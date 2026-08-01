@@ -1,24 +1,21 @@
-import os
-
 import streamlit as st
-from anthropic import Anthropic
-from dotenv import load_dotenv
+from config.container import resolve_presenter
+from data.tools_provider import ToolsProvider
 
-load_dotenv()
+if "result" not in st.session_state:
+    st.session_state["result"] = ""
 
-st.title("AI Research Blog")
-st.write("Minimal pipeline check: Streamlit → Claude API → response.")
+tools = ToolsProvider(
+    use_dci=False,
+    use_custom_presenter=False,
+    use_postgres=False
+)
 
-if st.button("Say Hello"):
-    client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    response = client.messages.create(
-        model="claude-opus-5",
-        max_tokens=16,
-        messages=[
-            {
-                "role": "user",
-                "content": "Respond with exactly the text: Hello World",
-            }
-        ],
-    )
-    st.write(response.content[0].text)
+presenter = resolve_presenter(tools, st.session_state)
+
+st.title("BlogResearch — MVP + DI + Provider Model")
+
+if st.button("Ask"):
+    presenter.on_button_click()
+
+st.write("Result:", st.session_state["result"])
