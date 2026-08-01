@@ -1,10 +1,13 @@
-from business.interfaces import IPPresenter
+"""A HelloPresenter variant with a custom result format.
 
-class CustomPresenter(IPPresenter):
-    def __init__(self, state, provider):
-        self.state = state
-        self.provider = provider
+Inherits on_button_click() - and its error handling - from
+HelloPresenter unchanged, and only overrides how a successful message
+is formatted.
+"""
 
-    def on_button_click(self):
-        msg = self.provider.say_hello()
-        self.state["result"] = f"Custom workflow → {msg.upper()}"
+from business.hello_presenter import HelloPresenter
+
+
+class CustomPresenter(HelloPresenter):
+    def _format_result(self, message: str) -> str:
+        return f"Custom workflow → {message.upper()}"

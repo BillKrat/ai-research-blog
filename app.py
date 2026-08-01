@@ -1,21 +1,24 @@
+"""Streamlit entrypoint - the only module that talks to Streamlit directly."""
+
 import streamlit as st
+
+from config.app_settings import AppSettings
 from config.container import resolve_presenter
-from data.tools_provider import ToolsProvider
+from config.environment import load_environment
+from views.streamlit_view import StreamlitView
 
-if "result" not in st.session_state:
-    st.session_state["result"] = ""
+load_environment()
 
-tools = ToolsProvider(
-    use_dci=False,
-    use_custom_presenter=False,
-    use_postgres=False
-)
-
-presenter = resolve_presenter(tools, st.session_state)
+settings = AppSettings()
+view = StreamlitView(st.session_state)
+presenter = resolve_presenter(settings, view)
 
 st.title("BlogResearch — MVP + DI + Provider Model")
 
 if st.button("Ask"):
     presenter.on_button_click()
 
-st.write("Result:", st.session_state["result"])
+if view.error:
+    st.error(view.error)
+else:
+    st.write("Result:", view.result)

@@ -1,93 +1,290 @@
 # AGENTS.md
 
-Context for AI agents working in this repository. This is a learning project, so keep changes small, readable, and easy to verify.
+Context for AI agents working in this repository. This is a learning
+project — keep changes simple, readable, and easy to verify. Don't
+introduce a framework or abstraction the current task doesn't need.
 
-## Project summary
+## Project
 
-- Repository: BillKrat/ai-research-blog
-- Stack: Python, Streamlit, pytest, Anthropic Claude API, PostgreSQL
-- Deployment: Railway from the main branch via Procfile
-- Live site: https://blogresearch.net
+- Repo: `BillKrat/ai-research-blog`
+- Stack: Python, Streamlit (UI), pytest, Anthropic Claude API,
+  PostgreSQL
+- Deploy: Railway, auto-deploys from `main` on push
+- Live: https://blogresearch.net
 
-## Working style
+## Workflow
 
-- Keep solutions simple and pragmatic; do not over-engineer.
-- Prefer the existing architecture patterns over introducing new frameworks.
-- Make changes that are easy to understand and test.
-- When adding or changing behavior, verify it with pytest or the relevant local run.
-- Keep secrets out of the repository. Use .env locally and environment variables in deployment.
+Every push to `main` triggers a live Railway deploy, so feature work
+happens on a branch and only gets merged to `main` (then pushed) once
+it's working end to end. Commit as you go on the branch — no need to
+keep history tidy, this is a learning project.
+
+The work below currently lives on `feature/postgres`.
+
+> ⚠️ **`AGENTS.md` itself has been silently overwritten before.**
+> During a Copilot session on this branch, this file was replaced
+> wholesale and the design-intent section below (triple store,
+> form-builder vision) was lost — it's been restored here from the
+> prior session's history. If you're an agent editing this file,
+> **extend it, don't replace it wholesale** — especially the "Vision"
+> and "Still open" sections, which represent decisions made across
+> multiple sessions, not just the current one.
 
 ## Current codebase state
 
-The app is now structured around a lightweight MVP + DI + provider model:
+The app is structured as MVP + DI + a provider registry, adapted to
+Streamlit's rerun-the-whole-script execution model:
 
-- Streamlit UI: app.py
-- Presenter layer: business/
-  - HelloPresenter
-  - CustomPresenter
-- Provider layer: data/
-  - ClaudeProvider
-  - DCIProvider
-  - PostgresProvider
-- Dependency resolution: config/container.py
-- Tool/config selection: data/tools_provider.py
+- **View** — `app.py` is the Streamlit entrypoint (the only module
+  that imports `streamlit`). `business/interfaces.py::IView` is the
+  contract; `views/streamlit_view.py::StreamlitView` is the only place
+  that knows the `st.session_state` key names. Presenters never touch
+  `st.session_state` directly.
+- **Presenter** — `business/`. `HelloPresenter` owns the shared
+  success/error flow (`on_button_click()`: call the provider, catch
+  `ProviderError`, call `view.show_error()` or `view.show_result()`).
+  `CustomPresenter` inherits `HelloPresenter` and only overrides
+  `_format_result()` — a template-method arrangement, not duplicated
+  logic.
+- **Provider (data layer)** — `data/`. Each implements
+  `IProvider.say_hello()` and raises `data.exceptions.ProviderError`
+  on failure — never crashes with an unrelated exception, never
+  returns an error string as if it were data.
+  - `ClaudeProvider` — Anthropic API. If unconfigured (no API key),
+    `say_hello()` raises `ProviderError` cleanly rather than crashing.
+  - `DCIProvider` — fixed response, for local/offline flows.
+  - `PostgresProvider` — currently queries a trivial `hello_messages`
+    fixture table, and there's a separate `triple_store` fixture table
+    used only by an integration test. **Neither of these is the real
+    triple-store schema** — see Vision below.
+- **Composition root** — `config/container.py`. `PROVIDER_FACTORIES`
+  is a `dict[str, Callable[[], IProvider]]` registry; adding a new
+  provider means registering a factory, not editing an if/elif chain
+  (Open/Closed).
+- **Settings** — `config/app_settings.py::AppSettings`, a plain
+  dataclass (not an interface — there's only one shape of "app
+  settings," so an ABC would be unnecessary ceremony). Reads
+  `PROVIDER_NAME` (default `"claude"`) and `USE_CUSTOM_PRESENTER`
+  (default `false`) from the environment.
+- **Environment loading** — `config/environment.py::load_environment()`
+  has no import-time side effects; it's called explicitly once, from
+  `app.py` for the running app and from `tests/conftest.py` for the
+  test session. (Earlier versions of this code called it as a
+  module-level side effect in two different files, which required an
+  `importlib.reload()` hack in tests to verify — don't reintroduce
+  that pattern.)
 
-The current behavior is intentionally simple: the UI resolves a presenter through the container, and the presenter delegates to a provider.
+## Session history
 
-## Architecture notes
+1. **Initial scaffold** — minimal "Say Hello" button proving
+   Streamlit → Claude API → Railway → custom domain worked end to end.
+2. **Branching + vision session** — adopted the branch-then-merge
+   workflow (this file's "Workflow" section); had an extended design
+   discussion about a Postgres-backed triple store for user-defined
+   forms — see **Vision** below. Nothing from that vision was built
+   yet at that point.
+3. **Copilot MVP/DI scaffold + realignment (current)** — the user had
+   Copilot build out an MVP + DI + provider-model skeleton
+   (`business/`, `data/`, `config/container.py`) on `feature/postgres`
+   as a way to flesh out ideas without spending Claude usage on
+   scaffolding, with the explicit intent that a Claude-driven review
+   would realign it afterward. That review found:
+   - **A real bug:** `ClaudeProvider.say_hello()` crashed with
+     `AttributeError` whenever unconfigured (missing API key) — the
+     exact "safe fallback" path the container routed to. Fixed by
+     raising `ProviderError` instead. The error handling was then
+     refined further (same session) to wrap both the Anthropic SDK's
+     own exception hierarchy and any other unexpected exception,
+     always re-raising as `ProviderError` via `raise ... from exc` so
+     the original is preserved — never swallowed into a fake result.
+     `tests/test_claude_provider.py` covers this with a real
+     `AuthenticationError`.
+   - **Inconsistent error handling** across providers (Postgres caught
+     and returned error strings; Claude didn't catch at all) — fixed
+     via the shared `ProviderError` contract.
+   - **A DI anti-pattern:** `resolve_provider()` checked
+     `os.environ.get("PYTEST_CURRENT_TEST")` — production code aware
+     of the test framework. Removed; tests inject their own
+     `AppSettings`/providers explicitly instead.
+   - **Service-Locator-style resolution** (if/elif on a string) instead
+     of a real registry — replaced with `PROVIDER_FACTORIES`.
+   - **No `IView`** — presenters wrote into `st.session_state`
+     directly (a magic string key), which isn't real MVP. Added `IView`
+     + `StreamlitView`.
+   - **Over-abstraction in the other direction:** `IToolsProvider` was
+     an ABC interface with exactly one implementation — a config DTO
+     wearing an interface's clothes. Replaced with the plain
+     `AppSettings` dataclass.
+   - **Duplicated `_load_environment()`** in two files, called as an
+     import-time side effect — consolidated into
+     `config/environment.py`, called explicitly instead of at import
+     time.
+   - **A test that could never fail:** the Postgres integration test
+     had its real assertions *inside* a broad `try/except` that
+     skipped on any exception — a wrong assertion would skip, not
+     fail. Fixed by moving the assertion outside the try/except.
+   - **Repo hygiene:** `.DS_Store` was tracked in git (added to
+     `.gitignore`, untracked); `app.py.original.md` was a stray
+     Copilot-left backup (deleted, git history already has it);
+     duplicate test files consolidated.
+   - Full test suite (`pytest`) and a live smoke test (real Claude
+     call through the whole DI chain) both verified after the
+     refactor.
 
-- The view should stay focused on UI concerns and should not know about provider implementations.
-- Presenters should orchestrate behavior and delegate to the injected provider.
-- Providers should encapsulate external dependencies such as Claude, DCI, or PostgreSQL.
-- The DI container should be the place where provider/presenter choices are resolved.
+## Vision: PostgreSQL-backed triple store (design intent, not yet built)
 
-If you add a new provider, implement the provider interface and wire it through the container and tool-selection layer.
+**This predates the current scaffold and is still the actual goal.**
+The MVP/DI/provider work above is foundation, not the feature itself —
+`PostgresProvider` today just reads one row from a fixture table.
+
+### The goal
+
+Users design their own forms — choose fields, lay them out, and CRUDL
+(Create/Read/Update/Delete/List) their own form data — without a
+developer defining a fixed schema per form up front.
+
+### Why a triple store
+
+The user has real production experience with RDF triple stores (prior
+work in Utility Engineering) and strong opinions earned from it:
+
+- **What's good:** a `(subject, predicate, object)` model fits
+  schema-less, user-defined forms — no migration needed every time
+  someone adds a field.
+- **What was bad, and deliberately avoided here:** the prior system's
+  ontologies were designed by architects for architects, and SPARQL
+  was a barrier for developers. **This project skips SPARQL** — query
+  the triple table with plain SQL, kept simple and developer-friendly.
+- **Known tradeoff, scoped around deliberately:** pivoting triples
+  back into rows/columns is expensive at volume (learned the hard way
+  processing thousands of pump records in the prior system). This
+  project's use case — user-generated forms, picklists, simple record
+  structures — is the low-hanging-fruit case where that cost doesn't
+  bite. Don't reach for this pattern for high-volume/bulk-record use
+  cases without re-evaluating.
+
+### Data shape — two DTO types depending on content
+
+- **Grid/tabular data** (rows of form submissions) → translate triples
+  into a `pandas.DataFrame` → render/edit via Streamlit's built-in
+  `st.data_editor`, which already gives an editable grid with
+  add/delete-row support largely for free.
+- **Form layout metadata** (labels, field types, position on the
+  form) → a lightweight dict or Pydantic model — this isn't tabular
+  data, it's structural/config data describing a form.
+
+Exact routing logic (how the app decides which DTO type applies to a
+given predicate/subject) is still to be worked out.
+
+### Data-layer abstraction
+
+The user has always used dependency injection to configure data
+layers in .NET (interface + swappable implementation) and wants the
+same discipline here — this is directly what `IProvider` +
+`config/container.py`'s registry already establish as a pattern; the
+triple store's repository should follow the same shape:
+
+- A `FormDataRepository`-style abstract base class (`abc.ABC`, per the
+  existing `IProvider` convention in this repo) — `get`, `save`,
+  `list`, `delete` (exact method signatures TBD).
+- A Postgres-backed triple-store implementation is the first concrete
+  implementation.
+- Business logic and the Streamlit UI depend only on the repository
+  interface, never on Postgres or triples directly — this is what
+  allows a different backend to be swapped in later for use cases that
+  don't suit triples well (e.g. high-volume data).
+- No DI framework needed — the existing hand-rolled composition root
+  in `config/container.py` is the right complexity for this project;
+  extend its registry pattern rather than introducing a container
+  library.
+
+### Still open — settle before/while building
+
+- Exact triple table schema (columns, types, how `object` values of
+  different types — text, number, date — are stored). The current
+  `triple_store` fixture table (`subject, predicate, object_value`,
+  all text) is a test fixture, not this schema.
+- `psycopg2` raw queries vs. an ORM — leaning toward raw queries for
+  simplicity given the schema is one triple table, open to
+  reconsidering.
+- The repository's exact method signatures and the DTO routing logic
+  (DataFrame vs. dict/Pydantic).
+- A first concrete form to build end-to-end as the proof of concept.
+
+### Reusability — explicitly deferred, but keep in mind
+
+It's too early to know what's suitable for extraction into a
+standalone, pip-installable package for reuse across apps (the user's
+explicit call). Nothing is packaged yet — no `pyproject.toml`, no
+`src/` layout. But keep the boundary clean as this develops: interfaces
+and the composition-root pattern are the reusable candidates; app-specific
+logic (this app's exact session-state contract, this app's schema)
+is not. Keeping that boundary clean now means extraction later is
+mechanical, not a redesign — no action needed until there's a second
+real consumer app.
 
 ## Environment and secrets
 
-- Local development should use .env.
-- Do not commit secrets.
-- .env.example is the safe template; do not place real credentials in it.
-- The PostgreSQL provider reads DATABASE_URL from the environment or .env.
-- The Claude provider reads ANTHROPIC_API_KEY or CLAUDE_API_KEY.
+- Local dev uses `.env` (gitignored); `.env.example` is the committed
+  placeholder template — **never put a real secret in
+  `.env.example`, only in `.env`.**
+- `ANTHROPIC_API_KEY` (or `CLAUDE_API_KEY`) — Claude provider.
+- `DATABASE_URL` — Postgres provider.
+- `PROVIDER_NAME` — which `IProvider` to resolve (`claude` / `dci` /
+  `postgres`); defaults to `claude`.
+- `USE_CUSTOM_PRESENTER` — `true` to use `CustomPresenter`; defaults
+  to `false`.
+- Production: same variables set in Railway's Variables tab, never
+  committed.
 
 ## Local development
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate       # VS Code's integrated terminal does this automatically
+                                # once "Python: Select Interpreter" points at ./venv/bin/python
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-If you need to debug the app, use the VS Code Streamlit launch configuration rather than running an arbitrary Python file.
+Debugging: use the "Streamlit: app.py" config in VS Code's Run and
+Debug panel (`.vscode/launch.json`) — not plain F5 on whatever file
+happens to be open, which will try to execute the wrong file.
 
 ## Testing
-
-Run the test suite with:
 
 ```bash
 pytest
 ```
 
-The repository currently includes tests for:
+Coverage:
 
-- Presenter behavior
-- Container/provider selection
-- Environment-driven Postgres configuration
-- A Postgres integration-style test that checks a fixed set of rows when DATABASE_URL is available
-
-If a test is environment-dependent, keep it skip-safe when the required runtime is not available.
-
-## Deployment notes
-
-- The app is deployed via Railway using Procfile.
-- Production configuration should be managed through Railway environment variables.
-- Keep deployment changes minimal and compatible with the existing app structure.
+- `tests/test_container.py` — DI resolution via the provider registry
+  (including case-insensitivity and the unknown-provider error path),
+  Postgres connection-string resolution, and a Postgres integration
+  test that's skip-safe when `DATABASE_URL` is unset or unreachable
+  (its real assertions run outside the skip-triggering try/except, so
+  a genuine mismatch fails the test rather than silently skipping).
+- `tests/test_presenter.py` — both presenters, both the success path
+  and the `ProviderError` → `view.show_error()` path.
+- `tests/test_environment.py` — `.env` loading, including that a real
+  environment variable always wins over `.env`.
 
 ## What to avoid
 
-- Avoid introducing a heavy framework or new architecture unless the task clearly needs it.
-- Avoid making the app more complex than the current MVP requires.
-- Avoid hard-coding provider credentials or connection strings.
-- Avoid changing the public behavior of the app without updating tests or documenting the change.
+- Don't introduce a DI framework, ORM, or other heavy dependency
+  unless the task clearly needs it — extend the existing registry/ABC
+  patterns instead.
+- Don't let application code become aware of the test framework (the
+  removed `PYTEST_CURRENT_TEST` check is the cautionary example) —
+  tests inject what they need explicitly.
+- Don't add an interface/ABC for something with only one real
+  implementation and no near-term second one (the removed
+  `IToolsProvider` is the cautionary example) — that's over-engineering
+  in the other direction.
+- Don't reintroduce import-time side effects (env loading, DB
+  connections, etc.) in modules other than the explicit entrypoints
+  (`app.py`, `tests/conftest.py`).
+- Don't hardcode credentials or connection strings.
+- Don't replace this file wholesale — extend it, especially the
+  Vision and Session history sections.
