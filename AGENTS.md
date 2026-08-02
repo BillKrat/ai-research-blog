@@ -8,7 +8,9 @@ doesn't need.
 This file covers setup, configuration, and what the app can currently
 do. Rationale and history for *why* it's built this way lives in
 [docs/adr/](docs/adr/) — check there before making a change that
-seems to contradict something here.
+seems to contradict something here. Where the product is headed —
+requirements not yet built, several with real open decisions — is
+tracked in [docs/ASR.md](docs/ASR.md).
 
 > ⚠️ Don't replace this file wholesale when editing it — extend it.
 > (It's happened before, silently, during a Copilot session.)
