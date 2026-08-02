@@ -6,11 +6,11 @@ from contextlib import closing
 import psycopg2
 
 from data.exceptions import ProviderError
-from data.interfaces import IProvider
+from data.interfaces import IDbProvider
 
 
-class PostgresProvider(IProvider):
-    """Reads a single row from hello_messages to answer say_hello().
+class PostgresProvider(IDbProvider):
+    """Reads a single row from hello_messages to answer get_message().
 
     The connection string is resolved from DATABASE_URL unless one is
     passed explicitly (used by tests). Assumes the environment has
@@ -27,7 +27,7 @@ class PostgresProvider(IProvider):
             raise ValueError("DATABASE_URL must be set in the environment or .env file")
         return conn_string
 
-    def say_hello(self) -> str:
+    def get_message(self) -> str:
         try:
             with closing(psycopg2.connect(self.conn_string)) as conn:
                 with conn.cursor() as cur:

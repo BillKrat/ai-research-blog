@@ -41,31 +41,48 @@ Streamlit's rerun-the-whole-script execution model:
   that knows the `st.session_state` key names. Presenters never touch
   `st.session_state` directly.
 - **Presenter** — `business/`. `HelloPresenter` owns the shared
-  success/error flow (`on_button_click()`: call the provider, catch
-  `ProviderError`, call `view.show_error()` or `view.show_result()`).
-  `CustomPresenter` inherits `HelloPresenter` and only overrides
-  `_format_result()` — a template-method arrangement, not duplicated
-  logic.
-- **Provider (data layer)** — `data/`. Each implements
-  `IProvider.say_hello()` and raises `data.exceptions.ProviderError`
-  on failure — never crashes with an unrelated exception, never
-  returns an error string as if it were data.
-  - `ClaudeProvider` — Anthropic API. If unconfigured (no API key),
-    `say_hello()` raises `ProviderError` cleanly rather than crashing.
-  - `DCIProvider` — fixed response, for local/offline flows.
-  - `PostgresProvider` — currently queries a trivial `hello_messages`
-    fixture table, and there's a separate `triple_store` fixture table
-    used only by an integration test. **Neither of these is the real
-    triple-store schema** — see Vision below.
-- **Composition root** — `config/container.py`. `PROVIDER_FACTORIES`
-  is a `dict[str, Callable[[], IProvider]]` registry; adding a new
-  provider means registering a factory, not editing an if/elif chain
-  (Open/Closed).
+  success/error flow for `IProvider` (`on_button_click()`: call the
+  provider, catch `ProviderError`, call `view.show_error()` or
+  `view.show_result()`). `CustomPresenter` inherits `HelloPresenter`
+  and only overrides `_format_result()` — a template-method
+  arrangement, not duplicated logic. `DbHelloPresenter` is the
+  `IDbProvider`-backed equivalent — **a separate class on purpose**,
+  not a shared one; see session history item 4 for why.
+- **Data layer** — `data/interfaces.py` defines three interfaces, kept
+  deliberately separate (see the file's own docstring for the full
+  rationale):
+  - **`IProvider`** — LLM/completion backends. Implementations:
+    `ClaudeProvider` (Anthropic API; if unconfigured, `say_hello()`
+    raises `ProviderError` cleanly rather than crashing) and
+    `DCIProvider` (fixed response, for local/offline flows).
+  - **`IDbProvider`** — persistence backends. Implementation:
+    `PostgresProvider.get_message()` — currently queries a trivial
+    `hello_messages` fixture table, and there's a separate
+    `triple_store` fixture table used only by an integration test.
+    **Neither of these is the real triple-store schema** — see Vision
+    below.
+  - **`IToolProvider`** — tool discovery/execution for a future
+    reasoning engine. Defined, no implementation anywhere yet — see
+    Vision's "Still open" for when to build one.
+
+  All three raise `data.exceptions.ProviderError` on failure — never
+  crash with an unrelated exception, never return an error string as
+  if it were data.
+- **Composition root** — `config/container.py`. Two registries, not
+  one: `LLM_PROVIDER_FACTORIES: dict[str, Callable[[], IProvider]]`
+  and `DB_PROVIDER_FACTORIES: dict[str, Callable[[], IDbProvider]]`.
+  `resolve_presenter()` checks which registry a `provider_name` falls
+  into and returns the matching presenter type. Adding a new provider
+  means registering a factory in the right registry, not editing an
+  if/elif chain (Open/Closed).
 - **Settings** — `config/app_settings.py::AppSettings`, a plain
   dataclass (not an interface — there's only one shape of "app
   settings," so an ABC would be unnecessary ceremony). Reads
   `PROVIDER_NAME` (default `"claude"`) and `USE_CUSTOM_PRESENTER`
-  (default `false`) from the environment.
+  (default `false`) from the environment. `USE_CUSTOM_PRESENTER` only
+  affects the `IProvider` path (`claude`/`dci`) — `postgres` always
+  resolves to plain `DbHelloPresenter`, no custom-formatting variant
+  exists for it yet.
 - **Environment loading** — `config/environment.py::load_environment()`
   has no import-time side effects; it's called explicitly once, from
   `app.py` for the running app and from `tests/conftest.py` for the
@@ -130,6 +147,60 @@ Streamlit's rerun-the-whole-script execution model:
    - Full test suite (`pytest`) and a live smoke test (real Claude
      call through the whole DI chain) both verified after the
      refactor.
+4. **`IProvider` was still ambiguous — split into three interfaces.**
+   Even after the realignment above, `IProvider` covered Claude, DCI,
+   *and* Postgres alike — as if querying a database and asking an LLM
+   a question were the same responsibility. They aren't. The user
+   caught this (context Copilot never had, from prompts shared with it
+   earlier the same day) and gave the corrected breakdown directly:
+   - **`IProvider`** narrowed to LLM/completion backends only (Claude,
+     DCI). Unchanged behavior, corrected scope.
+   - **`IDbProvider`** (new) — persistence backends. `PostgresProvider`
+     moved onto it; `say_hello()` renamed to `get_message()`, since
+     "say hello" is an LLM-shaped name, not a storage-shaped one. Kept
+     deliberately minimal (one method) — matches what the app actually
+     reads today; expand when there's a second real read/write need,
+     not before. This is also where `IDbProvider` connects to the
+     Vision section below: `FormDataRepository` (the triple-store
+     repository, not yet built) is expected to be a domain-specific
+     layer built *on top of* an `IDbProvider` implementation — two
+     layers, not one.
+   - **`DbHelloPresenter`** (new) — a presenter is not allowed to treat
+     "ask an LLM" and "read the database" as interchangeable just
+     because both currently return a `str`. Rather than one presenter
+     accepting any object shaped like a no-arg method returning a
+     string (which would have quietly re-introduced the exact
+     conflation being fixed one layer up), `HelloPresenter`/
+     `CustomPresenter` stay `IProvider`-only and `DbHelloPresenter` is
+     a separate, small class for `IDbProvider`. `config/container.py`
+     now has `LLM_PROVIDER_FACTORIES` and `DB_PROVIDER_FACTORIES` as
+     two registries, and `resolve_presenter()` dispatches to the right
+     presenter type based on which registry the requested provider
+     name falls into.
+   - **`IToolProvider`** (new, stub only) — tool discovery/execution
+     for a future reasoning engine (`get_tool_schemas()` /
+     `execute_tool()`), a third and genuinely orthogonal concern from
+     either of the above. Defined in `data/interfaces.py` because the
+     shape was worth settling now, but **no concrete implementation
+     exists** — nothing in the app calls it. When a first real tool
+     shows up, a dict/registry-driven implementation (mirroring
+     `PROVIDER_FACTORIES`'s pattern) is the recommended starting
+     point, not a framework and not a Pydantic-validated version
+     (that's the right upgrade *once* there are enough tools that
+     malformed-argument bugs are a real risk, not before).
+   - **Naming collision to keep straight:** the `ToolsProvider`/
+     `IToolsProvider` deleted in item 3 above was a config/feature-flag
+     DTO (which provider/presenter to use) — an unrelated concept that
+     happens to closely resemble this new `IToolProvider`'s name (LLM
+     tool/function invocation). Don't conflate them; the old one is
+     gone and replaced by `AppSettings`, the new one is a genuinely
+     different, forward-looking interface.
+   - Full test suite and a live smoke test (Streamlit → `AppSettings`
+     → container → `HelloPresenter` → `ClaudeProvider` → real Claude
+     call → `StreamlitView`) both verified after the split. The
+     Postgres path is covered by unit tests only in this session — the
+     local machine can't reach `postgres.railway.internal` to smoke
+     test it live, same limitation as before.
 
 ## Vision: PostgreSQL-backed triple store (design intent, not yet built)
 
@@ -180,19 +251,25 @@ given predicate/subject) is still to be worked out.
 
 The user has always used dependency injection to configure data
 layers in .NET (interface + swappable implementation) and wants the
-same discipline here — this is directly what `IProvider` +
-`config/container.py`'s registry already establish as a pattern; the
-triple store's repository should follow the same shape:
+same discipline here — this is directly what `IProvider`/`IDbProvider`
++ `config/container.py`'s registries already establish as a pattern;
+the triple store's repository should follow the same shape, one layer
+up from `IDbProvider`:
 
 - A `FormDataRepository`-style abstract base class (`abc.ABC`, per the
-  existing `IProvider` convention in this repo) — `get`, `save`,
-  `list`, `delete` (exact method signatures TBD).
-- A Postgres-backed triple-store implementation is the first concrete
-  implementation.
+  existing `IProvider`/`IDbProvider` convention in this repo) — `get`,
+  `save`, `list`, `delete` (exact method signatures TBD). This sits
+  *above* `IDbProvider`, not in place of it: `IDbProvider` is generic
+  storage access (get/save bytes or rows), `FormDataRepository` is the
+  domain-specific triple/form logic built on top of a concrete
+  `IDbProvider` implementation.
+- A Postgres-backed triple-store implementation (via `IDbProvider`) is
+  the first concrete implementation.
 - Business logic and the Streamlit UI depend only on the repository
-  interface, never on Postgres or triples directly — this is what
-  allows a different backend to be swapped in later for use cases that
-  don't suit triples well (e.g. high-volume data).
+  interface, never on Postgres, `IDbProvider`, or triples directly —
+  this is what allows a different storage backend to be swapped in
+  later for use cases that don't suit triples well (e.g. high-volume
+  data).
 - No DI framework needed — the existing hand-rolled composition root
   in `config/container.py` is the right complexity for this project;
   extend its registry pattern rather than introducing a container
@@ -230,8 +307,9 @@ real consumer app.
   `.env.example`, only in `.env`.**
 - `ANTHROPIC_API_KEY` (or `CLAUDE_API_KEY`) — Claude provider.
 - `DATABASE_URL` — Postgres provider.
-- `PROVIDER_NAME` — which `IProvider` to resolve (`claude` / `dci` /
-  `postgres`); defaults to `claude`.
+- `PROVIDER_NAME` — which provider to resolve: `claude` / `dci`
+  (`IProvider`, LLM) or `postgres` (`IDbProvider`, storage); defaults
+  to `claude`.
 - `USE_CUSTOM_PRESENTER` — `true` to use `CustomPresenter`; defaults
   to `false`.
 - Production: same variables set in Railway's Variables tab, never
@@ -259,14 +337,20 @@ pytest
 
 Coverage:
 
-- `tests/test_container.py` — DI resolution via the provider registry
-  (including case-insensitivity and the unknown-provider error path),
-  Postgres connection-string resolution, and a Postgres integration
-  test that's skip-safe when `DATABASE_URL` is unset or unreachable
-  (its real assertions run outside the skip-triggering try/except, so
-  a genuine mismatch fails the test rather than silently skipping).
-- `tests/test_presenter.py` — both presenters, both the success path
-  and the `ProviderError` → `view.show_error()` path.
+- `tests/test_container.py` — DI resolution through both
+  `LLM_PROVIDER_FACTORIES` and `DB_PROVIDER_FACTORIES` (including
+  case-insensitivity and the unknown-provider error path for each),
+  which presenter type `resolve_presenter()` returns for a given
+  `AppSettings`, Postgres connection-string resolution, and a Postgres
+  integration test that's skip-safe when `DATABASE_URL` is unset or
+  unreachable (its real assertions run outside the skip-triggering
+  try/except, so a genuine mismatch fails the test rather than
+  silently skipping).
+- `tests/test_presenter.py` — `HelloPresenter`, `CustomPresenter`, and
+  `DbHelloPresenter`, each covering the success path and the
+  `ProviderError` → `view.show_error()` path.
+- `tests/test_claude_provider.py` — a real Anthropic SDK error wrapped
+  as `ProviderError` rather than propagating unchanged.
 - `tests/test_environment.py` — `.env` loading, including that a real
   environment variable always wins over `.env`.
 
@@ -282,6 +366,13 @@ Coverage:
   implementation and no near-term second one (the removed
   `IToolsProvider` is the cautionary example) — that's over-engineering
   in the other direction.
+- Don't put two genuinely different responsibilities behind one
+  interface just because they're currently shaped the same (the
+  original `IProvider` covering both Claude and Postgres, because both
+  happened to return a `str`, is the cautionary example). If a new
+  capability doesn't obviously fit `IProvider`, `IDbProvider`, or
+  `IToolProvider`, that's a signal to add a fourth interface, not to
+  force it into one of the existing three.
 - Don't reintroduce import-time side effects (env loading, DB
   connections, etc.) in modules other than the explicit entrypoints
   (`app.py`, `tests/conftest.py`).

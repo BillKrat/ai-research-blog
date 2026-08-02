@@ -13,19 +13,40 @@ rerun-the-whole-script execution model:
 - **View** — the Streamlit UI lives in [app.py](app.py); the `IView`
   contract and its Streamlit adapter are in [views/](views/).
 - **Presenter** — in [business/](business/). Presenters depend on
-  `IView` and `IProvider` only, never on Streamlit or a concrete data
-  source.
-- **Provider (data layer)** — in [data/](data/). Each provider
-  implements `IProvider.say_hello()` and raises `ProviderError` on
-  failure instead of crashing or silently returning an error string.
-  Failures are always wrapped and re-raised as `ProviderError` (never
-  swallowed into a fake "success") — `ClaudeProvider` catches both the
-  Anthropic SDK's own exception hierarchy and any other unexpected
-  exception, always re-raising as `ProviderError` with the original
-  preserved via `raise ... from exc`.
+  `IView` and one data-layer interface only, never on Streamlit or a
+  concrete data source. `HelloPresenter`/`CustomPresenter` depend on
+  `IProvider`; `DbHelloPresenter` depends on `IDbProvider` — see
+  below for why those are two different presenters, not one.
+- **Data layer** — in [data/](data/), split into three interfaces on
+  purpose (see [data/interfaces.py](data/interfaces.py) for the full
+  rationale):
+  - **`IProvider`** — LLM/completion backends (Claude, DCI).
+  - **`IDbProvider`** — persistence backends (Postgres today; a
+    local-disk file store is a plausible future implementation).
+  - **`IToolProvider`** — tool discovery/execution for a future
+    reasoning engine. Defined, not yet implemented anywhere.
+
+  An earlier version of this codebase had one `IProvider` covering
+  Claude, DCI, *and* Postgres, as if querying a database and asking an
+  LLM a question were the same responsibility. They aren't, so
+  `PostgresProvider` now implements `IDbProvider.get_message()`, not
+  `IProvider.say_hello()` — and `DbHelloPresenter` exists specifically
+  so the presenter layer doesn't quietly reintroduce that same
+  conflation by accepting "anything with a no-arg method returning
+  str" as if the two were interchangeable.
+
+  All data-layer implementations raise `ProviderError`
+  ([data/exceptions.py](data/exceptions.py)) on failure instead of
+  crashing or silently returning an error string as if it were data.
+  `ClaudeProvider` wraps both the Anthropic SDK's own exception
+  hierarchy and any other unexpected exception, always re-raising as
+  `ProviderError` with the original preserved via `raise ... from
+  exc`.
 - **Composition root** — dependency resolution is centralized in
-  [config/container.py](config/container.py); application settings
-  (which provider, which presenter) live in
+  [config/container.py](config/container.py), with a separate
+  provider registry per interface (`LLM_PROVIDER_FACTORIES`,
+  `DB_PROVIDER_FACTORIES`). Application settings (which provider,
+  which presenter) live in
   [config/app_settings.py](config/app_settings.py).
 
 ### What the app does today
@@ -33,12 +54,13 @@ rerun-the-whole-script execution model:
 - Renders a simple UI with an "Ask" button.
 - Resolves a presenter through the DI container, based on
   `AppSettings` (which reads from the environment).
-- Calls a provider through the `IProvider` interface to produce a
-  response, and displays either the result or a user-facing error.
-- Supports three providers, selected via `PROVIDER_NAME`:
-  - `claude` (default) — [data/claude_provider.py](data/claude_provider.py), via the Anthropic API
-  - `dci` — [data/dci_provider.py](data/dci_provider.py), a fixed-response provider for local/offline flows
-  - `postgres` — [data/postgres_provider.py](data/postgres_provider.py)
+- Depending on `PROVIDER_NAME`, that presenter is backed by either an
+  `IProvider` (LLM) or an `IDbProvider` (storage), and displays either
+  the result or a user-facing error.
+- Supported values for `PROVIDER_NAME`:
+  - `claude` (default) — [data/claude_provider.py](data/claude_provider.py), via the Anthropic API (`IProvider`)
+  - `dci` — [data/dci_provider.py](data/dci_provider.py), a fixed-response provider for local/offline flows (`IProvider`)
+  - `postgres` — [data/postgres_provider.py](data/postgres_provider.py) (`IDbProvider`)
 
 ## Local setup
 
@@ -70,7 +92,7 @@ rerun-the-whole-script execution model:
    - `DATABASE_URL` for Postgres-backed runs
    - `PROVIDER_NAME` — `claude` (default), `dci`, or `postgres`
    - `USE_CUSTOM_PRESENTER` — `true` to use `CustomPresenter`'s
-     formatting instead of the default
+     formatting instead of the default (applies to the LLM path only)
 
 4. Run the app:
 
@@ -90,26 +112,31 @@ control.
 - **Presentation layer:** Streamlit UI in [app.py](app.py); `IView` /
   `StreamlitView` in [views/](views/).
 - **Business layer:** presenters in [business/](business/).
-  `HelloPresenter` owns the shared success/error flow; `CustomPresenter`
-  inherits it and only overrides how a successful message is
-  formatted (a template-method arrangement, not duplicated logic).
-- **Data layer:** providers in [data/](data/), all implementing
-  `IProvider` and raising `ProviderError` on failure.
+  `HelloPresenter` owns the shared success/error flow for `IProvider`;
+  `CustomPresenter` inherits it and only overrides how a successful
+  message is formatted (a template-method arrangement, not duplicated
+  logic). `DbHelloPresenter` is the `IDbProvider`-backed equivalent —
+  a separate class, deliberately, not a shared one.
+- **Data layer:** `IProvider` / `IDbProvider` / `IToolProvider` in
+  [data/interfaces.py](data/interfaces.py); concrete implementations
+  in [data/](data/), all raising `ProviderError` on failure.
 - **DI container:** [config/container.py](config/container.py) maps
-  provider names to factory functions in a registry — adding a new
-  provider means registering it, not editing an if/else chain.
+  provider names to factory functions in per-interface registries —
+  adding a new provider means registering it, not editing an if/else
+  chain.
 
 This keeps the UI independent of the underlying provider
 implementation and makes it possible to swap providers, presenters, or
 even the UI framework without touching the others.
 
 **A framework-agnostic reusability note:** the interfaces
-(`IProvider`, `IPresenter`, `IView`) and the composition-root pattern
-are the pieces most likely to be reusable across future apps. Nothing
-is packaged for external reuse yet — that's deliberately deferred
-until there's a second real consumer — but the code is kept clean of
-app-specific logic bleeding into those interfaces, so extracting them
-later should be mechanical rather than a redesign.
+(`IProvider`, `IDbProvider`, `IPresenter`, `IView`) and the
+composition-root pattern are the pieces most likely to be reusable
+across future apps. Nothing is packaged for external reuse yet —
+that's deliberately deferred until there's a second real consumer —
+but the code is kept clean of app-specific logic bleeding into those
+interfaces, so extracting them later should be mechanical rather than
+a redesign.
 
 ## Testing
 
@@ -124,13 +151,14 @@ pytest
 ### Current test coverage
 
 - [tests/test_container.py](tests/test_container.py) — DI resolution
-  (including the provider registry, case-insensitivity, and the
-  unknown-provider error path), and Postgres connection-string
-  resolution from the environment.
+  through both provider registries (LLM and DB), case-insensitivity,
+  the unknown-provider error path for each registry, which presenter
+  type `resolve_presenter()` returns for a given `AppSettings`, and
+  Postgres connection-string resolution from the environment.
 - [tests/test_presenter.py](tests/test_presenter.py) — presenter
-  behavior for both `HelloPresenter` and `CustomPresenter`, covering
-  both the success path and the `ProviderError` → `view.show_error()`
-  path.
+  behavior for `HelloPresenter`, `CustomPresenter`, and
+  `DbHelloPresenter`, covering both the success path and the
+  `ProviderError` → `view.show_error()` path for each.
 - [tests/test_claude_provider.py](tests/test_claude_provider.py) —
   verifies a real Anthropic SDK error (e.g. `AuthenticationError`) is
   wrapped as `ProviderError` rather than propagating unchanged.
@@ -161,20 +189,21 @@ integration-style test that exercises the real Postgres provider when
 ```text
 app.py
 business/
-  interfaces.py       # IView, IPresenter
-  hello_presenter.py   # default presenter (owns success/error flow)
-  custom_presenter.py  # overrides result formatting only
+  interfaces.py         # IView, IPresenter
+  hello_presenter.py     # IProvider-backed presenter (owns success/error flow)
+  custom_presenter.py    # overrides HelloPresenter's result formatting only
+  db_hello_presenter.py  # IDbProvider-backed presenter (separate on purpose)
 config/
-  environment.py       # .env loading (no import-time side effects)
-  app_settings.py       # AppSettings — env-driven provider/presenter choice
-  container.py          # composition root: provider registry + resolve_*()
+  environment.py         # .env loading (no import-time side effects)
+  app_settings.py        # AppSettings — env-driven provider/presenter choice
+  container.py           # composition root: per-interface registries + resolve_*()
 data/
-  interfaces.py         # IProvider
-  exceptions.py          # ProviderError
-  claude_provider.py
-  dci_provider.py
-  postgres_provider.py
+  interfaces.py           # IProvider, IDbProvider, IToolProvider
+  exceptions.py            # ProviderError
+  claude_provider.py       # IProvider
+  dci_provider.py          # IProvider
+  postgres_provider.py     # IDbProvider
 views/
-  streamlit_view.py     # IView adapter for st.session_state
+  streamlit_view.py       # IView adapter for st.session_state
 tests/
 ```
