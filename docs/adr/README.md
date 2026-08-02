@@ -12,6 +12,7 @@ reasoning behind it lives.
 | [0002](0002-mvp-di-provider-architecture.md) | MVP + DI + provider-registry architecture | Accepted |
 | [0003](0003-provider-interface-split.md) | Split IProvider into IProvider / IDbProvider / IToolProvider | Accepted |
 | [0004](0004-triple-store-for-user-forms.md) | Postgres-backed triple store for user-defined forms | Proposed |
+| [0005](0005-identity-data-in-triple-store.md) | Identity, role, group, and feature data lives in the triple store | Accepted |
 
 ## Adding a new ADR
 

@@ -63,17 +63,25 @@ builds on, not a bolt-on added later. Everything downstream (ASR-003,
 ASR-004) depends on this being right.
 
 **Architectural impact:**
-- Needs a new interface for identity/auth — a genuinely distinct
-  responsibility from `IProvider`/`IDbProvider`/`IToolProvider`, per
-  AGENTS.md's "don't force a new concern into an existing interface"
-  rule. Naming TBD, following the established `I*Provider` /
-  `I*Store` convention.
-- User/role/subscription data belongs in **conventional relational
-  tables**, not the triple store, even though both live under
-  `IDbProvider`. This data is high-frequency (checked on every
-  request) and integrity-sensitive (uniqueness, foreign keys) — the
-  opposite of what ADR-0004 says triples are good for. Form data goes
-  in triples; identity data doesn't.
+- Identity/role/group/feature data lives in the **same triple store**
+  as form data, not a separate relational schema — reversed from this
+  ASR's original recommendation here. See
+  [ADR-0005](adr/0005-identity-data-in-triple-store.md) for the full
+  reasoning (it corrects a performance argument this document
+  originally made incorrectly) and the reversibility plan that makes
+  it a low-risk choice.
+- `IUserProvider` (data: role/group/feature triples for a user) and
+  `IAuthorizationProvider` (service: resolves and enforces
+  credentials/roles for a given user + resource) are two separate
+  interfaces, not one — the same shape as `FormDataRepository` sitting
+  on top of `IDbProvider`. Neither is built yet.
+- Enforcement principle: authorization must gate what the backend
+  *retrieves* (scoped queries, e.g. row-level filtering by user/
+  subscription), not filter results after the fact based on
+  client-held role information. This is already how ASR-003's MCP
+  tools are designed (`search_subscribed_blogs` scopes its own query),
+  so this principle doesn't require reworking that design — it
+  confirms it.
 - "Claude access" isn't really a per-user role — the app holds one
   Anthropic API key, not per-user credentials. What actually varies
   per user is *which data* Claude's tools are allowed to touch when
@@ -82,6 +90,20 @@ ASR-004) depends on this being right.
   ASR-003) than as a literal Claude access role.
 
 **Open questions:**
+- **Token handling (preliminary, not yet designed):** after
+  authentication, don't pass the token itself between internal
+  processes — store it in a vault and pass only the bare user id.
+  `IAuthorizationProvider` is the component that takes that user id,
+  retrieves credentials, authenticates against downstream systems,
+  determines roles, and returns them — MCP's own authorization spec
+  covers client↔MCP-server auth but says nothing about this
+  resolution step, so it's squarely this project's own design.
+  Undecided: does `IAuthorizationProvider` run in-process, or is it
+  (per the user's own framing) "a separate app" — a dedicated
+  deployable, echoing the same same open question ASR-003 has about
+  whether the MCP server is its own Railway service. Worth deciding
+  both together rather than piecemeal, since together they determine
+  how many separate deployables this system ends up with.
 - Self-contained JWT (roles embedded in the token's claims, no lookup
   needed per request) vs. a centralized authorization/policy service
   the token is checked against (easier revocation and central control,
@@ -93,7 +115,9 @@ ASR-004) depends on this being right.
   Railway environment variable, the same pattern already used for
   `ANTHROPIC_API_KEY` / `DATABASE_URL`. Confirm this is what's meant,
   versus wanting an actual dedicated secrets-management service (new
-  infrastructure, likely more than this stage needs).
+  infrastructure, likely more than this stage needs). Separately, the
+  token vault mentioned above (for post-auth tokens, not the signing
+  secret) is a distinct thing and also undecided.
 - JWT expiry/refresh strategy, and whether revocation-before-expiry
   matters (plain JWTs can't be revoked early without a blocklist).
 - Exact roles/claims model — what roles exist (owner, subscriber,
