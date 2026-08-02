@@ -196,9 +196,15 @@ and any other user's blogs they subscribe to.
 list exists to support it.
 
 **Architectural impact:**
-- Needs a `subscriptions` relational table (`user_id`,
-  `subscribed_to_user_id`) — same reasoning as ASR-002: relationship
-  data that's checked on every cross-user query, not triple data.
+- Subscriptions (`user A subscribes to user B`) are the same
+  membership-relationship shape as the roles/groups data ADR-0005
+  moved to triples — and the same shape as the multi-blog-membership
+  pain that motivated that decision in the first place. Represent as
+  triples (e.g. `(user_A, "subscribes_to", user_B)`) via
+  `IUserProvider`, not a separate relational cross-reference table.
+  (This corrects an earlier draft of this ASR that still called for a
+  relational `subscriptions` table — written before ADR-0005 reversed
+  that reasoning, and not updated to match at the time.)
 - Cross-user querying is the sharpest edge of ASR-002's authorization
   model — a query must never leak a non-subscribed user's private
   content. This is exactly what ASR-003's `search_*` MCP tools need to
@@ -242,3 +248,44 @@ candidate for its own ADR once a rule is chosen.
   shaping), Opus/Claude proper for actual content generation and
   reasoning — revisit once real usage patterns exist rather than
   guessing at a policy now.
+
+---
+
+## ASR-006: Plugin/extensibility framework (MEF-style)
+
+**Statement:** A plugin framework so the platform is extensible the
+way .NET's Managed Extensibility Framework (MEF) is — new
+implementations can be added without modifying the composition root's
+code, ideally by dropping in a new module that self-registers rather
+than hand-editing a registry.
+
+**Rationale:** Called out as necessary alongside the other four pieces
+for the same reason they all matter — as AI capabilities and
+integrations change, the platform should absorb that by adding
+implementations, not by refactoring. Not yet flushed out; captured
+here so it isn't lost between sessions, same as everything else in
+this document started out.
+
+**Architectural impact:** This is a natural next step from a pattern
+that already exists, not a new one — `LLM_PROVIDER_FACTORIES` /
+`DB_PROVIDER_FACTORIES` in `config/container.py` (ADR-0002/0003) are
+already registries; a MEF-style plugin system essentially formalizes
+*auto-discovery* into those registries instead of hand-declaring every
+entry. The closest standard-library-adjacent Python analog to MEF's
+catalog-and-contract model is `importlib.metadata` entry points
+(`pyproject.toml` `[project.entry-points]`) — the same mechanism
+pytest, Flask, and most Python plugin ecosystems use for third-party
+extension discovery. A simpler convention-based alternative (scan a
+`plugins/` package for modules implementing a marker interface) is
+also worth weighing against it. Neither is chosen yet.
+
+**Open questions:**
+- `importlib.metadata` entry points vs. convention-based directory
+  scanning vs. something else — not evaluated yet.
+- Whether this applies to all four `I*Provider` families uniformly, or
+  is introduced incrementally starting with whichever one needs it
+  first in practice.
+- How this interacts with the composition root's current registry
+  pattern — full replacement, or plugins feed into the same
+  `LLM_PROVIDER_FACTORIES`-style dicts at startup rather than
+  replacing them.
