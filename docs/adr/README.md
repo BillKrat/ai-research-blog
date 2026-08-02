@@ -1,0 +1,22 @@
+# Architecture Decision Log
+
+Records of significant architectural decisions for this project, in
+the lightweight Nygard ADR format (Context / Decision / Consequences).
+[`AGENTS.md`](../../AGENTS.md) is the quick-reference surface for
+setup, configuration, and current capabilities; this is where the
+reasoning behind it lives.
+
+| # | Title | Status |
+|---|---|---|
+| [0001](0001-branch-then-merge-workflow.md) | Branch-then-merge workflow | Accepted |
+| [0002](0002-mvp-di-provider-architecture.md) | MVP + DI + provider-registry architecture | Accepted |
+| [0003](0003-provider-interface-split.md) | Split IProvider into IProvider / IDbProvider / IToolProvider | Accepted |
+| [0004](0004-triple-store-for-user-forms.md) | Postgres-backed triple store for user-defined forms | Proposed |
+
+## Adding a new ADR
+
+Copy the shape of an existing one: **Context** (what prompted this),
+**Decision** (what we're doing), **Consequences** (what this costs or
+unlocks). Number sequentially. Never renumber or delete a past one —
+if a decision is later reversed, mark it Superseded and link to the
+ADR that replaces it, rather than editing history away.

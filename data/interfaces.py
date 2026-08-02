@@ -14,7 +14,7 @@ They aren't - so this file has three, kept separate on purpose:
                   (agentic tool/function calling). Forward-looking:
                   no concrete implementation exists yet, and none
                   should be added until there's a real tool to
-                  register - see AGENTS.md.
+                  register - see docs/adr/0003-provider-interface-split.md.
 
 All three raise data.exceptions.ProviderError on failure rather than
 letting a lower-level exception escape unchanged, or swallowing it and
@@ -39,9 +39,10 @@ class IDbProvider(ABC):
     Deliberately minimal: only get_message() exists because that's the
     only thing this app currently reads from storage. Expand this
     interface when there's a second real read/write need, not before -
-    see FormDataRepository in AGENTS.md's Vision section for where the
-    triple-store work is expected to build a richer, domain-specific
-    repository on top of an implementation of this interface.
+    see FormDataRepository in docs/adr/0004-triple-store-for-user-forms.md
+    for where the triple-store work is expected to build a richer,
+    domain-specific repository on top of an implementation of this
+    interface.
     """
 
     @abstractmethod
@@ -57,8 +58,9 @@ class IToolProvider(ABC):
     codebase: interfaces exist because something swaps, but the shape
     itself is cheap to write down before the first implementation
     exists. When a first real tool shows up, a dict/registry-driven
-    implementation (mirroring config/container.py's PROVIDER_FACTORIES
-    pattern) is the recommended starting point - not a framework.
+    implementation (mirroring config/container.py's
+    LLM_PROVIDER_FACTORIES / DB_PROVIDER_FACTORIES pattern) is the
+    recommended starting point - not a framework.
     """
 
     @abstractmethod
