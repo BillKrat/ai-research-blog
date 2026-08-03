@@ -31,10 +31,16 @@ Rationale: [docs/adr/0001](docs/adr/0001-branch-then-merge-workflow.md).
 
 ## Capabilities — current architecture
 
+The pattern is **MVPVM** (Model-View-Presenter-ViewModel), adapted for
+Streamlit's rerun model — not generic "MVP." See
+[docs/adr/0002](docs/adr/0002-mvp-di-provider-architecture.md) for the
+precise mapping and source citation.
+
 - **View** — `app.py` (Streamlit entrypoint, the only module that
   imports `streamlit`). `IView` (`business/interfaces.py`) is the
   contract; `StreamlitView` (`views/streamlit_view.py`) is the only
-  place that knows the `st.session_state` key names.
+  place that knows the `st.session_state` key names. Interim by
+  design — [docs/adr/0006](docs/adr/0006-streamlit-interim-view.md).
 - **Presenter** — `business/`:
   - `HelloPresenter` / `CustomPresenter` — `IProvider`-backed.
   - `DbHelloPresenter` — `IDbProvider`-backed, a separate class on
@@ -45,6 +51,11 @@ Rationale: [docs/adr/0001](docs/adr/0001-branch-then-merge-workflow.md).
   - `IToolProvider` — tool discovery/execution for a reasoning engine.
     Defined, not yet implemented anywhere.
   - All raise `data.exceptions.ProviderError` on failure.
+  - Persistence-facing domain logic (e.g. the not-yet-built
+    `FormDataRepository`) sits on top of `IDbProvider` as a
+    **Repository** — [docs/adr/0007](docs/adr/0007-repository-pattern-for-domain-layer.md).
+    `IProvider`/`IToolProvider` are deliberately not repositories —
+    neither is a persisted collection of domain objects.
 - **Composition root** — `config/container.py`: `LLM_PROVIDER_FACTORIES`
   and `DB_PROVIDER_FACTORIES` registries; `resolve_presenter()`
   dispatches to the matching presenter type.
@@ -53,7 +64,8 @@ Rationale: [docs/adr/0001](docs/adr/0001-branch-then-merge-workflow.md).
 
 Design rationale: [docs/adr/0002](docs/adr/0002-mvp-di-provider-architecture.md)
 (overall architecture), [docs/adr/0003](docs/adr/0003-provider-interface-split.md)
-(why three data-layer interfaces).
+(why three data-layer interfaces), [docs/adr/0007](docs/adr/0007-repository-pattern-for-domain-layer.md)
+(Repository pattern for persistence-facing logic).
 
 **Not yet built:** a Postgres-backed triple store for user-defined
 forms — see [docs/adr/0004](docs/adr/0004-triple-store-for-user-forms.md)

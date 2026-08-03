@@ -1,7 +1,8 @@
-# 0002. MVP + DI + provider-registry architecture
+# 0002. MVPVM + DI + provider-registry architecture
 
 Status: Accepted
 Date: 2026-08-01
+Amended: 2026-08-03 (pattern name corrected from generic "MVP" to MVPVM — see bottom)
 
 ## Context
 
@@ -21,7 +22,10 @@ holds a persistent reference to a View object and calls methods on it
 
 ## Decision
 
-Adopt an MVP-flavored structure adapted to that constraint:
+Adopt an MVPVM-flavored structure adapted to that constraint (see the
+naming note at the bottom — this wasn't identified as MVPVM until
+2026-08-03, but the shape below is unchanged since it was first
+written):
 
 - **View** — `app.py` (Streamlit entrypoint) + `IView` /
   `StreamlitView` (`views/`). `StreamlitView` is the only code that
@@ -70,3 +74,49 @@ assertion would skip, not fail).
   must be called explicitly once, from `app.py` for the running app
   and `tests/conftest.py` for the test session — it has no
   import-time side effects, unlike the version this replaced.
+
+## Naming note (added 2026-08-03)
+
+This is the **MVPVM** pattern — Model-View-Presenter-ViewModel — as
+defined by Bill Kratochvil, ["MVPVM Design Pattern: The Model-View-Presenter-ViewModel
+Design Pattern for WPF,"](https://learn.microsoft.com/en-us/archive/msdn-magazine/2011/december/mvpvm-design-pattern-the-model-view-presenter-viewmodel-design-pattern-for-wpf)
+*MSDN Magazine*, December 2011. Originally described here only as
+"MVP-flavored"; the precise name was identified after the fact, but
+the architecture itself is unchanged — this is a naming correction,
+not a new decision. Mapping this codebase onto the article's own
+terms:
+
+| MVPVM (Kratochvil, 2011) | This codebase |
+|---|---|
+| View | `app.py` + `StreamlitView` |
+| Presenter | `HelloPresenter` / `CustomPresenter` / `DbHelloPresenter` |
+| BLL interfaces | `IProvider`, `IDbProvider` |
+| Module / bootstrapper | `config/container.py` (the registries) |
+| Configuration | `AppSettings` (env-driven `PROVIDER_NAME`) |
+| DAL | `ClaudeProvider` / `PostgresProvider`'s actual external calls |
+| Model | Postgres triple store (ADR-0004) |
+
+Per the article: *"The Presenter will have dependencies on the
+interfaces for the BLLs from which it needs to retrieve domain
+objects (data)... It will use the resolved instances as configured in
+the module or bootstrapper."* That's exactly `HelloPresenter`
+depending on `IProvider`/`IDbProvider` for its constructor type, with
+`config/container.py` deciding which concrete class satisfies it — the
+Presenter knowing the *interface* is correct and prescribed; only
+knowledge of the *concrete implementation* is confined to the
+composition root.
+
+Two honest gaps versus the full pattern, not mistakes:
+
+- **No distinct ViewModel.** `StreamlitView` holds `result`/`error`
+  directly rather than a separate ViewModel object the Presenter
+  populates. Reasonable given Streamlit reruns the whole script on
+  every interaction — there's no persistent object graph for
+  `NotifyPropertyChanged`-style binding to matter the way it does in
+  WPF. Worth revisiting once a React-based frontend (Next.js) is in
+  play, since React's state model is much closer to what ViewModel was
+  built to serve.
+- **No distinct BLL/DAL split.** `IProvider`/`IDbProvider` currently do
+  both jobs — the interface and the actual external call live in one
+  class. See ADR-0007 (Repository pattern) for how this resolves as
+  the triple-store work (ADR-0004) is built.
