@@ -1,24 +1,24 @@
-import os
+"""Streamlit entrypoint - the only module that talks to Streamlit directly."""
 
 import streamlit as st
-from anthropic import Anthropic
-from dotenv import load_dotenv
 
-load_dotenv()
+from config.app_settings import AppSettings
+from config.container import resolve_presenter
+from config.environment import load_environment
+from views.streamlit_view import StreamlitView
 
-st.title("AI Research Blog")
-st.write("Minimal pipeline check: Streamlit → Claude API → response.")
+load_environment()
 
-if st.button("Say Hello"):
-    client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    response = client.messages.create(
-        model="claude-opus-5",
-        max_tokens=16,
-        messages=[
-            {
-                "role": "user",
-                "content": "Respond with exactly the text: Hello World",
-            }
-        ],
-    )
-    st.write(response.content[0].text)
+settings = AppSettings()
+view = StreamlitView(st.session_state)
+presenter = resolve_presenter(settings, view)
+
+st.title("BlogResearch — MVP + DI + Provider Model")
+
+if st.button("Ask"):
+    presenter.on_button_click()
+
+if view.error:
+    st.error(view.error)
+else:
+    st.write("Result:", view.result)

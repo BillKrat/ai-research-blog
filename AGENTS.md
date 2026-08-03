@@ -1,83 +1,127 @@
 # AGENTS.md
 
-Context for AI agents picking up work on this repo. This is a learning
-project — keep solutions simple and readable, not over-engineered.
+Context for AI agents and developers working in this repository. This
+is a learning project — keep changes simple, readable, and easy to
+verify. Don't introduce a framework or abstraction the current task
+doesn't need.
+
+This file covers setup, configuration, and what the app can currently
+do. Rationale and history for *why* it's built this way lives in
+[docs/adr/](docs/adr/) — check there before making a change that
+seems to contradict something here. Where the product is headed —
+requirements not yet built, several with real open decisions — is
+tracked in [docs/ASR.md](docs/ASR.md).
+
+> ⚠️ Don't replace this file wholesale when editing it — extend it.
+> (It's happened before, silently, during a Copilot session.)
 
 ## Project
 
 - Repo: `BillKrat/ai-research-blog`
-- Stack: Python, Streamlit (UI), Anthropic Claude API (backend logic),
-  PostgreSQL (not yet wired up)
+- Stack: Python, Streamlit (UI), pytest, Anthropic Claude API,
+  PostgreSQL
 - Deploy: Railway, auto-deploys from `main` on push
 - Live: https://blogresearch.net
 
-## What exists (as of this session)
+## Workflow
 
-- `app.py` — minimal end-to-end proof: a "Say Hello" button that calls
-  Claude (`claude-opus-5`) and displays the response. Confirms the full
-  pipeline (Streamlit → Claude API → Railway → custom domain) works.
-- `requirements.txt` — `streamlit`, `anthropic`, `python-dotenv`, pinned
-  to exact versions.
-- `.env` (gitignored, local only) — holds the real `ANTHROPIC_API_KEY`.
-  `.env.example` is the committed placeholder template — **never put a
-  real secret in `.env.example`, only in `.env`.**
-- `Procfile` — `web: streamlit run app.py --server.port $PORT --server.address 0.0.0.0`,
-  Railway's standard way to run a Streamlit web service.
-- `.vscode/launch.json` — debug config named "Streamlit: app.py" that
-  launches via `python -m streamlit run app.py` so F5 debugging works
-  correctly (a plain "Run Python File" won't work for Streamlit apps,
-  and debugging whatever file happens to be the active editor tab is a
-  common trap — make sure `app.py` or the right config is selected).
-- Railway: `ANTHROPIC_API_KEY` is set in the Variables tab; custom
-  domain `blogresearch.net` is attached and confirmed working (DNS
-  propagation took a little while after adding it — that's normal).
+Feature work happens on a branch; merge to `main` (then push) only
+once it's working end to end — every push to `main` deploys live.
+Rationale: [docs/adr/0001](docs/adr/0001-branch-then-merge-workflow.md).
 
-## How the pieces fit together
+## Capabilities — current architecture
 
-- Streamlit is both "backend" and provides the "frontend," but as two
-  separate things: `app.py` is a Python server process (started by
-  `streamlit run`) — this is where `ANTHROPIC_API_KEY` is read and
-  where the Claude API call happens, entirely server-side. The
-  frontend is a pre-built JS/React app bundled inside the `streamlit`
-  package itself (not something we write) that the browser loads; it
-  talks back to the Python process over a WebSocket. The API key is
-  never sent to or visible in the browser.
-- `st.*` functions (buttons, inputs, layout, etc.) are the
-  client-interaction API — each one maps to a frontend component
-  Streamlit renders and wires up for you. For raw HTML/JS embedding,
-  `st.markdown(..., unsafe_allow_html=True)` or
-  `st.components.v1.html(...)` are the escape hatches.
+- **View** — `app.py` (Streamlit entrypoint, the only module that
+  imports `streamlit`). `IView` (`business/interfaces.py`) is the
+  contract; `StreamlitView` (`views/streamlit_view.py`) is the only
+  place that knows the `st.session_state` key names.
+- **Presenter** — `business/`:
+  - `HelloPresenter` / `CustomPresenter` — `IProvider`-backed.
+  - `DbHelloPresenter` — `IDbProvider`-backed, a separate class on
+    purpose.
+- **Data layer** — `data/interfaces.py` defines three interfaces:
+  - `IProvider` — LLM backends: `ClaudeProvider`, `DCIProvider`.
+  - `IDbProvider` — storage backends: `PostgresProvider`.
+  - `IToolProvider` — tool discovery/execution for a reasoning engine.
+    Defined, not yet implemented anywhere.
+  - All raise `data.exceptions.ProviderError` on failure.
+- **Composition root** — `config/container.py`: `LLM_PROVIDER_FACTORIES`
+  and `DB_PROVIDER_FACTORIES` registries; `resolve_presenter()`
+  dispatches to the matching presenter type.
+- **Settings** — `config/app_settings.py::AppSettings`, env-driven
+  (`PROVIDER_NAME`, `USE_CUSTOM_PRESENTER`).
 
-## Local dev
+Design rationale: [docs/adr/0002](docs/adr/0002-mvp-di-provider-architecture.md)
+(overall architecture), [docs/adr/0003](docs/adr/0003-provider-interface-split.md)
+(why three data-layer interfaces).
+
+**Not yet built:** a Postgres-backed triple store for user-defined
+forms — see [docs/adr/0004](docs/adr/0004-triple-store-for-user-forms.md)
+(proposed, not implemented).
+
+## Environment and secrets
+
+- Local dev uses `.env` (gitignored); `.env.example` is the committed
+  placeholder template — **never put a real secret in
+  `.env.example`, only in `.env`.**
+- `ANTHROPIC_API_KEY` (or `CLAUDE_API_KEY`) — Claude provider.
+- `DATABASE_URL` — Postgres provider.
+- `PROVIDER_NAME` — `claude` (default) / `dci` / `postgres`.
+- `USE_CUSTOM_PRESENTER` — `true` to use `CustomPresenter`; defaults
+  to `false`. Only affects the LLM path.
+- Production: same variables set in Railway's Variables tab, never
+  committed.
+
+## Local development
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate       # VS Code's integrated terminal does this automatically
                                 # once "Python: Select Interpreter" points at ./venv/bin/python
 pip install -r requirements.txt
-streamlit run app.py           # python-dotenv's load_dotenv() picks up .env automatically
+streamlit run app.py
 ```
 
 Debugging: use the "Streamlit: app.py" config in VS Code's Run and
-Debug panel (not plain F5 on whatever file is open).
+Debug panel (`.vscode/launch.json`) — not plain F5 on whatever file
+happens to be open, which will try to execute the wrong file.
 
-## Next session: PostgreSQL
+## Testing
 
-Goal: stand up a PostgreSQL instance and retrieve/surface data from it
-in the Streamlit app. Not yet started — no schema, no connection code,
-no ORM choice made yet. Likely shape, to confirm with the user before
-building:
+```bash
+pytest
+```
 
-- Where the Postgres instance lives (Railway's own Postgres plugin is
-  the natural fit given we're already deployed there — provides a
-  `DATABASE_URL` env var automatically, same pattern as
-  `ANTHROPIC_API_KEY`).
-- Whether to use a lightweight approach (`psycopg`/`psycopg2` raw
-  queries) or an ORM (e.g. SQLAlchemy) — lean toward the simpler
-  option given this is a learning project, unless the user wants ORM
-  experience specifically.
-- What data the blog actually needs to store/retrieve (schema is
-  undefined — ask before designing tables).
-- Same secret-handling pattern as `ANTHROPIC_API_KEY`: connection
-  string goes in `.env` locally / Railway Variables in production,
-  never hardcoded, never placed in `.env.example`.
+- `tests/test_container.py` — DI resolution through both provider
+  registries, presenter dispatch, Postgres connection-string
+  resolution, and a Postgres integration test (skip-safe when
+  `DATABASE_URL` is unset or unreachable).
+- `tests/test_presenter.py` — all three presenters, success and
+  `ProviderError` paths.
+- `tests/test_claude_provider.py` — a real Anthropic SDK error wrapped
+  as `ProviderError`.
+- `tests/test_environment.py` — `.env` loading behavior.
+
+## What to avoid
+
+- Don't introduce a DI framework, ORM, or other heavy dependency
+  unless the task clearly needs it — extend the existing registry/ABC
+  patterns instead.
+- Don't let application code become aware of the test framework —
+  tests inject what they need explicitly.
+- Don't add an interface/ABC for something with only one real
+  implementation and no near-term second one.
+- Don't put two genuinely different responsibilities behind one
+  interface just because they're currently shaped the same. If a new
+  capability doesn't obviously fit `IProvider`, `IDbProvider`, or
+  `IToolProvider`, add a fourth interface rather than force it in.
+- Don't reintroduce import-time side effects (env loading, DB
+  connections, etc.) in modules other than the explicit entrypoints
+  (`app.py`, `tests/conftest.py`).
+- Don't hardcode credentials or connection strings.
+- Don't replace this file wholesale — extend it.
+
+## Decision log
+
+Full context, rationale, and history for the decisions above:
+[docs/adr/](docs/adr/)
