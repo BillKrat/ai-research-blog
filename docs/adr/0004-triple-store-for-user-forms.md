@@ -81,3 +81,11 @@ in Utility Engineering) and strong opinions earned from it:
   fixture-table read until this is picked up.
 - Every subsequent Postgres/forms-related decision should be checked
   against this ADR before diverging from it.
+
+**Update (2026-08-04):** A generic `TripleRepository` — CRUDL over
+raw `(subject, predicate, object_value)` rows, not yet form-shaped —
+is now built; see
+[docs/adr/0008](0008-triple-repository-first-implementation.md) for
+its scope and the schema/signature decisions it makes. `FormDataRepository`
+itself (form-specific DTOs, schema representation, the first concrete
+form) is still not built and still has the open questions below.

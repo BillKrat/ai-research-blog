@@ -32,6 +32,13 @@ Design rationale and decision history live in
   `resolve_presenter()` returns the matching presenter type.
   [blogresearch/config/app_settings.py](blogresearch/config/app_settings.py) holds the env-driven
   `AppSettings` (`PROVIDER_NAME`, `USE_CUSTOM_PRESENTER`).
+- **Repository** — [blogresearch/repositories/](blogresearch/repositories/):
+  `TripleRepository` — CRUDL over `(subject, predicate, object_value)`
+  triples, one `(subject, predicate)` slot at a time.
+  [PostgresTripleRepository](blogresearch/repositories/postgres_triple_repository.py)
+  is the concrete implementation. Not yet wired into the composition
+  root — no UI feature consumes it yet; see
+  [docs/adr/0008](docs/adr/0008-triple-repository-first-implementation.md).
 
 ### What the app does today
 
@@ -109,6 +116,10 @@ pytest
   a real Anthropic SDK error wrapped as `ProviderError`.
 - [tests/test_environment.py](tests/test_environment.py) — `.env`
   loading behavior.
+- [tests/test_triple_repository.py](tests/test_triple_repository.py) —
+  `TripleRepository` CRUDL logic against a fake connection, plus
+  integration tests against the real `triple_store` table (skip
+  gracefully when unreachable, same as the Postgres test above).
 
 ## Project structure
 
@@ -134,6 +145,9 @@ blogresearch/
     environment.py         # .env loading (no import-time side effects)
     app_settings.py        # AppSettings — env-driven provider/presenter choice
     registrations.py       # app composition root: per-family registries + resolve_*()
+  repositories/
+    interfaces.py           # Triple, TripleRepository
+    postgres_triple_repository.py  # TripleRepository backed by triple_store
 shared/
   container.py             # reusable DI container primitives
 tests/

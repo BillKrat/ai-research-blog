@@ -15,6 +15,7 @@ reasoning behind it lives.
 | [0005](0005-identity-data-in-triple-store.md) | Identity, role, group, and feature data lives in the triple store | Accepted |
 | [0006](0006-streamlit-interim-view.md) | Streamlit remains an interim, dev-only View | Accepted |
 | [0007](0007-repository-pattern-for-domain-layer.md) | Adopt the Repository pattern for the persistence-facing domain layer | Accepted |
+| [0008](0008-triple-repository-first-implementation.md) | TripleRepository: first Repository implementation, CRUDL over triple_store | Accepted |
 
 ## Adding a new ADR
 
