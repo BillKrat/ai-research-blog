@@ -15,12 +15,13 @@ from typing import Callable
 from business.custom_presenter import CustomPresenter
 from business.db_hello_presenter import DbHelloPresenter
 from business.hello_presenter import HelloPresenter
-from business.interfaces import IPresenter, IView
+from business.interfaces import IPresenter, IView, IViewModel
 from config.app_settings import AppSettings
 from data.claude_provider import ClaudeProvider
 from data.dci_provider import DCIProvider
 from data.interfaces import IDbProvider, IProvider
 from data.postgres_provider import PostgresProvider
+from view_models.session_state_view_model import SessionStateViewModel
 
 
 def _get_anthropic_api_key() -> str | None:
@@ -76,17 +77,40 @@ def resolve_db_provider(settings: AppSettings) -> IDbProvider:
     return factory()
 
 
-def resolve_presenter(settings: AppSettings, view: IView) -> IPresenter:
+def resolve_viewmodel(presenter: IPresenter) -> IViewModel:
+    """Resolve the ViewModel for the given presenter.
+
+    Every presenter today gets a SessionStateViewModel; the indirection
+    means a future presenter needing a different ViewModel shape is a
+    change here, not in every presenter's __init__.
+
+    Not called by presenters directly - passed to each one as the
+    resolve_viewmodel constructor argument (see resolve_presenter()
+    below and ViewModelResolver in business/interfaces.py). That way
+    presenters depend on the ViewModelResolver callable type, never on
+    this module, so business/ -> di/ never has to happen.
+    """
+    return SessionStateViewModel(presenter.view.session_state)
+
+
+def resolve_presenter(view: IView, settings: AppSettings | None = None) -> IPresenter:
+    """Resolve the presenter for the given view.
+
+    settings defaults to AppSettings() (environment-driven) when not
+    given - same pattern as PostgresProvider's conn_string parameter.
+    Pass settings explicitly in tests to avoid monkeypatching env vars.
+    """
+    settings = settings if settings is not None else AppSettings()
     name = settings.provider_name.strip().lower()
 
     if name in DB_PROVIDER_FACTORIES:
-        return DbHelloPresenter(view, resolve_db_provider(settings))
+        return DbHelloPresenter(view, resolve_db_provider(settings), resolve_viewmodel)
 
     if name in LLM_PROVIDER_FACTORIES:
         provider = resolve_llm_provider(settings)
         if settings.use_custom_presenter:
-            return CustomPresenter(view, provider)
-        return HelloPresenter(view, provider)
+            return CustomPresenter(view, provider, resolve_viewmodel)
+        return HelloPresenter(view, provider, resolve_viewmodel)
 
     known = sorted(set(LLM_PROVIDER_FACTORIES) | set(DB_PROVIDER_FACTORIES))
     raise ValueError(

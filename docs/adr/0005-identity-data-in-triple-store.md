@@ -78,6 +78,18 @@ two different performance concerns, and the wrong one was cited.
   but this is not decided.
 - `IUserProvider`'s exact method signatures — same "expand when there's
   a second real need" discipline `IDbProvider` was built with.
+- **Configuration abstraction (raised 2026-08-03, not yet warranted):**
+  whether `AppSettings` should grow an `IConfiguration`-style
+  abstraction (the .NET pattern for unifying multiple config sources
+  behind one interface). Same litmus test as every other interface in
+  this codebase — needs ≥2 real sources to abstract over, and today
+  there's exactly one (`.env`/environment variables). The real trigger
+  is *this* ADR's token-vault work: env vars for local dev plus a real
+  secrets vault for production would be two genuine sources. When that
+  happens, prefer `pydantic-settings` (or `dynaconf`, if the vault
+  source is the dominant driver) over hand-rolling an
+  `IConfiguration`-shaped interface — the established Python
+  equivalent, not a literal port of the C# shape.
 - **Token handling, not yet designed:** after authentication, the
   token itself should not be passed between internal processes — it
   gets stored in a vault, and only the bare user id is passed around.

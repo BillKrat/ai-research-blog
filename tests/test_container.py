@@ -8,18 +8,32 @@ from business.custom_presenter import CustomPresenter
 from business.db_hello_presenter import DbHelloPresenter
 from business.hello_presenter import HelloPresenter
 from config.app_settings import AppSettings
-from config.container import resolve_db_provider, resolve_llm_provider, resolve_presenter
+from di.container import resolve_db_provider, resolve_llm_provider, resolve_presenter
 from data.claude_provider import ClaudeProvider
 from data.dci_provider import DCIProvider
 from data.postgres_provider import PostgresProvider
 
 
 class _FakeView:
-    def show_result(self, text):
-        pass
+    class _FakeViewModel:
+        result = ""
+        error = ""
 
-    def show_error(self, text):
-        pass
+    def __init__(self):
+        self._view_model = self._FakeViewModel()
+        self._session_state = {}
+
+    @property
+    def session_state(self):
+        return self._session_state
+
+    @property
+    def view_model(self):
+        return self._view_model
+
+    @view_model.setter
+    def view_model(self, value):
+        self._view_model = value
 
 
 def test_container_resolves_claude():
@@ -53,20 +67,32 @@ def test_container_rejects_unknown_db_provider():
 
 
 def test_resolve_presenter_uses_hello_presenter_for_claude():
-    presenter = resolve_presenter(AppSettings(provider_name="claude"), _FakeView())
+    settings = AppSettings(provider_name="claude", use_custom_presenter=False)
+    presenter = resolve_presenter(_FakeView(), settings)
     assert isinstance(presenter, HelloPresenter)
     assert not isinstance(presenter, CustomPresenter)
 
 
 def test_resolve_presenter_uses_custom_presenter_when_requested():
     settings = AppSettings(provider_name="claude", use_custom_presenter=True)
-    presenter = resolve_presenter(settings, _FakeView())
+    presenter = resolve_presenter(_FakeView(), settings)
     assert isinstance(presenter, CustomPresenter)
 
 
 def test_resolve_presenter_uses_db_hello_presenter_for_postgres():
-    presenter = resolve_presenter(AppSettings(provider_name="postgres"), _FakeView())
+    settings = AppSettings(provider_name="postgres", use_custom_presenter=False)
+    presenter = resolve_presenter(_FakeView(), settings)
     assert isinstance(presenter, DbHelloPresenter)
+
+
+def test_resolve_presenter_defaults_settings_from_environment(monkeypatch):
+    # No settings passed - resolve_presenter() should fall back to
+    # AppSettings() reading the environment, same pattern as
+    # PostgresProvider's conn_string parameter.
+    monkeypatch.setenv("PROVIDER_NAME", "dci")
+    monkeypatch.setenv("USE_CUSTOM_PRESENTER", "false")
+    presenter = resolve_presenter(_FakeView())
+    assert isinstance(presenter, HelloPresenter)
 
 
 def test_postgres_provider_uses_environment_connection_string(monkeypatch):

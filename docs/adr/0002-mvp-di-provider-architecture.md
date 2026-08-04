@@ -106,16 +106,19 @@ Presenter knowing the *interface* is correct and prescribed; only
 knowledge of the *concrete implementation* is confined to the
 composition root.
 
-Two honest gaps versus the full pattern, not mistakes:
+One gap closed, one still open:
 
-- **No distinct ViewModel.** `StreamlitView` holds `result`/`error`
-  directly rather than a separate ViewModel object the Presenter
-  populates. Reasonable given Streamlit reruns the whole script on
-  every interaction — there's no persistent object graph for
-  `NotifyPropertyChanged`-style binding to matter the way it does in
-  WPF. Worth revisiting once a React-based frontend (Next.js) is in
-  play, since React's state model is much closer to what ViewModel was
-  built to serve.
+- **~~No distinct ViewModel~~ — closed 2026-08-03.** `IViewModel`
+  (`business/interfaces.py`) is now a real interface — `result`/`error`
+  as properties with setters — implemented by `SessionStateViewModel`
+  (`views/streamlit_view.py`), backed by `st.session_state`. `IView`
+  exposes only a `view_model` property; presenters write through
+  `view.view_model.result = ...` and never touch `st.session_state`
+  directly. (Property is `view_model`, snake_case, not the article's
+  `ViewModel` PascalCase — Python convention, not a literal port of
+  the C#/WPF property naming.) This was closed as a natural
+  consequence of implementing the pattern precisely, not a separate
+  planned effort.
 - **No distinct BLL/DAL split.** `IProvider`/`IDbProvider` currently do
   both jobs — the interface and the actual external call live in one
   class. See ADR-0007 (Repository pattern) for how this resolves as

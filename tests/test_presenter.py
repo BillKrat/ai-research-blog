@@ -29,46 +29,88 @@ class FakeDbProvider:
         return self._message
 
 
+class FakeViewModel:
+    def __init__(self):
+        self.result = ""
+        self.error = ""
+
+
+def _resolve_viewmodel(presenter):
+    """Stand-in for di.container.resolve_viewmodel in presenter-only tests.
+
+    Presenters take a ViewModelResolver via their constructor rather than
+    importing di.container, so these tests hand in a plain fake instead
+    of pulling the real container/SessionStateViewModel into what should
+    be an isolated unit test.
+    """
+    return FakeViewModel()
+
+
 class FakeView:
     def __init__(self):
-        self.result = None
-        self.error = None
+        self._view_model = None
+        self._session_state = {}
 
-    def show_result(self, text):
-        self.result = text
+    @property
+    def session_state(self):
+        return self._session_state
 
-    def show_error(self, text):
-        self.error = text
+    @property
+    def view_model(self):
+        return self._view_model
+
+    @view_model.setter
+    def view_model(self, value):
+        self._view_model = value
+
+    @property
+    def result(self):
+        if self.view_model is None:
+            return ""
+        return self.view_model.result
+
+    @property
+    def error(self):
+        if self.view_model is None:
+            return ""
+        return self.view_model.error
 
 
 def test_hello_presenter_is_an_ipresenter():
-    presenter = HelloPresenter(FakeView(), FakeProvider())
+    presenter = HelloPresenter(FakeView(), FakeProvider(), _resolve_viewmodel)
     assert isinstance(presenter, IPresenter)
+
+
+def test_hello_presenter_assigns_view_model_to_view():
+    view = FakeView()
+    HelloPresenter(view, FakeProvider(), _resolve_viewmodel)
+
+    assert view.view_model is not None
 
 
 def test_hello_presenter_shows_provider_result():
     view = FakeView()
-    presenter = HelloPresenter(view, FakeProvider(message="Hello from FakeProvider"))
+    presenter = HelloPresenter(view, FakeProvider(message="Hello from FakeProvider"), _resolve_viewmodel)
 
     presenter.on_button_click()
 
     assert view.result == "Hello from FakeProvider"
-    assert view.error is None
+    assert view.error == ""
 
 
 def test_hello_presenter_shows_error_on_provider_failure():
     view = FakeView()
-    presenter = HelloPresenter(view, FakeProvider(error=ProviderError("boom")))
+    presenter = HelloPresenter(view, FakeProvider(error=ProviderError("boom")), _resolve_viewmodel)
 
     presenter.on_button_click()
 
     assert view.error == "boom"
-    assert view.result is None
+    assert view.result == ""
 
 
 def test_custom_presenter_formats_result():
     view = FakeView()
-    presenter = CustomPresenter(view, FakeProvider(message="hello"))
+    presenter = CustomPresenter(view, FakeProvider(message="hello"), _resolve_viewmodel)
 
     presenter.on_button_click()
 
@@ -77,34 +119,34 @@ def test_custom_presenter_formats_result():
 
 def test_custom_presenter_shows_error_on_provider_failure():
     view = FakeView()
-    presenter = CustomPresenter(view, FakeProvider(error=ProviderError("boom")))
+    presenter = CustomPresenter(view, FakeProvider(error=ProviderError("boom")), _resolve_viewmodel)
 
     presenter.on_button_click()
 
     assert view.error == "boom"
-    assert view.result is None
+    assert view.result == ""
 
 
 def test_db_hello_presenter_is_an_ipresenter():
-    presenter = DbHelloPresenter(FakeView(), FakeDbProvider())
+    presenter = DbHelloPresenter(FakeView(), FakeDbProvider(), _resolve_viewmodel)
     assert isinstance(presenter, IPresenter)
 
 
 def test_db_hello_presenter_shows_db_provider_result():
     view = FakeView()
-    presenter = DbHelloPresenter(view, FakeDbProvider(message="Hello from FakeDbProvider"))
+    presenter = DbHelloPresenter(view, FakeDbProvider(message="Hello from FakeDbProvider"), _resolve_viewmodel)
 
     presenter.on_button_click()
 
     assert view.result == "Hello from FakeDbProvider"
-    assert view.error is None
+    assert view.error == ""
 
 
 def test_db_hello_presenter_shows_error_on_provider_failure():
     view = FakeView()
-    presenter = DbHelloPresenter(view, FakeDbProvider(error=ProviderError("db boom")))
+    presenter = DbHelloPresenter(view, FakeDbProvider(error=ProviderError("db boom")), _resolve_viewmodel)
 
     presenter.on_button_click()
 
     assert view.error == "db boom"
-    assert view.result is None
+    assert view.result == ""

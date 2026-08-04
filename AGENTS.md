@@ -37,14 +37,34 @@ Streamlit's rerun model — not generic "MVP." See
 precise mapping and source citation.
 
 - **View** — `app.py` (Streamlit entrypoint, the only module that
-  imports `streamlit`). `IView` (`business/interfaces.py`) is the
-  contract; `StreamlitView` (`views/streamlit_view.py`) is the only
-  place that knows the `st.session_state` key names. Interim by
-  design — [docs/adr/0006](docs/adr/0006-streamlit-interim-view.md).
+  imports `streamlit`). `IView` (`business/interfaces.py`) exposes
+  `session_state` (the raw binding container) and a settable
+  `view_model` property; it has no `show_result()`/`show_error()`
+  methods. Interim by design —
+  [docs/adr/0006](docs/adr/0006-streamlit-interim-view.md).
+- **ViewModel** — `IViewModel` (`business/interfaces.py`) is the real
+  bindable state contract: `result`/`error` as properties with
+  setters. `SessionStateViewModel` (`view_models/`) backs it with
+  `st.session_state`. A Presenter takes a `ViewModelResolver`
+  (`business/interfaces.py` — `Callable[[IPresenter], IViewModel]`) as
+  a constructor argument and calls it with itself to get its
+  ViewModel, then assigns the result to `view.view_model` in its own
+  `__init__`; after that, presenters write through
+  `view.view_model.result = ...` / `.error = ...` and never touch
+  `st.session_state` directly again. (Property is `view_model`,
+  snake_case — not `ViewModel` — Python naming, not the C#/WPF
+  convention the concept comes from.)
 - **Presenter** — `business/`:
   - `HelloPresenter` / `CustomPresenter` — `IProvider`-backed.
   - `DbHelloPresenter` — `IDbProvider`-backed, a separate class on
     purpose.
+  - Neither imports `di.container` — each takes `resolve_viewmodel` as
+    a constructor argument instead (see ViewModel above). `di.container`
+    imports every presenter class already, so a presenter importing
+    `di.container` back would be circular; taking the resolver as a
+    parameter keeps the dependency one-directional (`di/` → `business/`
+    only) instead of just timing around the cycle with a deferred
+    import.
 - **Data layer** — `data/interfaces.py` defines three interfaces:
   - `IProvider` — LLM backends: `ClaudeProvider`, `DCIProvider`.
   - `IDbProvider` — storage backends: `PostgresProvider`.
@@ -56,9 +76,17 @@ precise mapping and source citation.
     **Repository** — [docs/adr/0007](docs/adr/0007-repository-pattern-for-domain-layer.md).
     `IProvider`/`IToolProvider` are deliberately not repositories —
     neither is a persisted collection of domain objects.
-- **Composition root** — `config/container.py`: `LLM_PROVIDER_FACTORIES`
-  and `DB_PROVIDER_FACTORIES` registries; `resolve_presenter()`
-  dispatches to the matching presenter type.
+- **Composition root** — `di/container.py`: `LLM_PROVIDER_FACTORIES`
+  and `DB_PROVIDER_FACTORIES` registries; `resolve_presenter(view,
+  settings=None)` dispatches to the matching presenter type. `settings`
+  defaults to `AppSettings()` (environment-driven) when omitted — same
+  optional-override pattern as `PostgresProvider.conn_string` — so
+  `app.py` stays a one-liner while tests can still inject explicit
+  settings directly instead of monkeypatching env vars.
+  `resolve_viewmodel(presenter)` resolves the `IViewModel` a presenter
+  gets; passed to `DbHelloPresenter`/`HelloPresenter`/`CustomPresenter`
+  as a constructor argument here in `resolve_presenter()`, then called
+  by each presenter with itself once it exists.
 - **Settings** — `config/app_settings.py::AppSettings`, env-driven
   (`PROVIDER_NAME`, `USE_CUSTOM_PRESENTER`).
 

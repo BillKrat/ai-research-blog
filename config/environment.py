@@ -1,10 +1,10 @@
 """Loads environment variables from a local .env file, if present.
 
-This has no import-time side effects - call load_environment()
-explicitly, once, at the start of the process (app.py for the running
-app, tests/conftest.py for the test suite). Everything downstream
-(container.py, the providers) just reads os.environ and assumes it's
-already been populated.
+This has no import-time side effects - call load() explicitly, once,
+at the start of the process (app.py for the running app,
+tests/conftest.py for the test suite). Everything downstream
+(di/container.py, the providers) just reads os.environ and assumes
+it's already been populated.
 """
 
 from pathlib import Path
@@ -14,7 +14,7 @@ from dotenv import find_dotenv, load_dotenv
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-def load_environment() -> None:
+def load() -> None:
     """Load .env into the process environment.
 
     Idempotent and safe to call more than once: python-dotenv does not

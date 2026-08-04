@@ -2,36 +2,26 @@
 
 from typing import MutableMapping
 
-from business.interfaces import IView
+from business.interfaces import IView, IViewModel
 
 
 class StreamlitView(IView):
-    """Adapts IView onto st.session_state.
-
-    This is the only place in the app that knows the session_state key
-    names - presenters never touch session_state directly, and a
-    different UI framework would only need a new class like this one.
-    """
-
-    _RESULT_KEY = "result"
-    _ERROR_KEY = "error"
+    """UI view that only exposes a ViewModel for binding."""
 
     def __init__(self, session_state: MutableMapping[str, str]) -> None:
+        self._view_model: IViewModel | None = None
         self._session_state = session_state
-        self._session_state.setdefault(self._RESULT_KEY, "")
-        self._session_state.setdefault(self._ERROR_KEY, "")
-
-    def show_result(self, text: str) -> None:
-        self._session_state[self._RESULT_KEY] = text
-        self._session_state[self._ERROR_KEY] = ""
-
-    def show_error(self, text: str) -> None:
-        self._session_state[self._ERROR_KEY] = text
 
     @property
-    def result(self) -> str:
-        return self._session_state[self._RESULT_KEY]
+    def session_state(self) -> MutableMapping[str, str]:
+        return self._session_state
 
     @property
-    def error(self) -> str:
-        return self._session_state[self._ERROR_KEY]
+    def view_model(self) -> IViewModel:
+        if self._view_model is None:
+            raise RuntimeError("View model has not been assigned yet")
+        return self._view_model
+
+    @view_model.setter
+    def view_model(self, value: IViewModel) -> None:
+        self._view_model = value

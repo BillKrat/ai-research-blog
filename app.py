@@ -2,23 +2,21 @@
 
 import streamlit as st
 
-from config.app_settings import AppSettings
-from config.container import resolve_presenter
-from config.environment import load_environment
+from di import container as di
+from config import environment as env
 from views.streamlit_view import StreamlitView
 
-load_environment()
+env.load()
 
-settings = AppSettings()
 view = StreamlitView(st.session_state)
-presenter = resolve_presenter(settings, view)
+presenter = di.resolve_presenter(view)
 
-st.title("BlogResearch — MVP + DI + Provider Model")
+st.title("BlogResearch — MVPVM + DI + Provider Model")
 
 if st.button("Ask"):
     presenter.on_button_click()
 
-if view.error:
-    st.error(view.error)
+if view.view_model.error:
+    st.error(view.view_model.error)
 else:
-    st.write("Result:", view.result)
+    st.write("Result:", view.view_model.result)

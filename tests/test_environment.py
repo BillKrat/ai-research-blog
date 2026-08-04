@@ -2,7 +2,7 @@
 
 import os
 
-from config.environment import load_environment
+from config import environment as env
 
 
 def test_load_environment_reads_dotenv(tmp_path, monkeypatch):
@@ -12,7 +12,7 @@ def test_load_environment_reads_dotenv(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("SOME_TEST_VAR", raising=False)
 
-    load_environment()
+    env.load()
 
     assert os.environ["SOME_TEST_VAR"] == "from-dotenv"
 
@@ -24,6 +24,6 @@ def test_load_environment_does_not_override_real_env_vars(tmp_path, monkeypatch)
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("SOME_TEST_VAR", "from-real-environment")
 
-    load_environment()
+    env.load()
 
     assert os.environ["SOME_TEST_VAR"] == "from-real-environment"

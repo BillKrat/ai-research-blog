@@ -1,1 +1,1 @@
-"""App configuration and the DI composition root."""
+"""App configuration: environment loading and settings."""
