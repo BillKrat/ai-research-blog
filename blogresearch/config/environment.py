@@ -3,8 +3,8 @@
 This has no import-time side effects - call load() explicitly, once,
 at the start of the process (app.py for the running app,
 tests/conftest.py for the test suite). Everything downstream
-(di/container.py, the providers) just reads os.environ and assumes
-it's already been populated.
+(blogresearch/config/registrations.py, the providers) just reads
+os.environ and assumes it's already been populated.
 """
 
 from pathlib import Path

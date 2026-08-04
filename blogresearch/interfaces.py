@@ -66,9 +66,11 @@ class IPresenter(ABC):
 
 
 # A presenter takes this in via its constructor and calls it with itself
-# to get its ViewModel, instead of importing di.container to ask for one
-# directly. di.container is the only thing that ever points at this type
+# to get its ViewModel, instead of importing
+# blogresearch.config.registrations to ask for one directly.
+# registrations.py is the only thing that ever points at this type
 # concretely (it passes its own resolve_viewmodel() as the argument); a
-# presenter never imports di.container, so the dependency between
-# business/ and di/ only runs one way (di/ -> business/) and can't cycle.
+# presenter never imports registrations.py, so the dependency between
+# blogresearch/presenters/ and blogresearch/config/ only runs one way
+# (config/ -> presenters/) and can't cycle.
 ViewModelResolver = Callable[[IPresenter], IViewModel]

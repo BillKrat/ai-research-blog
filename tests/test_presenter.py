@@ -1,4 +1,4 @@
-"""Tests for the presenter layer (business/)."""
+"""Tests for the presenter layer (blogresearch/presenters/)."""
 
 from blogresearch.presenters.custom_presenter import CustomPresenter
 from blogresearch.presenters.db_hello_presenter import DbHelloPresenter

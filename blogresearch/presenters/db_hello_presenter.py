@@ -4,7 +4,7 @@ Deliberately a separate class from HelloPresenter rather than a
 presenter that accepts "anything shaped like a no-arg method returning
 str" - IProvider and IDbProvider are different responsibilities, and
 collapsing that distinction back together at the presenter layer would
-undo the point of splitting them in data/interfaces.py.
+undo the point of splitting them in blogresearch/providers/interfaces.py.
 """
 
 from blogresearch.interfaces import IPresenter, IView, ViewModelResolver

@@ -109,7 +109,7 @@ def resolve_viewmodel(presenter: IPresenter) -> IViewModel:
 
     Not called by presenters directly - passed to each one as the
     resolve_viewmodel constructor argument (see resolve_presenter()
-    below and ViewModelResolver in business/interfaces.py). That way
+    below and ViewModelResolver in blogresearch/interfaces.py). That way
     presenters depend on the ViewModelResolver callable type, never on
     this module, so the app wiring stays at the edge.
     """

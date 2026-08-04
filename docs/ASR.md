@@ -268,11 +268,12 @@ this document started out.
 
 **Architectural impact:** This is a natural next step from a pattern
 that already exists, not a new one — `LLM_PROVIDER_FACTORIES` /
-`DB_PROVIDER_FACTORIES` in `config/container.py` (ADR-0002/0003) are
-already registries; a MEF-style plugin system essentially formalizes
-*auto-discovery* into those registries instead of hand-declaring every
-entry. The closest standard-library-adjacent Python analog to MEF's
-catalog-and-contract model is `importlib.metadata` entry points
+`DB_PROVIDER_FACTORIES` in `blogresearch/config/registrations.py`
+(ADR-0002/0003) are already registries; a MEF-style plugin system
+essentially formalizes *auto-discovery* into those registries instead
+of hand-declaring every entry. The closest standard-library-adjacent
+Python analog to MEF's catalog-and-contract model is
+`importlib.metadata` entry points
 (`pyproject.toml` `[project.entry-points]`) — the same mechanism
 pytest, Flask, and most Python plugin ecosystems use for third-party
 extension discovery. A simpler convention-based alternative (scan a
