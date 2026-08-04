@@ -1,10 +1,10 @@
 """Tests for the presenter layer (business/)."""
 
-from business.custom_presenter import CustomPresenter
-from business.db_hello_presenter import DbHelloPresenter
-from business.hello_presenter import HelloPresenter
-from business.interfaces import IPresenter
-from data.exceptions import ProviderError
+from blogresearch.presenters.custom_presenter import CustomPresenter
+from blogresearch.presenters.db_hello_presenter import DbHelloPresenter
+from blogresearch.presenters.hello_presenter import HelloPresenter
+from blogresearch.interfaces import IPresenter
+from blogresearch.providers.exceptions import ProviderError
 
 
 class FakeProvider:
@@ -36,10 +36,10 @@ class FakeViewModel:
 
 
 def _resolve_viewmodel(presenter):
-    """Stand-in for di.container.resolve_viewmodel in presenter-only tests.
+    """Stand-in for the app-level resolve_viewmodel in presenter-only tests.
 
     Presenters take a ViewModelResolver via their constructor rather than
-    importing di.container, so these tests hand in a plain fake instead
+    importing the container module, so these tests hand in a plain fake instead
     of pulling the real container/SessionStateViewModel into what should
     be an isolated unit test.
     """

@@ -2,9 +2,9 @@
 
 import streamlit as st
 
-from config import environment as env
-from config.registrations import resolve_presenter
-from views.streamlit_view import StreamlitView
+from blogresearch.config import environment as env
+from blogresearch.config.registrations import resolve_presenter
+from blogresearch.views.streamlit_view import StreamlitView
 
 env.load()
 

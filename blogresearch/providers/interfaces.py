@@ -1,9 +1,7 @@
-"""Interfaces for the data layer.
+"""Provider-layer contracts.
 
-"Provider" was ambiguous here: an earlier version of this file had one
-IProvider covering Claude, DCI, and Postgres alike, as if reading a
-database and asking an LLM a question were the same responsibility.
-They aren't - so this file has three, kept separate on purpose:
+These are split by responsibility: completion, persistence, and tool
+execution are different shapes and stay separate on purpose:
 
 - IProvider     - LLM/completion backends (Claude, OpenAI, ...)
 - IDbProvider   - persistence backends (Postgres today; a local-disk
@@ -16,9 +14,8 @@ They aren't - so this file has three, kept separate on purpose:
                   should be added until there's a real tool to
                   register - see docs/adr/0003-provider-interface-split.md.
 
-All three raise data.exceptions.ProviderError on failure rather than
-letting a lower-level exception escape unchanged, or swallowing it and
-returning an error string as if it were data.
+All three raise ProviderError on failure rather than leaking lower-
+level exceptions to the UI layer.
 """
 
 from abc import ABC, abstractmethod
@@ -58,7 +55,7 @@ class IToolProvider(ABC):
     codebase: interfaces exist because something swaps, but the shape
     itself is cheap to write down before the first implementation
     exists. When a first real tool shows up, a dict/registry-driven
-    implementation (mirroring config/container.py's
+    implementation (mirroring shared/container.py's
     LLM_PROVIDER_FACTORIES / DB_PROVIDER_FACTORIES pattern) is the
     recommended starting point - not a framework.
     """

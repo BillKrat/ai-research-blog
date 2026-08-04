@@ -1,8 +1,7 @@
-"""Generic DI primitives used by the application composition root.
+"""Reusable DI primitives.
 
-This module intentionally knows nothing about the app's providers,
-presenters, settings, or view models. It only provides a small
-container with singleton, transient, and scoped lifetimes.
+This is framework-agnostic infrastructure only: no app providers,
+presenters, settings, or view models live here.
 """
 
 from dataclasses import dataclass

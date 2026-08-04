@@ -3,7 +3,7 @@
 BlogResearch is a small Streamlit application built around a decoupled,
 provider-based architecture: the UI never talks to Claude, Postgres, or
 any other data source directly — everything goes through interfaces
-wired up by a small dependency-injection composition root.
+wired up by a small application-level composition root.
 
 Design rationale and decision history live in
 [docs/adr/](docs/adr/) — this file covers current capabilities only.
@@ -11,26 +11,26 @@ Design rationale and decision history live in
 ## Architecture
 
 - **View** — Streamlit UI in [app.py](app.py). `IView`
-  ([business/interfaces.py](business/interfaces.py)) is the contract;
-  [views/streamlit_view.py](views/streamlit_view.py) is the Streamlit
+  ([blogresearch/interfaces.py](blogresearch/interfaces.py)) is the contract;
+  [blogresearch/views/streamlit_view.py](blogresearch/views/streamlit_view.py) is the Streamlit
   adapter, and the only place that knows the `st.session_state` key
   names.
-- **Presenter** — [business/](business/):
+- **Presenter** — [blogresearch/presenters/](blogresearch/presenters/):
   - `HelloPresenter` / `CustomPresenter` — `IProvider`-backed.
     `CustomPresenter` inherits `HelloPresenter` and overrides only the
     result formatting.
   - `DbHelloPresenter` — `IDbProvider`-backed, a separate class.
-- **Data layer** — [data/interfaces.py](data/interfaces.py) defines
+- **Data layer** — [blogresearch/providers/interfaces.py](blogresearch/providers/interfaces.py) defines
   three interfaces, each implementation raising `ProviderError`
-  ([data/exceptions.py](data/exceptions.py)) on failure:
-  - `IProvider` — LLM/completion backends: [ClaudeProvider](data/claude_provider.py), [DCIProvider](data/dci_provider.py).
-  - `IDbProvider` — persistence backends: [PostgresProvider](data/postgres_provider.py).
+  ([blogresearch/providers/exceptions.py](blogresearch/providers/exceptions.py)) on failure:
+  - `IProvider` — LLM/completion backends: [ClaudeProvider](blogresearch/providers/claude_provider.py), [DCIProvider](blogresearch/providers/dci_provider.py).
+  - `IDbProvider` — persistence backends: [PostgresProvider](blogresearch/providers/postgres_provider.py).
   - `IToolProvider` — tool discovery/execution for a reasoning engine.
     Defined, not yet implemented anywhere.
-- **Composition root** — [config/container.py](config/container.py):
+- **Composition root** — [blogresearch/config/registrations.py](blogresearch/config/registrations.py):
   `LLM_PROVIDER_FACTORIES` / `DB_PROVIDER_FACTORIES` registries;
   `resolve_presenter()` returns the matching presenter type.
-  [config/app_settings.py](config/app_settings.py) holds the env-driven
+  [blogresearch/config/app_settings.py](blogresearch/config/app_settings.py) holds the env-driven
   `AppSettings` (`PROVIDER_NAME`, `USE_CUSTOM_PRESENTER`).
 
 ### What the app does today
@@ -114,23 +114,28 @@ pytest
 
 ```text
 app.py
-business/
-  interfaces.py         # IView, IPresenter
-  hello_presenter.py     # IProvider-backed presenter (owns success/error flow)
-  custom_presenter.py    # overrides HelloPresenter's result formatting only
-  db_hello_presenter.py  # IDbProvider-backed presenter (separate on purpose)
-config/
-  environment.py         # .env loading (no import-time side effects)
-  app_settings.py        # AppSettings — env-driven provider/presenter choice
-  container.py           # composition root: per-interface registries + resolve_*()
-data/
-  interfaces.py           # IProvider, IDbProvider, IToolProvider
-  exceptions.py            # ProviderError
-  claude_provider.py       # IProvider
-  dci_provider.py          # IProvider
-  postgres_provider.py     # IDbProvider
-views/
-  streamlit_view.py       # IView adapter for st.session_state
+blogresearch/
+  interfaces.py            # IView, IPresenter, ViewModelResolver
+  presenters/
+    hello_presenter.py     # IProvider-backed presenter (owns success/error flow)
+    custom_presenter.py    # overrides HelloPresenter's result formatting only
+    db_hello_presenter.py   # IDbProvider-backed presenter (separate on purpose)
+  providers/
+    interfaces.py          # IProvider, IDbProvider, IToolProvider
+    exceptions.py          # ProviderError
+    claude_provider.py     # IProvider
+    dci_provider.py        # IProvider
+    postgres_provider.py   # IDbProvider
+  views/
+    streamlit_view.py      # IView adapter for st.session_state
+  view_models/
+    session_state_view_model.py
+  config/
+    environment.py         # .env loading (no import-time side effects)
+    app_settings.py        # AppSettings — env-driven provider/presenter choice
+    registrations.py       # app composition root: per-family registries + resolve_*()
+shared/
+  container.py             # reusable DI container primitives
 tests/
 docs/
   adr/                    # Architecture Decision Log — see docs/adr/

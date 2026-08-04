@@ -1,8 +1,8 @@
 """Default presenter: shows the provider's message as-is."""
 
-from business.interfaces import IPresenter, IView, ViewModelResolver
-from data.exceptions import ProviderError
-from data.interfaces import IProvider
+from blogresearch.interfaces import IPresenter, IView, ViewModelResolver
+from blogresearch.providers.exceptions import ProviderError
+from blogresearch.providers.interfaces import IProvider
 
 
 class HelloPresenter(IPresenter):
@@ -20,10 +20,9 @@ class HelloPresenter(IPresenter):
     ) -> None:
         self.view = view
         self.provider = provider
-        # resolve_viewmodel is di.container.resolve_viewmodel, handed in
-        # by the composition root - see ViewModelResolver's docstring in
-        # business/interfaces.py for why it's passed in rather than
-        # imported here.
+        # resolve_viewmodel is handed in by the composition root.
+        # Presenters depend on the callable type, not on the container
+        # module itself.
         self.view.view_model = resolve_viewmodel(self)
 
     def on_button_click(self) -> None:

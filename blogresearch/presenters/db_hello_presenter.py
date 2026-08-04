@@ -7,9 +7,9 @@ collapsing that distinction back together at the presenter layer would
 undo the point of splitting them in data/interfaces.py.
 """
 
-from business.interfaces import IPresenter, IView, ViewModelResolver
-from data.exceptions import ProviderError
-from data.interfaces import IDbProvider
+from blogresearch.interfaces import IPresenter, IView, ViewModelResolver
+from blogresearch.providers.exceptions import ProviderError
+from blogresearch.providers.interfaces import IDbProvider
 
 
 class DbHelloPresenter(IPresenter):
@@ -18,10 +18,9 @@ class DbHelloPresenter(IPresenter):
     ) -> None:
         self.view = view
         self.db_provider = db_provider
-        # resolve_viewmodel is di.container.resolve_viewmodel, handed in
-        # by the composition root - see ViewModelResolver's docstring in
-        # business/interfaces.py for why it's passed in rather than
-        # imported here.
+        # resolve_viewmodel is handed in by the composition root.
+        # Presenters depend on the callable type, not on the container
+        # module itself.
         self.view.view_model = resolve_viewmodel(self)
 
     def on_button_click(self) -> None:

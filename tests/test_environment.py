@@ -2,7 +2,7 @@
 
 import os
 
-from config import environment as env
+from blogresearch.config import environment as env
 
 
 def test_load_environment_reads_dotenv(tmp_path, monkeypatch):

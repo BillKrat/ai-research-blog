@@ -5,21 +5,21 @@ from dataclasses import dataclass
 import psycopg2
 import pytest
 
-from business.custom_presenter import CustomPresenter
-from business.db_hello_presenter import DbHelloPresenter
-from business.hello_presenter import HelloPresenter
-from config.app_settings import AppSettings
-from config.registrations import (
+from blogresearch.presenters.custom_presenter import CustomPresenter
+from blogresearch.presenters.db_hello_presenter import DbHelloPresenter
+from blogresearch.presenters.hello_presenter import HelloPresenter
+from blogresearch.config.app_settings import AppSettings
+from blogresearch.config.registrations import (
     build_container,
     resolve_db_provider,
     resolve_llm_provider,
     resolve_presenter,
 )
-from di.container import Container
-from data.claude_provider import ClaudeProvider
-from data.dci_provider import DCIProvider
-from data.postgres_provider import PostgresProvider
-from data.interfaces import IDbProvider, IProvider
+from blogresearch.providers.claude_provider import ClaudeProvider
+from blogresearch.providers.dci_provider import DCIProvider
+from blogresearch.providers.postgres_provider import PostgresProvider
+from blogresearch.providers.interfaces import IDbProvider, IProvider
+from shared.container import Container
 
 
 class _FakeView:

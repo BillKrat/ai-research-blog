@@ -1,0 +1,1 @@
+"""BlogResearch application package."""

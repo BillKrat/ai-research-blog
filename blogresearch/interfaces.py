@@ -1,4 +1,8 @@
-"""Interfaces for the presentation layer (MVPVM)."""
+"""Presentation-layer contracts.
+
+These are app-facing interfaces for the view, presenter, and
+view-model boundary.
+"""
 
 from abc import ABC, abstractmethod
 from typing import Callable, MutableMapping

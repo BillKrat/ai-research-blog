@@ -1,24 +1,23 @@
-"""Application-level service registrations and resolution.
+"""Application composition root.
 
-Keep this module at the app boundary. It knows which concrete providers
-and presenters exist, while di.container remains a reusable generic
-container implementation.
+This module wires the app's concrete providers and presenters into the
+reusable shared container.
 """
 
 import os
 from typing import Callable
 
-from business.custom_presenter import CustomPresenter
-from business.db_hello_presenter import DbHelloPresenter
-from business.hello_presenter import HelloPresenter
-from business.interfaces import IPresenter, IView, IViewModel
-from config.app_settings import AppSettings
-from di.container import Container
-from data.claude_provider import ClaudeProvider
-from data.dci_provider import DCIProvider
-from data.interfaces import IDbProvider, IProvider
-from data.postgres_provider import PostgresProvider
-from view_models.session_state_view_model import SessionStateViewModel
+from blogresearch.interfaces import IPresenter, IView, IViewModel
+from blogresearch.presenters.custom_presenter import CustomPresenter
+from blogresearch.presenters.db_hello_presenter import DbHelloPresenter
+from blogresearch.presenters.hello_presenter import HelloPresenter
+from blogresearch.config.app_settings import AppSettings
+from blogresearch.providers.claude_provider import ClaudeProvider
+from blogresearch.providers.dci_provider import DCIProvider
+from blogresearch.providers.postgres_provider import PostgresProvider
+from blogresearch.providers.interfaces import IDbProvider, IProvider
+from blogresearch.view_models.session_state_view_model import SessionStateViewModel
+from shared.container import Container
 
 
 def _get_anthropic_api_key() -> str | None:

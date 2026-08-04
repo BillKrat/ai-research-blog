@@ -5,7 +5,7 @@ HelloPresenter unchanged, and only overrides how a successful message
 is formatted.
 """
 
-from business.hello_presenter import HelloPresenter
+from blogresearch.presenters.hello_presenter import HelloPresenter
 
 
 class CustomPresenter(HelloPresenter):

@@ -2,8 +2,8 @@ import anthropic
 import httpx
 import pytest
 
-from data.claude_provider import ClaudeProvider
-from data.exceptions import ProviderError
+from blogresearch.providers.claude_provider import ClaudeProvider
+from blogresearch.providers.exceptions import ProviderError
 
 
 class FailingMessages:
