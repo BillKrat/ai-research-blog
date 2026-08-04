@@ -1,5 +1,6 @@
 import os
 from contextlib import closing
+from dataclasses import dataclass
 
 import psycopg2
 import pytest
@@ -8,10 +9,17 @@ from business.custom_presenter import CustomPresenter
 from business.db_hello_presenter import DbHelloPresenter
 from business.hello_presenter import HelloPresenter
 from config.app_settings import AppSettings
-from di.container import resolve_db_provider, resolve_llm_provider, resolve_presenter
+from config.registrations import (
+    build_container,
+    resolve_db_provider,
+    resolve_llm_provider,
+    resolve_presenter,
+)
+from di.container import Container
 from data.claude_provider import ClaudeProvider
 from data.dci_provider import DCIProvider
 from data.postgres_provider import PostgresProvider
+from data.interfaces import IDbProvider, IProvider
 
 
 class _FakeView:
@@ -34,6 +42,82 @@ class _FakeView:
     @view_model.setter
     def view_model(self, value):
         self._view_model = value
+
+
+@dataclass
+class _Thing:
+    value: str
+
+
+def test_container_can_register_and_resolve_a_function_factory():
+    container = Container()
+
+    container.add_transient("hello", lambda: _Thing("hello from function"))
+
+    resolved = container.resolve("hello")
+
+    assert isinstance(resolved, _Thing)
+    assert resolved.value == "hello from function"
+
+
+def test_container_can_register_and_resolve_a_singleton_factory():
+    container = Container()
+
+    calls = []
+
+    def build_thing():
+        calls.append("called")
+        return _Thing("singleton")
+
+    container.add_singleton("thing", build_thing)
+
+    first = container.resolve("thing")
+    second = container.resolve("thing")
+
+    assert first is second
+    assert calls == ["called"]
+
+
+def test_container_can_resolve_scoped_values_from_a_scope():
+    container = Container()
+
+    calls = []
+
+    def build_thing():
+        calls.append("called")
+        return _Thing("scoped")
+
+    container.add_scoped("thing", build_thing)
+
+    scope = container.create_scope()
+    first = scope.resolve("thing")
+    second = scope.resolve("thing")
+
+    assert first is second
+    assert calls == ["called"]
+
+
+def test_app_container_registers_selected_provider_services():
+    container = build_container(AppSettings(provider_name="claude"))
+
+    llm_provider = container.resolve(IProvider)
+
+    assert isinstance(llm_provider, ClaudeProvider)
+
+
+def test_app_container_registers_db_services_for_postgres():
+    container = build_container(AppSettings(provider_name="postgres"))
+
+    db_provider = container.resolve(IDbProvider)
+
+    assert isinstance(db_provider, PostgresProvider)
+
+
+def test_container_rejects_unknown_registration():
+    container = Container()
+
+    with pytest.raises(KeyError, match="unknown"):
+        container.resolve("unknown")
 
 
 def test_container_resolves_claude():
