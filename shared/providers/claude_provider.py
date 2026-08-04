@@ -2,8 +2,8 @@
 
 import anthropic
 
-from blogresearch.providers.interfaces import IProvider
 from shared.exceptions import ProviderError
+from shared.providers.interfaces import IProvider
 
 _MODEL = "claude-opus-5"
 

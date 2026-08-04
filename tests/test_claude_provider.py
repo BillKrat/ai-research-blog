@@ -2,8 +2,8 @@ import anthropic
 import httpx
 import pytest
 
-from blogresearch.providers.claude_provider import ClaudeProvider
 from shared.exceptions import ProviderError
+from shared.providers.claude_provider import ClaudeProvider
 
 
 class FailingMessages:

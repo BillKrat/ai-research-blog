@@ -15,11 +15,11 @@ from blogresearch.config.registrations import (
     resolve_llm_provider,
     resolve_presenter,
 )
-from blogresearch.providers.claude_provider import ClaudeProvider
-from blogresearch.providers.dci_provider import DCIProvider
-from blogresearch.providers.postgres_provider import PostgresProvider
-from blogresearch.providers.interfaces import IDbProvider, IProvider
 from shared.container import Container
+from shared.providers.claude_provider import ClaudeProvider
+from shared.providers.dci_provider import DCIProvider
+from shared.providers.postgres_provider import PostgresProvider
+from shared.providers.interfaces import IDbProvider, IProvider
 
 
 class _FakeView:

@@ -11,12 +11,12 @@ from blogresearch.presenters.custom_presenter import CustomPresenter
 from blogresearch.presenters.db_hello_presenter import DbHelloPresenter
 from blogresearch.presenters.hello_presenter import HelloPresenter
 from blogresearch.config.app_settings import AppSettings
-from blogresearch.providers.claude_provider import ClaudeProvider
-from blogresearch.providers.dci_provider import DCIProvider
-from blogresearch.providers.postgres_provider import PostgresProvider
-from blogresearch.providers.interfaces import IDbProvider, IProvider
 from shared.container import Container
 from shared.interfaces import IPresenter, IView, IViewModel
+from shared.providers.claude_provider import ClaudeProvider
+from shared.providers.dci_provider import DCIProvider
+from shared.providers.postgres_provider import PostgresProvider
+from shared.providers.interfaces import IDbProvider, IProvider
 from shared.session_state_view_model import SessionStateViewModel
 
 

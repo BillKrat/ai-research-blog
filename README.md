@@ -28,16 +28,19 @@ choices built on top of it.
     `CustomPresenter` inherits `HelloPresenter` and overrides only the
     result formatting.
   - `DbHelloPresenter` — `IDbProvider`-backed, a separate class.
-- **Data layer** — [blogresearch/providers/interfaces.py](blogresearch/providers/interfaces.py)
-  defines two app-specific interfaces (their methods name this app's
-  demo feature, not a generic capability — see ADR-0009), each
-  implementation raising `ProviderError`
+- **Data layer** — [shared/providers/interfaces.py](shared/providers/interfaces.py)
+  defines three interfaces, each implementation raising `ProviderError`
   ([shared/exceptions.py](shared/exceptions.py)) on failure:
-  - `IProvider` — LLM/completion backends: [ClaudeProvider](blogresearch/providers/claude_provider.py), [DCIProvider](blogresearch/providers/dci_provider.py).
-  - `IDbProvider` — persistence backends: [PostgresProvider](blogresearch/providers/postgres_provider.py).
-  - `IToolProvider` — tool discovery/execution for a reasoning engine,
-    domain-agnostic — lives in [shared/tool_provider.py](shared/tool_provider.py)
-    instead. Defined, not yet implemented anywhere.
+  - `IProvider` — LLM/completion backends: [ClaudeProvider](shared/providers/claude_provider.py), [DCIProvider](shared/providers/dci_provider.py).
+  - `IDbProvider` — persistence backends: [PostgresProvider](shared/providers/postgres_provider.py).
+  - `IToolProvider` — tool discovery/execution for a reasoning engine.
+    Defined, not yet implemented anywhere.
+  - Structurally decoupled from any one app, but `IProvider`/
+    `IDbProvider`'s only implementations still hardcode this app's
+    demo behavior (a fixed prompt, a fixed fixture table) — see
+    ADR-0009's 2026-08-04 update. Reusing the classes themselves, not
+    just the interfaces, still needs their method signatures
+    generalized first.
 - **Composition root** — [blogresearch/config/registrations.py](blogresearch/config/registrations.py)
   (inherently app-specific — it wires this app's concrete choices):
   `LLM_PROVIDER_FACTORIES` / `DB_PROVIDER_FACTORIES` registries;
@@ -146,20 +149,19 @@ shared/                     # reusable framework - no app-specific vocabulary (A
   environment.py               # .env loading (no import-time side effects)
   streamlit_view.py             # IView adapter for st.session_state
   session_state_view_model.py    # IViewModel adapter for st.session_state
-  tool_provider.py                # IToolProvider (domain-agnostic)
+  providers/
+    interfaces.py                 # IProvider, IDbProvider, IToolProvider
+    claude_provider.py            # IProvider
+    dci_provider.py               # IProvider
+    postgres_provider.py          # IDbProvider
   repositories/
     interfaces.py                 # Triple, TripleRepository
     postgres_triple_repository.py  # TripleRepository backed by triple_store
-blogresearch/                # this app's own choices, built on shared/
+blogresearch/                # this app's own choices, built on shared/ - deliberately small
   presenters/
     hello_presenter.py       # IProvider-backed presenter (owns success/error flow)
     custom_presenter.py      # overrides HelloPresenter's result formatting only
     db_hello_presenter.py    # IDbProvider-backed presenter (separate on purpose)
-  providers/
-    interfaces.py            # IProvider, IDbProvider (app-specific)
-    claude_provider.py       # IProvider
-    dci_provider.py          # IProvider
-    postgres_provider.py     # IDbProvider
   config/
     app_settings.py          # AppSettings — env-driven provider/presenter choice
     registrations.py         # app composition root: per-family registries + resolve_*()

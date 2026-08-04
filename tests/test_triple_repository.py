@@ -261,7 +261,7 @@ def test_postgres_triple_repository_is_a_triple_repository():
 # --- Connection-string resolution ---
 #
 # Same three cases PostgresProvider's own connection-string handling
-# would have (see blogresearch/providers/postgres_provider.py): read
+# would have (see shared/providers/postgres_provider.py): read
 # from the environment, an explicit override wins, and a genuinely
 # missing configuration fails loudly instead of connecting to nothing.
 

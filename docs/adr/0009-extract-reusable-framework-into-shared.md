@@ -38,18 +38,14 @@ what keeps that promise true later.
     — the generic Streamlit adapters (`StreamlitView`,
     `SessionStateViewModel`); neither references this app's demo
     feature.
-  - `shared/tool_provider.py` — `IToolProvider`, split out of
-    `blogresearch/providers/interfaces.py`. Unlike `IProvider`/
-    `IDbProvider`, it was already domain-agnostic (ADR-0003).
   - `shared/repositories/` — `Triple`, `TripleRepository`,
     `PostgresTripleRepository` (ADR-0008).
-- **Leave app-specific code in `blogresearch/`:** `IProvider`/
-  `IDbProvider` (their methods — `say_hello()`, `get_message()` —
-  name this app's one demo feature, not a generic capability), the
-  concrete Claude/DCI/Postgres providers, the Hello/Custom/DbHello
-  presenters, `AppSettings`, and `registrations.py` (the composition
-  root is inherently app-specific by definition — it wires *this
-  app's* concrete choices).
+- **Leave app-specific code in `blogresearch/`:** the Hello/Custom/
+  DbHello presenters, `AppSettings`, and `registrations.py` (the
+  composition root is inherently app-specific by definition — it
+  wires *this app's* concrete choices). ~~`IProvider`/`IDbProvider`
+  and the concrete Claude/DCI/Postgres providers~~ — see the
+  2026-08-04 update below; these moved too.
 - This is a reorganization of existing, already-settled code — a
   move plus import fixes — not a redesign. No behavior changed; the
   full test suite passes unchanged after the move, aside from import
@@ -77,3 +73,27 @@ what keeps that promise true later.
   capability, raising a shared `ProviderError`, resolved through
   `shared/container.py` — documented in ADR-0002/0003, not these two
   concrete interfaces.
+
+**Update (2026-08-04, same day):** `blogresearch/providers/` (
+`IProvider`, `IDbProvider`, `ClaudeProvider`, `DCIProvider`,
+`PostgresProvider`) moved to `shared/providers/` too, on review —
+they're structurally decoupled from Streamlit and blog-specific
+vocabulary, same as everything else in this ADR, so the argument for
+keeping them app-specific was weaker than it first looked.
+`IToolProvider` (`shared/tool_provider.py` above) was folded back into
+`shared/providers/interfaces.py` alongside them, since the reason it
+was split out — "unlike `IProvider`/`IDbProvider`, it stays in
+`shared/`" — no longer applies now that all three live in the same
+place.
+
+This does **not** mean these three are fully reusable yet, only that
+they're in the right *location*. `ClaudeProvider.say_hello()` and
+`DCIProvider.say_hello()` still hardcode this app's one demo prompt/
+response; `PostgresProvider.get_message()` still hardcodes the
+`hello_messages` fixture table. A second app can depend on `IProvider`/
+`IDbProvider` and resolve concrete implementations through
+`shared/container.py` today, but actually reusing these specific
+classes still means generalizing their method signatures first (e.g.
+`complete(prompt: str) -> str` instead of a no-arg `say_hello()`) —
+that generalization is real, not-yet-done work, tracked here rather
+than silently implied by the move.

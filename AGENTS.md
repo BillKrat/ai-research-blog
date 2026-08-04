@@ -70,10 +70,10 @@ Two packages, split by reusability, not by architectural layer — see
   vocabulary of any kind. This is what a second app built on the same
   pattern would start from.
 - **`blogresearch/`** — this app's own choices built on top of
-  `shared/`: which concrete providers exist, what the one demo
-  feature does, how they're wired together. A second app would not
-  reuse this package — it would write its own equivalent of it,
-  against `shared/`.
+  `shared/`: what the one demo feature does and how it's wired
+  together. Deliberately small — two subpackages, `presenters/` and
+  `config/`. A second app would not reuse this package — it would
+  write its own equivalent of it, against `shared/`.
 
 When adding something new, ask which side it belongs on: no
 app-specific vocabulary (feature names, this app's field/method
@@ -115,19 +115,30 @@ prematurely generalized is not.
     one-directional (`blogresearch/config/` → `blogresearch/presenters/`
     only) instead of just timing around the cycle with a deferred
     import.
-- **Data layer** — `blogresearch/providers/interfaces.py` defines two
-  app-specific interfaces:
-  - `IProvider` — LLM backends: `ClaudeProvider`, `DCIProvider`.
-  - `IDbProvider` — storage backends: `PostgresProvider`.
-  - Both raise `shared.exceptions.ProviderError` on failure.
-  - These stay in `blogresearch/`, not `shared/`, because their
-    methods (`say_hello()`, `get_message()`) name this app's specific
-    demo feature, not a generic capability — see ADR-0009. A future
-    `IToolProvider`-shaped need would go in `shared/` instead (see
-    `shared/tool_provider.py` below), since tool discovery/execution
-    isn't blog-specific vocabulary.
+- **Data layer** — `shared/providers/interfaces.py` defines three
+  interfaces (structurally decoupled from any one app, though
+  `IProvider`/`IDbProvider`'s only implementations still hardcode this
+  app's demo behavior — see the caveat below):
+  - `IProvider` — LLM backends: `ClaudeProvider`, `DCIProvider`
+    (`shared/providers/`).
+  - `IDbProvider` — storage backends: `PostgresProvider`
+    (`shared/providers/`).
+  - `IToolProvider` — tool discovery/execution for a reasoning engine.
+    Defined, not yet implemented anywhere; domain-agnostic from the
+    start, unlike the other two.
+  - All three raise `shared.exceptions.ProviderError` on failure.
   - Persistence-facing domain logic sits on top as a **Repository** —
     [docs/adr/0007](docs/adr/0007-repository-pattern-for-domain-layer.md).
+  - **Caveat (ADR-0009, 2026-08-04 update):** being in `shared/` means
+    the *location* is right, not that these are finished reusable
+    capabilities. `ClaudeProvider.say_hello()` / `DCIProvider.say_hello()`
+    still hardcode this app's one demo prompt/response, and
+    `PostgresProvider.get_message()` still hardcodes the
+    `hello_messages` fixture table. A second app can depend on
+    `IProvider`/`IDbProvider` and `shared/container.py` today, but
+    actually reusing these specific classes still needs their method
+    signatures generalized first (e.g. `complete(prompt: str) -> str`
+    instead of a no-arg `say_hello()`) — not yet done.
 - **Repository** — `shared/repositories/` (reusable, domain-agnostic):
   - `TripleRepository` (`interfaces.py`) — CRUDL (`create`/`read`/
     `update`/`delete`/`list`) over `(subject, predicate, object_value)`
@@ -143,10 +154,6 @@ prematurely generalized is not.
     no presenter or UI feature consumes it yet. The not-yet-built
     `FormDataRepository` (ADR-0004) is expected to compose it once
     the forms-specific DTO/schema questions are resolved.
-- **Tool provider** — `shared/tool_provider.py::IToolProvider` — tool
-  discovery/execution for a reasoning engine. Defined, not yet
-  implemented anywhere; domain-agnostic, so it lives in `shared/`
-  rather than alongside `IProvider`/`IDbProvider`.
 - **Composition root** — `blogresearch/config/registrations.py`
   (inherently app-specific — it wires *this app's* concrete choices,
   so it stays in `blogresearch/` even though the pattern it follows

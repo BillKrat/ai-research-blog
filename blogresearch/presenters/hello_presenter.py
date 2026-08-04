@@ -1,8 +1,8 @@
 """Default presenter: shows the provider's message as-is."""
 
-from blogresearch.providers.interfaces import IProvider
 from shared.exceptions import ProviderError
 from shared.interfaces import IPresenter, IView, ViewModelResolver
+from shared.providers.interfaces import IProvider
 
 
 class HelloPresenter(IPresenter):
