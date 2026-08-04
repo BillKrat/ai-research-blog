@@ -5,6 +5,11 @@ provider-based architecture: the UI never talks to Claude, Postgres, or
 any other data source directly — everything goes through interfaces
 wired up by a small application-level composition root.
 
+Note: Streamlit's rerun architecture will not be feasible for the
+direction this application will take; it is a temporary client until
+development of the infrastructure reaches a point where we'll use
+nextjs.
+
 Design rationale and decision history live in
 [docs/adr/](docs/adr/) — this file covers current capabilities only.
 
