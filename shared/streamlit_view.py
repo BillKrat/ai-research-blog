@@ -2,7 +2,7 @@
 
 from typing import MutableMapping
 
-from blogresearch.interfaces import IView, IViewModel
+from shared.interfaces import IView, IViewModel
 
 
 class StreamlitView(IView):

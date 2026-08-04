@@ -3,8 +3,8 @@
 from blogresearch.presenters.custom_presenter import CustomPresenter
 from blogresearch.presenters.db_hello_presenter import DbHelloPresenter
 from blogresearch.presenters.hello_presenter import HelloPresenter
-from blogresearch.interfaces import IPresenter
-from blogresearch.providers.exceptions import ProviderError
+from shared.exceptions import ProviderError
+from shared.interfaces import IPresenter
 
 
 class FakeProvider:

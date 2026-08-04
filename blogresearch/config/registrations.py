@@ -7,7 +7,6 @@ reusable shared container.
 import os
 from typing import Callable
 
-from blogresearch.interfaces import IPresenter, IView, IViewModel
 from blogresearch.presenters.custom_presenter import CustomPresenter
 from blogresearch.presenters.db_hello_presenter import DbHelloPresenter
 from blogresearch.presenters.hello_presenter import HelloPresenter
@@ -16,8 +15,9 @@ from blogresearch.providers.claude_provider import ClaudeProvider
 from blogresearch.providers.dci_provider import DCIProvider
 from blogresearch.providers.postgres_provider import PostgresProvider
 from blogresearch.providers.interfaces import IDbProvider, IProvider
-from blogresearch.view_models.session_state_view_model import SessionStateViewModel
 from shared.container import Container
+from shared.interfaces import IPresenter, IView, IViewModel
+from shared.session_state_view_model import SessionStateViewModel
 
 
 def _get_anthropic_api_key() -> str | None:
@@ -109,7 +109,7 @@ def resolve_viewmodel(presenter: IPresenter) -> IViewModel:
 
     Not called by presenters directly - passed to each one as the
     resolve_viewmodel constructor argument (see resolve_presenter()
-    below and ViewModelResolver in blogresearch/interfaces.py). That way
+    below and ViewModelResolver in shared/interfaces.py). That way
     presenters depend on the ViewModelResolver callable type, never on
     this module, so the app wiring stays at the edge.
     """

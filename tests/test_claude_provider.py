@@ -3,7 +3,7 @@ import httpx
 import pytest
 
 from blogresearch.providers.claude_provider import ClaudeProvider
-from blogresearch.providers.exceptions import ProviderError
+from shared.exceptions import ProviderError
 
 
 class FailingMessages:

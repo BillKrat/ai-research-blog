@@ -1,8 +1,8 @@
-"""Tests for config/environment.py's .env loading behavior."""
+"""Tests for shared/environment.py's .env loading behavior."""
 
 import os
 
-from blogresearch.config import environment as env
+from shared import environment as env
 
 
 def test_load_environment_reads_dotenv(tmp_path, monkeypatch):

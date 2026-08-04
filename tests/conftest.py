@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from blogresearch.config import environment as env  # noqa: E402
+from shared import environment as env  # noqa: E402
 
 # Load .env once for the whole test session - this is the one place test
 # code is responsible for bootstrapping the environment; application

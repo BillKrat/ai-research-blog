@@ -5,8 +5,8 @@ from contextlib import closing
 
 import psycopg2
 
-from blogresearch.providers.exceptions import ProviderError
 from blogresearch.providers.interfaces import IDbProvider
+from shared.exceptions import ProviderError
 
 
 class PostgresProvider(IDbProvider):

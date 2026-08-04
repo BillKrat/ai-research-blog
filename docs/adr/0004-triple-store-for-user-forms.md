@@ -55,12 +55,14 @@ in Utility Engineering) and strong opinions earned from it:
   triples well.
 - No DI framework — extend `config/container.py`'s registry pattern
   rather than introducing a container library.
-- Packaging/extraction into a standalone, reusable library is
-  explicitly deferred until there's a second real consumer app.
-  Nothing is packaged yet (no `pyproject.toml`, no `src/` layout).
-  Keep the boundary clean as this develops — interfaces and the
-  composition-root pattern are the reusable candidates, app-specific
-  logic is not — so extraction later is mechanical, not a redesign.
+- ~~Packaging/extraction into a standalone, reusable library is
+  explicitly deferred until there's a second real consumer app.~~
+  **Superseded by [docs/adr/0009](0009-extract-reusable-framework-into-shared.md)
+  (2026-08-04):** the *internal* boundary (reusable code into
+  `shared/`) is no longer deferred — the framework settled enough to
+  sort that out now, while it's cheap. Formal packaging
+  (`pyproject.toml`, installable by a second app) is still deferred;
+  see ADR-0009 for the distinction.
 
 ## Still open
 

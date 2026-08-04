@@ -1,4 +1,4 @@
-"""Tests for the triple-store repository (blogresearch/repositories/).
+"""Tests for the triple-store repository (shared/repositories/).
 
 Read this file top to bottom to understand PostgresTripleRepository -
 each test is documented with *what* it checks and *why*, not just the
@@ -74,9 +74,9 @@ from dataclasses import FrozenInstanceError
 import psycopg2
 import pytest
 
-from blogresearch.providers.exceptions import ProviderError
-from blogresearch.repositories.interfaces import Triple, TripleRepository
-from blogresearch.repositories.postgres_triple_repository import PostgresTripleRepository
+from shared.exceptions import ProviderError
+from shared.repositories.interfaces import Triple, TripleRepository
+from shared.repositories.postgres_triple_repository import PostgresTripleRepository
 
 
 # --- Fakes: stand-ins for a real psycopg2 connection/cursor ---

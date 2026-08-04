@@ -1,25 +1,17 @@
-"""Provider-layer contracts.
+"""Provider-layer contracts for this app's own demo capabilities.
 
-These are split by responsibility: completion, persistence, and tool
-execution are different shapes and stay separate on purpose:
+IProvider and IDbProvider are app-specific by nature - their methods
+name this app's one demo feature (say_hello / get_message), not a
+generic capability every app would need, so they stay here rather
+than in shared/. IToolProvider moved to shared/tool_provider.py
+instead: it's domain-agnostic (no blog/forms vocabulary), unlike
+these two - see docs/adr/0009.
 
-- IProvider     - LLM/completion backends (Claude, OpenAI, ...)
-- IDbProvider   - persistence backends (Postgres today; a local-disk
-                  file store for user config is a plausible future
-                  implementation - swapping it shouldn't require
-                  touching business logic)
-- IToolProvider - tool discovery/execution for a reasoning engine
-                  (agentic tool/function calling). Forward-looking:
-                  no concrete implementation exists yet, and none
-                  should be added until there's a real tool to
-                  register - see docs/adr/0003-provider-interface-split.md.
-
-All three raise ProviderError on failure rather than leaking lower-
-level exceptions to the UI layer.
+Both raise ProviderError (shared/exceptions.py) on failure rather than
+leaking lower-level exceptions to the UI layer.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
 
 
 class IProvider(ABC):
@@ -45,29 +37,3 @@ class IDbProvider(ABC):
     @abstractmethod
     def get_message(self) -> str:
         """Return a stored message, or raise ProviderError on failure."""
-
-
-class IToolProvider(ABC):
-    """Tool discovery/execution contract for a reasoning engine.
-
-    Not yet implemented anywhere in this app - defined now so the
-    shape is settled, per the same principle used elsewhere in this
-    codebase: interfaces exist because something swaps, but the shape
-    itself is cheap to write down before the first implementation
-    exists. When a first real tool shows up, a dict/registry-driven
-    implementation (mirroring shared/container.py's
-    LLM_PROVIDER_FACTORIES / DB_PROVIDER_FACTORIES pattern) is the
-    recommended starting point - not a framework.
-    """
-
-    @abstractmethod
-    def get_tool_schemas(self) -> list[dict[str, Any]]:
-        """Return JSON-compatible schemas of all available tools."""
-
-    @abstractmethod
-    def execute_tool(self, tool_name: str, arguments: dict[str, Any]) -> Any:
-        """Execute the named tool with the given arguments.
-
-        Raises ProviderError (e.g. an unknown tool name) rather than a
-        bare ValueError/KeyError, consistent with IProvider/IDbProvider.
-        """

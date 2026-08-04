@@ -7,9 +7,9 @@ collapsing that distinction back together at the presenter layer would
 undo the point of splitting them in blogresearch/providers/interfaces.py.
 """
 
-from blogresearch.interfaces import IPresenter, IView, ViewModelResolver
-from blogresearch.providers.exceptions import ProviderError
 from blogresearch.providers.interfaces import IDbProvider
+from shared.exceptions import ProviderError
+from shared.interfaces import IPresenter, IView, ViewModelResolver
 
 
 class DbHelloPresenter(IPresenter):

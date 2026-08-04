@@ -2,7 +2,7 @@
 
 from typing import MutableMapping
 
-from blogresearch.interfaces import IViewModel
+from shared.interfaces import IViewModel
 
 
 class SessionStateViewModel(IViewModel):

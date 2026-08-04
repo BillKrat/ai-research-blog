@@ -12,8 +12,8 @@ from typing import Any, Callable
 
 import psycopg2
 
-from blogresearch.providers.exceptions import ProviderError
-from blogresearch.repositories.interfaces import Triple, TripleRepository
+from shared.exceptions import ProviderError
+from shared.repositories.interfaces import Triple, TripleRepository
 
 
 class PostgresTripleRepository(TripleRepository):
