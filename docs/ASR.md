@@ -290,3 +290,114 @@ also worth weighing against it. Neither is chosen yet.
   pattern — full replacement, or plugins feed into the same
   `LLM_PROVIDER_FACTORIES`-style dicts at startup rather than
   replacing them.
+
+---
+
+## ASR-007: Blogs feature — multi-domain pipeline, built toward the model
+
+**Statement:** The first real feature on the framework. Chain:
+`BlogsView` (Streamlit) → `BlogsViewModel` (`IViewModel`) →
+`BlogsPresenter` (`IPresenter`) → `BlogsBll` (new `IBll`, CRUDL) →
+`BlogsTriplesDal` (new `IDal`, CRUDL) → Postgres triple store, with
+DTOs mapping triples to a `BlogEntity` (`__dict__`: blogId, Name,
+Description, Domain). Presenter calls `Bll.get_list(blogId)` →
+`Dal.get_list(blogId)` → Postgres, and sets `view_model.BlogList` with
+the result.
+
+Stated approach: **build toward the model (PostgreSQL) rather than
+from it** — flesh out each link in the chain against the real
+schema/seed data, not mock outward from the UI.
+
+Seed data — three blogs sharing one pipeline, only the data differs,
+selected **by domain** (data-driven, not conditional logic in
+Bll/Presenter):
+1. `https://blogresearch.net/` — Blog Research — Research Projects with AI assist
+2. `https://adventuresedge.net/` — Adventures — Adventures On The Edge learning AI
+3. `https://localhost:8501/` — Development — for local dev and unit tests
+
+A later step adds sub-blogs under one blog id (e.g. blog id=1's
+`{1}/ClinicalTrial`), which get their own URL and own configuration
+the same way — see ASR-008.
+
+**Rationale:** Proves the full MVPVM chain end-to-end against a real
+feature and real seed data, and is the vehicle for validating `IBll`
+as a genuine architectural layer (not scaffolding) before ASR-008
+builds on it.
+
+**Architectural impact:**
+- `BlogsTriplesDal` should compose the existing `TripleRepository` /
+  `PostgresTripleRepository` ([shared/repositories/](../shared/repositories/))
+  rather than reimplement CRUDL over raw SQL — it resolves the
+  triple→DTO mapping question ADR-0004 left open for
+  `FormDataRepository`, scoped to blogs specifically.
+- `IBll` is a new interface with (initially) one implementation. That
+  would normally be flagged as premature per AGENTS.md's "don't add an
+  interface for one implementation" guidance — it's justified here
+  specifically because ASR-008 needs a concrete mechanism for a second
+  `Bll` implementation to exist (contributor-supplied variants,
+  version-pinned behavior for locked/regulated data), not because of
+  habit. If ASR-008 doesn't end up needing that, revisit whether `IBll`
+  earns its keep.
+- Domain → config selection is a composition-root concern (which
+  config a request's domain resolves to), not something `Bll`/`Dal`
+  branch on internally.
+
+**Open questions:**
+- Exact `BlogEntity` shape beyond blogId/Name/Description/Domain.
+- Where domain→config resolution lives — likely an extension of
+  `blogresearch/config/registrations.py`'s existing registry pattern,
+  not yet designed for a per-domain key.
+- `IBll`'s exact CRUDL signatures.
+
+---
+
+## ASR-008: Locked-value / versioned BLL for regulated data
+
+**Statement:** A sub-blog (e.g. ASR-007's `{blogId}/ClinicalTrial`)
+can be tagged in the triple store (e.g. `"locked-down"`) to mean: the
+BLL and data behind a computed value must not change further. The
+value must stay reproducible exactly as it was at lock time (e.g. a
+regulatory sign-off), even as later `Bll` versions improve the
+underlying algorithm for new work. Each `Bll` instance is expected to
+carry its own GUID by default, supporting lock/version identification.
+
+**Rationale:** Regulated/audited data has a real failure mode this
+guards against: an algorithm change that silently alters what a
+historical chart/value shows when the same underlying data is
+re-queried later, so a value used for a formal approval no longer
+matches what was actually approved. A versioned, lockable `Bll` is the
+direct structural answer — old locked results stay pinned to the `Bll`
+version that produced them; new work can use a newer version without
+touching the old one.
+
+**Architectural impact:**
+- Builds directly on ASR-007's `IBll`/`IDal` — this is the concrete
+  reason those interfaces exist, not a hypothetical one.
+- Feeds two later user-facing features (not yet designed in detail):
+  a "Try Beta" toggle (swap to a new `Bll`/`Dal` implementation at
+  runtime, with "revert to current" if it isn't ready) and a
+  "lock-down" action so a user creating data in a regulated context
+  can seal it.
+
+**Stated build order:** ASR-007's three-blog pipeline is TDD'd
+end-to-end first (domain set manually for tests; mostly tests against
+an in-memory/fake datastore, with a small number of sanity-level
+integration tests against the real database) before this ASR is
+picked up. This ASR itself starts from a concrete proof-of-concept use
+case — not the general mechanism first.
+
+**Open questions:**
+- A first concrete use case to TDD against: a real, simple, correct
+  metric + algorithm for a "first locked value," and a second,
+  legitimately different algorithm version for the same underlying
+  data that a "secondary chart" would use — not yet chosen.
+- How a `"locked-down"` tag is actually enforced (write-path rejection
+  in `Dal`? `Bll`-level check against the tag before any mutating
+  call?) — not yet designed.
+- Whether GUID-per-`Bll`-instance is generated at registration time or
+  per-deploy, and how it's surfaced to the lock/version-selection
+  mechanism.
+- Runtime implementation-swapping ("Try Beta") needs a resolution
+  mechanism beyond `registrations.py`'s current startup-time registry
+  — swapping *after* the composition root has already run is new
+  territory for this codebase and not yet designed.
