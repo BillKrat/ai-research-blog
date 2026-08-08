@@ -210,9 +210,19 @@ pip install -r requirements.txt
 uvicorn app:app --reload --port 8000
 ```
 
-Debugging: use the "FastAPI: app.py" config in VS Code's Run and
-Debug panel (`.vscode/launch.json`) — not plain F5 on whatever file
-happens to be open, which will try to execute the wrong file.
+Debugging: use the configurations in VS Code's Run and Debug panel
+(`.vscode/launch.json`) — not plain F5 on whatever file happens to be
+open, which will try to execute the wrong file:
+
+- `FastAPI: app.py` starts only the API under `debugpy`.
+- `Next.js: frontend` starts the `API: uvicorn` background task from
+  `.vscode/tasks.json`, waits for Uvicorn's application-started message,
+  then starts the Next.js client.
+- `Full stack: client + services` launches the frontend configuration,
+  which starts the API task first. This avoids starting the API twice.
+
+The API task expects the project interpreter at `.venv/bin/python`. Select
+that interpreter in VS Code before using the full-stack configuration.
 
 ## Testing
 
