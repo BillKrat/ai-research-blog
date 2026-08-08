@@ -7,8 +7,6 @@ interface AskResponse {
   error: string;
 }
 
-const apiUrl = "";
-
 export default function Home() {
   const [response, setResponse] = useState<AskResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
