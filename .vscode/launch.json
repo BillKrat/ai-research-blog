@@ -28,7 +28,12 @@
             "console": "integratedTerminal",
             "skipFiles": [
                 "<node_internals>/**"
-            ]
+            ],
+            "serverReadyAction": {
+                "pattern": "- Local:\\s+(https?://\\S+)",
+                "uriFormat": "%s",
+                "action": "openExternally"
+            }
         }
     ],
     "compounds": [
