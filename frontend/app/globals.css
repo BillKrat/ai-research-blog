@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap');
+
+:root {
+  --ink: #17201d;
+  --muted: #68736d;
+  --paper: #f5f3ed;
+  --lime: #d7f36b;
+  --orange: #ff7043;
+  --line: rgba(23, 32, 29, 0.16);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 88% 12%, rgba(215, 243, 107, 0.68), transparent 28rem),
+    linear-gradient(125deg, #f5f3ed 0%, #e9eee5 100%);
+  font-family: "Manrope", sans-serif;
+}
+
+.shell {
+  display: grid;
+  min-height: 100svh;
+  grid-template-columns: minmax(0, 720px) 240px;
+  align-items: center;
+  gap: 5rem;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 8vw 6vw;
+}
+
+.panel { max-width: 650px; }
+.eyebrow, .signal, .result span {
+  font-family: "DM Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+.eyebrow { margin: 0 0 2.4rem; color: var(--orange); }
+h1 { max-width: 620px; margin: 0; font-size: clamp(3.4rem, 8vw, 7.5rem); line-height: 0.92; letter-spacing: 0; }
+.lede { max-width: 470px; margin: 2.4rem 0; color: var(--muted); font-size: 1.08rem; line-height: 1.7; }
+button { border: 0; border-radius: 999px; padding: 1rem 2rem; color: var(--ink); background: var(--lime); font: 700 1rem "Manrope", sans-serif; cursor: pointer; box-shadow: 0 0.7rem 1.5rem rgba(23, 32, 29, 0.12); }
+button:hover:not(:disabled) { transform: translateY(-2px); }
+button:disabled { cursor: wait; opacity: 0.65; }
+.result { display: grid; gap: 0.8rem; margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line); font-size: 1.2rem; line-height: 1.5; }
+.result span { color: var(--orange); }
+.error { margin-top: 2rem; color: #b63420; }
+.signal { display: flex; align-items: center; gap: 0.7rem; align-self: end; color: var(--muted); white-space: nowrap; }
+.signal-dot { width: 0.65rem; height: 0.65rem; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 0.35rem rgba(255, 112, 67, 0.18); }
+
+@media (max-width: 760px) {
+  .shell { display: block; padding: 3rem 1.5rem; }
+  h1 { font-size: clamp(3.2rem, 17vw, 5.5rem); }
+  .signal { margin-top: 5rem; }
+}

@@ -1,16 +1,16 @@
-"""Streamlit implementation of the IView contract."""
+"""In-memory view adapter used by the HTTP API."""
 
 from typing import MutableMapping
 
 from shared.interfaces import IView, IViewModel
 
 
-class StreamlitView(IView):
-    """UI view that only exposes a ViewModel for binding."""
+class ApiView(IView):
+    """Provides the presenter with request-scoped state."""
 
-    def __init__(self, session_state: MutableMapping[str, str]) -> None:
+    def __init__(self) -> None:
         self._view_model: IViewModel | None = None
-        self._session_state = session_state
+        self._session_state: MutableMapping[str, str] = {}
 
     @property
     def session_state(self) -> MutableMapping[str, str]:

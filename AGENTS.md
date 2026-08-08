@@ -44,7 +44,7 @@ tracked in [docs/ASR.md](docs/ASR.md).
 ## Project
 
 - Repo: `BillKrat/ai-research-blog`
-- Stack: Python, Streamlit (UI), pytest, Anthropic Claude API,
+- Stack: Next.js (UI), Python/FastAPI (API), pytest, Anthropic Claude API,
   PostgreSQL
 - Deploy: Railway, auto-deploys from `main` on push
 - Live: https://blogresearch.net
@@ -58,7 +58,7 @@ Rationale: [docs/adr/0001](docs/adr/0001-branch-then-merge-workflow.md).
 ## Capabilities — current architecture
 
 The pattern is **MVPVM** (Model-View-Presenter-ViewModel), adapted for
-Streamlit's rerun model — not generic "MVP." See
+request-scoped HTTP interactions — not generic "MVP." See
 [docs/adr/0002](docs/adr/0002-mvp-di-provider-architecture.md) for the
 precise mapping and source citation.
 
@@ -82,24 +82,23 @@ names) → `shared/`; anything that names this app's specific choices →
 moving something to `shared/` later is cheap, walking back something
 prematurely generalized is not.
 
-- **View** — `app.py` (Streamlit entrypoint, the only module that
-  imports `streamlit`). `IView` (`shared/interfaces.py`) exposes
-  `session_state` (the raw binding container) and a settable
+- **View** — `frontend/` (Next.js client) calls the FastAPI entrypoint in
+  `app.py`. `IView` (`shared/interfaces.py`) exposes
+  request-scoped state (the raw binding container) and a settable
   `view_model` property; it has no `show_result()`/`show_error()`
-  methods. Interim by design —
-  [docs/adr/0006](docs/adr/0006-streamlit-interim-view.md).
-  `StreamlitView` (`shared/streamlit_view.py`) is the concrete
-  adapter — generic, not tied to this app's demo feature.
+  methods.
+  `ApiView` (`shared/api_view.py`) is the concrete adapter — generic,
+  not tied to this app's demo feature.
 - **ViewModel** — `IViewModel` (`shared/interfaces.py`) is the real
   bindable state contract: `result`/`error` as properties with
-  setters. `SessionStateViewModel` (`shared/session_state_view_model.py`)
-  backs it with `st.session_state`. A Presenter takes a
+  setters. `MappingViewModel` (`shared/mapping_view_model.py`)
+  backs it with request-scoped state. A Presenter takes a
   `ViewModelResolver` (`shared/interfaces.py` —
   `Callable[[IPresenter], IViewModel]`) as a constructor argument and
   calls it with itself to get its ViewModel, then assigns the result
   to `view.view_model` in its own `__init__`; after that, presenters
   write through `view.view_model.result = ...` / `.error = ...` and
-  never touch `st.session_state` directly again. (Property is
+  never touch request state directly again. (Property is
   `view_model`, snake_case — not `ViewModel` — Python naming, not the
   C#/WPF convention the concept comes from.)
 - **Presenter** — `blogresearch/presenters/` (app-specific: these
@@ -208,10 +207,10 @@ python3 -m venv venv
 source venv/bin/activate       # VS Code's integrated terminal does this automatically
                                 # once "Python: Select Interpreter" points at ./venv/bin/python
 pip install -r requirements.txt
-streamlit run app.py
+uvicorn app:app --reload --port 8000
 ```
 
-Debugging: use the "Streamlit: app.py" config in VS Code's Run and
+Debugging: use the "FastAPI: app.py" config in VS Code's Run and
 Debug panel (`.vscode/launch.json`) — not plain F5 on whatever file
 happens to be open, which will try to execute the wrong file.
 

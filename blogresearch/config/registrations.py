@@ -17,7 +17,7 @@ from shared.providers.claude_provider import ClaudeProvider
 from shared.providers.dci_provider import DCIProvider
 from shared.providers.postgres_provider import PostgresProvider
 from shared.providers.interfaces import IDbProvider, IProvider
-from shared.session_state_view_model import SessionStateViewModel
+from shared.mapping_view_model import MappingViewModel
 
 
 def _get_anthropic_api_key() -> str | None:
@@ -103,7 +103,7 @@ def resolve_db_provider(settings: AppSettings) -> IDbProvider:
 def resolve_viewmodel(presenter: IPresenter) -> IViewModel:
     """Resolve the ViewModel for the given presenter.
 
-    Every presenter today gets a SessionStateViewModel; the indirection
+    Every presenter today gets a MappingViewModel; the indirection
     means a future presenter needing a different ViewModel shape is a
     change here, not in every presenter's __init__.
 
@@ -113,7 +113,7 @@ def resolve_viewmodel(presenter: IPresenter) -> IViewModel:
     presenters depend on the ViewModelResolver callable type, never on
     this module, so the app wiring stays at the edge.
     """
-    return SessionStateViewModel(presenter.view.session_state)
+    return MappingViewModel(presenter.view.session_state)
 
 
 def resolve_presenter(view: IView, settings: AppSettings | None = None) -> IPresenter:

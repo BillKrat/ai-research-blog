@@ -1,14 +1,9 @@
 # AI Research Blog
 
-BlogResearch is a small Streamlit application built around a decoupled,
+BlogResearch is a small Next.js application with a Python API built around a decoupled,
 provider-based architecture: the UI never talks to Claude, Postgres, or
 any other data source directly — everything goes through interfaces
 wired up by a small application-level composition root.
-
-Note: Streamlit's rerun architecture will not be feasible for the
-direction this application will take; it is a temporary client until
-development of the infrastructure reaches a point where we'll use
-nextjs.
 
 Design rationale and decision history live in
 [docs/adr/](docs/adr/) — this file covers current capabilities only.
@@ -22,11 +17,11 @@ vocabulary anywhere in it — what a second app built on this pattern
 would start from); [`blogresearch/`](blogresearch/) is this app's own
 choices built on top of it.
 
-- **View** — Streamlit UI in [app.py](app.py). `IView`
+- **View** — Next.js UI in [frontend/](frontend/), backed by the FastAPI
+  endpoints in [app.py](app.py). `IView`
   ([shared/interfaces.py](shared/interfaces.py)) is the contract;
-  [shared/streamlit_view.py](shared/streamlit_view.py) is the Streamlit
-  adapter, and the only place that knows the `st.session_state` key
-  names.
+  [shared/api_view.py](shared/api_view.py) is the request-scoped API
+  adapter.
 - **Presenter** — [blogresearch/presenters/](blogresearch/presenters/)
   (app-specific — these implement this app's one demo feature):
   - `HelloPresenter` / `CustomPresenter` — `IProvider`-backed.
@@ -110,15 +105,53 @@ choices built on top of it.
 4. Run the app:
 
    ```bash
-   streamlit run app.py
+  uvicorn app:app --reload --port 8000
    ```
+
+  In another terminal, run the Next.js client:
+
+  ```bash
+  cd frontend
+  npm install
+  npm run dev
+  ```
+
+  The client runs at `http://localhost:3000` and calls the API at
+  `http://localhost:8000`. Set `NEXT_PUBLIC_API_URL` when the API is hosted
+  elsewhere.
 
 ## Deployment note
 
-The project is set up for Railway deployment through
-[Procfile](Procfile). Production secrets should be stored as
-environment variables in Railway rather than committed to source
-control.
+The Python API is set up for Railway deployment through [Procfile](Procfile).
+Deploy the API as one Railway service and the Next.js client as a second
+service.
+
+### Railway environment variables
+
+API service
+- `ANTHROPIC_API_KEY` (or `CLAUDE_API_KEY`) for Claude-backed runs
+- `DATABASE_URL` for Postgres-backed runs
+- `PROVIDER_NAME` — `claude` (default), `dci`, or `postgres`
+- `USE_CUSTOM_PRESENTER` — `true` or `false`
+- `FRONTEND_ORIGIN` — the public URL of the frontend service, for example
+  `https://your-frontend.up.railway.app`
+
+Frontend service
+- `NEXT_PUBLIC_API_URL` — the public URL of the API service, for example
+  `https://your-api.up.railway.app`
+
+### Deployment steps
+
+1. Create a Railway service from the repository root for the FastAPI app.
+2. The included [railway.toml](railway.toml) already sets the API start command to `uvicorn app:app --host 0.0.0.0 --port $PORT`.
+3. Create a second Railway service from the `frontend/` directory for the Next.js app.
+4. The included [frontend/railway.toml](frontend/railway.toml) already sets the frontend start command to `npm run start`.
+5. Set the frontend service's build command to `npm run build`.
+6. Set the frontend service's `NEXT_PUBLIC_API_URL` to the API service URL.
+7. Set the API service's `FRONTEND_ORIGIN` to the frontend service URL.
+8. Keep secrets in Railway environment variables rather than committing them to source control.
+
+With this wiring, the frontend calls `/api/ask`, and the Next.js rewrite forwards it to the configured API URL.
 
 ## Testing
 
@@ -131,9 +164,11 @@ pytest
   connection-string resolution, and a Postgres integration test that
   exercises the real database when `DATABASE_URL` is configured and
   reachable (skips gracefully otherwise).
+- [tests/test_api.py](tests/test_api.py) — the FastAPI `/api/ask` endpoint
+  through the offline DCI provider.
 - [tests/test_presenter.py](tests/test_presenter.py) — `HelloPresenter`,
   `CustomPresenter`, and `DbHelloPresenter`, covering both the success
-  path and the `ProviderError` → `view.show_error()` path for each.
+  path and the `ProviderError` path for each.
 - [tests/test_claude_provider.py](tests/test_claude_provider.py) —
   a real Anthropic SDK error wrapped as `ProviderError`.
 - [tests/test_environment.py](tests/test_environment.py) — `.env`
@@ -146,14 +181,15 @@ pytest
 ## Project structure
 
 ```text
-app.py
+app.py                      # FastAPI API entrypoint
+frontend/                   # Next.js client
 shared/                     # reusable framework - no app-specific vocabulary (ADR-0009)
   container.py              # reusable DI container primitives
   interfaces.py              # IView, IViewModel, IPresenter, ViewModelResolver
   exceptions.py               # ProviderError
   environment.py               # .env loading (no import-time side effects)
-  streamlit_view.py             # IView adapter for st.session_state
-  session_state_view_model.py    # IViewModel adapter for st.session_state
+  api_view.py                   # IView adapter for HTTP requests
+  mapping_view_model.py         # IViewModel adapter for request state
   providers/
     interfaces.py                 # IProvider, IDbProvider, IToolProvider
     claude_provider.py            # IProvider

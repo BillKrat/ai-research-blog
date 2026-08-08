@@ -1,22 +1,48 @@
-"""Streamlit entrypoint - the only module that talks to Streamlit directly."""
+import os
 
-import streamlit as st
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from blogresearch.config.registrations import resolve_presenter
 from shared import environment as env
-from shared.streamlit_view import StreamlitView
+from shared.api_view import ApiView
 
 env.load()
 
-view = StreamlitView(st.session_state)
-presenter = resolve_presenter(view)
+frontend_origins = [
+    origin.strip()
+    for origin in os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000").split(",")
+    if origin.strip()
+]
 
-st.title("BlogResearch — MVPVM + DI + Provider Model")
+app = FastAPI(title="BlogResearch API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=frontend_origins,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
-if st.button("Ask"):
+
+class AskResponse(BaseModel):
+    result: str
+    error: str
+
+
+@app.get("/")
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.post("/api/ask", response_model=AskResponse)
+def ask() -> AskResponse:
+    view = ApiView()
+    presenter = resolve_presenter(view)
     presenter.on_button_click()
 
-if view.view_model.error:
-    st.error(view.view_model.error)
-else:
-    st.write("Result:", view.view_model.result)
+    return AskResponse(
+        result=view.view_model.result,
+        error=view.view_model.error,
+    )

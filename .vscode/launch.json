@@ -2,15 +2,41 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Streamlit: app.py",
+            "name": "FastAPI: app.py",
             "type": "debugpy",
             "request": "launch",
-            "module": "streamlit",
+            "module": "uvicorn",
             "args": [
-                "run",
-                "${workspaceFolder}/app.py"
+                "app:app",
+                "--port",
+                "8000"
             ],
+            "cwd": "${workspaceFolder}",
             "justMyCode": true
+        },
+        {
+            "name": "Next.js: frontend",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/frontend",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "dev"
+            ],
+            "preLaunchTask": "API: uvicorn",
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Full stack: client + services",
+            "configurations": [
+                "Next.js: frontend"
+            ]
         }
     ]
 }
