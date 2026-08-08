@@ -1,0 +1,32 @@
+[
+  {
+    "subject": "{base}seed/person/application-owner",
+    "predicate": "{base}type",
+    "object_value": "{base}Person"
+  },
+  {
+    "subject": "{base}seed/person/application-owner",
+    "predicate": "{base}name",
+    "object_value": "Application owner"
+  },
+  {
+    "subject": "{base}seed/dataset/example",
+    "predicate": "{base}type",
+    "object_value": "{base}DataSet"
+  },
+  {
+    "subject": "{base}seed/dataset/example",
+    "predicate": "{base}name",
+    "object_value": "Example data set"
+  },
+  {
+    "subject": "{base}seed/database-schema/example",
+    "predicate": "{base}type",
+    "object_value": "{base}DatabaseSchema"
+  },
+  {
+    "subject": "{base}seed/database-schema/example",
+    "predicate": "{base}name",
+    "object_value": "Example database schema"
+  }
+]
