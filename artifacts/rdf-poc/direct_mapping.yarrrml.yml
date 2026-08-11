@@ -1,0 +1,240 @@
+prefixes:
+  base: https://blogresearch.net/id/
+  xsd: http://www.w3.org/2001/XMLSchema#
+mappings:
+  organizations_map:
+    sources:
+    - query: SELECT * FROM "organizations"
+    s: base:organizations/id=$(id)
+    po:
+    - [a, base:organizations~iri]
+    - p: base:organizations#id
+      o:
+      - value: $(id)
+        datatype: xsd:string
+    - p: base:organizations#tenant_id
+      o:
+      - value: $(tenant_id)
+        datatype: xsd:string
+    - p: base:organizations#name
+      o:
+      - value: $(name)
+        datatype: xsd:string
+    - p: base:organizations#description
+      o:
+      - value: $(description)
+        datatype: xsd:string
+    - p: base:organizations#created_at
+      o:
+      - value: $(created_at)
+        datatype: xsd:string
+    - p: base:organizations#ref-tenant_id
+      o:
+      - mapping: tenants_map
+        condition:
+          function: equal
+          parameters:
+          - [str1, $(tenant_id), s]
+          - [str2, $(id), o]
+  permissions_map:
+    sources:
+    - query: SELECT * FROM "permissions"
+    s: base:permissions/id=$(id)
+    po:
+    - [a, base:permissions~iri]
+    - p: base:permissions#id
+      o:
+      - value: $(id)
+        datatype: xsd:string
+    - p: base:permissions#code
+      o:
+      - value: $(code)
+        datatype: xsd:string
+    - p: base:permissions#description
+      o:
+      - value: $(description)
+        datatype: xsd:string
+  role_permissions_map:
+    sources:
+    - query: SELECT * FROM "role_permissions"
+    s: base:role_permissions/role_id=$(role_id);permission_id=$(permission_id)
+    po:
+    - [a, base:role_permissions~iri]
+    - p: base:role_permissions#role_id
+      o:
+      - value: $(role_id)
+        datatype: xsd:string
+    - p: base:role_permissions#permission_id
+      o:
+      - value: $(permission_id)
+        datatype: xsd:string
+    - p: base:role_permissions#ref-role_id
+      o:
+      - mapping: roles_map
+        condition:
+          function: equal
+          parameters:
+          - [str1, $(role_id), s]
+          - [str2, $(id), o]
+    - p: base:role_permissions#ref-permission_id
+      o:
+      - mapping: permissions_map
+        condition:
+          function: equal
+          parameters:
+          - [str1, $(permission_id), s]
+          - [str2, $(id), o]
+  roles_map:
+    sources:
+    - query: SELECT * FROM "roles"
+    s: base:roles/id=$(id)
+    po:
+    - [a, base:roles~iri]
+    - p: base:roles#id
+      o:
+      - value: $(id)
+        datatype: xsd:string
+    - p: base:roles#tenant_id
+      o:
+      - value: $(tenant_id)
+        datatype: xsd:string
+    - p: base:roles#name
+      o:
+      - value: $(name)
+        datatype: xsd:string
+    - p: base:roles#description
+      o:
+      - value: $(description)
+        datatype: xsd:string
+    - p: base:roles#created_at
+      o:
+      - value: $(created_at)
+        datatype: xsd:string
+    - p: base:roles#ref-tenant_id
+      o:
+      - mapping: tenants_map
+        condition:
+          function: equal
+          parameters:
+          - [str1, $(tenant_id), s]
+          - [str2, $(id), o]
+  tenants_map:
+    sources:
+    - query: SELECT * FROM "tenants"
+    s: base:tenants/id=$(id)
+    po:
+    - [a, base:tenants~iri]
+    - p: base:tenants#id
+      o:
+      - value: $(id)
+        datatype: xsd:string
+    - p: base:tenants#name
+      o:
+      - value: $(name)
+        datatype: xsd:string
+    - p: base:tenants#description
+      o:
+      - value: $(description)
+        datatype: xsd:string
+    - p: base:tenants#created_at
+      o:
+      - value: $(created_at)
+        datatype: xsd:string
+  user_organizations_map:
+    sources:
+    - query: SELECT * FROM "user_organizations"
+    s: base:user_organizations/user_id=$(user_id);organization_id=$(organization_id)
+    po:
+    - [a, base:user_organizations~iri]
+    - p: base:user_organizations#user_id
+      o:
+      - value: $(user_id)
+        datatype: xsd:string
+    - p: base:user_organizations#organization_id
+      o:
+      - value: $(organization_id)
+        datatype: xsd:string
+    - p: base:user_organizations#ref-user_id
+      o:
+      - mapping: users_map
+        condition:
+          function: equal
+          parameters:
+          - [str1, $(user_id), s]
+          - [str2, $(id), o]
+    - p: base:user_organizations#ref-organization_id
+      o:
+      - mapping: organizations_map
+        condition:
+          function: equal
+          parameters:
+          - [str1, $(organization_id), s]
+          - [str2, $(id), o]
+  user_roles_map:
+    sources:
+    - query: SELECT * FROM "user_roles"
+    s: base:user_roles/user_id=$(user_id);role_id=$(role_id)
+    po:
+    - [a, base:user_roles~iri]
+    - p: base:user_roles#user_id
+      o:
+      - value: $(user_id)
+        datatype: xsd:string
+    - p: base:user_roles#role_id
+      o:
+      - value: $(role_id)
+        datatype: xsd:string
+    - p: base:user_roles#ref-user_id
+      o:
+      - mapping: users_map
+        condition:
+          function: equal
+          parameters:
+          - [str1, $(user_id), s]
+          - [str2, $(id), o]
+    - p: base:user_roles#ref-role_id
+      o:
+      - mapping: roles_map
+        condition:
+          function: equal
+          parameters:
+          - [str1, $(role_id), s]
+          - [str2, $(id), o]
+  users_map:
+    sources:
+    - query: SELECT * FROM "users"
+    s: base:users/id=$(id)
+    po:
+    - [a, base:users~iri]
+    - p: base:users#id
+      o:
+      - value: $(id)
+        datatype: xsd:string
+    - p: base:users#tenant_id
+      o:
+      - value: $(tenant_id)
+        datatype: xsd:string
+    - p: base:users#email
+      o:
+      - value: $(email)
+        datatype: xsd:string
+    - p: base:users#display_name
+      o:
+      - value: $(display_name)
+        datatype: xsd:string
+    - p: base:users#description
+      o:
+      - value: $(description)
+        datatype: xsd:string
+    - p: base:users#created_at
+      o:
+      - value: $(created_at)
+        datatype: xsd:string
+    - p: base:users#ref-tenant_id
+      o:
+      - mapping: tenants_map
+        condition:
+          function: equal
+          parameters:
+          - [str1, $(tenant_id), s]
+          - [str2, $(id), o]

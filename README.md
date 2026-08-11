@@ -1,12 +1,57 @@
 # AI Research Blog
 
-BlogResearch is a small Next.js application with a Python API built around a decoupled,
-provider-based architecture: the UI never talks to Claude, Postgres, or
-any other data source directly — everything goes through interfaces
-wired up by a small application-level composition root.
+An AI-assisted, multi-tenant blog platform: Claude helps users draft
+posts grounded in their own uploaded documents, and queries can span
+both a user's own blogs and any other user's blog they subscribe to.
+Two tenants and four blogs
+([blogresearch.net](https://blogresearch.net),
+[adventuresedge.net](https://adventuresedge.net)) are already seeded
+in Postgres as the target data model; the live site today still runs
+the single-feature demo this decoupled architecture was built to
+prove out first (see "What the app does today" below) — this is a
+working testbed for the architecture, not the finished product.
 
-Design rationale and decision history live in
-[docs/adr/](docs/adr/) — this file covers current capabilities only.
+Two things make this more than a CRUD blog:
+
+- **Locked, versioned business logic for regulated data.** User-created
+  content can be sealed ("locked-down") once signed off, so a value
+  stays reproducible exactly as it was at lock time even after the
+  underlying algorithm improves for new work — the direct answer to a
+  data-integrity failure mode from prior regulated-data experience
+  (see [ASR-008](docs/ASR.md#asr-008-locked-value--versioned-bll-for-regulated-data)).
+  A "Try Beta" toggle is planned on top of it, letting a user swap to a
+  new implementation at runtime and revert if it isn't ready.
+- **Schema-flexible data via a triple store**, not a fixed relational
+  schema — the same model already proven out for blog/organization data
+  in Postgres, and now being evaluated against a real graph database
+  (Neo4j Aura, with local Memgraph for heavy dev workloads) to move
+  from single-valued triples toward genuine RDF-style multi-valued
+  facts. A `morph-kgc`-based SQLite→RDF pipeline is already proven
+  end-to-end (`artifacts/rdf-poc/`); landing that RDF in a Cypher store
+  is the open bridge problem.
+
+Everywhere the UI is decoupled from Claude, Postgres, or any other data
+source: nothing talks to a concrete provider directly, everything goes
+through interfaces wired up by a small application-level composition
+root. That decoupling is what lets the roadmap below — a real graph
+database, an MCP-mediated tool layer for Claude, JWT-based per-user
+authorization — get added as new implementations rather than rewrites.
+
+**Where this is headed**, requirement by requirement, is tracked in
+[docs/ASR.md](docs/ASR.md) — each entry states what's required, why it
+matters architecturally, and what's still an open decision:
+[triple-store schema](docs/ASR.md#asr-001-postgresql-triple-store-with-inspectable-schema),
+[JWT-based security](docs/ASR.md#asr-002-security-as-the-cross-cutting-foundation),
+[MCP as the Claude tool gateway](docs/ASR.md#asr-003-mcp-as-the-tool-layer-gateway-for-the-ai-assistant),
+[documents + cross-user subscriptions](docs/ASR.md#asr-004-ai-assisted-blog-platform-with-documents-and-cross-user-subscriptions),
+[cost-aware model routing](docs/ASR.md#asr-005-ai-cost-mitigation-via-model-routing),
+[MEF-style plugin extensibility](docs/ASR.md#asr-006-pluginextensibility-framework-mef-style),
+[the Blogs feature](docs/ASR.md#asr-007-blogs-feature--multi-domain-pipeline-built-toward-the-model),
+and [locked/versioned BLL](docs/ASR.md#asr-008-locked-value--versioned-bll-for-regulated-data).
+
+Design rationale and decision history for what's already built live in
+[docs/adr/](docs/adr/) — the rest of this file covers current
+capabilities only.
 
 ## Architecture
 
@@ -213,5 +258,6 @@ docs/
 
 ## Further reading
 
-Why the app is structured this way, what was tried and replaced, and
-what's designed but not yet built: [docs/adr/](docs/adr/).
+Where the product is headed, requirement by requirement:
+[docs/ASR.md](docs/ASR.md). Why the app is structured this way and
+what was tried and replaced: [docs/adr/](docs/adr/).

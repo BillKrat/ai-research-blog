@@ -1,0 +1,241 @@
+@prefix ns1: <https://blogresearch.net/id/organizations#> .
+@prefix ns2: <https://blogresearch.net/id/users#> .
+@prefix ns3: <https://blogresearch.net/id/role_permissions#> .
+@prefix ns4: <https://blogresearch.net/id/roles#> .
+@prefix ns5: <https://blogresearch.net/id/user_organizations#> .
+@prefix ns6: <https://blogresearch.net/id/user_roles#> .
+@prefix ns7: <https://blogresearch.net/id/tenants#> .
+@prefix ns8: <https://blogresearch.net/id/permissions#> .
+
+<https://blogresearch.net/id/organizations/id=o4444444-dddd-eeee-ffff-444444444444> a <https://blogresearch.net/id/organizations> ;
+    ns1:created_at "2026-08-10T14:04:30Z" ;
+    ns1:description "Exploration of Python programming and outdoor tech" ;
+    ns1:id "o4444444-dddd-eeee-ffff-444444444444" ;
+    ns1:name "Python" ;
+    ns1:ref-tenant_id <https://blogresearch.net/id/tenants/id=d2222222-bbbb-cccc-dddd-222222222222> ;
+    ns1:tenant_id "d2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/role_permissions/role_id=r1111111-aaaa-bbbb-cccc-111111111111;permission_id=p1111111-aaaa-bbbb-cccc-121212121212> a <https://blogresearch.net/id/role_permissions> ;
+    ns3:permission_id "p1111111-aaaa-bbbb-cccc-121212121212" ;
+    ns3:ref-permission_id <https://blogresearch.net/id/permissions/id=p1111111-aaaa-bbbb-cccc-121212121212> ;
+    ns3:ref-role_id <https://blogresearch.net/id/roles/id=r1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns3:role_id "r1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/role_permissions/role_id=r1111111-aaaa-bbbb-cccc-111111111111;permission_id=p2222222-bbbb-cccc-dddd-232323232323> a <https://blogresearch.net/id/role_permissions> ;
+    ns3:permission_id "p2222222-bbbb-cccc-dddd-232323232323" ;
+    ns3:ref-permission_id <https://blogresearch.net/id/permissions/id=p2222222-bbbb-cccc-dddd-232323232323> ;
+    ns3:ref-role_id <https://blogresearch.net/id/roles/id=r1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns3:role_id "r1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/role_permissions/role_id=r1111111-aaaa-bbbb-cccc-111111111111;permission_id=p3333333-cccc-dddd-eeee-343434343434> a <https://blogresearch.net/id/role_permissions> ;
+    ns3:permission_id "p3333333-cccc-dddd-eeee-343434343434" ;
+    ns3:ref-permission_id <https://blogresearch.net/id/permissions/id=p3333333-cccc-dddd-eeee-343434343434> ;
+    ns3:ref-role_id <https://blogresearch.net/id/roles/id=r1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns3:role_id "r1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/role_permissions/role_id=r1111111-aaaa-bbbb-cccc-111111111111;permission_id=p4444444-dddd-eeee-ffff-454545454545> a <https://blogresearch.net/id/role_permissions> ;
+    ns3:permission_id "p4444444-dddd-eeee-ffff-454545454545" ;
+    ns3:ref-permission_id <https://blogresearch.net/id/permissions/id=p4444444-dddd-eeee-ffff-454545454545> ;
+    ns3:ref-role_id <https://blogresearch.net/id/roles/id=r1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns3:role_id "r1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/role_permissions/role_id=r2222222-bbbb-cccc-dddd-222222222222;permission_id=p1111111-aaaa-bbbb-cccc-121212121212> a <https://blogresearch.net/id/role_permissions> ;
+    ns3:permission_id "p1111111-aaaa-bbbb-cccc-121212121212" ;
+    ns3:ref-permission_id <https://blogresearch.net/id/permissions/id=p1111111-aaaa-bbbb-cccc-121212121212> ;
+    ns3:ref-role_id <https://blogresearch.net/id/roles/id=r2222222-bbbb-cccc-dddd-222222222222> ;
+    ns3:role_id "r2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/role_permissions/role_id=r2222222-bbbb-cccc-dddd-222222222222;permission_id=p2222222-bbbb-cccc-dddd-232323232323> a <https://blogresearch.net/id/role_permissions> ;
+    ns3:permission_id "p2222222-bbbb-cccc-dddd-232323232323" ;
+    ns3:ref-permission_id <https://blogresearch.net/id/permissions/id=p2222222-bbbb-cccc-dddd-232323232323> ;
+    ns3:ref-role_id <https://blogresearch.net/id/roles/id=r2222222-bbbb-cccc-dddd-222222222222> ;
+    ns3:role_id "r2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/role_permissions/role_id=r3333333-cccc-dddd-eeee-333333333333;permission_id=p1111111-aaaa-bbbb-cccc-121212121212> a <https://blogresearch.net/id/role_permissions> ;
+    ns3:permission_id "p1111111-aaaa-bbbb-cccc-121212121212" ;
+    ns3:ref-permission_id <https://blogresearch.net/id/permissions/id=p1111111-aaaa-bbbb-cccc-121212121212> ;
+    ns3:ref-role_id <https://blogresearch.net/id/roles/id=r3333333-cccc-dddd-eeee-333333333333> ;
+    ns3:role_id "r3333333-cccc-dddd-eeee-333333333333" .
+
+<https://blogresearch.net/id/role_permissions/role_id=r3333333-cccc-dddd-eeee-333333333333;permission_id=p2222222-bbbb-cccc-dddd-232323232323> a <https://blogresearch.net/id/role_permissions> ;
+    ns3:permission_id "p2222222-bbbb-cccc-dddd-232323232323" ;
+    ns3:ref-permission_id <https://blogresearch.net/id/permissions/id=p2222222-bbbb-cccc-dddd-232323232323> ;
+    ns3:ref-role_id <https://blogresearch.net/id/roles/id=r3333333-cccc-dddd-eeee-333333333333> ;
+    ns3:role_id "r3333333-cccc-dddd-eeee-333333333333" .
+
+<https://blogresearch.net/id/role_permissions/role_id=r3333333-cccc-dddd-eeee-333333333333;permission_id=p3333333-cccc-dddd-eeee-343434343434> a <https://blogresearch.net/id/role_permissions> ;
+    ns3:permission_id "p3333333-cccc-dddd-eeee-343434343434" ;
+    ns3:ref-permission_id <https://blogresearch.net/id/permissions/id=p3333333-cccc-dddd-eeee-343434343434> ;
+    ns3:ref-role_id <https://blogresearch.net/id/roles/id=r3333333-cccc-dddd-eeee-333333333333> ;
+    ns3:role_id "r3333333-cccc-dddd-eeee-333333333333" .
+
+<https://blogresearch.net/id/roles/id=r4444444-dddd-eeee-ffff-444444444444> a <https://blogresearch.net/id/roles> ;
+    ns4:created_at "2026-08-10T14:04:30Z" ;
+    ns4:description "Full domain access" ;
+    ns4:id "r4444444-dddd-eeee-ffff-444444444444" ;
+    ns4:name "Admin" ;
+    ns4:ref-tenant_id <https://blogresearch.net/id/tenants/id=d2222222-bbbb-cccc-dddd-222222222222> ;
+    ns4:tenant_id "d2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/user_organizations/user_id=u1111111-aaaa-bbbb-cccc-111111111111;organization_id=o1111111-aaaa-bbbb-cccc-111111111111> a <https://blogresearch.net/id/user_organizations> ;
+    ns5:organization_id "o1111111-aaaa-bbbb-cccc-111111111111" ;
+    ns5:ref-organization_id <https://blogresearch.net/id/organizations/id=o1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns5:ref-user_id <https://blogresearch.net/id/users/id=u1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns5:user_id "u1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/user_organizations/user_id=u1111111-aaaa-bbbb-cccc-111111111111;organization_id=o2222222-bbbb-cccc-dddd-222222222222> a <https://blogresearch.net/id/user_organizations> ;
+    ns5:organization_id "o2222222-bbbb-cccc-dddd-222222222222" ;
+    ns5:ref-organization_id <https://blogresearch.net/id/organizations/id=o2222222-bbbb-cccc-dddd-222222222222> ;
+    ns5:ref-user_id <https://blogresearch.net/id/users/id=u1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns5:user_id "u1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/user_organizations/user_id=u2222222-bbbb-cccc-dddd-222222222222;organization_id=o1111111-aaaa-bbbb-cccc-111111111111> a <https://blogresearch.net/id/user_organizations> ;
+    ns5:organization_id "o1111111-aaaa-bbbb-cccc-111111111111" ;
+    ns5:ref-organization_id <https://blogresearch.net/id/organizations/id=o1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns5:ref-user_id <https://blogresearch.net/id/users/id=u2222222-bbbb-cccc-dddd-222222222222> ;
+    ns5:user_id "u2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/user_organizations/user_id=u2222222-bbbb-cccc-dddd-222222222222;organization_id=o3333333-cccc-dddd-eeee-333333333333> a <https://blogresearch.net/id/user_organizations> ;
+    ns5:organization_id "o3333333-cccc-dddd-eeee-333333333333" ;
+    ns5:ref-organization_id <https://blogresearch.net/id/organizations/id=o3333333-cccc-dddd-eeee-333333333333> ;
+    ns5:ref-user_id <https://blogresearch.net/id/users/id=u2222222-bbbb-cccc-dddd-222222222222> ;
+    ns5:user_id "u2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/user_roles/user_id=u1111111-aaaa-bbbb-cccc-111111111111;role_id=r2222222-bbbb-cccc-dddd-222222222222> a <https://blogresearch.net/id/user_roles> ;
+    ns6:ref-role_id <https://blogresearch.net/id/roles/id=r2222222-bbbb-cccc-dddd-222222222222> ;
+    ns6:ref-user_id <https://blogresearch.net/id/users/id=u1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns6:role_id "r2222222-bbbb-cccc-dddd-222222222222" ;
+    ns6:user_id "u1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/user_roles/user_id=u1111111-aaaa-bbbb-cccc-111111111111;role_id=r5555555-eeee-ffff-aaaa-555555555555> a <https://blogresearch.net/id/user_roles> ;
+    ns6:ref-role_id <https://blogresearch.net/id/roles/id=r5555555-eeee-ffff-aaaa-555555555555> ;
+    ns6:ref-user_id <https://blogresearch.net/id/users/id=u1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns6:role_id "r5555555-eeee-ffff-aaaa-555555555555" ;
+    ns6:user_id "u1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/user_roles/user_id=u2222222-bbbb-cccc-dddd-222222222222;role_id=r3333333-cccc-dddd-eeee-333333333333> a <https://blogresearch.net/id/user_roles> ;
+    ns6:ref-role_id <https://blogresearch.net/id/roles/id=r3333333-cccc-dddd-eeee-333333333333> ;
+    ns6:ref-user_id <https://blogresearch.net/id/users/id=u2222222-bbbb-cccc-dddd-222222222222> ;
+    ns6:role_id "r3333333-cccc-dddd-eeee-333333333333" ;
+    ns6:user_id "u2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/user_roles/user_id=u2222222-bbbb-cccc-dddd-222222222222;role_id=r6666666-ffff-aaaa-bbbb-666666666666> a <https://blogresearch.net/id/user_roles> ;
+    ns6:ref-role_id <https://blogresearch.net/id/roles/id=r6666666-ffff-aaaa-bbbb-666666666666> ;
+    ns6:ref-user_id <https://blogresearch.net/id/users/id=u2222222-bbbb-cccc-dddd-222222222222> ;
+    ns6:role_id "r6666666-ffff-aaaa-bbbb-666666666666" ;
+    ns6:user_id "u2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/organizations/id=o2222222-bbbb-cccc-dddd-222222222222> a <https://blogresearch.net/id/organizations> ;
+    ns1:created_at "2026-08-10T14:04:30Z" ;
+    ns1:description "Inspirational and spiritual writing" ;
+    ns1:id "o2222222-bbbb-cccc-dddd-222222222222" ;
+    ns1:name "Saints" ;
+    ns1:ref-tenant_id <https://blogresearch.net/id/tenants/id=d1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns1:tenant_id "d1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/organizations/id=o3333333-cccc-dddd-eeee-333333333333> a <https://blogresearch.net/id/organizations> ;
+    ns1:created_at "2026-08-10T14:04:30Z" ;
+    ns1:description "Adventure-driven research content" ;
+    ns1:id "o3333333-cccc-dddd-eeee-333333333333" ;
+    ns1:name "blogResearch" ;
+    ns1:ref-tenant_id <https://blogresearch.net/id/tenants/id=d2222222-bbbb-cccc-dddd-222222222222> ;
+    ns1:tenant_id "d2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/permissions/id=p4444444-dddd-eeee-ffff-454545454545> a <https://blogresearch.net/id/permissions> ;
+    ns8:code "BLOG_ADMIN" ;
+    ns8:description "Full administrative control" ;
+    ns8:id "p4444444-dddd-eeee-ffff-454545454545" .
+
+<https://blogresearch.net/id/roles/id=r5555555-eeee-ffff-aaaa-555555555555> a <https://blogresearch.net/id/roles> ;
+    ns4:created_at "2026-08-10T14:04:30Z" ;
+    ns4:description "Can write and edit posts" ;
+    ns4:id "r5555555-eeee-ffff-aaaa-555555555555" ;
+    ns4:name "Author" ;
+    ns4:ref-tenant_id <https://blogresearch.net/id/tenants/id=d2222222-bbbb-cccc-dddd-222222222222> ;
+    ns4:tenant_id "d2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/roles/id=r6666666-ffff-aaaa-bbbb-666666666666> a <https://blogresearch.net/id/roles> ;
+    ns4:created_at "2026-08-10T14:04:30Z" ;
+    ns4:description "Can edit and publish posts" ;
+    ns4:id "r6666666-ffff-aaaa-bbbb-666666666666" ;
+    ns4:name "Editor" ;
+    ns4:ref-tenant_id <https://blogresearch.net/id/tenants/id=d2222222-bbbb-cccc-dddd-222222222222> ;
+    ns4:tenant_id "d2222222-bbbb-cccc-dddd-222222222222" .
+
+<https://blogresearch.net/id/organizations/id=o1111111-aaaa-bbbb-cccc-111111111111> a <https://blogresearch.net/id/organizations> ;
+    ns1:created_at "2026-08-10T14:04:30Z" ;
+    ns1:description "AI research and analysis" ;
+    ns1:id "o1111111-aaaa-bbbb-cccc-111111111111" ;
+    ns1:name "BlogAI" ;
+    ns1:ref-tenant_id <https://blogresearch.net/id/tenants/id=d1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns1:tenant_id "d1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/permissions/id=p3333333-cccc-dddd-eeee-343434343434> a <https://blogresearch.net/id/permissions> ;
+    ns8:code "BLOG_PUBLISH" ;
+    ns8:description "Publish blog posts" ;
+    ns8:id "p3333333-cccc-dddd-eeee-343434343434" .
+
+<https://blogresearch.net/id/permissions/id=p1111111-aaaa-bbbb-cccc-121212121212> a <https://blogresearch.net/id/permissions> ;
+    ns8:code "BLOG_READ" ;
+    ns8:description "Read blog content" ;
+    ns8:id "p1111111-aaaa-bbbb-cccc-121212121212" .
+
+<https://blogresearch.net/id/permissions/id=p2222222-bbbb-cccc-dddd-232323232323> a <https://blogresearch.net/id/permissions> ;
+    ns8:code "BLOG_WRITE" ;
+    ns8:description "Write blog posts" ;
+    ns8:id "p2222222-bbbb-cccc-dddd-232323232323" .
+
+<https://blogresearch.net/id/roles/id=r2222222-bbbb-cccc-dddd-222222222222> a <https://blogresearch.net/id/roles> ;
+    ns4:created_at "2026-08-10T14:04:30Z" ;
+    ns4:description "Can write and edit posts" ;
+    ns4:id "r2222222-bbbb-cccc-dddd-222222222222" ;
+    ns4:name "Author" ;
+    ns4:ref-tenant_id <https://blogresearch.net/id/tenants/id=d1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns4:tenant_id "d1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/roles/id=r1111111-aaaa-bbbb-cccc-111111111111> a <https://blogresearch.net/id/roles> ;
+    ns4:created_at "2026-08-10T14:04:30Z" ;
+    ns4:description "Full domain access" ;
+    ns4:id "r1111111-aaaa-bbbb-cccc-111111111111" ;
+    ns4:name "Admin" ;
+    ns4:ref-tenant_id <https://blogresearch.net/id/tenants/id=d1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns4:tenant_id "d1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/roles/id=r3333333-cccc-dddd-eeee-333333333333> a <https://blogresearch.net/id/roles> ;
+    ns4:created_at "2026-08-10T14:04:30Z" ;
+    ns4:description "Can edit and publish posts" ;
+    ns4:id "r3333333-cccc-dddd-eeee-333333333333" ;
+    ns4:name "Editor" ;
+    ns4:ref-tenant_id <https://blogresearch.net/id/tenants/id=d1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns4:tenant_id "d1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/users/id=u1111111-aaaa-bbbb-cccc-111111111111> a <https://blogresearch.net/id/users> ;
+    ns2:created_at "2026-08-10T14:04:30Z" ;
+    ns2:description "Primary author and system owner" ;
+    ns2:display_name "Bill Kratochvil" ;
+    ns2:email "billkrat@example.com" ;
+    ns2:id "u1111111-aaaa-bbbb-cccc-111111111111" ;
+    ns2:ref-tenant_id <https://blogresearch.net/id/tenants/id=d1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns2:tenant_id "d1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/users/id=u2222222-bbbb-cccc-dddd-222222222222> a <https://blogresearch.net/id/users> ;
+    ns2:created_at "2026-08-10T14:04:30Z" ;
+    ns2:description "AI assistant and contributor" ;
+    ns2:display_name "Claude AI" ;
+    ns2:email "claude@example.com" ;
+    ns2:id "u2222222-bbbb-cccc-dddd-222222222222" ;
+    ns2:ref-tenant_id <https://blogresearch.net/id/tenants/id=d1111111-aaaa-bbbb-cccc-111111111111> ;
+    ns2:tenant_id "d1111111-aaaa-bbbb-cccc-111111111111" .
+
+<https://blogresearch.net/id/tenants/id=d2222222-bbbb-cccc-dddd-222222222222> a <https://blogresearch.net/id/tenants> ;
+    ns7:created_at "2026-08-10T14:04:30Z" ;
+    ns7:description "Adventure and exploration blog network" ;
+    ns7:id "d2222222-bbbb-cccc-dddd-222222222222" ;
+    ns7:name "https://adventuresEdge.net" .
+
+<https://blogresearch.net/id/tenants/id=d1111111-aaaa-bbbb-cccc-111111111111> a <https://blogresearch.net/id/tenants> ;
+    ns7:created_at "2026-08-10T14:04:30Z" ;
+    ns7:description "Primary domain for research-focused blogs" ;
+    ns7:id "d1111111-aaaa-bbbb-cccc-111111111111" ;
+    ns7:name "https://blogResearch.net" .
+
