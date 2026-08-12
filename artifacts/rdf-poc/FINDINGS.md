@@ -483,7 +483,58 @@ POC-only — application code (`shared/repositories/`) imports it now.
 
 **Still not done:** this repository isn't wired into
 `resolve_presenter()`/the composition root — no UI feature consumes
-it yet, same as `PostgresTripleRepository`. The Railway-volume
-persistence question above is also still open — everything here has
-been tested against local paths, not the actual
-`ai-research-blog-volume`.
+it yet, same as `PostgresTripleRepository`.
+
+## Railway-volume persistence: CONFIRMED (2026-08-11)
+
+The remaining open question — does an on-disk Oxigraph store actually
+survive a real Railway restart, not just a fresh `Store` object in the
+same local process — is now answered live, against the real
+infrastructure.
+
+**Finding along the way, not a footnote:** the volume originally
+provisioned for this (`ai-research-blog-volume`) was attached to the
+wrong service. This project has two Railway services —
+`ai-research-blog` (the Next.js client, `blogresearch.net`) and
+`ai-research-api` (the FastAPI service that actually runs `app.py`,
+private-network-only, no public domain) — and the volume had been
+mounted on the former, which never runs Python code at all. Fixed by
+provisioning a fresh volume (`ai-research-api-volume`, same
+`/var/lib/agraph` mount path) directly on `ai-research-api` via its
+context menu's "Attach volume" action — Railway does not expose a way
+to reattach an existing volume to a different service through its UI,
+only create-fresh-and-discard-old. `ai-research-blog-volume` is still
+attached to `ai-research-blog`, empty and effectively free (Railway
+only charges for data stored) — left as-is, cleanup at the user's
+convenience, not urgent.
+
+**Test method:** a temporary, gated diagnostic endpoint
+(`/api/_debug/oxigraph-volume-check` in `app.py`, inert unless
+`DEBUG_OXIGRAPH_VOLUME_CHECK` is set — since removed) wrote a
+timestamped value via `OxigraphTripleRepository(store_path="/var/lib/agraph/oxigraph_poc_check")`
+and returned both the previous and new value on each call. Reached
+over the public `blogresearch.net` domain — the Next.js rewrite in
+`frontend/next.config.js` (`/api/:path* → NEXT_PUBLIC_API_URL`)
+proxies through Railway's private network to `ai-research-api`
+server-side, so the API service never needed a public domain of its
+own for this to work.
+
+**Result:**
+1. First call (fresh deploy): `previous_value: null`, `new_value:
+   "2026-08-12T01:56:26...-41ee488c"`.
+2. Restarted `ai-research-api` from the Railway dashboard ("Restart" —
+   restarts the running container without rebuilding the image).
+3. Second call (post-restart): `previous_value:
+   "2026-08-12T01:56:26...-41ee488c"` — **exact match** to the first
+   call's `new_value` — `new_value: "2026-08-12T01:59:17...-71383613"`.
+
+Data survived the restart. The volume-backed on-disk store works
+exactly as designed. The debug endpoint and its Railway variable have
+both been removed (commit `9602efc`) now that the question is
+answered; the endpoint returns a genuine 404 (route no longer exists)
+rather than the gated one.
+
+**What this leaves as the one remaining "not done yet" item for this
+whole thread:** wiring `OxigraphTripleRepository` (or
+`PostgresTripleRepository`) into `resolve_presenter()`/the composition
+root — no UI feature consumes either implementation yet.
