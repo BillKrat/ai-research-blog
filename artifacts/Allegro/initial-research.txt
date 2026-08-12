@@ -1,0 +1,132 @@
+Allegro
+You can import RDF triples into AllegroGraph using three primary methods: the command-line tool, programmatic client APIs, or the WebView graphical interface. AllegroGraph supports standard RDF formats like NTriples, Turtle, RDF/XML, Trix, N-Quads, and RDF-star extensions. [1, 2, 3, 4, 5] 
+
+1. Command-Line Import (Fastest) 
+
+For bulk loading, use the high-performance program. It utilizes multiple CPU cores when parsing line-based formats like N-Triples. 
+* Example:
+* Use the flag if you want to wipe an existing repository and start fresh. 
+* For massive datasets, pre-convert RDF/XML or heavy Turtle files into N-Triples using tools like Rapper to maximize loading speeds. [2, 3, 6] 
+2. Programmatic Import (Python API) 
+
+If you are building an incremental application pipeline, you can import data using the AllegroGraph Python Client. 
+* Best Practice: Use rather than streaming bulk data row-by-row via , as file-based imports are highly optimized. [1] 
+3. Graphical Import (AGWebView) 
+
+For a no-code visual solution, use the browser-based AGWebView management interface. 
+1. Open your browser and navigate to your AllegroGraph server instance (usually ). 
+2. Select your target Repository from the list. 
+3. Click on the Repository Control or Statements submenu. 
+4. Select Import RDF Data.
+5. Upload your file directly from your local disk or supply a server-side path. [2] 
+Performance Tuning Tips 
+* Format Choice: N-Triples and N-Quads scale across multiple cores during import, whereas single Turtle files are parsed using only one core. 
+* Named Graphs: You can pass a URI during the import step to group the incoming triples into a Named Graph / Quad, making later deletions or provenance tracking simple. [7, 8] 
+Would you like help setting up a specific API client language (such as Java or Lisp), or do you need help troubleshooting a specific file parsing error? [2, 9] 
+
+
+AI responses may include mistakes.
+[1] https://franz.com/agraph/support/documentation/python/tutorial/example006.html
+[2] https://franz.com/agraph/support/documentation/agload.html
+[3] https://franz.com/agraph/support/documentation/4.7/agload.html
+[4] https://franz.com/agraph/support/documentation/rdf-star.html
+[5] https://franz.com/agraph/support/documentation/4.7/agload.html
+[6] https://franz.com/agraph/support/documentation/rapper.html
+[7] https://allegrograph.com/adding-properties-to-triples-in-allegrograph/
+[8] https://franz.com/agraph/allegrograph3.3/
+[9] https://franz.com/agraph/support/documentation/agraph-introduction.html
+
+The AllegroGraph Free Edition provides a fully featured environment that is free to use but carries a specific capacity cap. [1, 2] 
+Core Offerings & Limits
+
+* 
+* 5 Million Triples: You can load, store, and query up to 5,000,000 triples per repository instance.
+* No Expiration Date: The free license does not expire and can be used indefinitely for development, testing, or small production projects.
+* Fully Featured Engine: Unlike some freemium software, it includes almost all of the core developer capabilities of the database. [1, 2, 3] 
+* 
+Included Capabilities
+
+* 
+* AI & GraphRAG: Access to latest version 9.x features, including GraphTalker (natural language agent layer), neuro-symbolic AI integration, and built-in vector storage for semantic search.
+* Full Query & Reasoning: Unrestricted use of SPARQL queries, OWL/RDFS++ materialization, and Prolog reasoning engines.
+* Gruff Built-in: Full access to the Gruff Graph Visualization Tool for no-code visual query building and graph exploration.
+* Complete API Support: Access via Python, Java (Jena/Sesame), REST, and Lisp client drivers. [4, 5, 6, 7, 8, 9] 
+* 
+Where to Deploy
+You can obtain the Free Edition across multiple environments via the AllegroGraph Downloads Hub:
+
+* 
+* Self-Hosted / Local: Downloadable as an .rpm package for Linux (RHEL/CentOS/Rocky) to host on your own hardware.
+* Cloud Marketplaces: Available as pre-configured machine images on AWS Marketplace and Microsoft Azure. Note: The software license is free, but you still pay the cloud provider's underlying infrastructure hourly hosting costs.
+* Managed Cloud: Accessible directly through the hosted AllegroGraph.cloud tier. [4, 10] 
+* 
+What is Excluded? (Enterprise Only)
+To scale past 5 million triples or deploy enterprise-resilient web clusters, you must upgrade to a commercial tier. Free tier excludes: [1, 11] 
+
+* 
+* Unlimited triple capacity
+* Multi-Master replication and warm standby
+* FedShard™ horizontal sharding across multiple server nodes
+* Dedicated 24/7 technical phone and ticketing support [2, 4, 9, 11, 12] 
+* 
+Would you like assistance downloading the configuration files for a local install, or do you need help setting up AllegroGraph on AWS/Docker?
+
+[1] https://franz.com
+[2] https://allegrograph.com
+[3] https://allegrograph.com
+[4] https://aws.amazon.com
+[5] https://allegrograph.com
+[6] https://allegrograph.com
+[7] https://franz.com
+[8] https://franz.com
+[9] https://allegrograph.com
+[10] https://franz.com
+[11] https://allegrograph.com
+[12] https://sourceforge.net
+
+To host the AllegroGraph Free Edition on Railway, you must deploy it as a Docker container. Because AllegroGraph functions as an independent database engine, it interfaces with Railway using standard Docker network configurations, environment variables, and volumes. [1] 
+1. Deploying via Docker on Railway
+Since AllegroGraph doesn't have a pre-built template in the Railway marketplace, you deploy it by referencing Franz Inc.'s official image.
+
+1. In your Railway dashboard, click + New Project and select Deploy from Docker Image. [2, 3] 
+2. Use the official image string: franzinc/allegrograph:latest (or substitute a specific version tag).
+3. Important Configuration: For AllegroGraph to run properly without starting a headless setup wizard, you must provide the root user and password natively in the Variables tab of your Railway service:
+    * AGRAPH_SUPERUSER = admin (or your preferred username)
+    * AGRAPH_SUPER_PASSWORD = YourSecurePasswordHere
+4. 
+2. Networking & Port Interface
+AllegroGraph exposes its visual interface (AGWebView) and REST API on port 10035.
+
+* 
+* Public Web Interface: In Railway, go to the Settings tab of your AllegroGraph service and generate a public domain (or link a custom one). Railway will automatically provision an SSL certificate and map public HTTPS traffic to port 10035. You can then navigate to that domain in your browser to import triples visually. [4, 5] 
+* Internal Private Networking: If you are hosting a separate Python or Node.js backend app in the same Railway project, do not use the public domain. Instead, use Railway's internal private networking string (e.g., http://railway.internal) inside your application code to keep connection speeds fast and secure. [6] 
+* 
+3. Persistent Volumes (Crucial Step)
+By default, Railway deployments have ephemeral file systems. If your AllegroGraph container restarts, all your imported triples will be wiped out. [7] 
+
+1. In your Railway project, click + New and select Volume.
+2. Attach the volume to your AllegroGraph service.
+3. Set the Mount Path precisely to: /var/lib/agraph This maps AllegroGraph's internal database directory to Railway’s persistent SSD network storage, securing your data across restarts and deployments. [8] 
+4. Interfacing from your Code
+Once configured on Railway, your programming client interfaces with the cloud database just like a local setup. Using the Python example from before, you would swap out localhost for your Railway connection details:
+from franz.openrdf.repository.repository import Repository
+import os
+
+# Grab variables securely if deploying your script on Railway as well
+# Or paste your public https://... url if running your script locally
+AG_HOST = os.getenv("RAILWAY_INTERNAL_URL", "your-public-railway-domain.up.railway.app")
+
+# Connect via port 10035 (Railway handles routing to the correct port)
+repo = Repository('my_catalog', 'my_repository', host=AG_HOST, port=10035)
+conn = repo.getConnection()
+# Data can now be safely pushed up to Railway...
+Are you deploying a backend application right alongside AllegroGraph in the same Railway project, or are you hoping to connect to your Railway database from a script running locally on your machine?
+
+[1] https://encore.dev
+[2] https://docs.railway.com
+[3] https://medium.com
+[4] https://docs.openclaw.ai
+[5] https://kuberns.com
+[6] https://flaviocopes.com
+[7] https://docs.flowiseai.com
+[8] https://docs.railway.com

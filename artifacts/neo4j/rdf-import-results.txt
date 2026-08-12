@@ -1,0 +1,1173 @@
+Skip to main content
+Neo4j Online Community
+
+Log In
+
+Desktop and mobile link
+📅 Community Forum Event Calendar
+
+​
+Answers Needed
+Discussions
+Ask a question
+Developer Guides
+Graph Academy
+Developer Blog
+🎮 Discord
+198 results forrdf import
+rdf import
+
+Search
+Advanced filters
+
+AI results
+50
+Sort by
+
+What does "no protocol" mean when importing RDF using Neosemantics?
+Neo4j Graph Platform
+migrated
+Jul 2022 - Trying to import RDF using Neosemantics rdf.import.fetch using both a Turtle and RDF/XML scheme, and both result in a KO terminationStatus with as extra info "no protocol: file.ext". What does it mean exactly?
+
+Mapping database and imported RDF ontology
+Graph Academy
+Newbie Questions
+Jul 2019 - I am able to import an ontology in RDF format in Neo4j desktop version using Neosemantics. I also do have a data modelled in the form of a graph which I loaded from CSV. Now I am unable to map the meaning of the nodes in the data to the meanings/semantics I have defined in the ontology. Thanks.
+
+Local rdf file import error
+Neo4j Graph Platform
+migrated
+May 2021 - Dear All: I'm learning rdf import from https://neo4j.com/labs/neosemantics/4.2/import/ Importing RDF Data - Neosemantics , when I use: CALL n10s.rdf.import.fetch(" https://github.com/...
+
+Importing a RDF file for visualization purposes from scratch
+Neo4j Graph Platform
+Jul 2020 - I am trying to visualize a Knowledge graph from an RDF file. I have both the RDF file as well as the URL for it which as I saw in some official documentation is required. I have the neo4j desktop app and I am really new to using it. So if someone can help from the start of the Neo4j desktop app I...
+
+Neosemantics for loading the <owl:Restriction>
+Neo4j Graph Platform
+knowledge-base
+Jan 2021 - If you're importing the ontology using the n10s.onto.import methods then this is normal because this method only imports a subset of the triples in an ontology. Here's a fragment from https://neo4j.com/labs/neosemantics/4.0/importing-ontologies/ the manual describing precisely that: Ontologies ar...
+
+Call n10s.onto.import.fetch doesn't work for indirect ontology
+Neo4j Graph Platform
+migrated
+,
+graph
+Sep 2022 - Hi https://community.neo4j.com/t5/user/viewprofilepage/user-id/15199 @fan_123 , thanks for your interest! The n10s.*.import methods don't follow import links but you can do it with a couple of lines. All you got to do is do a second pass with the n10s.rdf.stream.* method that returns the triples ...
+
+Neo4j CE and OWL 2
+Neo4j Graph Platform
+knowledge-base
+Jul 2019 - If you're interested in using Neo4j together with OWL ontologies, have a look at this plugin: https://github.com/neo4j-labs/neosemantics GitHub https://github.com/neo4j-labs/neosemantics GitHub - neo4j-labs/neosemantics: Graph+Semantics: Import/Export RDF from... Graph+Semantics: Import/Export RD...
+
+How to process heterogeneous data sources (structure, semi structure and unstructured) in Neo4Js using Ontology driven data integration? Any help /reference is highly appreciated
+Neo4j Graph Platform
+import
+,
+knowledge-base
+Nov 2018 - Could you provide more detail? I'm not personally familiar with this means of integration, looks like it's usually associated with RDF triple stores. Relevant articles, though perhaps not exactly what you're looking for: https://lju-lazarevic.github.io/ImportingRDFSOWL.html and 09:54AM - 27 Febru...
+
+Import Of OWL File Does Not Retain Relationships Correctly
+Neo4j Graph Platform
+migrated
+Jun 2022 - I have an ontology file that I am trying to import into NEO4J Community version 4.4.7. When I import the file I see the proper nodes, however the relationships between the nodes are missing. How do I import the relationships for the nodes? Commands Used To Import: call n10s.graphconfig.init(); ca...
+
+Extend current Graph with RDF
+Neo4j Graph Platform
+cypher
+,
+import
+,
+relationship
+May 2021 - I'm new with Neo4j and I have a question about using rdf to extend the current graph. Suppose I have a normal graph data stored in Neo4j (just a basic graph) and I wish to use rdf to produce a hierarchy (e.g. owl:subPropertyOf, rdfs:subClassOf). In this case, how can I match the exact predicate o...
+
+Importing ncithesaurus ontology into neo4j
+Neo4j Graph Platform
+migrated
+Jul 2022 - Hey there https://community.neo4j.com/t5/user/viewprofilepage/user-id/14868 @ceiag - maybe I can be of some help, Right off the bat - you are correct that the import is not importing the ontology entirely or preserving all triples. That said: There are a few things you can do here. Take a look at...
+
+Create grpah database for Semantic Triplets?(pointers tutorials or resources)
+Neo4j Graph Platform
+Feb 2019 - Here you go: 11:55AM - 07 June 2016 https://jbarrasa.com/2016/06/07/importing-rdf-data-into-neo4j/ Jesús Barrasa – 7 Jun 16 https://jbarrasa.com/2016/06/07/importing-rdf-data-into-neo4j/ Importing RDF data into Neo4j The previous blog post might have been a bit too dense to start with, so I’ll tr...
+
+Modelling heavyweight ontologies in Neo4j
+Neo4j Graph Platform
+Jan 2021 - Hi @andreas.dorta , welcome to the neo4j community. Could you elaborate on the kind of problems that you're having when trying to import the FMA ontology? It's not particularly big (2.7 million triples). I've run it on my laptop and the import process took just over 30 seconds. image Depending on...
+
+Node relationships are not being displayed as I expect
+Neo4j Graph Platform
+migrated
+Sep 2022 - Hi, Apologies for any confusion caused, I'm relatively new to the world of knowledge graphs and neo4j. Really appreciate your continued assistance. Data file is available at the following location - https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/Thesaurus_22.06d.OWL.zip Scripts I used to upload the d...
+
+Import of ChEBI.owl seems not correct
+Neo4j Graph Platform
+Jun 2024 - Hi, I downloaded ChEBI.owl from: curl -O https://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi.owl Then I used neosemantics jar from neo4j-labs neosemantics/releases github page for neo4j 5.20.0. to import it into neo4j. I started it as 'neo4j start' on Windows 11 in command prompt. It seems t...
+
+Can SHACL validation use subclass information from ontology?
+Neo4j Graph Platform
+neosemantics
+Oct 2023 - I am trying to analyse and validate a set of RDF data with SHACL. Now I have the following setup: CALL n10s.graphconfig.init({handleVocabUris: "IGNORE"}) WITH ' < http://my.data.com/SUB123 > < http://www.w3.org/1999/02/22-rdf-syntax-ns#type > < http://my.ont.com/def/comp#Person > . < http://my.da...
+
+Trouble Installing n10s Plugin Manually in Neo4j Desktop 5.26.0
+Graph Academy
+Newbie Questions
+operations
+Nov 2025 - Hi everyone! Glad to be here. I'm an epidemiology researcher working with the ComptoxAI RDF dataset. When Neo4j Desktop supported the n10s plugin, I successfully imported RDF files and queried specific nodes using Cypher and Python. Now, using Neo4j Desktop v2.0.5 and DB version 5.26.0 , I've tri...
+
+Unable to use RDF* (RDF-star) with Neo4j (v4.3.6) and n10s (v4.3.0.1)
+Neo4j Graph Platform
+Nov 2021 - I'm following https://jbarrasa.com/2021/01/19/quickgraph14-using-rdf-with-neo4j/ this guide written by @jesus_barrasa . The guide demonstrates how to import RDF* (RDF-star) using the serialization format Turtle*. call n10s.rdf.preview.fetch('https://raw.githubusercontent.com/jbarrasa/datasets/mas...
+
+Using Windows neo4jdesktop1.6.1 version, downloading neosemantics-5.20.0.jar does not work
+Neo4j Graph Platform
+neosemantics
+Mar 2025 - I am a student of artificial intelligence and I am studying knowledge graphs. However, I recently encountered a problem. I need to use neosemantics to import RDF files in Neo4j, but the neosemantics plugin cannot be used after downloading. I hope to get your help. I tried to download directly usi...
+
+Neosemantics (n10s) output "extraInfo": "Users"
+Neo4j Graph Platform
+migrated
+Oct 2022 - Hello everyone. I'm just starting with graph databases and ontology. I took https://github.com/jbarrasa/goingmeta/blob/main/session1/data_import.md this tutorial (thanks https://community.neo4j.com/t5/user/viewprofilepage/user-id/2510 @jbarrasa for it!) as introduction. I followed the steps menti...
+
+Import of OWL File Leaves Nodes Without a Label
+Neo4j Graph Platform
+migrated
+Jun 2022 - I am using Neo4j Community version 4 and am trying to import an ontology (.owl file). I followed the steps below and the data imports, but when I look at the nodes created in the Neo4j Browser, none of them have labels on them. They are all blank. How do I get the nodes to display with labels? CA...
+
+Server not available during a loading process of 311 files
+Graph Academy
+Newbie Questions
+apoc
+,
+import
+,
+knowledge-base
+Apr 2022 - Hi all, I'm trying to load a bunch of 311 NQUADS into Neo4J v.4.4.5 community in CentOS server. I have created several files dataloadxx.cypher call n10s.graphconfig.init({ handleVocabUris: "IGNORE"}); unwind ["output000097.nq.gz", "output000150.nq.gz", "output000203.nq.gz", "output000256.nq.gz", ...
+
+Sample datasets?
+Graph Academy
+Newbie Questions
+Apr 2021 - Hello, We're missing a standard file format for graph databases which precisely describes an instance of a property graph model. Existing data formats are either drawing-oriented (graphviz dot, GraphML) or semantic web (RDF, JSON-lD). For MongoDB, you can load JSON. For RDBMS, you can load CSV. F...
+
+Neosemantics plugin is not detected
+Neo4j Graph Platform
+Jul 2020 - I am an absolute Java noob but it could be a version mismatch, perhaps you can open an issue on the neosemantics github project page and see if some one with more Java insight spots the issue.. https://github.com/neo4j-labs/neosemantics/issues GitHub https://github.com/neo4j-labs/neosemantics/iss...
+
+Getting an error when trying to define a prefix for "schema.org"
+Neo4j Graph Platform
+migrated
+Oct 2022 - Hi, I am using Neo4j to import and export RDF data, where I use the following prefix for " http://schema.org schema.org ". @prefix schema: < http://schema.org/ > . I am importing my RDF data using "SHORTEN" for "handleVocabUris", so I follow https://neo4j.com/labs/neosemantics/4.3/import/#custom-...
+
+Importing SHACL for graph validation (namespaces..?)
+Graph Academy
+Newbie Questions
+Oct 2021 - Hello, I want to use neosemantics to validate a graph in neo4j, but I'm having trouble to get the model constraints loaded on a minimal example: Suppose I have the following graph: CREATE (n:Person {name: 'Andy'}) Then, I initialize neosemantics as follows: CALL n10s.graphconfig.init(); Now I sho...
+
+Neosemantics : "Detecting n10s Plugin" spinning
+Neo4j Graph Platform
+plugin
+May 2025 - I have it working. Don't bother launching it. Check the n10s are there, check the HTTP endpoints are there and import or preview your rdf file. Let me know if you want the full details. https://community.neo4j.com/t/neosemantics-detecting-n10s-plugin-never-completes/68732/5
+
+Cannot import a .owl file from Protege in Cypher
+Neo4j Graph Platform
+migrated
+Jan 2023 - Hi everyone, I have a . owl file that I want to import in Neo4j, I followed the steps to init the Neosemantics plugin it worked, but once I call " n10s.onto.import.fetch " it gives me this error message : " Failed to invoke procedure `n10s.onto.import.fetch`: Caused by: java.lang.ClassCastExcepti...
+
+Federated or cross graph queries
+Neo4j Graph Platform
+Oct 2019 - We have a scenario where we have an RDF file provided by a third party, which we've imported in to Neo4j using the Neosemantics plugin. The third party RDF file is regularly updated so we wanted to host this graph with little to no changes. However we do want to extend and embellish the third par...
+
+Neosemantics "Detecting n10s plugin..." Never Completes
+Neo4j Graph Platform
+plugin
+,
+neosemantics
+May 2025 - Don't bother tryin to launch it. Obs make sure the .jar is in the active DBMS folder in the relate-data folder. Add 'dbms.unmanaged_extension_classes=n10s.endpoint=/rdf' to the DBMS configuration file Check the n10s are there, 'SHOW PROCEDURES' Check the http endpoints are mounted - expect respon...
+
+How to import ontology to Neo4j?
+Neo4j Graph Platform
+migrated
+Sep 2022 - I am referring to the tutorials which are provided by goingMeta. I would like to import the ontology and align the ontology with my CSV instance file. First, I tried this code ttps://github.com/jbarrasa/goingmeta/blob/main/session5/Ontology_Driven_KG_creation.ipynb However, when I run this code, ...
+
+Ontology class mapping to Neo4j Database
+Neo4j Graph Platform
+import
+,
+operations
+May 2021 - @vikash.kumar3 How about neosemantics (n10s). https://neo4j.com/labs/neosemantics/ Neo4j Graph Data Platform https://neo4j.com/labs/neosemantics/ neosemantics (n10s): Neo4j RDF & Semantics toolkit - Neo4j Labs
+
+Neo4J base model file similar to RDF TTL?
+Neo4j Graph Platform
+migrated
+Jun 2022 - Hi https://community.neo4j.com/t5/user/viewprofilepage/user-id/14540 @dk0451 Many developers first try to define a complete schema. In my Neo4j case, I first import the raw data. Then I create the basic nodes and relationships. Depending on what you are searching for, I create new nodes. Those no...
+
+How to import a single class from an ontology(which has many classes) and create a graph?
+Neo4j Graph Platform
+migrated
+Oct 2022 - Hello All, While working on a project, I was struck at a point where I am not able to find a standardized ontology for "Product" in http://schema.org schema.org and also don't want to create a custom ontology. I understood that http://schema.org schema.org has the ontologies which are standardize...
+
+WITH .. WHERE exists((e1)--(e2)) takes too much time(To check any relationship exists between nodes)
+Neo4j Graph Platform
+migrated
+Jul 2022 - I have wikidata dataset in my database. There are mainly Entities represented by 'Entity' node and relationships between them corresponding to RDF triples (subject-predicate-object). In our example both subject and object are instance of 'Entity' node. Relationship between them are labelled with ...
+
+N10s.rdf.preview.fetch vs n10s.rdf.import.fetch
+Neo4j Graph Platform
+Import / Export
+Oct 2021 - Hi, I'm trying to build a knowledge graph from Wikidata using the n10s library. When I run the following using n10s.rdf.preview.fetch I get a preview of the nodes and relationships which look correct: WITH 'PREFIX wdt: < http://www.wikidata.org/prop/direct/ > PREFIX wd: < http://www.wikidata.org/...
+
+Neosemantics Import RDF & Graph visualization
+Ecosystem & Integrations
+apoc
+,
+import
+Oct 2021 - Hi everyone. I am Nabiz and new to Neo4j, trying to use it for Graph Data Science and create a use case within Python. I am currently following the Neosemantics page to load RDF dataset as TTL: https://neo4j.com/labs/neosemantics/4.0/import/ Neo4j Graph Data Platform https://neo4j.com/labs/neosem...
+
+Difference between n10s.rdf.import.fetch method and n10s.onto.import.fetch method
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+Sep 2020 - What is the difference between importing ontologies using n10s.rdf.import.fetch method and importing using n10s.onto.import.fetch method?
+
+Issue opening NeoSemantics - import RDF
+Neo4j Graph Platform
+Import / Export
+import
+,
+rdf
+Feb 2025 - I got the following message when trying to open OpenSemantics in Desktop: "Could not perform discovery. No routing servers available. Known routing table: RoutingTable[database=default database, expirationTime=0, currentTime=1738923253194, routers= , readers= , writers= ]" neo4j free version, des...
+
+Get nodes that were created with n10s.rdf.import.fetch
+Neo4j Graph Platform
+Import / Export
+neo4j-import
+Apr 2021 - I want to get the nodes in return , that got created after importing an rdf file. I want to relate them to an another node on the fly. How can I do it.
+
+Importing RDF file (turtle), error "Namespace prefix 'file' used but not defined [line 1]"
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+May 2023 - Hi, I am trying to import an RDF file with my ontology (produced with protegé) exported in Turle format. I have tried to import the content or file using various commands like: CALL n10s.rdf.import.inline("Turle", "", {}) CALL n10s.rdf.import.inline("file:///Users/kailashdejesushornig/Desktop/D_M...
+
+Neoemantics import RDF* file incorrect
+Neo4j Graph Platform
+Import / Export
+May 2021 - Dear All: I tried to import an RDF* file as described on : https://neo4j.com/labs/neosemantics/4.2/import/ Importing RDF Data - Neosemantics The contents of this file are shown in Example 1 of the W3C RDF* spec: https://w3c.github.io/rdf-star/cg-spec/editors_draft.html#example-1 RDF-star and SPAR...
+
+Using a variable in n10s.rdf.import.fetch call
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Oct 2021 - Is it possible to use a variable when making a call to n10s.rdf.import.fetch(, 'Turtle')? As can be seen from the code below, hard-coding the absolute path into the call works perfectly. Problem is I want to load a number of rdf files into the same graph. The call is the same except for the filen...
+
+Result of n10s.rdf.import.fetch is non-intuitive
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+neosemantics
+May 2023 - Hi I'm trying to import rdf data into neo4j. Everything seemed fine, but I realized that the result of CALL n10s.rdf.import.fetch Seems a little bit odd. I imported my rdf set. Then I imported it again, as expected there are no new nodes in the databse, but I checked for result of the import and ...
+
+Import rdf files(.ttl turtle) to neo4j:error:Unexpected character U+23 at index 8
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+Mar 2022 - image how can i ignore the error node . I just want to import the fucking data into neo4j......
+
+Issues importing RDF in the middle of a transaction
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2020 - I'm running into an issue where a CALL semantics.importRDFSnippet (the 3.5 version of neosemantics) in a transaction is blocking indefinitely. Are there any caveats/issues to be aware of when importing RDF as part of a user-level transaction? In this particular case, the transaction includes a pr...
+
+Large RDF import fails despite big memory allocation
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Feb 2022 - I tried importing an RDF file with 10K's of triples and nodes using the following command: CALL n10s.onto.import.fetch("https://github.com/FoodOntology/foodon/raw/master/foodon.owl", "RDF/XML",{commitSize: 100000, nodeCacheSize: 20000}); I cannot get the ontology to load and instead get variation...
+
+Node names are in full URI after Neosemantics RDF import
+Neo4j Graph Platform
+Import / Export
+Feb 2021 - I'm quite new to Neo4j, and I'm currently in the process of building a knowledge graph to support better discovery of content. I've been trying to import a full taxonomy using the Neosemantics add-on. The original file is an RDF (Turtle). First I call the graphconfig function: CALL n10s.graphconf...
+
+Importing RDF Data Example - Data not persisting in a Graph
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Aug 2020 - Just started following neosemantics manual, and after importing the data using the command: CALL n10s.rdf.import.fetch("https://github.com/neo4j-labs/neosemantics/raw/3.5/docs/rdf/nsmntx.ttl","Turtle"); It seems that the import was ok, 19 triples loaded, however it did not give me the option to v...
+
+"n10s.rdf.import.fetch"function returning "PKIX path building failed" error
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Aug 2023 - I am newer using the Neosemantics plugin and I am trying to run the following command: CALL n10s.rdf.import.fetch('https://data.bioontology.org/ontologies/RXNORM/submissions/24/download?apikey=8b5b7825-538d-40e0-9e9e-5ab9274a9aeb','Turtle') But it is returning the error below: "PKIX path building...
+
+Error message importing RDF
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+migrated
+,
+cypher-tagged
+,
+import--export
+Feb 2023 - Hi! I've been trying to import an ontology into my database. I've tried a few different file types (.ttl, .xml, .rdf), but I'm getting error messages each time. Most recently, the query: CALLn10s.onto.import.fetch(" https://github.com/foodkg/foodkg.github.io/blob/master/docs/ontologyDocumentation...
+
+Local rdf file import error
+Neo4j Graph Platform
+Import / Export
+May 2021 - Dear All: I'm learning rdf import from https://neo4j.com/labs/neosemantics/4.2/import/ Importing RDF Data - Neosemantics , when I use: CALL n10s.rdf.import.fetch(" https://github.com/...
+
+How to import an rdf file to neo4j
+Neo4j Graph Platform
+Import / Export
+Mar 2022 - Iam new to neo4j .Iam in the learning stage.Can you please guide me how to import an rdf file to neo4j .I have already gone through the manual of importing rdf and importing ontologies .Iam importing the rdf files from dbpedia and Iam giving the URL of that in CALL n10s.rdf.import.fetch(" https:/...
+
+I am unable to import an RDF file into the neo4j desktop app
+Neo4j Graph Platform
+Import / Export
+import
+Oct 2021 - image I am getting above mentioned error while trying to import an RDF file.
+
+rdf data import error
+Neo4j Graph Platform
+Import / Export
+May 2023 - Something went wrong: "Error: Reference.set failed: First argument contains a string greater than 10485760 utf8 bytes in property 'users.google-oauth2|102522669330983833297.grass.0.data' ('{"0":"{","1":""","2":"0","3":""","4":":","5":""...')" and the application can't recover.
+
+Rdf data import
+Neo4j Graph Platform
+Import / Export
+May 2023 - Something went wrong: "Error: Reference.set failed: First argument contains a string greater than 10485760 utf8 bytes in property 'users.google-oauth2|102522669330983833297.grass.0.data' ('{"0":"{","1":""","2":"0","3":""","4":":","5":""...')" and the application can't recover. what can do to solv...
+
+How to use inference with an imported ontology and rdf data
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+May 2020 - Using the example of https://neo4j.com/docs/labs/nsmntx/current/import/#classes-as-nodes Importing RFD Data (with https://github.com/neo4j-labs/neosemantics/blob/4.0/docs/rdf/minionto.ttl minionto and https://github.com/neo4j-labs/neosemantics/blob/4.0/docs/rdf/miniinstances.ttl miniinstances ), ...
+
+Importing and exporting RDF data with blank nodes
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+export
+Dec 2021 - Hi! I am working with ontologies and Linked Data for several years for now, but I'm quite new to Neo4j and n10s. I imported an ontology using n10s.rdf.import.fetch. Here is an example: @prefix owl: < http://www.w3.org/2002/07/owl# > . @prefix rdfs: < http://www.w3.org/2000/01/rdf-schema# > . @pre...
+
+RDF and OWL import to NEO4J
+Neo4j Graph Platform
+Import / Export
+Jan 2022 - Dear Neo4j community, slight_smile I am very new to Neo4J and am trying to export an OWL file which I saved from Protégé. It was saved as a Turtle and as a RDF/XML files. I have tried both method described in https://neo4j.com/labs/neosemantics/4.0/importing-ontologies/ Importing Ontologies - N...
+
+Asking for suggestions about how to import json-ld format rdf data into neo4j through neosematics or APOC
+Neo4j Graph Platform
+Import / Export
+apoc
+,
+import
+May 2020 - data source:" http://openkg1.oss-cn-beijing.aliyuncs.com/bed2b2d5-0749-44a3-8a3f-e15f90b4d3bb/character-covid-19-v0.2.json " download:" http://openkg.cn/dataset/covid-19-character " Using neo4j server v3.5.x At the very begining, I convert the json-ld data to rdf/xml format. I have tried to impor...
+
+Roundtripping typed literals with RDF import/export
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2020 - Using still 3.5, I noticed that if I use importRDFSnippet and post a graph that includes a typed triple, e.g., xsd:dateTime , and then export the same using the /rdf/cypheronrdf endpoint, the returned triple lacks the datatype annotation. Is that to be expected? Is this behavior changed in 4.0?
+
+Import rdfxml has problem
+Neo4j Graph Platform
+Import / Export
+Feb 2020 - Hi All, I am importing rdf/xml ( /uploads/short-url/duod8TF2WjgQnsruBpGm2Y8YlzI.txt music_200.txt (113.1 KB) ) to neo4j and meet the issue as below picture. Could you please help me! CALL semantics.liteOntoImport('file://music_200.owl','RDF/XML') neo4j version: 3.5.9 Plugin: neosemantics-3.5.0.4....
+
+Can't export a graph db from Neo4j in rdf
+Neo4j Graph Platform
+Import / Export
+Nov 2023 - Hi guys! smiley I just started to work with Neo4j, using the Neosemantics plugin. Lately I've been trying really hard to find out how I can export my graph db in rdf/xml serialization. I have found some solutions in the Documentation, but apparently, I cannot work this out alone, as I come from...
+
+Error importing/previewing simple TriG file
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+,
+rdf
+Jun 2023 - Hi everyone, I have a small TriG file (29 triples only) which I am trying to preview prior to import. We have installed the neosemantics plugin to our neo4j (docker install) and tried: call n10s.rdf.preview.fetch( "file://home/odead/Documents/Source/AMBA/gkg-test.trig", "TriG" ) but get back: Neo...
+
+Neosemantics generate RDF multilanguage Elements
+Neo4j Graph Platform
+Import / Export
+neosemantics
+,
+rdf
+Aug 2023 - Hi There, I tried to export an RDF XML using neosemantics plugin and the following mapping CALL n10s.mapping.add("http://www.w3.org/2004/02/skos/core#prefLabel", "prefLabel:en"); CALL n10s.mapping.add("http://www.w3.org/2004/02/skos/core#prefLabel", "prefLabel:de"); The result should be an XML li...
+
+Remove prefixes from n10s nodes in browser
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Sep 2020 - Hi Boris, that's what I found in the documentation: Prefixes for custom namespaces are assigned dynamically in sequence ( ns0 , ns1 , etc) as they appear in the imported RDF. This is the default behavior but we’ll see later on that it is possible to control that, and use custom prefixes. More det...
+
+Can't import owl individuals
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+Apr 2023 - I'm trying to import a local .owl file to neo4j using CALL n10s.onto.import.fetch("file:///C:/Users/Ozan/Desktop/ontology/PizzaTutorialWithDataV2.owl","RDF/XML") procedure. It imports classes, object properties and data properties, but not individuals. Is there any possible way to include individ...
+
+ClassCastException impl.SimpleIRI to Literal on owl n10s.onto.import.fetch
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+May 2023 - Hi, I'm getting a ClassCastException when importing the Foodon ontology owl file. An earlier version of the ontology owl file works, but newer revisions fail with the following error: Failed to invoke procedure n10s.onto.import.fetch : Caused by: java.lang.ClassCastException: class org.eclipse.rd...
+
+Issue with Neosemantics v4 Neo4j V4.1.2 + loading in Turtle files + IRI included an unencoded space: '32'
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+,
+knowledge-base
+Dec 2020 - ...mples master/examples Uniform metadata schema for buildings. Contribute to BrickSchema/Brick development by creating an account on GitHub. The "test" RDF import call shown in the documentation works without issue: CALL n10s.rdf.import.fetch("https://github.com/neo4j-labs/neosemantics/raw/3.5/docs/rdf/nsmntx.t...
+
+"Could not parse JSONLD" error when importing a JSON-LD file
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+,
+neo4j-desktop
+,
+json
+Nov 2021 - Hi, I'm trying to import a json-ld file into neo4j. I've installed the APOC and Neosemantic plugins to accomplish this but run into the following error: "Could not parse JSONLD". What I've tried: An inline data insertion per the example: https://neo4j.com/labs/neosemantics/4.3/import/#actual-rdf-...
+
+Issue with Loading RDF File into Neo4j Desktop
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+,
+neo4j-desktop
+,
+neosemantics
+,
+rdf
+Nov 2023 - Hello Neo4j Community, I am experiencing an issue when trying to load an RDF file into Neo4j Desktop on my Windows machine. I have followed the standard procedures for importing RDF data but have been encountering errors that prevent the file from being recognized by Neo4j. I have placed my RDF f...
+
+Exporting RDF data
+Neo4j Graph Platform
+Import / Export
+Dec 2020 - I'm trying to use neosemantics in docker environment, based on https://neo4j.com/docs/operations-manual/current/docker/operations/#docker-neo4jlabs-plugins Configure Neo4j Labs plugins . I can read the https://neo4j.com/labs/neosemantics/4.0/ document (Chapter 1 through 4), and execute some cyphe...
+
+Family tree relationship mapping
+Neo4j Graph Platform
+Cypher
+Jan 2019 - If you want to label the grandfathers of Dave you could simply tag them: match (:Male {name: 'Dave' }) < -[:PARENT]-(parent) < -[:PARENT]-(grandfather:Male) set grandfather:GrandfatherOfDave Be careful, however, if you have more than one of this procedural inference rules. If they depend on each ...
+
+Running semantics.importRDF local vs remote
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+Aug 2020 - Hello, running 1. (remote) works fine, while running 2. (local) doesn't work (see results below) remote CALL semantics.importRDF("https://github.com/neo4j-labs/neosemantics/raw/3.5/docs/rdf/nsmntx.ttl","Turtle",{}) local CALL semantics.importRDF("file://Users/bora/Documents/nsmntx.ttl","Turtle",{...
+
+How to import the OWL classes as a Node
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+Dec 2021 - Hello, I am working on Neo4j, and I imported my ontology, but I didn't understand how Neo4j import the class owl:NamedIndividual or the other class other than owl:Class, because it gives me just one node label which is Resource, there aren't any way to import this owl:NamedIndividual as a separat...
+
+Import complete wikidata into neo4j
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Sep 2021 - I used https://github.com/findie/wikidata-neo4j-importer GitHub https://github.com/findie/wikidata-neo4j-importer GitHub - findie/wikidata-neo4j-importer: Imports WikiData JSON dumps into... Imports WikiData JSON dumps into Neo4j in a meaningful way. - GitHub - findie/wikidata-neo4j-importer: Imp...
+
+Import WebProtégé Ontology
+Neo4j Graph Platform
+Import / Export
+Mar 2021 - Hello all, I want to import a WebProtege ontology into Neo4j with neosemantics. I am inspired by the following tutorial: https://jbarrasa.com/2019/11/25/quickgraph9-the-fashion-knowledge-graph-inferencing-with-ontologies-in-neo4j/ QuickGraph#9 The fashion Knowledge Graph. Inferencing with Ontolog...
+
+Datatype properties represented as edges? (cross post from GitHub)
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Mar 2022 - I copied this from https://github.com/neo4j-labs/neosemantics/issues/231 a GitHub issue because I thought it could be useful for others. The question was: "is there a way to force a literal property to be represented as an edge rather than as a neo4j node property so we can associate metadata to ...
+
+Neosemantics failed to import owl
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+Mar 2021 - when I import the ontology file an error message appears Error Running Query Failed to invoke procedure n10s.rdf.stream.fetch : Caused by: n10s.RDFImportException: unqualified attribute 'lang' not allowed [line 8, column 18] ontologi from : https://github.com/syukriyansyah-ipb/KMS-Tumbuhan-Obat/b...
+
+Deleting RDF fragments with blank nodes
+Ecosystem & Integrations
+migrated
+Jan 2023 - I imported some RDF fragments using n10s.rdf.import.inline. Now I want to delete one of these fragments passing in the fragment to n10s.rdf.delete.inline. I realized that the bnodes that have been created by the import function do not get deleted. The documentation says " Note that currently blan...
+
+Retrieving mapped data problem
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+May 2020 - I have a problem with retrieving data mapped to imported RDF ontology. I want to achieve smth like mentioned in https://neo4j.com/docs/labs/nsmntx/current/mapping/ "We have a graph in Neo4j that we want to publish as JSON-LD through a REST api, but we want to map the elements in our graph (labels...
+
+How to get triple set from the imported ontology?
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jan 2021 - Hello I imported owl file into Neo4J successfully, however, I cannot get the triples from the graph. I want to get the triples as I can execute in SPARQL. I've already tried that match (n1)-[r]-(n2) return n1, r, n2 However, this only returns the triples that based on the hierarchy only. Please l...
+
+Termination status "KO"
+Ecosystem & Integrations
+migrated
+,
+import
+,
+operations-tagged
+,
+ai
+,
+browser-tagged
+,
+ml
+,
+nlp
+Feb 2022 - Hi all, Currently I am following along the tutorial in the link below 3X_3_b_3b1e4d6a0833cd84853036ad6d878607dfd32908.png 3X_3_b_3b1e4d6a0833cd84853036ad6d878607dfd32908.png https://neo4j.com/developer/graph-data-science/build-knowledge-graph-nlp-ontologies/ Neo4j Graph Database Platform 3X_3_2_3...
+
+Export RDF from neo4j
+Neo4j Graph Platform
+Import / Export
+Aug 2024 - How do you export an entire Neo4j graph to RDF? I have tried neosemantics app, adding the neosemantics plugin to neo4j desktop, and using rdflib-neo4j. None of it seems to work. This should be a pretty simple thing to do. Anyone any ideas?
+
+Blank nodes and names from owl Ontology
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2021 - i am quite new to Neo4J and trying to import ontology via neosemantics. I had couple of questions: I tried importing first using n10s.onto.import.fetch, however seems the blank nodes are getting skipped. Are blank nodes not supported via n10s.onto.import.fetch currently? I then also tried importi...
+
+Custom properties of OWL/RDF Ontology
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2020 - Hi, I am trying to import an ontology, which is in RDF/XML format (owl): call n10s.graphconfig.init( { keepCustomDataTypes:true, handleRDFTypes: "LABELS_AND_NODES" }); CALL n10s.onto.import.fetch("...","RDF/XML"); In the ontology file, each class contains synonym properties: < oboInOwl:hasExactSy...
+
+Error in n10s HowTo when persisting Wikidata example
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+neosemantics
+,
+rdf
+Apr 2023 - Hi @alanbuxton , There's an additional value returned by the rdf.import method called extraInfo that should hopefully provide additional info: CALL n10s.rdf.import.fetch(...) yield terminationStatus, triplesLoaded, triplesParsed, namespaces, extraInfo RETURN terminationStatus, triplesLoaded, trip...
+
+Problem exporting RDF using NeoSemantics N10S
+Neo4j Graph Platform
+Desktop
+Jul 2020 - I think I've figured this out. The documentation states: The only required parameter is node’s unique identifier: If the graph is the result of importing RDF using n10s it will be the uri and if the graph is not the result of importing RDF, then we’ll use the node ID. Whether we’re in one case or...
+
+Feedback on Neosemantics with Neo4j 4.0
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Apr 2020 - Hi Jesus, I am new to Neo4j and since we use Neo4j 4.0 I'm seeing how we can integrate our RDF data into Neo4j. So far I had one immediate piece of feedback (I am not sure if I'll have more, so I'm not waiting to aggregate them all into one feedback post, I hope that's ok). In your documentation,...
+
+Enhancement request for n10s.onto.import
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jan 2025 - I have some suggestions on how to enhance n10s.onto.import: The label "Resource" is quite generic and for some datasets it is likely that this label is already used, which might result in unintended confusion/misbehavior. I would like to be able to control the name of this label in graphconfig. T...
+
+Not able to import OWL file
+Neo4j Graph Platform
+Import / Export
+apoc
+,
+import
+,
+operations
+Apr 2020 - It looks like you are using 4.0 version. Please add this to config dbms.unmanaged_extension_classes=n10s.endpoint=/rdf dbms.security.procedures.whitelist=apoc.*,n10s.* dbms.security.procedures.unrestricted=apoc.*,n10s.* Also read this 4.0 related doc https://github.com/neo4j-labs/neosemantics/blo...
+
+NLP Knowledge Graph Tutorial
+Neo4j Graph Platform
+Procedures & APOC
+Feb 2022 - Hi there, I have also started following at https://neo4j.com/developer/graph-data-science/build-knowledge-graph-nlp-ontologies/ Tutorial: Build a Knowledge Graph using NLP and Ontologies - Developer Guides . Able to following along with no issues until the part where I need to import RDF from Wik...
+
+Termination status "KO"
+Graph + AI
+import
+,
+operations
+,
+browser
+Feb 2022 - Hi all, Currently I am following along the tutorial in the link below https://neo4j.com/developer/graph-data-science/build-knowledge-graph-nlp-ontologies/ Neo4j Graph Data Platform https://neo4j.com/developer/graph-data-science/build-knowledge-graph-nlp-ontologies/ Tutorial: Build a Knowledge Gra...
+
+Import Individuals and relate to Classes in Neo4j
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+cypher
+,
+import
+,
+relationship
+Sep 2020 - Hi, I am trying to import Individuals into Neo4j and relate them to their corresponding Class. See the following figure that represents the result I am aiming to achieve. aim_result In this case the Ontology file is an RDF where the Individuals are defined as follows: individual_definition In ord...
+
+Import mondo owl file into neo4j
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jul 2021 - Hi everyone, My name is Jordi Valls, and I'm really new in neo4j and I have some questions about to import ontologies using the mondo.owl file... I download this file from this web page: http://obofoundry.org/ontology/mondo.html I followed the instructions form: https://neo4j.com/docs/labs/nsmntx...
+
+Multiple domains and ranged for a relation
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+May 2022 - Hello, I am trying to import simple ontology with n10s.onto.import.fetch() The problem is that my ontology contains several "rdfs:domain" and "rdfs:ranges" for some specific relations. Here it is example alp:cites rdf:type owl:ObjectProperty ; rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( alp:...
+
+How to import two ontologies with two different Labels for the owl:Class?
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Mar 2022 - Hello, I am working on Neo4j v4.3 (Community) and with neosematics (n10s) v4.3.0, I have two ontologies to import into the same Graph. the problem is I can't import the two ontologies with two different Labels for the owl: Class. Does someone have any suggestions? Thanks for your help.
+
+Passing multiple values to an export query via http
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+May 2020 - Hi Ryan, let me see if I've understood your question. Let's say I have a simple RDF graph imported into neo4j (using default settings). What you want to do is select a bunch of nodes by URI and have them serialised as RDF through the n10s cypher endpoint. Is this right? Here is a step by step exa...
+
+Is support of RDF*/SPARQL* planned?
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+May 2021 - Hello, I'm trying to import into neo4j 4.2.5 YAGO RDF knowledge base ( https://yago-knowledge.org/downloads/yago-4 Downloads/yago 4 | Yago Project ). All files .nt worked very well, but there's also a file https://yago-knowledge.org/data/yago4/en/2020-02-24/yago-wd-annotated-facts.ntx.gz yago-wd-...
+
+Literal string properties of an RDF export node don't have the XMLS datatype
+Neo4j Graph Platform
+Import / Export
+neosemantics
+,
+rdf
+Mar 2025 - Hi all, I am trying to export a huge Cyber Threat Intelligence graph (~1.5M nodes, ~2M relationships) in RDF with Turtle serialization. I would like to export all the literal properties as RDF typed literals with the proper XML datatype, but unfortunately only the numerical properties have an exp...
+
+n10s Plugin Availability in AuraDB Professional Trial
+Neo4j Graph Platform
+Aura & Cloud
+apoc
+,
+plugin
+,
+n10s
+May 11 - Hi Team, I am currently using an AuraDB Professional Trial instance on AWS us-east-1. Instance Details: AuraDB Professional Trial AWS / us-east-1 2GB Memory I am trying to use the Neosemantics (n10s) plugin for RDF/TTL ontology import and SHACL validation. However, when I run: SHOW PROCEDURES YIE...
+
+High performance ingestion of large amounts of RDF data
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+performance
+,
+import
+Mar 2021 - We are using RDF heavily for modeling our data while at the same time our data model is evolving. After some discussion, we decided that to deal with data model changes, we would perform a full reload of all our data by loading it from their sources, converting it to CSV and then doing a bulk loa...
+
+How to add Property to Relation Type from RDF Triples
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+import
+,
+knowledge-base
+Nov 2019 - As we all know, OWL could not give any DataProperty to one ObjectProperty because it's itself a property. So, if I want to add some properties to relation in Neo4J from RDF Triples, there is a trick. I define a relation as a Class in OWL and some DataProperties to it too. Then I define 2 ObjectPr...
+
+Java driver question
+Drivers & Stacks
+Java
+Mar 2023 - I heartily thank you. Where can I find the relevant documents? I also saved rdf xml using n10s.rdf.import.fetch on neo4j desktop. My file is as follows. xmlns:test="http://www.test/2023#" < test:Cat rdf:ID="_2300" > < test:Name.aliasName > Tom < /test:Name.aliasName > As a result, I checked the u...
+
+About the Linked Data, RDF, Ontology category
+Ecosystem & Integrations
+migrated
+,
+rdf
+,
+ontology
+,
+linked-data
+Sep 2019 - ...your section if you have questions (basic or advanced) or want to share your experiences on the following Ontologies and inferencing (OWL, RDFS, etc) RDF import/export to/from Neo4j, model mapping Constraint management (SHACL) ..all things linked data, semantics, etc
+
+Iterate over nodes and fetch rdf data using a specific property on each node
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Nov 2020 - I used the neosemantics plugin to import all instances of https://www.wikidata.org/wiki/Q515 cities located in https://www.wikidata.org/wiki/Q38 Italy . I also imported all instances of https://www.wikidata.org/wiki/Q960648 points of interest located in https://www.wikidata.org/wiki/Q38 Italy . N...
+
+Support for RDF* in n10s 4.1.*
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Nov 2020 - According to the release notes for n10s, the latest version (i.e. https://github.com/neo4j-labs/neosemantics/releases v4.1.* ) supports the import / export of https://w3c.github.io/rdf-star/rdf-star-cg-spec.html RDF* data . However, I am encountering issues when trying to load data. For instance,...
+
+FIBO ontology with NeoSemantics
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jul 2020 - How can I load the entire hierarchical FIBO. Currently when I use semantics.importRDF() procedure to load, it loads only the specific ttl/RDF file and not the hierarchical dependent ones. Is there a way to load the ontology recursively traversing through the links. Thanks Sudipta
+
+Neosemantics support to RDF Named Graphs
+General
+migrated
+Jan 2023 - Hello, I’m evaluating Neosemantics according with my project’s requirements. One of the major requirements is support to “ https://www.w3.org/2009/07/NamedGraph.html RDF Named Graphs (N-Quads) ”: An RDF database can store collections of RDF statements (triples) in separate graphs identified (name...
+
+JSON-LD and edge properties
+Neo4j Graph Platform
+Modeling
+data-modeling
+Jun 2021 - Hi, I'm not too sure if this is the best category to post this question. I have a JSON-LD-Star file with " @annotation " properties. Can Neo4J+APOC import this type of file? So far, I haven't found a way. n10s.rdf.import.fetch(..., "JSON-LD") appears to ignore the @annotation data completely. Bas...
+
+Creating RDF n10s conformant Neo4j Graph (without loading in external triples) & Rewrite this SPARQL Query in Neo4j with n10s
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Mar 2021 - So for a follow-up... I've loaded in the ontology... and my turtle file... CALL n10s.graphconfig.init({handleVocabUris: 'IGNORE', handleMultival: 'ARRAY'}) CREATE CONSTRAINT n10s_unique_uri ON (r:Resource) ASSERT r.uri IS UNIQUE CALL n10s.rdf.import.fetch("https://raw.githubusercontent.com/iamlia...
+
+NeoInterface – a Python interface to use the Neo4j graph database and simplify its use
+Drivers & Stacks
+Python
+Dec 2021 - Dear Neo4j Community, I am thrilled to share that my Team at https://www.gsk.com/ GSK has recently released our first code asset to the open source community – https://github.com/GSK-Biostatistics/neointerface NeoInterface – a Python interface to use the Neo4j graph database and simplify its use!...
+
+Not able to load Turle* with n10s 4.3.0.0
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Aug 2021 - Hi, just updated my desktop Neo4J to 4.3.2 with n10s 4.3.0.0 — and I am not able to load Turtle* rdf data sets. I am using 'turtlestart' format label -- > output is an error " Unrecognized serialization format " Command call n10s.rdf.import.fetch('file:///d:\\Neo4jDesktop\\Input\\CHO_LPG.ttl', 'T...
+
+How to export my graph to RDF
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Mar 2023 - Difficult to say without some additional context. Is the graph the result of importing RDF? If it's not, then you don't need an GraphConfig so if there is one I suggest deleting it call n10s.graphconfig.drop() Can you give this a try and let us know if that solves the problem? Thanks. JB
+
+Running Neosemantics in Node.js
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Oct 2021 - Hi, Is it possible to make n10s calls in Node.js? Something along the lines of session.run(call n10s.rdf.import.fetch( ... ) ); thanks Richard Tresider
+
+Importing with Neosemantics gives prefix "xsi" for attribute "xsi:noNamespaceSchemaLocation" error
+Neo4j Graph Platform
+Import / Export
+import
+Jan 2022 - Version: Neo4j 4.4.2 community Plugins: Neosemantics 4.4.0.0 System: Windows I'm trying to import a XML file in to Neo4j, but I'm getting the error: The prefix "xsi" for attribute "xsi:noNamespaceSchemaLocation" associated with an element type "Vocabulary" is not bound. [line 1, column 205]"' Com...
+
+Linking instances / individuals to my ontology graph
+Neo4j Graph Platform
+Import / Export
+cypher
+,
+import
+,
+browser
+Jan 2021 - Hi everyone, I am currently working with OWL ontologies created on Protege. I've been trying to import them on Neo4J using the following query : < call n10s.rdf.import.fetch("file:///fileAdress/fileName","Turtle", {typesToLabels: false}) > My ontology has Individuals for each class, but when I im...
+
+Neosemantics in Neo4J Desktop
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+neo4j-desktop
+,
+neosemantics
+Mar 2025 - I'm exploring neo4j and neosemantics. I've installed neo4j (5.27.0) locally with brew, added the neosemantics plugin (5.20.0) and imported an ontology using n10s.rdf.import.fetch . I'd now like to try using the neosemantics app in neo4j desktop. When I start the app and connect to my local graph ...
+
+RDF describe empty, cypher also
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Mar 2021 - Hello, I'm new to neo4j and neosemantics. I'm trying to export a graph database to RDF using neosemantics. This database has not been imported using RDF. When doing a describe on an node (using the identifier) the output is empty. Also when using CYPHER and trying to export from a MATCH the outpu...
+
+Importing a OWL file to Neo4j
+Neo4j Graph Platform
+Import / Export
+Feb 2022 - Hi @matt8mb the n10s.onto.import.* procedures import only a subset of the statements in your ontology as described in https://neo4j.com/labs/neosemantics/4.0/importing-ontologies/ the manual . The ontology you're trying to load makes heavy use of predicates outside the set covered by these method...
+
+Neosemantics with Neo4j V4
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jan 2020 - Hi, Following some investigation into upgrading from V3 to V4, am I correct in my conclusion that there is not yet a version of Neosemantics that can run in a V4 database? And if so, are there any timescales for an update? Many thanks, Simon ps This is the kind of error I am seeing using the late...
+
+Neosemantics import turtle triples is resource intensive
+Neo4j Graph Platform
+Import / Export
+Sep 2021 - Hi there! I am trying to import a turtle dataset of just under 700MB containing roughly 2M nodes. I am doing it into a community edition of the Neo4J database started as follows in docker: docker run \ --name neo_realm_neo4j \ -p7474:7474 -p7687:7687 \ --add-host host.docker.internal:host-gateway...
+
+Cannot upload .ttl file
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2020 - Hi @Live_Data_Concepts , thanks for your interest in neosemantics. The reason why n10s does not see the content in the url as RDF is because it's actually not RDF but the human-readable HTML version of the document as you see it in http://github.com github.com . If you want to get the actual RDF ...
+
+Export procedure that returns serialized RDF
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2021 - Thanks for sharing the roadmap for that @jesus_barrasa I would also appreciate having an officially supported by Neo4j way to export serialized string. The workflow for my use case would be as follows: starting from data in Neo4j format (nodes and relationships without uri), assign a uri based on...
+
+How to visualize Class restrictions without blank nodes between classes?
+Neo4j Graph Platform
+Neo4j Visualization Library (NVL)
+cypher
+,
+import
+Feb 2021 - Hello all I am trying to import an OWL ontology from Protege using n10s.rdf.import.fetch (....,'Turtle', {typestolabels=False}). The {handleRDFTypes} parameter is set on "LABELS_AND_NODES" This ontology contains for each class a subClassOf predicate that contains either an object property or a da...
+
+Import OWL individuals to Neo4j
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Nov 2019 - Hi all: I am new to Neo4j and I am trying to import an ontology built using Protege 5 into Neo4j. I used the following two procedures CALL semantics.liteOntoImport(...) CALL semantics.importOntology(...) Both procedures worked fine. However, I found only classes, i.e., the TBox of the ontology, a...
+
+I installed Neo4j Desktop 1.5.9 on mac. Where is the neo4j.conf file?
+Neo4j Graph Platform
+Installation
+May 2024 - which OS do you want to install on, use tags for that too: MacBook Pro M1, macOS Sonoma neo4j version, desktop version, browser version: neo4j 1.5.9 I am new to neo4j. I installed the neo4j desktop by simply moved .dmg file to Applications folder. It was good without using any plugins. Now I want...
+
+About the Linked Data, RDF, Ontology category
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Sep 2019 - ...your section if you have questions (basic or advanced) or want to share your experiences on the following Ontologies and inferencing (OWL, RDFS, etc) RDF import/export to/from Neo4j, model mapping Constraint management (SHACL) ..all things linked data, semantics, etc
+
+Import JSON-LD data in neo4j
+Neo4j Graph Platform
+Procedures & APOC
+apoc
+Jul 2021 - After installing APOC & Neosemantics plugins, run the following cypher query. CALL n10s.graphconfig.init(); CREATE CONSTRAINT n10s_unique_uri ON (r:Resource) ASSERT r.uri IS UNIQUE; CALL n10s.rdf.import.fetch("file:///C:\Users\name\file_loaction\file_name.jsonld","JSON-LD"); After this step, json...
+
+Mistake in Neosemantics(n10s) User Guide
+Feedback & Requests
+Documentation
+Jan 2021 - Hi @abk , PRs are welcome. The manual lives here: https://github.com/neo4j-labs/neosemantics/tree/4.2/docs/modules/ROOT/pages github.com https://github.com/neo4j-labs/neosemantics/tree/4.2/docs/modules/ROOT/pages neosemantics/docs/modules/ROOT/pages at 4.2 · neo4j-labs/neosemantics https://github...
+
+Have imported ontology, enabled neosemantics but cypher query stopped referring to ontology suddenly
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2024 - Have imported ontology, enabled neosemantics but cypher query stopped referring to ontology . its just referring to my original nodes imported with data and also picking wrong fields. The purpose of ontology was to nudge the right cypher query generation. This was working so till few hours ago wh...
+
+"Problems when running partial commit. Partial transaction rolled back. "
+Neo4j Graph Platform
+Import / Export
+cypher
+,
+rdf
+,
+integration
+,
+loading-owl
+,
+owl
+Jul 2023 - I am getting error "Problems when running partial commit. Partial transaction rolled back. " while loading an owl file using CALL n10s.onto.import.fetch.
+
+Imported turtle file does not show Node labels
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Feb 2022 - Hi ! @jbarrasa I imported a turtle file from neosemantics plugin, but node labels are missing in the visualisation. Please find the attached screenshot. Any solutions to make node labels visible are highly appreciated. PS: I am new to neosemantics and neo4j. MicrosoftTeams-image
+
+Unable to load EDAM ontology; uri cannot be cast to Literal
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+apoc
+,
+operations
+Jan 2024 - When I try to load the EDAM ontology (the official release) with the cypher query CALL n10s.onto.import.fetch("file:///data/ontologies/EDAM.owl","RDF/XML"); I get the the following error message: Failed to invoke procedure n10s.onto.import.fetch : Caused by: java.lang.ClassCastException: class or...
+
+Is it possible to import a DatatypeProperty as a property of the correspondent nodes
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Sep 2020 - Hi everyone, I would like to know if it's possible to convert a DatatypeProperty as property in the nodes of its Domain. I have some classes with a large list of DatatypeProperty and I think they made the graph less comprehensive. I can create also a model by myself but I we have a nice ontology ...
+
+Neosemantics - can I force an RDF datatype property to be represented as edges
+Neo4j Graph Platform
+Import / Export
+Sep 2021 - I have an ontology (OWL/RDF) in which certain datatype statements are assigned a confidence level, using RDF* (in particular TTL*). For example: < < DocumentX hasKeyword "interesting" > > hasConfidenceLevel 0.43 (I'm eliding namespace prefixes for simplicity). Unfortunately the embedded triple ha...
+
+Importing .owl file - From annotation property to node property
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Apr 2023 - Hey, I've imported an ontology file to Neo4j which works just fine. But there is something that confuses me. The classes of my ontology file have only annotation properties. They don't have any object or data property. When I import the file to Neo4j, it creates node properties from some of these...
+
+Connecting Neo4j to Building Information Models
+Neo4j Graph Platform
+Neo4j Visualization Library (NVL)
+Mar 2020 - Hi, I'm a PhD candidate researching how we could link all kinds of built environment data using graphs, and created multiple graphs for BIM data. The easiest way currently seems to be this: Create an IFC export of your BIM model. Use the IFCtoLBD converter to create an RDF turtle. (it uses the BO...
+
+‘real’ storage size in Neo 4j
+Neo4j Graph Platform
+Desktop
+Nov 2019 - Hi! Perhaps some general observations might help triage what's going on: Have you imported your RDF data and kept it reified? How are you importing the data? I don't know if you've been using the Neosemantics plugin to import your data ( https://neo4j.com/labs/nsmtx-rdf/ neosemantics (n10s): Neo4...
+
+Linking ontology to an existing label property graph
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+export
+Apr 2021 - Hi @somasays , here are some comments: If what you want to do is validate your model against some constraints, what you need is https://neo4j.com/labs/neosemantics/4.0/validation/ a SHACL definition of the shape of your graph. You can find examples of using it https://youtu.be/DRpW-FJgUTc in this...
+
+Problem with POST request to rdf/neo4j/cypher
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2021 - @jesus_barrasa On Neo4j v4.2.3 n10s v.4.2.0.1 I am using the following python code to submit GET and POST requests to the rdf endpoint of my database: import requests import os import json rdf_host = "http://localhost:11006/rdf" get_pstfx = "/neo4j/describe/13" post_pstfx = "/neo4j/cypher" creden...
+
+Failed to import SHACL with Neosemantics
+Ecosystem & Integrations
+neosemantics
+Oct 2023 - Hi, Although I am a newby in this part of Neo4j, I noticed the same issue. I got the shacl to work by using this: call n10s.validation.shacl.import.inline(' @prefix neo4j: < neo4j://schema.graph# > . @prefix sh: < http://www.w3.org/ns/shacl# > . neo4j:PersonShape a sh:NodeShape ; sh:targetClass n...
+
+Neosemantics hangs on neo4j Desktop on MacOS
+Neo4j Graph Platform
+Desktop
+Jul 2020 - which OS do you use? MacOS 10.15.5 neo4j version, desktop version, browser version: Version 1.3.0 (1.3.0.18) which plugins / extensions / procedures do you use: Neosemantics(n10s) 4.0 I have installed the neo4j Community edition on Ubuntu 16.04 along with neosemantics(n10s) 4.00. I used neosemant...
+
+Incorrect SHACL validation
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Mar 2021 - Hello everyone, I'm facing an issue when trying to validate my Graph against a SHACL constraint file. Here is my SHACL constraint : @prefix EbomMbom: http://example.org/EbomMbom# . @prefix dash: http://datashapes.org/dash# . @prefix owl: http://www.w3.org/2002/07/owl# . @prefix rdf: http://www.w3...
+
+New release of Neosemantics (3.5.0.4)
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Nov 2019 - The latest release of Neosemantics for Neo4j 3.5.x is out! Check it out https://github.com/neo4j-labs/neosemantics/releases/tag/3.5.0.4 here . Includes some bug fixes and a number of additional procedures and functions: some utility methods and others that complete the existing import/delete capa...
+
+The English WordNet in Neo4j, problem when refactoring
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Feb 2021 - Hi all, I've been trying to replicate the English WordNet in Neo4j example and, at first, I have had no problems importing the RDF dump, but when refactoring I try this query: match ()-[:wn__partOfSpeech]- > (pos) return pos.uri, count(*) it should produce five records but, in my case, I am warne...
+
+Tuning of cypher queries for List operations
+Neo4j Graph Platform
+Cypher
+optimization
+Aug 2021 - I have imported one RDF file in Neo4J using NeoSemantics. Total no of nodes : 1071461 (1 Million) Total Relationships : 2553482 (2.5 Million) When I query this imported graph for traversal queries, I usually get execution time arount 1-100 milliseconds, But when I go for using list in my queries,...
+
+Neosemantics adapted with python driver
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jul 2021 - Hi colleges, I've a question about how to use neosemantics in python driver... there is any option to execute the commands in python to export owl files to graph database? My question is regarding that I used neo4j-admin import, to generate a new graph database of my project due to I've high amou...
+
+Developed ontology, imported and populated with data - questions regarding validity and querying
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Nov 2021 - Hey there, neo4j community! So recently i started my own KG project which i developed an own OWL/RDF ontology for and imported that with neosemantics to create the initial graph schema. I then populated it with a few data instances with the csv load - thanks to Jesus Barrasa at this point for his...
+
+Sparql for neo4j
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2020 - Hi @thomas_stuempfi , We have no immediate plans to support SPARQL in neosemantics unfortunately. Essentially because we have Cypher that covers the need for a structured graph query language. Is cypher not an option for you? If you don't want to export the data as RDF and import it into Jena, th...
+
+How to check if graph is empty?
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+May 2021 - Yep, that would do. To be more precise, the procedure will refuse to run if there is at least a node labeled as :Resource or in other words, if there is some RDF data imported in the DB. Because if that is the case, some config was applied for that import and changing it without cleaning the DB w...
+
+Exporting RDF with 4.0 and 3.5.x
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Apr 2020 - Hi @r_moquin , you're right the n10s.rdf.export.cypher method at the moment only exports RDF from a Property Graph model. But I expect to have its behavior fixed for the GA release by the end of the week. In 4.0 you can achieve it using the RDF http endpoint. Here's how: :post http://localhost:74...
+
+Blank nodes in RDF
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Oct 2019 - Hello! Are blank nodes still being labeled as BNode after imported? I imported the STATO ontology using CALL semantics.importRDF(‘https://raw.githubusercontent.com/ISA-tools/stato/dev/releases/latest_release/stato.owl’, ‘RDF/XML’). But no node seems to be labeled as BNode. There’re many blank nod...
+
+Importing JSON-LD from a zipped file in jsonline format
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Nov 2019 - I got this https://github.com/neo4j-labs/neosemantics/issues/130#issue-518789561 question from a community member and I thought I'd create a simple example to illustrate how to do it. You can find it https://github.com/jbarrasa/neosemantics-python-examples/blob/master/jsonlines/loadRDFFromJsonLin...
+
+N10s inferences union/intersections, complements
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2021 - Hi Thomas, thanks for your interest. n10s currently does not support inferencing on these owl constructs. The plan is to include them asap in the set of owl constructs that the n10s.onto.import procedures imports but it's still unclear the type of inferences that we would use them for other than ...
+
+I can't get a simple WHERE Cypher query syntax with full URI nodes and properties right. Help!
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Sep 2020 - I can't get this to work: MATCH (n:`http://example.org/Offense` {`http://example.org/offenseType`: 'Wishbone'}) RETURN n; or this: MATCH (n:`http://example.org/Offense`) WHERE n.`http://example.org/offenseType` = 'Wishbone' RETURN n; But this does work: MATCH (n:`http://example.org/Offense`) RETU...
+
+Knowledge Graph using neosemantics
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Feb 2021 - Hi, Thanks for the quick reply. Please find attached the Sample OWL file and the data. I have executed the following scripts **1. Initial Configuration** CALL n10s.graphconfig.init(); **2. Load the OWL file** CALL n10s.onto.import.fetch("file:///C:\\SampleOWL.owl", "RDF/XML"); **3. Load the data ...
+
+SHACL Union of Range for an object property constraint
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Mar 2021 - Hello, I am trying to constraint an object property (OP) by saying that this OP can only have two classes as range. When I run n10s.validation.shacl.import.inline I get the following error: Error Running Query Failed to invoke procedure n10s.validation.shacl.import.inline : Caused by: java.lang.I...
+
+Convert JSON to Turtle format
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Mar 2022 - A bit convoluted but since you ask here, it's an option. It's an experimental method that takes any random JSON and imports it into Neo4j as a tree. You need to pass a node where the tree will be linked to. Once imported you can export in any RDF serialisation. match (p:LinkageNode) with p call n...
+
+Error while loading the ontology (XML/RDF)
+Ecosystem & Integrations
+migrated
+,
+neo4j
+,
+neosemantics
+,
+ontology
+Feb 2023 - Hi, I am trying to import an ontology: https://bioportal.bioontology.org/ontologies/OAE#:~:text=The%20Ontology%20of%20Adverse%20Events,follows%20the%20OBO%20Foundry%20principles. Here's what I'm doing: CALL n10s.graphconfig.init(); I read that it might be related to memory allocation of neo4j. To...
+
+Can u please help me generate cypher query ?
+Neo4j Graph Platform
+Cypher
+cypher
+May 2023 - Hello Team, I am facing a bit of a work problem, So i am using metaphors in the problem. I have imported two ontology using neosemantics in neo4j from RDf/TTL file Ontology 1. Actor Ontology 2. Movie Now import is completed. Now i have a csv file where both ontology are mapped using "URI" present...
+
+Overriding graph model elements
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2020 - Hi, I am trying to import an ontology using custom label names for classes like in this example form the documentation: CALL n10s.onto.import.fetch("https://github.com/neo4j-labs/neosemantics/raw/3.5/docs/rdf/vw.owl","Turtle", { classLabel : 'Category', objectPropertyLabel: 'Rel', dataTypePropert...
+
+Neo4j Shacl Help: targetClass has space
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Oct 2021 - Hello, I'm trying to use shacl to validate the schema of my neo4j database and I have a node that has a label with a space in it. How do I specify the SHACL targetClass in this case? So far I have... CALL n10s.graphconfig.init({handleVocabUris: "IGNORE"}) CREATE (:`Soccer Player` {gender: 'male'}...
+
+Importing data into graph from pdf files based on an ontology
+Neo4j Graph Platform
+Import / Export
+neosemantics
+,
+genai
+,
+ontology
+Jun 2024 - @swanandbagve PDF ? or RDF? if RDF see https://neo4j.com/labs/neosemantics/4.0/
+
+Neo4j literal representation in RDF/RDF* graph
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Dec 2021 - Hi @jesus_barrasa , Your solution is indeed simple and would work in the majority of the cases. However in my case, prior to importing data into my graph, I don't have any knowledge of what constitute a parameter. Using this solution would result in a RDF graph without the complete picture of our...
+
+CSV to RDF
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+May 2021 - Given Neosemantics is for interfacing with Neo4j, I think it would make sense to just import the CSV into Neo4j and then export it to RDF ... otherwise the question doesn't really have anything to do with Neo4j. RDF4j itself will export RDF to CSV and probably back, I just don't know if that CSV ...
+
+Human-friendly text file format for graph data?
+Neo4j Graph Platform
+Import / Export
+import
+Dec 2020 - Are there any friendly editors for RDF or OWL formats? I guess it's just a dialect of XML but i still haven't seen any nice way to edit these files, even if there was a schema. putting some relevant links: https://www.w3.org/2002/11/rddl/ 09:54AM - 27 February 2018 https://neo4j.com/blog/neo4j-rd...
+
+Property graphs and Elixir: Accessing Neo4j from Elixir with Bolt and Cypher
+Community Content & Blogs
+blog
+Mar 2019 - I just published a post ‘Property graphs and Elixir: Accessing Neo4j from Elixir with Bolt and Cypher’. 05:03AM - 27 April 2019 https://medium.com/@tonyhammond/property-graphs-and-elixir-13672940804b Medium – 27 Apr 19 https://medium.com/@tonyhammond/property-graphs-and-elixir-13672940804b Proper...
+
+Explanation on data upload process
+Neo4j Graph Platform
+Import / Export
+Mar 2022 - Yes, I converted the csv file into rdf format and uploaded them.
+
+Modelling open statistical data using Neo4j
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jul 2021 - Hello everyone : ) I am curious about the steps involved in creating a knowledge graph using open statistical data. My research has brought me to the conclusion that the RDF Data Cube Vocabulary (W3C) is the way to go for modelling statistical data (e.g. population counts, averages etc.), so my q...
+
+This Week in Neo4j: GraphAcademy, RDF, RAG, GTFS, Hume and more
+Community Content & Blogs
+Dec 2023 - This Week in Neo4j: GraphAcademy, RDF, RAG, GTFS, Hume and more Welcome to This Week in Neo4j, your weekly fix for news from the world of graph databases! This week's edition has something for all senses: we take a look at how to work with RDF data and learn how to import GTFS data into Neo4j ( r...
+
+Register procedure for neosemantics in embedded Neo4j
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+May 2022 - Hi, I want to use neosemantics in my project to import ontologies. I managed to use neosemantics on the browser but now I want to use it in my embedded Java project. I am new to coding Neo4j but I saw that I need to register the prodecures I want to use if I want to use a plugin. I found some exa...
+
+Updating multiValPropList in live DB
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+n10s
+Feb 2024 - I have a neo4j that I've been using n10s to import data into. I now have a new type of data that I want to bring into my database. This requires me to update the multivalPropList in the graphConfig to handle som new properties that I want to treat as arrays in neo4j. But when I try to do CALL n10...
+
+Creating GraphConfig in the graph when using neosemantics in embedded Neo4j
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+May 2022 - Hi, I want to write Java code for a procedure which can import ontologies into Neo4j with neosemantcis. This is a procedure which should be used over and over again, so I don't want to use neosemantics in the browser for every single ontology. I found code on GitHub which I'm trying to use: https...
+
+Getting "Problems when running partial commit. Partial transaction rolled back. " when loading a turtle file from local system
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Oct 2021 - I am facing this issue when loading a turtle file from the local system using n10s.onto.import.fetch link to the turtle file in case anyone wants to replicate and help me with this issue. https://archivo.dbpedia.org/info use file which has 79396 triples in it. image Thanks in advance. :)
+
+Neosemantics Web Ontology,data and SCHAL in a single DB (Pros and Cons)
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Sep 2020 - Hi All, I have the following query: Problem Statement: We have created an ontology using Protege and imported it to neo4j. We are loading the data from an external data source. We have imported the appropriate SCHAL validations as per ontology. Queries: On each data import, we need a unique URI t...
+
+When I import the ontology using n10s, the node names do not appear in the graph
+Neo4j Graph Platform
+Cypher
+cypher
+,
+browser
+,
+n10s
+Jan 2024 - Thanks for respons @dana_canzano I use the browser Current version:5.12.0 neosemantics 5.14.0 When I build a graph, the names appear normally, there is no problem with the style. but when import ontology the names dont appear. I tried all type of ontology files rdf, turtle,owl and tried n10s0.ont...
+
+Beta release of neosemantics for 4.0
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Apr 2020 - Hi everyone, We've just published a beta release of neosemantics for Neo4j 4.0.x. Notice that it includes several important (breaking) changes: There's an extensive change in the naming scheme for procedures and functions as well as in the mode of operation of the toolkit. I'd suggest you start b...
+
+How are People Making Their Ontologies Interoperable and Abide by FAIR Standards?
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Nov 2024 - Hello all, I'm fairly new to developing ontologies and implementing them in knowledge graphs which is why I'm coming here to look for answers! I've been developing an ontology and knowledge graph in Neo4j but a few questions have arisen and I would love to get some input from others as to how the...
+
+Finding path with arbitrary direction at arbitrary depth
+Neo4j Graph Platform
+Cypher
+May 2024 - I am doing some academic work with rdf and knowledge graphs, and want to make sure that I am not overlooking anything. In my specific case, I have defined two separate ontologies with owl which I have imported into the graph database with n10s. These ontologies are based on separate, unaligned po...
+
+Looking for Assistance in Importing an Ontology
+General
+migrated
+Jan 2023 - Hi, Here is what I tried following the Neosematics intro tutorial. New Database. CREATE CONSTRAINT n10s_unique_uri ON (r:Resource) ASSERT r.uri IS UNIQUE CALL n10s.graphconfig.init({ handleVocabUris: 'MAP' }) CALL n10s.rdf.preview.fetch(" https://github.com/emmo-repo/EMMO/blob/master/emmo.ttl ","...
+
+Only Neo4j database for application or neo4j and sql?
+Neo4j Graph Platform
+Modeling
+Sep 2020 - I think neo4j not only is good for entity relation type problems, but also great with respect to is schemaless characteristic. Actualy you do not need a predefined schema. Even more important, you can add properties to existing nodes or relations at your guise. If you stick to non strongly typed ...
+
+Best Practices for Enforcing OWL/SHACL Ontologies in a Python + Neo4j Stack
+Ecosystem & Integrations
+May 13 - If you are thinking of enforcing the schema from the code's perspective (python?) linkml is as good as anything (you could also do it in JSON, XML, RDF, etc) . If you want the schema in Neo4J to use it to generate a schema - then that could also work. Neither approach is wrong ... that said if sc...
+
+N10s and inference
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Oct 2021 - Hello everyone! First of all, I want to congratulate you on getting a really cool project off the ground! Ontologies and graph databases are certainly the next big step. I looked through the github repsository and I saw that you have made big progress on importing OWL 2 ontologies. However, I cou...
+
+Page Rank Problem
+Neo4j Graph Platform
+Graph Data Science / Graph Analytics
+Feb 2019 - Hello, I am trying to use Page Rank algorithm in an amout of data. It is a triplified content in rdf format. The data consists in a group of datasets registered with their metadata, keywords to explain their topics. The idea is to find the most influent in the graph by the keywords. I first impor...
+
+Unable to access values from mapping after xml import
+Neo4j Graph Platform
+Cypher
+Dec 2020 - Hello, relative newbie user of neo4j here. I had code that ran 2 years on version 3.4 but doesn't anymore on version 4.2. So I managed to rewrite some of it but I'm stuck now on the rest. I am trying to match data from an animal disease ontology xml file to update some nodes. here is some working...
+
+If property names can contain "%20", why can't apoc.refactor.rename.nodeProperty work with them?
+Neo4j Graph Platform
+Procedures & APOC
+cypher
+,
+apoc
+,
+operations
+Oct 2021 - Summary: I have a use case where we anticipate loading labels and properties with "%20" (spaces) in their names, and so have a requirement to clean those names after they've been imported. I can fix labels using apoc.refactor.rename.label , but cannot do the same for properties using apoc.refacto...
+
+Ontologies and JSON Data
+Neo4j Graph Platform
+Modeling
+Aug 2021 - Welcome! the best way of working with and importing ontologies in neo4j is neosemantics (n10s). I'd suggest to check out the tool and the many blog posts by @jesus_barrasa https://neo4j.com/labs/neosemantics/ Neo4j Graph Data Platform https://neo4j.com/labs/neosemantics/ neosemantics (n10s): Neo4...
+
+Docker compose configuration for neosemantics errors out
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Mar 2020 - I'm trying to get neosemantics working in a docker container. Has anyone been able to successfully get this running? I get the following error: ... 2020-03-31 14:35:55.241+0000 ERROR Failed to start Neo4j: Starting Neo4j failed: Component 'org.neo4j.server.AbstractNeoServer$ServerComponentsLifecy...
+
+Certificate issue while retrieving open data using apoc.load.json
+Neo4j Graph Platform
+Procedures & APOC
+Nov 2021 - I faced this error when trying to access the below page as part of a training video on the Neo4J channel. : https://raw.githubusercontent.com/cj2001/nodes2021_kg_workshop/main/json_files/wiki.json The StackOverflow link talks of downloading and adding the certificate for the URL. Searching google...
+
+Overview of the Neo4j Graph Data Platform
+Community Content & Blogs
+Neo4j Developer Blog Archive
+May 2021 - GraphStuff.FM Episode #3 ![](upload://kXcT19poK0K7oFQrqnDN3hLLsY1.jpeg)The https://neo4j.com/developer/graph-platform/ Neo4j Graph Data Platform In this episode of the https://graphstuff.fm/ GraphStuff.FM podcast, https://twitter.com/ElLazal Lju Lazarevic and https://twitter.com/lyonwj Will Lyon ...
+
+Labeled Property Graphs not suited as knowledge graphs?
+General
+Sep 2025 - Disclaimer: I am not a Neo4j expert, however, this article was written based on my experience with semantic triple building and with the help of ChatGPT and approved by me. A recent article on LinkedIn argued that most graph databases — particularly Labeled Property Graphs (LPGs) — fall short of ...
+
+Migrating from Neptune to Neo4j
+Graph Academy
+migrated
+Jan 2024 - Migrating a graph database from Amazon Neptune to Neo4j involves a few steps, and while there isn't a direct tool provided by either service for this specific migration, you can use a combination of methods. Here's a general guide: 1. Data Extraction: Export the data from Amazon Neptune. Neptune ...
+
+Fibo rdf loading
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jun 2020 - Hey @michaeljquinn , I'm not sure about an add-on for FIBO but you can certainly use neosemantics. It looks like the problem that you had was down to the fact that the form input was only accepting text/* mime types. I've just published version 0.2.8 of the Neosemantics Graph App that has updated...
+
+NeoSemantics (n10s) Course
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Jul 2020 - Jesus Barrasa is the author of neosematics and the go to guy for advice slight_smile Best to check out his blog: https://jbarrasa.com/ There are some videos available: https://www.youtube.com/watch Neosemantics (n10s): A Linked Data Toolkit for Neo4j with Jesus Barrasa and Adam Cowley - YouTube...
+
+SHACL validation: Ignore edge direction
+Ecosystem & Integrations
+Linked Data, RDF, Ontology
+Oct 2021 - Hello, consider I have the following graph: CREATE (n:A)-[:develops]- > (m:B) I'd like to enforce that A has at least one edge "develops" and that B has at least one edge "develops". For A, this is easy enough: @prefix neo4j: < neo4j://graph.schema# > . @prefix sh: < http://www.w3.org/ns/shacl# >...
+
+Week 10 — Getting Dumps and Example Projects into Aura Free
+Community Content & Blogs
+Neo4j Developer Blog Archive
+Oct 2021 - Week 10 — Getting Dumps and Example Projects Into Aura Free The main topic was to explore the different ways of getting existing graph data into Aura from other Neo4j instances: New: Built In Movies Database and Guide Load a Dump from Neo4j Sandbox Backup Load a Dump from a Neo4j Graph Example Re...
+
+Sandbox Spring Cleaning
+Community Content & Blogs
+Neo4j Developer Blog Archive
+Feb 2021 - All-New Neo4j Sandboxes to explore and learn about graphs with major version updates https://sandbox.neo4j.com ![](upload://zm0wX5LpHQowWhxOG2nZZjTi6W0.jpeg) Photo by https://unsplash.com/@kintecus Ostap Senyuk on https://unsplash.com/s/photos/sandbox Unsplash As the first spring flowers start to...
+No more results found.
+  

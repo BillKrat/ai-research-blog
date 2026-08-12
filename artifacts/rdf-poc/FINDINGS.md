@@ -296,3 +296,194 @@ without RDF-specific tooling on either side.
 loader (N-Triples → Cypher `MERGE` statements is the likely shape —
 straightforward given morph-kgc already gets us clean triples, see
 the POC above).
+
+## CLOSED OUT (2026-08-11): Neo4j Aura ruled out, Oxigraph is the new candidate
+
+The "worst case" custom loader above was actually built and tested: it
+worked correctly but was "painfully slow" — not realistic for a
+production environment. That result, plus a review of the Neo4j
+community forum (`artifacts/neo4j/rdf-import-results.txt` for RDF
+import via Neosemantics/n10s, `artifacts/neo4j/batch-results.txt` for
+bulk loading generally), confirms this wasn't an implementation
+problem to optimize away:
+
+- **n10s** (the only RDF-import path into Neo4j) is a labs-status
+  plugin with a long history of partial imports, fragile parsing, and
+  install friction — and its own availability on AuraDB specifically
+  was never confirmed working in the threads reviewed.
+- The only genuinely fast Neo4j load path, `neo4j-admin database
+  import`, is an offline CLI tool requiring direct filesystem access to
+  the server. **Aura is a fully managed service — no shell, no
+  filesystem, no `neo4j-admin`.** Every hand-rolled loader (this
+  project's included) is stuck doing transactional Cypher writes
+  instead, which the forum confirms is structurally slow at volume
+  (deadlocks, memory blowups) regardless of how it's written.
+
+**Conclusion: Neo4j Aura is ruled out as the deployed/production target
+for this project's RDF data.** Full reasoning and evidence trail in the
+`project-neo4j-aura-graph-db-decision` memory. Local Memgraph's role is
+now an open question rather than a settled "dev half" of a pair — it
+wasn't implicated by this evidence (self-hosted Docker still has
+filesystem/CLI access `neo4j-admin`-equivalent tooling could use), but
+it hasn't been checked either.
+
+**New candidate: Oxigraph** (`pyoxigraph`) — an embedded RDF/SPARQL
+1.1 store, already a `morph-kgc` dependency
+(`morph_kgc.materialize_oxigraph()`), already flagged above as worth
+considering as *the* real triple store. It sidesteps both failure modes
+above structurally: no RDF-import bridge needed (it's native RDF, not a
+property graph), and its bulk loader is a Python API, not a
+server-CLI tool that requires access a managed host might not grant.
+Preliminary research looks promising but is unverified AI-summary
+content, not a primary-source read or a POC against this project's own
+data — see `project-oxigraph-candidate-evaluation` memory for the
+caveats and the two new questions it raises instead (Railway disk
+persistence for the on-disk store, single-writer/single-process
+concurrency), and for the suggested next POC step (load
+`blog_research_graph.ttl` from this folder into an on-disk
+`pyoxigraph.Store` and query it).
+
+**AllegroGraph was also researched as a candidate** (see
+`artifacts/Allegro/initial-research.txt`) — a client-server RDF store
+with native reasoning (OWL/RDFS++, Prolog) and built-in vector storage,
+which would have resolved Oxigraph's single-writer/multi-replica
+question by design (many app instances can talk to one server, same
+model as this project's existing Postgres service). Deprioritized in
+favor of Oxigraph for now: it reintroduces the self-hosting ops burden
+that Aura was originally chosen over self-hosted Memgraph to avoid, and
+its free tier caps at 5,000,000 triples — real costs to pay before
+Oxigraph is actually shown to fail at something. Kept as the escalation
+path if OWL/Prolog reasoning becomes a real requirement, the API service
+goes multi-replica, or the app outgrows Oxigraph's practical ceiling —
+none of which are true today.
+
+## Oxigraph POC (2026-08-11): both open questions resolved with real evidence
+
+`artifacts/rdf-poc/oxigraph_poc.py` — loads `blog_research_graph.ttl`
+into a scratch on-disk `pyoxigraph.Store` and exercises exactly the two
+things the preliminary research's claims needed verifying against:
+
+1. **`Store.bulk_load()` claim, verified against the installed
+   package itself** (`pyoxigraph` 0.5.9), not just the AI-generated
+   research file — its own docstring confirms it's a real, documented
+   API distinct from `.load()`, "designed to be as fast as possible on
+   big files." The research file's claim checks out.
+2. **On-disk persistence, verified by actually testing it**: the script
+   opens a **second, brand-new** `Store` instance pointed at the same
+   directory after the first one wrote and flushed — not just reusing
+   the same Python object — and queries it. Result: 197 triples, an
+   exact match to the original morph-kgc POC's triple count above, with
+   zero data loss across the reopen.
+3. **A real SPARQL query against the reopened store** correctly returns
+   all 4 known organizations (`BlogAI`, `Python`, `Saints`,
+   `blogResearch`) — confirming the round trip is semantically correct,
+   not just triple-count-correct.
+
+**Decision: Oxigraph is the adopted near-term target** for this
+project's real RDF triple store, given today's tiny data scale
+(ASR-001: under 100 records per user context) and single-instance
+deployment — neither of Oxigraph's own open questions (scale ceiling,
+multi-replica concurrency) are live concerns yet, and it adds zero new
+services to operate. **Still open, not yet tested:** this POC ran
+against a local scratch directory, not the `ai-research-blog-volume`
+Railway volume already provisioned for this purpose — confirming the
+same persistence behavior holds across an actual Railway redeploy
+(not just a fresh `Store` object in the same process) is the next real
+step before treating this as production-ready, not just POC-verified.
+
+## CRUDL POC (2026-08-11): the real design question, surfaced by real behavior
+
+`artifacts/rdf-poc/oxigraph_crudl_poc.py` — before wiring an actual
+`OxigraphTripleRepository`, exercised the individual-quad primitives a
+repository would actually call (`add`/`remove`/`quads_for_pattern`),
+not just `bulk_load()`. All five CRUDL-shaped operations behaved
+exactly as expected: read one value, create a new triple, "update" (no
+atomic UPDATE primitive in RDF — it's `remove()` then `add()` as two
+separate calls, a real transactional-window risk to design around),
+delete (confirmed idempotent — removing an absent triple raises
+nothing, matching `TripleRepository.delete()`'s contract), and list by
+subject.
+
+**The real finding is in section 6.** `shared/repositories/interfaces.py`'s
+existing `TripleRepository` is deliberately **single-valued**:
+`create()` raises `ProviderError` if a `(subject, predicate)` already
+has a value; `update()` requires exactly one existing value to change.
+That scoping was a deliberate choice made *for* Postgres's shape
+(ADR-0008), not an RDF limitation. Oxigraph has no such constraint —
+the POC added two different objects for the same `(subject,
+predicate)` and **both persisted, both came back on query**. That's
+not a bug to work around; it's the actual capability RDF and Oxigraph
+were chosen for in the first place (genuine multi-valued facts, e.g.
+ASR-004's `user-subscribes-to-user` triples), and it's exactly what
+`TripleRepository`'s single-valued contract forbids.
+
+**This means `OxigraphTripleRepository` is a real design fork, not
+just an implementation task, and it needs a decision before writing
+code:**
+
+- **(a) Implement `TripleRepository` as-is**, enforcing single-valued
+  behavior in the repository layer on top of a naturally multi-valued
+  store. Gives a drop-in alternative to `PostgresTripleRepository` —
+  same interface, same call sites — but throws away the actual reason
+  Oxigraph was chosen over the existing Postgres triple store.
+- **(b) A new interface with real multi-valued semantics.** Keeps what
+  Oxigraph is actually for, but isn't a drop-in replacement, and needs
+  its own CRUDL contract designed from scratch — e.g. what "delete"
+  means when there are 3 objects for one `(subject, predicate)`: all
+  of them, or one specific one (which needs the object value, or some
+  other identifier, in the call signature)?
+
+Not decided yet — see the `project-oxigraph-candidate-evaluation`
+memory for the open decision.
+
+## Decision (2026-08-11): (a), single-valued drop-in — and it's built
+
+Chose **(a)** — enforce `TripleRepository`'s existing single-valued
+contract in the repository layer, deferring a real multi-valued
+interface until ASR-004 gives it a concrete consumer, rather than
+designing that interface speculatively now.
+
+`shared/repositories/oxigraph_triple_repository.py` implements
+`OxigraphTripleRepository`, a full drop-in alternative to
+`PostgresTripleRepository` — same `TripleRepository` interface, same
+CRUDL contract, same `ProviderError` wrapping. Two things came up
+building it that weren't visible from the POCs alone:
+
+- **RDF requires subject/predicate to be valid IRIs**; `TripleRepository`'s
+  contract takes arbitrary opaque strings (the same fixture shape as
+  `"unit-test-1"` in the Postgres tests, which isn't a valid IRI on its
+  own — `pyoxigraph.NamedNode` rejects it, "No scheme found in an
+  absolute IRI"). Resolved with two fixed `urn:` namespaces
+  (`urn:triple-repository:subject:` / `...:predicate:`) plus
+  percent-encoding, fully reversible, handling arbitrary characters —
+  see the module docstring for the reasoning.
+- **An on-disk store can only be held open by one live `Store` object
+  at a time** — a RocksDB file lock, discovered when a test tried to
+  open a second repository instance against the same path while the
+  first was still alive (`OSError: lock hold by current process`).
+  This is a *stricter* version of the multi-replica concurrency
+  question already flagged for Oxigraph: it bites even sequentially,
+  within a single process, not only across multiple app instances.
+  Fix is straightforward (release all references to the first
+  instance before opening a second one against the same path) but
+  matters for however this eventually gets wired into
+  `blogresearch/config/registrations.py` — one long-lived instance,
+  not one per request.
+
+`tests/test_oxigraph_triple_repository.py` — 22 tests, all passing,
+covering the full CRUDL contract, both IRI-encoding edge cases above,
+error wrapping, and (not skip-safe, unlike the Postgres integration
+tests — no external network dependency to be unreachable) real
+on-disk persistence across separate repository instances. Full suite:
+81 passed, 4 skipped (unrelated live Postgres/Neo4j/Memgraph
+integration tests, as before).
+
+`pyoxigraph==0.5.9` is now a real `requirements.txt` dependency, not
+POC-only — application code (`shared/repositories/`) imports it now.
+
+**Still not done:** this repository isn't wired into
+`resolve_presenter()`/the composition root — no UI feature consumes
+it yet, same as `PostgresTripleRepository`. The Railway-volume
+persistence question above is also still open — everything here has
+been tested against local paths, not the actual
+`ai-research-blog-volume`.

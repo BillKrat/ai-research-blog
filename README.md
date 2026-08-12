@@ -23,12 +23,15 @@ Two things make this more than a CRUD blog:
   new implementation at runtime and revert if it isn't ready.
 - **Schema-flexible data via a triple store**, not a fixed relational
   schema — the same model already proven out for blog/organization data
-  in Postgres, and now being evaluated against a real graph database
-  (Neo4j Aura, with local Memgraph for heavy dev workloads) to move
-  from single-valued triples toward genuine RDF-style multi-valued
-  facts. A `morph-kgc`-based SQLite→RDF pipeline is already proven
-  end-to-end (`artifacts/rdf-poc/`); landing that RDF in a Cypher store
-  is the open bridge problem.
+  in Postgres, and moving toward genuine RDF-style multi-valued facts.
+  A `morph-kgc`-based SQLite→RDF pipeline is already proven end-to-end
+  (`artifacts/rdf-poc/`). Neo4j Aura was evaluated and ruled out as the
+  landing spot for that RDF — neither its RDF-import plugin nor its fast
+  bulk-load path survives Aura's managed-service model at production
+  scale (evidence: `artifacts/neo4j/`). **Oxigraph**, an embedded
+  RDF/SPARQL store, is the adopted near-term target instead — a POC
+  (`artifacts/rdf-poc/oxigraph_poc.py`) confirmed real bulk loading and
+  on-disk persistence against this project's own seed data.
 
 Everywhere the UI is decoupled from Claude, Postgres, or any other data
 source: nothing talks to a concrete provider directly, everything goes
@@ -96,10 +99,16 @@ choices built on top of it.
 - **Repository** — [shared/repositories/](shared/repositories/)
   (reusable, domain-agnostic):
   `TripleRepository` — CRUDL over `(subject, predicate, object_value)`
-  triples, one `(subject, predicate)` slot at a time.
+  triples, one `(subject, predicate)` slot at a time. Two
+  implementations:
   [PostgresTripleRepository](shared/repositories/postgres_triple_repository.py)
-  is the concrete implementation. Not yet wired into the composition
-  root — no UI feature consumes it yet; see
+  and
+  [OxigraphTripleRepository](shared/repositories/oxigraph_triple_repository.py)
+  (an embedded RDF store, deliberately enforcing the same
+  single-valued contract even though it's natively multi-valued — see
+  [artifacts/rdf-poc/FINDINGS.md](artifacts/rdf-poc/FINDINGS.md)).
+  Neither is wired into the composition root yet — no UI feature
+  consumes them; see
   [docs/adr/0008](docs/adr/0008-triple-repository-first-implementation.md).
 
 ### What the app does today
@@ -222,6 +231,11 @@ pytest
   `TripleRepository` CRUDL logic against a fake connection, plus
   integration tests against the real `triple_store` table (skip
   gracefully when unreachable, same as the Postgres test above).
+- [tests/test_oxigraph_triple_repository.py](tests/test_oxigraph_triple_repository.py) —
+  the same `TripleRepository` CRUDL logic against a real in-memory
+  `pyoxigraph.Store` (no fake needed), plus an on-disk persistence
+  test across separate instances — not skip-safe, since an embedded
+  store has no external network dependency to be unreachable.
 
 ## Project structure
 
@@ -243,6 +257,7 @@ shared/                     # reusable framework - no app-specific vocabulary (A
   repositories/
     interfaces.py                 # Triple, TripleRepository
     postgres_triple_repository.py  # TripleRepository backed by triple_store
+    oxigraph_triple_repository.py  # TripleRepository backed by an embedded pyoxigraph.Store
 blogresearch/                # this app's own choices, built on shared/ - deliberately small
   presenters/
     hello_presenter.py       # IProvider-backed presenter (owns success/error flow)

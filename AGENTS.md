@@ -142,17 +142,30 @@ prematurely generalized is not.
   - `TripleRepository` (`interfaces.py`) — CRUDL (`create`/`read`/
     `update`/`delete`/`list`) over `(subject, predicate, object_value)`
     rows, one `(subject, predicate)` slot at a time (single-valued,
-    not RDF multi-valued facts). `PostgresTripleRepository` is the
-    concrete implementation, over the existing `triple_store` table.
-  - Talks to Postgres directly (same `DATABASE_URL`/`psycopg2`
-    pattern as `PostgresProvider`) rather than composing through
-    `IDbProvider` — see
-    [docs/adr/0008](docs/adr/0008-triple-repository-first-implementation.md)
-    for why.
+    not RDF multi-valued facts). Two concrete implementations:
+    - `PostgresTripleRepository`, over the existing `triple_store`
+      table. Talks to Postgres directly (same `DATABASE_URL`/
+      `psycopg2` pattern as `PostgresProvider`) rather than composing
+      through `IDbProvider` — see
+      [docs/adr/0008](docs/adr/0008-triple-repository-first-implementation.md)
+      for why.
+    - `OxigraphTripleRepository`, over an embedded `pyoxigraph.Store`
+      (in-memory by default, or on-disk via `OXIGRAPH_STORE_PATH`).
+      Deliberately enforces the same single-valued contract as
+      `PostgresTripleRepository` even though the underlying store is
+      naturally multi-valued RDF — see
+      `artifacts/rdf-poc/FINDINGS.md`'s "CRUDL POC" section for why
+      that was a deliberate deferral, not a limitation, pending a real
+      multi-valued consumer (ASR-004). **Operational constraint to
+      know before wiring this into the composition root:** an on-disk
+      store can only be held open by one live `Store` object at a
+      time (a RocksDB file lock) — keep one long-lived instance, don't
+      construct a new one per request.
   - Not yet wired into `resolve_presenter()`/the composition root —
-    no presenter or UI feature consumes it yet. The not-yet-built
-    `FormDataRepository` (ADR-0004) is expected to compose it once
-    the forms-specific DTO/schema questions are resolved.
+    no presenter or UI feature consumes either implementation yet. The
+    not-yet-built `FormDataRepository` (ADR-0004) is expected to
+    compose one of them once the forms-specific DTO/schema questions
+    are resolved.
 - **Composition root** — `blogresearch/config/registrations.py`
   (inherently app-specific — it wires *this app's* concrete choices,
   so it stays in `blogresearch/` even though the pattern it follows
@@ -244,6 +257,12 @@ pytest
   resolves to Railway's private network and isn't reachable from a
   local dev machine), plus skip-safe integration tests against the
   real `triple_store` table.
+- `tests/test_oxigraph_triple_repository.py` — `OxigraphTripleRepository`
+  CRUDL logic against a real in-memory `pyoxigraph.Store` (no fake
+  needed — an in-memory store is already instant and offline), plus a
+  persistence test across separate on-disk instances. Not skip-safe
+  like the Postgres integration tests — no external network dependency
+  to be unreachable.
 
 ## What to avoid
 
