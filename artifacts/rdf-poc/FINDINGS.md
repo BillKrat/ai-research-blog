@@ -503,10 +503,12 @@ provisioning a fresh volume (`ai-research-api-volume`, same
 `/var/lib/agraph` mount path) directly on `ai-research-api` via its
 context menu's "Attach volume" action — Railway does not expose a way
 to reattach an existing volume to a different service through its UI,
-only create-fresh-and-discard-old. `ai-research-blog-volume` is still
-attached to `ai-research-blog`, empty and effectively free (Railway
-only charges for data stored) — left as-is, cleanup at the user's
-convenience, not urgent.
+only create-fresh-and-discard-old. `ai-research-blog-volume` (the
+misattached one) was deleted afterward, once `ai-research-api-volume`
+was confirmed working — Railway required typing the volume's exact
+name to confirm, plus the account owner's own 2FA. Final state:
+`ai-research-blog` has no volume at all; `ai-research-api-volume` is
+the only one, correctly placed on the service that actually uses it.
 
 **Test method:** a temporary, gated diagnostic endpoint
 (`/api/_debug/oxigraph-volume-check` in `app.py`, inert unless
