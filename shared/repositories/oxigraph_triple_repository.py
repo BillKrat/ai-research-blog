@@ -10,6 +10,7 @@ a concrete consumer (ASR-004) needs it.
 """
 
 import os
+from pathlib import Path
 from urllib.parse import quote, unquote
 
 import pyoxigraph as ox
@@ -82,7 +83,17 @@ class OxigraphTripleRepository(TripleRepository):
             return
         resolved_path = store_path or os.environ.get("OXIGRAPH_STORE_PATH")
         try:
-            self.store = ox.Store(resolved_path) if resolved_path else ox.Store()
+            if resolved_path:
+                # pyoxigraph only creates the leaf directory of
+                # resolved_path if missing, not its parents (confirmed
+                # directly: "./local_data/oxigraph" raises FileNotFoundError
+                # when "./local_data/" doesn't exist yet) - unlike
+                # PostgresTripleRepository, which has no local filesystem
+                # state to prepare.
+                Path(resolved_path).mkdir(parents=True, exist_ok=True)
+                self.store = ox.Store(resolved_path)
+            else:
+                self.store = ox.Store()
         except OSError as exc:
             raise ProviderError(f"Oxigraph error: {exc}") from exc
 

@@ -84,6 +84,28 @@ def test_uses_environment_store_path(tmp_path, monkeypatch):
     assert reopened.read("subject-1", "kind") == Triple("subject-1", "kind", "widget")
 
 
+def test_store_path_creates_missing_parent_directories(tmp_path):
+    """store_path can point at a nested directory that doesn't exist yet.
+
+    pyoxigraph.Store only creates the leaf directory of the given path
+    if missing, not its parents - confirmed directly: pointing at
+    tmp_path/"nested/oxigraph" without this repository's own mkdir(
+    parents=True) raises FileNotFoundError, because tmp_path/"nested"
+    doesn't exist either. Local dev's OXIGRAPH_STORE_PATH default
+    (./local_data/oxigraph, see .env.example) is exactly this shape -
+    a fresh checkout has no ./local_data/ yet.
+    """
+    nested_path = tmp_path / "nested" / "oxigraph"
+    assert not nested_path.parent.exists()
+
+    repository = OxigraphTripleRepository(store_path=str(nested_path))
+    repository.create("subject-1", "kind", "widget")
+    del repository  # release the on-disk lock before reopening below
+
+    reopened = OxigraphTripleRepository(store_path=str(nested_path))
+    assert reopened.read("subject-1", "kind") == Triple("subject-1", "kind", "widget")
+
+
 def test_explicit_store_path_overrides_environment(tmp_path, monkeypatch):
     other_path = tmp_path / "from-env"
     other_path.mkdir()

@@ -14,12 +14,16 @@ from blogresearch.config.registrations import (
     resolve_db_provider,
     resolve_llm_provider,
     resolve_presenter,
+    resolve_triple_repository,
 )
 from shared.container import Container
 from shared.providers.claude_provider import ClaudeProvider
 from shared.providers.dci_provider import DCIProvider
 from shared.providers.postgres_provider import PostgresProvider
 from shared.providers.interfaces import IDbProvider, IProvider
+from shared.repositories.interfaces import TripleRepository
+from shared.repositories.oxigraph_triple_repository import OxigraphTripleRepository
+from shared.repositories.postgres_triple_repository import PostgresTripleRepository
 
 
 class _FakeView:
@@ -219,3 +223,72 @@ def test_postgres_provider_can_select_from_triple_store():
         ("unit-test-1", "kind", "fixture"),
         ("unit-test-2", "kind", "fixture"),
     ]
+
+
+# --- TripleRepository: its own axis, independent of provider_name ---
+#
+# provider_name picks the LLM-vs-DB demo provider (mutually exclusive -
+# see the tests above). triple_repository_name is a separate field on
+# AppSettings, so these tests mirror the resolve_llm_provider/
+# resolve_db_provider pairing above, but for TripleRepository, and add
+# one test proving the two axes really are independent.
+
+
+def test_container_resolves_oxigraph_as_triple_repository():
+    repository = resolve_triple_repository(AppSettings(triple_repository_name="oxigraph"))
+    assert isinstance(repository, OxigraphTripleRepository)
+
+
+def test_container_resolves_postgres_as_triple_repository():
+    repository = resolve_triple_repository(AppSettings(triple_repository_name="postgres"))
+    assert isinstance(repository, PostgresTripleRepository)
+
+
+def test_container_triple_repository_name_is_case_insensitive():
+    repository = resolve_triple_repository(AppSettings(triple_repository_name="OXIGRAPH"))
+    assert isinstance(repository, OxigraphTripleRepository)
+
+
+def test_container_rejects_unknown_triple_repository():
+    with pytest.raises(ValueError, match="Unknown triple repository"):
+        resolve_triple_repository(AppSettings(triple_repository_name="neo4j"))
+
+
+def test_app_container_registers_triple_repository_by_default():
+    # AppSettings() with no override - TRIPLE_REPOSITORY_NAME unset in the
+    # environment resolves to the "oxigraph" default (see app_settings.py).
+    container = build_container(AppSettings(provider_name="claude"))
+
+    repository = container.resolve(TripleRepository)
+
+    assert isinstance(repository, OxigraphTripleRepository)
+
+
+def test_app_container_registers_triple_repository_regardless_of_provider_name():
+    # TripleRepository is registered on every branch of register_app_services
+    # - unlike IProvider/IDbProvider, which are mutually exclusive per
+    # provider_name. Proven here from both branches.
+    claude_container = build_container(
+        AppSettings(provider_name="claude", triple_repository_name="oxigraph")
+    )
+    postgres_container = build_container(
+        AppSettings(provider_name="postgres", triple_repository_name="oxigraph")
+    )
+
+    assert isinstance(claude_container.resolve(TripleRepository), OxigraphTripleRepository)
+    assert isinstance(postgres_container.resolve(TripleRepository), OxigraphTripleRepository)
+
+
+def test_app_container_resolves_triple_repository_as_a_singleton():
+    # Not just a container-lifetime detail: OxigraphTripleRepository's
+    # on-disk store can only be held open by one live Store at a time (a
+    # RocksDB file lock - see its docstring), so a new instance per
+    # resolve() would break the very first time two call sites needed it
+    # in the same process. add_singleton is what makes "keep one
+    # long-lived instance" true in practice, not just in a comment.
+    container = build_container(AppSettings(triple_repository_name="oxigraph"))
+
+    first = container.resolve(TripleRepository)
+    second = container.resolve(TripleRepository)
+
+    assert first is second

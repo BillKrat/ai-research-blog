@@ -18,6 +18,9 @@ from shared.providers.dci_provider import DCIProvider
 from shared.providers.postgres_provider import PostgresProvider
 from shared.providers.interfaces import IDbProvider, IProvider
 from shared.mapping_view_model import MappingViewModel
+from shared.repositories.interfaces import TripleRepository
+from shared.repositories.oxigraph_triple_repository import OxigraphTripleRepository
+from shared.repositories.postgres_triple_repository import PostgresTripleRepository
 
 
 def _get_anthropic_api_key() -> str | None:
@@ -36,6 +39,18 @@ def _build_postgres_provider() -> IDbProvider:
     return PostgresProvider()
 
 
+def _build_postgres_triple_repository() -> TripleRepository:
+    return PostgresTripleRepository()
+
+
+def _build_oxigraph_triple_repository() -> TripleRepository:
+    # One instance for the whole app lifetime: add_singleton below caches
+    # it, matching the one-live-Store-per-path constraint documented on
+    # OxigraphTripleRepository (a second Store on the same on-disk path
+    # while this one is alive raises ProviderError).
+    return OxigraphTripleRepository()
+
+
 # Registered by provider name (case-insensitive). Add a new LLM provider
 # or DB provider by adding an entry to the matching registry - the
 # resolve_*() functions below never need to change.
@@ -46,6 +61,14 @@ LLM_PROVIDER_FACTORIES: dict[str, Callable[[], IProvider]] = {
 
 DB_PROVIDER_FACTORIES: dict[str, Callable[[], IDbProvider]] = {
     "postgres": _build_postgres_provider,
+}
+
+# Which backend answers TripleRepository CRUDL calls - independent of
+# LLM_PROVIDER_FACTORIES/DB_PROVIDER_FACTORIES above, selected by its own
+# settings field (see AppSettings.triple_repository_name).
+TRIPLE_REPOSITORY_FACTORIES: dict[str, Callable[[], TripleRepository]] = {
+    "postgres": _build_postgres_triple_repository,
+    "oxigraph": _build_oxigraph_triple_repository,
 }
 
 
@@ -68,6 +91,11 @@ def register_app_services(container: Container, settings: AppSettings | None = N
         raise ValueError(
             f"Unknown provider '{settings.provider_name}'. Known providers: {', '.join(known)}"
         )
+
+    # Always registered, unlike the IProvider/IDbProvider branch above -
+    # triple_repository_name is its own axis, not part of the
+    # provider_name choice.
+    container.add_singleton(TripleRepository, lambda: resolve_triple_repository(settings))
     return container
 
 
@@ -96,6 +124,19 @@ def resolve_db_provider(settings: AppSettings) -> IDbProvider:
         known = ", ".join(sorted(DB_PROVIDER_FACTORIES))
         raise ValueError(
             f"Unknown DB provider '{settings.provider_name}'. Known providers: {known}"
+        ) from None
+    return factory()
+
+
+def resolve_triple_repository(settings: AppSettings) -> TripleRepository:
+    name = settings.triple_repository_name.strip().lower()
+    try:
+        factory = TRIPLE_REPOSITORY_FACTORIES[name]
+    except KeyError:
+        known = ", ".join(sorted(TRIPLE_REPOSITORY_FACTORIES))
+        raise ValueError(
+            f"Unknown triple repository '{settings.triple_repository_name}'. "
+            f"Known triple repositories: {known}"
         ) from None
     return factory()
 
