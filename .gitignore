@@ -64,6 +64,11 @@ db.sqlite3-journal
 # Local Oxigraph on-disk store (OXIGRAPH_STORE_PATH default in .env.example)
 /local_data/
 
+# Local Postgres container's data files (local/postgres/docker-compose.yml)
+# - the schema/fixture config itself (init/001-schema.sql) is real,
+# versioned config and stays tracked; only the runtime data is ignored.
+/local/postgres/data/
+
 # Flask stuff:
 instance/
 .webassets-cache

@@ -94,8 +94,13 @@ choices built on top of it.
   `LLM_PROVIDER_FACTORIES` / `DB_PROVIDER_FACTORIES` registries;
   `resolve_presenter()` returns the matching presenter type, resolving
   through [shared/container.py](shared/container.py)'s reusable `Container`.
+  `TRIPLE_REPOSITORY_FACTORIES` is a third, independent registry —
+  registered unconditionally (not gated by `PROVIDER_NAME`), since which
+  `TripleRepository` backend is active has nothing to do with which
+  LLM/DB demo provider is active.
   [blogresearch/config/app_settings.py](blogresearch/config/app_settings.py) holds the env-driven
-  `AppSettings` (`PROVIDER_NAME`, `USE_CUSTOM_PRESENTER`).
+  `AppSettings` (`PROVIDER_NAME`, `USE_CUSTOM_PRESENTER`,
+  `TRIPLE_REPOSITORY_NAME`).
 - **Repository** — [shared/repositories/](shared/repositories/)
   (reusable, domain-agnostic):
   `TripleRepository` — CRUDL over `(subject, predicate, object_value)`
@@ -107,8 +112,10 @@ choices built on top of it.
   (an embedded RDF store, deliberately enforcing the same
   single-valued contract even though it's natively multi-valued — see
   [artifacts/rdf-poc/FINDINGS.md](artifacts/rdf-poc/FINDINGS.md)).
-  Neither is wired into the composition root yet — no UI feature
-  consumes them; see
+  Both are wired into the composition root as a `TripleRepository`
+  singleton, selected by `TRIPLE_REPOSITORY_NAME` — its own axis,
+  independent of `PROVIDER_NAME` (see "Local setup" below). No UI
+  feature consumes it yet; see
   [docs/adr/0008](docs/adr/0008-triple-repository-first-implementation.md).
 
 ### What the app does today
@@ -151,12 +158,69 @@ choices built on top of it.
 
    Recommended values:
    - `ANTHROPIC_API_KEY` (or `CLAUDE_API_KEY`) for Claude-based runs
-   - `DATABASE_URL` for Postgres-backed runs
+   - `DATABASE_URL` for Postgres-backed runs — see "Local Postgres" below
+     for a ready-to-run local instance matching this
    - `PROVIDER_NAME` — `claude` (default), `dci`, or `postgres`
    - `USE_CUSTOM_PRESENTER` — `true` to use `CustomPresenter`'s
      formatting instead of the default (applies to the LLM path only)
+   - `TRIPLE_REPOSITORY_NAME` — `oxigraph` (default) or `postgres`;
+     which `TripleRepository` backend the composition root resolves,
+     independent of `PROVIDER_NAME` above
+   - `OXIGRAPH_STORE_PATH` — only read when
+     `TRIPLE_REPOSITORY_NAME=oxigraph`; a local on-disk directory (e.g.
+     `./local_data/oxigraph`) for persistence across restarts. Unset
+     falls back to an in-memory store — fine for tests, gone on exit.
 
-4. Run the app:
+4. (Optional) Start a local Postgres, if you'll use `PROVIDER_NAME=postgres`
+   or `TRIPLE_REPOSITORY_NAME=postgres`:
+
+   ```bash
+   docker compose -f local/postgres/docker-compose.yml up -d
+   ```
+
+   `local/postgres/init/001-schema.sql` creates `hello_messages` and
+   `triple_store` (including the `unit-test-1`/`unit-test-2` fixture rows
+   the test suite asserts on) on first run — matches `.env.example`'s
+   default `DATABASE_URL`
+   (`postgresql://postgres:postgres@localhost:5432/blogresearch`). Stop it
+   with `docker compose -f local/postgres/docker-compose.yml down`; its
+   data lives in `local/postgres/data/` (gitignored).
+
+5. (Optional) Browse a `TripleRepository` backend directly, outside the
+   app:
+   - **Oxigraph** — `pip install oxigraph` (the standalone CLI package;
+     separate from `pyoxigraph`, the embedded library the app itself
+     depends on), then
+     `oxigraph serve --location ./local_data/oxigraph` (or wherever your
+     `OXIGRAPH_STORE_PATH` points) for a SPARQL UI at
+     `http://localhost:7878`. Only one process can hold that directory
+     open at a time (a RocksDB file lock) — stop the app first, or point
+     at a copy of the directory.
+   - **Postgres** — any Postgres client against `DATABASE_URL`
+     (`psql`, a GUI tool, etc.).
+
+6. (Optional) Reseed the actively configured `TripleRepository` (whichever
+   `TRIPLE_REPOSITORY_NAME` selects) from
+   [shared/seed_data/initial_triples.json](shared/seed_data/initial_triples.json) —
+   deletes everything currently in that store, then recreates the seed
+   set:
+
+   ```bash
+   python scripts/reseed_triple_store.py
+   ```
+
+   Prompts for confirmation unless the target looks local (add `--yes`
+   to skip that for scripted use).
+
+> Steps 4–5's commands are the portable, versioned way to do this on any
+> machine. On a machine set up for this project day to day, they may also
+> be wrapped as personal `postgres-start`/`postgres-stop` and
+> `oxigraph-start`/`oxigraph-stop` shell scripts (e.g. in `~/bin`) —
+> those are machine-specific launchers, not part of this repo, so they
+> won't exist on a fresh checkout. The commands above work everywhere
+> regardless.
+
+7. Run the app:
 
    ```bash
   uvicorn app:app --reload --port 8000
@@ -236,12 +300,22 @@ pytest
   `pyoxigraph.Store` (no fake needed), plus an on-disk persistence
   test across separate instances — not skip-safe, since an embedded
   store has no external network dependency to be unreachable.
+- [tests/test_vocabulary.py](tests/test_vocabulary.py) —
+  `seed_initial_vocabulary()` (conflict-safe: leaves existing data
+  alone) and `reseed()` (destructive kill-and-fill), both against an
+  in-memory fake `TripleRepository`.
 
 ## Project structure
 
 ```text
 app.py                      # FastAPI API entrypoint
 frontend/                   # Next.js client
+local/postgres/              # local Postgres (docker compose - see "Local setup")
+  docker-compose.yml
+  init/001-schema.sql          # hello_messages + triple_store, incl. unit-test-*/kind fixture
+  data/                          # gitignored - the container's own runtime data
+scripts/
+  reseed_triple_store.py       # kill-and-fill the active TripleRepository from the seed file
 shared/                     # reusable framework - no app-specific vocabulary (ADR-0009)
   container.py              # reusable DI container primitives
   interfaces.py              # IView, IViewModel, IPresenter, ViewModelResolver
@@ -258,6 +332,9 @@ shared/                     # reusable framework - no app-specific vocabulary (A
     interfaces.py                 # Triple, TripleRepository
     postgres_triple_repository.py  # TripleRepository backed by triple_store
     oxigraph_triple_repository.py  # TripleRepository backed by an embedded pyoxigraph.Store
+  seed_data/
+    initial_triples.json          # the master seed file scripts/reseed_triple_store.py loads
+    loader.py                     # seed_initial_vocabulary() (safe) and reseed() (destructive)
 blogresearch/                # this app's own choices, built on shared/ - deliberately small
   presenters/
     hello_presenter.py       # IProvider-backed presenter (owns success/error flow)
