@@ -190,6 +190,13 @@ choices built on top of it.
    with `docker compose -f local/postgres/docker-compose.yml down`; its
    data lives in `local/postgres/data/` (gitignored).
 
+   The same compose file also runs pgAdmin at
+   [http://localhost:5050](http://localhost:5050) (login
+   `admin@example.com` / `admin`) for browsing this database directly.
+   Its own saved-server list lives in an anonymous Docker volume, not
+   named in compose — a `docker compose down` resets it, `stop`/`start`
+   doesn't.
+
 5. (Optional) Browse a `TripleRepository` backend directly, outside the
    app:
    - **Oxigraph** — `pip install oxigraph` (the standalone CLI package;
