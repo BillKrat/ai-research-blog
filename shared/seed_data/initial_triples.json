@@ -1,30 +1,36 @@
 [
   {
+    "id": "4550bb52-ef99-4249-a2bf-5af639867e2a",
     "subject": "{base}seed/person/application-owner",
     "predicate": "{base}type",
     "object_value": "{base}Person"
   },
   {
+    "id": "b16bae48-07cd-401d-834a-29fe5df1d04c",
     "subject": "{base}seed/person/application-owner",
     "predicate": "{base}name",
     "object_value": "Application owner"
   },
   {
+    "id": "26d0aed3-a267-4590-b9e9-0916f50b914c",
     "subject": "{base}seed/dataset/example",
     "predicate": "{base}type",
     "object_value": "{base}DataSet"
   },
   {
+    "id": "6bbbb90b-4f5b-438e-81c0-14e172c53c83",
     "subject": "{base}seed/dataset/example",
     "predicate": "{base}name",
     "object_value": "Example data set"
   },
   {
+    "id": "7ccb8523-fc26-4c69-947e-b72edbbcd48f",
     "subject": "{base}seed/database-schema/example",
     "predicate": "{base}type",
     "object_value": "{base}DatabaseSchema"
   },
   {
+    "id": "cabd9b83-bcce-42e4-bf82-b5e7816e628c",
     "subject": "{base}seed/database-schema/example",
     "predicate": "{base}name",
     "object_value": "Example database schema"

@@ -7,8 +7,8 @@ class MemoryTripleRepository:
     def __init__(self):
         self.triples = {}
 
-    def create(self, subject, predicate, object_value):
-        triple = Triple(subject, predicate, object_value)
+    def create(self, subject, predicate, object_value, id=None):
+        triple = Triple(subject, predicate, object_value, id=id or "")
         self.triples[(subject, predicate)] = triple
         return triple
 

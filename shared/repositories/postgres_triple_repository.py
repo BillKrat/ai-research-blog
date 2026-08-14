@@ -7,6 +7,7 @@ docs/adr/0008 for why this repository doesn't route through it.
 """
 
 import os
+import uuid
 from contextlib import closing
 from typing import Any, Callable
 
@@ -40,7 +41,10 @@ class PostgresTripleRepository(TripleRepository):
             raise ValueError("DATABASE_URL must be set in the environment or .env file")
         return conn_string
 
-    def create(self, subject: str, predicate: str, object_value: str) -> Triple:
+    def create(
+        self, subject: str, predicate: str, object_value: str, id: str | None = None
+    ) -> Triple:
+        resolved_id = id or str(uuid.uuid4())
         try:
             with closing(self._connect(self.conn_string)) as conn:
                 with conn.cursor() as cur:
@@ -54,39 +58,43 @@ class PostgresTripleRepository(TripleRepository):
                             f"predicate={predicate!r}"
                         )
                     cur.execute(
-                        "INSERT INTO triple_store (subject, predicate, object_value) "
-                        "VALUES (%s, %s, %s)",
-                        (subject, predicate, object_value),
+                        "INSERT INTO triple_store (subject, predicate, object_value, id) "
+                        "VALUES (%s, %s, %s, %s)",
+                        (subject, predicate, object_value, resolved_id),
                     )
                 conn.commit()
         except psycopg2.Error as exc:
             raise ProviderError(f"PostgreSQL error: {exc}") from exc
-        return Triple(subject, predicate, object_value)
+        return Triple(subject, predicate, object_value, id=resolved_id)
 
     def read(self, subject: str, predicate: str) -> Triple | None:
         try:
             with closing(self._connect(self.conn_string)) as conn:
                 with conn.cursor() as cur:
                     cur.execute(
-                        "SELECT object_value FROM triple_store "
+                        "SELECT object_value, id FROM triple_store "
                         "WHERE subject = %s AND predicate = %s",
                         (subject, predicate),
                     )
                     row = cur.fetchone()
         except psycopg2.Error as exc:
             raise ProviderError(f"PostgreSQL error: {exc}") from exc
-        return Triple(subject, predicate, row[0]) if row else None
+        return Triple(subject, predicate, row[0], id=row[1]) if row else None
 
     def update(self, subject: str, predicate: str, object_value: str) -> Triple:
         try:
             with closing(self._connect(self.conn_string)) as conn:
                 with conn.cursor() as cur:
+                    # RETURNING id in the same round trip - update() must
+                    # report the row's existing id, not invent a new one,
+                    # since an UPDATE changes object_value, never identity.
                     cur.execute(
                         "UPDATE triple_store SET object_value = %s "
-                        "WHERE subject = %s AND predicate = %s",
+                        "WHERE subject = %s AND predicate = %s RETURNING id",
                         (object_value, subject, predicate),
                     )
-                    if cur.rowcount == 0:
+                    row = cur.fetchone()
+                    if row is None:
                         raise ProviderError(
                             f"No triple to update for subject={subject!r}, "
                             f"predicate={predicate!r}"
@@ -94,7 +102,7 @@ class PostgresTripleRepository(TripleRepository):
                 conn.commit()
         except psycopg2.Error as exc:
             raise ProviderError(f"PostgreSQL error: {exc}") from exc
-        return Triple(subject, predicate, object_value)
+        return Triple(subject, predicate, object_value, id=row[0])
 
     def delete(self, subject: str, predicate: str) -> None:
         try:
@@ -114,16 +122,18 @@ class PostgresTripleRepository(TripleRepository):
                 with conn.cursor() as cur:
                     if subject is None:
                         cur.execute(
-                            "SELECT subject, predicate, object_value FROM triple_store "
+                            "SELECT subject, predicate, object_value, id FROM triple_store "
                             "ORDER BY subject, predicate"
                         )
                     else:
                         cur.execute(
-                            "SELECT subject, predicate, object_value FROM triple_store "
+                            "SELECT subject, predicate, object_value, id FROM triple_store "
                             "WHERE subject = %s ORDER BY predicate",
                             (subject,),
                         )
                     rows = cur.fetchall()
         except psycopg2.Error as exc:
             raise ProviderError(f"PostgreSQL error: {exc}") from exc
+        # Column order matches Triple's field order exactly, so the row
+        # tuple unpacks positionally with no manual remapping.
         return [Triple(*row) for row in rows]

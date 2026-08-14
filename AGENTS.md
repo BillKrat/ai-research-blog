@@ -142,7 +142,12 @@ prematurely generalized is not.
   - `TripleRepository` (`interfaces.py`) — CRUDL (`create`/`read`/
     `update`/`delete`/`list`) over `(subject, predicate, object_value)`
     rows, one `(subject, predicate)` slot at a time (single-valued,
-    not RDF multi-valued facts). Two concrete implementations:
+    not RDF multi-valued facts) — that pair remains the key CRUDL is
+    addressed by. Each `Triple` also carries a stable `id` (a UUID,
+    excluded from equality) for direct row-level reference and cross-
+    store/environment identity — see
+    [docs/adr/0010](docs/adr/0010-stable-id-for-triples.md). Two
+    concrete implementations:
     - `PostgresTripleRepository`, over the existing `triple_store`
       table. Talks to Postgres directly (same `DATABASE_URL`/
       `psycopg2` pattern as `PostgresProvider`) rather than composing

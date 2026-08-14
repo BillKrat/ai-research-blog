@@ -15,6 +15,12 @@ def _load_seed_triples(base_uri: str) -> list[Triple]:
             subject=record["subject"].replace("{base}", base_uri),
             predicate=record["predicate"].replace("{base}", base_uri),
             object_value=record["object_value"].replace("{base}", base_uri),
+            # Each seed record carries its own pre-generated id (see
+            # initial_triples.json, docs/adr/0010) rather than letting
+            # create() mint a fresh one - that's what makes the same
+            # seed vocabulary recognizable as "the same facts" whether
+            # it's loaded into local Postgres, Railway, or Oxigraph.
+            id=record["id"],
         )
         for record in records
     ]
@@ -28,13 +34,17 @@ def seed_initial_vocabulary(
 
     Existing identical triples are left alone, making a new installation
     command safe to run more than once. A changed existing value raises
-    instead of silently overwriting application data.
+    instead of silently overwriting application data. The comparison
+    (`existing != triple`) never trips on id alone - Triple.id is
+    excluded from equality (see docs/adr/0010) precisely so re-running
+    this against a store where these facts already exist under their
+    own, independently-generated ids isn't mistaken for a conflict.
     """
     seeds = _load_seed_triples(base_uri)
     for triple in seeds:
         existing = repository.read(triple.subject, triple.predicate)
         if existing is None:
-            repository.create(triple.subject, triple.predicate, triple.object_value)
+            repository.create(triple.subject, triple.predicate, triple.object_value, id=triple.id)
         elif existing != triple:
             raise ValueError(f"Seed triple conflicts with existing data: {triple}")
     return seeds
@@ -66,7 +76,7 @@ def reseed(
         repository.delete(triple.subject, triple.predicate)
     seeds = _load_seed_triples(base_uri)
     for triple in seeds:
-        repository.create(triple.subject, triple.predicate, triple.object_value)
+        repository.create(triple.subject, triple.predicate, triple.object_value, id=triple.id)
     return seeds
 
 

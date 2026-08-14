@@ -104,7 +104,9 @@ choices built on top of it.
 - **Repository** — [shared/repositories/](shared/repositories/)
   (reusable, domain-agnostic):
   `TripleRepository` — CRUDL over `(subject, predicate, object_value)`
-  triples, one `(subject, predicate)` slot at a time. Two
+  triples, one `(subject, predicate)` slot at a time (each also
+  carries a stable `id` for row-level/cross-store reference — see
+  [docs/adr/0010](docs/adr/0010-stable-id-for-triples.md)). Two
   implementations:
   [PostgresTripleRepository](shared/repositories/postgres_triple_repository.py)
   and

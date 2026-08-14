@@ -54,6 +54,12 @@ from a .NET/C# background:
   section below for tests that make both of those concrete - this is
   a real behavioral difference from a plain C# class, where `==`
   compares references unless you opt into value equality yourself.
+  One field opts out of that auto-generated comparison: `id` is
+  declared with `field(compare=False)` (see docs/adr/0010), so two
+  Triples with the same subject/predicate/object_value are equal
+  regardless of what id each one carries - deliberately, since the
+  same fact seeded into two independent stores gets the same content
+  but is still "the same fact" either way.
 - **pytest `monkeypatch`** temporarily sets/removes an environment
   variable for the duration of one test and restores it automatically
   afterward - no manual save/restore, no risk of one test's env
@@ -197,6 +203,22 @@ def test_triple_equality_is_by_value_not_identity():
     assert a is not b  # still two distinct objects in memory
 
 
+def test_triple_equality_ignores_id():
+    """id is declared with field(compare=False) (docs/adr/0010) - the one
+    field @dataclass's auto-generated __eq__ deliberately skips. Two
+    Triples with different ids but identical subject/predicate/
+    object_value are still equal: this is what a store that assigns
+    its own ids at write time (PostgresTripleRepository generating a
+    fresh UUID4, or a different environment's Oxigraph store) needs in
+    order to still be recognized as holding "the same fact."
+    """
+    same_content_different_id_a = Triple("subject-1", "kind", "widget", id="id-a")
+    same_content_different_id_b = Triple("subject-1", "kind", "widget", id="id-b")
+
+    assert same_content_different_id_a == same_content_different_id_b
+    assert same_content_different_id_a.id != same_content_different_id_b.id  # ids themselves still differ
+
+
 def test_triple_is_immutable():
     """frozen=True blocks attribute assignment after construction.
 
@@ -316,6 +338,12 @@ def test_create_inserts_and_returns_the_triple():
     the final result) proves *which* two statements ran, in order:
     the existence check first, then the INSERT - not just that
     *something* happened to produce the right return value.
+
+    No id was passed in, so create() must have minted a fresh UUID4
+    itself (see docs/adr/0010) - checked for shape (a real UUID) rather
+    than an exact value, since it's freshly random every run. Triple
+    equality ignores id entirely (compare=False), which is why the
+    `result == Triple(...)` assertion below doesn't need to know it.
     """
     cursor = _FakeCursor(fetchone_result=None)
     repository, connection = _repository(cursor)
@@ -323,10 +351,26 @@ def test_create_inserts_and_returns_the_triple():
     result = repository.create("subject-1", "kind", "widget")
 
     assert result == Triple("subject-1", "kind", "widget")
+    assert uuid.UUID(result.id)  # raises ValueError if this isn't a real UUID
     assert cursor.executed[0][0].startswith("SELECT 1")
     assert cursor.executed[1][0].startswith("INSERT")
-    assert cursor.executed[1][1] == ("subject-1", "kind", "widget")
+    assert cursor.executed[1][1] == ("subject-1", "kind", "widget", result.id)
     assert connection.committed
+
+
+def test_create_uses_an_explicit_id_when_given():
+    """Passing id= skips UUID generation and uses exactly the given value -
+    the path shared/seed_data/loader.py relies on to keep a seeded
+    fact's id stable across independently seeded stores/environments,
+    instead of a fresh random one being minted on every install.
+    """
+    cursor = _FakeCursor(fetchone_result=None)
+    repository, _ = _repository(cursor)
+
+    result = repository.create("subject-1", "kind", "widget", id="explicit-id")
+
+    assert result.id == "explicit-id"
+    assert cursor.executed[1][1] == ("subject-1", "kind", "widget", "explicit-id")
 
 
 def test_create_raises_when_triple_already_exists():
@@ -362,26 +406,35 @@ def test_read_returns_none_when_missing():
 def test_read_returns_the_triple_when_present():
     """A matching row is reassembled into a Triple, with subject/predicate
     supplied by the caller (they're the lookup key, not part of the
-    SELECT's result columns - only object_value comes back from the query)."""
-    cursor = _FakeCursor(fetchone_result=("widget",))
+    SELECT's result columns - object_value and id are what comes back)."""
+    cursor = _FakeCursor(fetchone_result=("widget", "row-id-1"))
     repository, _ = _repository(cursor)
 
-    assert repository.read("subject-1", "kind") == Triple("subject-1", "kind", "widget")
+    result = repository.read("subject-1", "kind")
+
+    assert result == Triple("subject-1", "kind", "widget")
+    assert result.id == "row-id-1"
 
 
 # --- update() ---
 
 
 def test_update_changes_the_object_value():
-    """rowcount=1 simulates "the UPDATE matched exactly one row" - the normal case."""
-    cursor = _FakeCursor(rowcount=1)
+    """fetchone_result simulates `RETURNING id` finding the row it just
+    updated - the normal case. update() preserves that existing id
+    rather than inventing a new one, since an UPDATE changes
+    object_value, never identity.
+    """
+    cursor = _FakeCursor(fetchone_result=("row-id-1",))
     repository, connection = _repository(cursor)
 
     result = repository.update("subject-1", "kind", "gadget")
 
     assert result == Triple("subject-1", "kind", "gadget")
-    # SQL is `SET object_value = %s WHERE subject = %s AND predicate = %s` -
-    # params must line up with the %s placeholders in that exact order.
+    assert result.id == "row-id-1"
+    # SQL is `SET object_value = %s WHERE subject = %s AND predicate = %s
+    # RETURNING id` - params must line up with the %s placeholders in
+    # that exact order (RETURNING has no placeholder of its own).
     assert cursor.executed[0][1] == ("gadget", "subject-1", "kind")
     assert connection.committed
 
@@ -389,14 +442,15 @@ def test_update_changes_the_object_value():
 def test_update_raises_when_triple_does_not_exist():
     """update() assumes an existing record - unlike create(), it's not an upsert.
 
-    rowcount=0 simulates "the UPDATE ran but matched zero rows" (the
-    WHERE clause found nothing) - the only way update() can tell the
+    `fetchone_result=None` (the _FakeCursor default) simulates "the
+    UPDATE ran but RETURNING id came back with nothing" (the WHERE
+    clause found no matching row) - the only way update() can tell the
     difference between "changed a row" and "silently did nothing."
     Nothing is committed, so even though the UPDATE statement itself
     executed, it has no effect once the connection closes without a
     commit.
     """
-    cursor = _FakeCursor(rowcount=0)
+    cursor = _FakeCursor()
     repository, connection = _repository(cursor)
 
     with pytest.raises(ProviderError, match="No triple to update"):
@@ -442,13 +496,21 @@ def test_delete_is_idempotent_when_triple_does_not_exist():
 
 
 def test_list_filters_by_subject():
-    """Passing subject= adds a WHERE clause and its value is bound as a query parameter."""
-    cursor = _FakeCursor(fetchall_result=[("subject-1", "kind", "widget")])
+    """Passing subject= adds a WHERE clause and its value is bound as a query parameter.
+
+    The fake row is a 4-tuple (subject, predicate, object_value, id),
+    matching the real SELECT's column list exactly - that's what lets
+    list() build each Triple as `Triple(*row)` with no manual
+    remapping. id is asserted on directly since Triple equality itself
+    ignores it.
+    """
+    cursor = _FakeCursor(fetchall_result=[("subject-1", "kind", "widget", "row-id-1")])
     repository, _ = _repository(cursor)
 
     result = repository.list(subject="subject-1")
 
     assert result == [Triple("subject-1", "kind", "widget")]
+    assert result[0].id == "row-id-1"
     assert "WHERE" in cursor.executed[0][0]
     assert cursor.executed[0][1] == ("subject-1",)
 
@@ -457,8 +519,8 @@ def test_list_without_subject_returns_everything():
     """No subject= means no WHERE clause - every row comes back, mapped to Triples in order."""
     cursor = _FakeCursor(
         fetchall_result=[
-            ("subject-1", "kind", "widget"),
-            ("subject-2", "kind", "gadget"),
+            ("subject-1", "kind", "widget", "row-id-1"),
+            ("subject-2", "kind", "gadget", "row-id-2"),
         ]
     )
     repository, _ = _repository(cursor)
@@ -470,6 +532,7 @@ def test_list_without_subject_returns_everything():
         Triple("subject-1", "kind", "widget"),
         Triple("subject-2", "kind", "gadget"),
     ]
+    assert [triple.id for triple in result] == ["row-id-1", "row-id-2"]
 
 
 def test_list_returns_an_empty_list_not_none_when_nothing_matches():
@@ -545,10 +608,12 @@ def test_live_create_read_update_delete_roundtrip(live_repository):
 
     created = repository.create(subject, "kind", "widget")
     assert created == Triple(subject, "kind", "widget")
+    assert uuid.UUID(created.id)  # the real id column, DEFAULT gen_random_uuid()'d or app-assigned
     assert repository.read(subject, "kind") == created
 
     updated = repository.update(subject, "kind", "gadget")
     assert repository.read(subject, "kind") == updated
+    assert updated.id == created.id  # identity survives the value change
 
     repository.delete(subject, "kind")
     assert repository.read(subject, "kind") is None
@@ -578,3 +643,28 @@ def test_live_list_filters_by_subject(live_repository):
         Triple(subject, "color", "blue"),
         Triple(subject, "kind", "widget"),
     ]
+    assert all(uuid.UUID(triple.id) for triple in results)
+
+
+def test_live_unique_constraint_is_enforced_by_the_database(live_repository):
+    """The database, not just PostgresTripleRepository.create()'s own
+    check-then-insert, rejects a second row for the same
+    (subject, predicate) - proof that docs/adr/0010's UNIQUE constraint
+    actually does its job even when something bypasses the repository
+    entirely, e.g. a direct row inserted through pgAdmin's data grid.
+    Deliberately goes around the repository - straight psycopg2, the
+    same way an out-of-band tool would.
+    """
+    repository, subject = live_repository
+    repository.create(subject, "kind", "widget")
+
+    conn_string = os.environ["DATABASE_URL"]
+    with closing(psycopg2.connect(conn_string)) as conn:
+        with conn.cursor() as cur:
+            with pytest.raises(psycopg2.errors.UniqueViolation):
+                cur.execute(
+                    "INSERT INTO triple_store (subject, predicate, object_value) "
+                    "VALUES (%s, %s, %s)",
+                    (subject, "kind", "a second value for the same slot"),
+                )
+        conn.rollback()  # the failed INSERT aborts the transaction; must roll back before reuse

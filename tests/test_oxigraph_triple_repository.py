@@ -31,6 +31,8 @@ testing shape underneath, worth understanding on its own terms:
   everywhere, every time, with no skip logic needed at all.
 """
 
+import uuid
+
 import pytest
 
 import pyoxigraph as ox
@@ -149,6 +151,28 @@ def test_create_inserts_and_returns_the_triple():
     assert repository.read("subject-1", "kind") == result
 
 
+def test_create_generates_a_uuid_when_id_is_omitted():
+    """No id argument -> create() mints a fresh UUID4 itself, same
+    contract as PostgresTripleRepository.create() (docs/adr/0010)."""
+    repository = OxigraphTripleRepository()
+
+    result = repository.create("subject-1", "kind", "widget")
+
+    assert uuid.UUID(result.id)  # raises ValueError if this isn't a real UUID
+
+
+def test_create_uses_an_explicit_id_when_given():
+    """Passing id= skips UUID generation - the path
+    shared/seed_data/loader.py relies on to keep a seeded fact's id
+    stable across independently seeded stores/environments."""
+    repository = OxigraphTripleRepository()
+
+    result = repository.create("subject-1", "kind", "widget", id="explicit-id")
+
+    assert result.id == "explicit-id"
+    assert repository.read("subject-1", "kind").id == "explicit-id"
+
+
 def test_create_raises_when_triple_already_exists():
     """create() is a real create, not an upsert - matches
     PostgresTripleRepository's contract exactly, even though the
@@ -177,9 +201,12 @@ def test_read_returns_none_when_missing():
 
 def test_read_returns_the_triple_when_present():
     repository = OxigraphTripleRepository()
-    repository.create("subject-1", "kind", "widget")
+    created = repository.create("subject-1", "kind", "widget")
 
-    assert repository.read("subject-1", "kind") == Triple("subject-1", "kind", "widget")
+    result = repository.read("subject-1", "kind")
+
+    assert result == Triple("subject-1", "kind", "widget")
+    assert result.id == created.id
 
 
 # --- update() ---
@@ -193,6 +220,20 @@ def test_update_changes_the_object_value():
 
     assert result == Triple("subject-1", "kind", "gadget")
     assert repository.read("subject-1", "kind") == result
+
+
+def test_update_preserves_the_original_id():
+    """An UPDATE changes object_value, never identity - the same id
+    survives the remove-then-add cycle update() does internally (see
+    the module docstring and docs/adr/0010's note on where id actually
+    lives: the quad's graph_name component, which the remove+add below
+    has to deliberately carry over rather than mint fresh)."""
+    repository = OxigraphTripleRepository()
+    created = repository.create("subject-1", "kind", "widget")
+
+    updated = repository.update("subject-1", "kind", "gadget")
+
+    assert updated.id == created.id
 
 
 def test_update_raises_when_triple_does_not_exist():
@@ -244,10 +285,13 @@ def test_delete_is_idempotent_when_triple_does_not_exist():
 
 def test_list_filters_by_subject():
     repository = OxigraphTripleRepository()
-    repository.create("subject-1", "kind", "widget")
+    created = repository.create("subject-1", "kind", "widget")
     repository.create("subject-2", "kind", "gizmo")
 
-    assert repository.list(subject="subject-1") == [Triple("subject-1", "kind", "widget")]
+    result = repository.list(subject="subject-1")
+
+    assert result == [Triple("subject-1", "kind", "widget")]
+    assert result[0].id == created.id
 
 
 def test_list_without_subject_returns_everything():
@@ -388,13 +432,18 @@ def test_data_persists_across_separate_repository_instances_on_disk(tmp_path):
     only across multiple app instances.
     """
     writer = OxigraphTripleRepository(store_path=str(tmp_path))
-    writer.create("subject-1", "kind", "widget")
-    writer.create("subject-1", "color", "blue")
+    color_created = writer.create("subject-1", "color", "blue")
+    kind_created = writer.create("subject-1", "kind", "widget")
     del writer  # release the lock - see docstring above
 
     reader = OxigraphTripleRepository(store_path=str(tmp_path))
+    result = reader.list(subject="subject-1")
 
-    assert reader.list(subject="subject-1") == [
+    assert result == [
         Triple("subject-1", "color", "blue"),
         Triple("subject-1", "kind", "widget"),
     ]
+    # id lives in each quad's graph_name (docs/adr/0010) - this proves
+    # that survives an actual flush-to-disk and reopen in a brand-new
+    # process-like instance, not just staying attached in memory.
+    assert [triple.id for triple in result] == [color_created.id, kind_created.id]

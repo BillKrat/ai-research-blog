@@ -7,9 +7,14 @@ artifacts/rdf-poc/FINDINGS.md for why this enforces single-valued
 behavior even though Oxigraph itself supports genuine RDF multi-valued
 facts: that capability was deliberately deferred, not forgotten, until
 a concrete consumer (ASR-004) needs it.
+
+Triple.id (see docs/adr/0010) is stored in each quad's own graph_name
+component - see _ID_NS below for why that's the correct RDF-native
+slot for it, rather than a synthetic fourth triple.
 """
 
 import os
+import uuid
 from pathlib import Path
 from urllib.parse import quote, unquote
 
@@ -30,6 +35,19 @@ from shared.repositories.interfaces import Triple, TripleRepository
 _SUBJECT_NS = "urn:triple-repository:subject:"
 _PREDICATE_NS = "urn:triple-repository:predicate:"
 
+# id lives in the quad's own graph_name component - pyoxigraph's Store
+# is a genuine quad store (Quad = subject, predicate, object, AND a
+# graph_name), not just a triple store; every quad added elsewhere in
+# this file already implicitly used the default graph. Using the real
+# graph_name slot for id, rather than inventing a fourth synthetic
+# triple, is what actually disambiguates correctly: a single subject
+# routinely has several predicates (the seed data does - see
+# initial_triples.json's "type"/"name" pairs), so an id attached only
+# to the subject node couldn't tell those slots apart. Attached to the
+# (subject, predicate) quad itself, via graph_name, there's no
+# ambiguity - see docs/adr/0010.
+_ID_NS = "urn:triple-repository:id:"
+
 
 def _subject_node(subject: str) -> ox.NamedNode:
     return ox.NamedNode(_SUBJECT_NS + quote(subject, safe=""))
@@ -37,6 +55,10 @@ def _subject_node(subject: str) -> ox.NamedNode:
 
 def _predicate_node(predicate: str) -> ox.NamedNode:
     return ox.NamedNode(_PREDICATE_NS + quote(predicate, safe=""))
+
+
+def _id_graph(id_: str) -> ox.NamedNode:
+    return ox.NamedNode(_ID_NS + quote(id_, safe=""))
 
 
 def _decode(node: ox.NamedNode, namespace: str) -> str:
@@ -97,7 +119,10 @@ class OxigraphTripleRepository(TripleRepository):
         except OSError as exc:
             raise ProviderError(f"Oxigraph error: {exc}") from exc
 
-    def create(self, subject: str, predicate: str, object_value: str) -> Triple:
+    def create(
+        self, subject: str, predicate: str, object_value: str, id: str | None = None
+    ) -> Triple:
+        resolved_id = id or str(uuid.uuid4())
         s, p = _subject_node(subject), _predicate_node(predicate)
         try:
             if next(self.store.quads_for_pattern(s, p, None), None) is not None:
@@ -105,11 +130,11 @@ class OxigraphTripleRepository(TripleRepository):
                     f"Triple already exists for subject={subject!r}, "
                     f"predicate={predicate!r}"
                 )
-            self.store.add(ox.Quad(s, p, ox.Literal(object_value)))
+            self.store.add(ox.Quad(s, p, ox.Literal(object_value), _id_graph(resolved_id)))
             self.store.flush()
         except OSError as exc:
             raise ProviderError(f"Oxigraph error: {exc}") from exc
-        return Triple(subject, predicate, object_value)
+        return Triple(subject, predicate, object_value, id=resolved_id)
 
     def read(self, subject: str, predicate: str) -> Triple | None:
         s, p = _subject_node(subject), _predicate_node(predicate)
@@ -117,7 +142,9 @@ class OxigraphTripleRepository(TripleRepository):
             quad = next(self.store.quads_for_pattern(s, p, None), None)
         except OSError as exc:
             raise ProviderError(f"Oxigraph error: {exc}") from exc
-        return Triple(subject, predicate, quad.object.value) if quad else None
+        if quad is None:
+            return None
+        return Triple(subject, predicate, quad.object.value, id=_decode(quad.graph_name, _ID_NS))
 
     def update(self, subject: str, predicate: str, object_value: str) -> Triple:
         s, p = _subject_node(subject), _predicate_node(predicate)
@@ -128,16 +155,19 @@ class OxigraphTripleRepository(TripleRepository):
                     f"No triple to update for subject={subject!r}, "
                     f"predicate={predicate!r}"
                 )
+            # id carries over from the existing quad(s) - an UPDATE
+            # changes object_value, never identity.
+            resolved_id = _decode(existing[0].graph_name, _ID_NS)
             # RDF has no atomic UPDATE primitive (confirmed in
             # oxigraph_crudl_poc.py) - remove the old quad(s), then add
             # the new one, both against the same in-process Store.
             for quad in existing:
                 self.store.remove(quad)
-            self.store.add(ox.Quad(s, p, ox.Literal(object_value)))
+            self.store.add(ox.Quad(s, p, ox.Literal(object_value), _id_graph(resolved_id)))
             self.store.flush()
         except OSError as exc:
             raise ProviderError(f"Oxigraph error: {exc}") from exc
-        return Triple(subject, predicate, object_value)
+        return Triple(subject, predicate, object_value, id=resolved_id)
 
     def delete(self, subject: str, predicate: str) -> None:
         s, p = _subject_node(subject), _predicate_node(predicate)
@@ -162,6 +192,7 @@ class OxigraphTripleRepository(TripleRepository):
                 _decode(quad.subject, _SUBJECT_NS),
                 _decode(quad.predicate, _PREDICATE_NS),
                 quad.object.value,
+                id=_decode(quad.graph_name, _ID_NS),
             )
             for quad in quads
             # Defensive: the same store can hold RDF loaded from

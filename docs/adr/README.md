@@ -17,6 +17,7 @@ reasoning behind it lives.
 | [0007](0007-repository-pattern-for-domain-layer.md) | Adopt the Repository pattern for the persistence-facing domain layer | Accepted |
 | [0008](0008-triple-repository-first-implementation.md) | TripleRepository: first Repository implementation, CRUDL over triple_store | Accepted |
 | [0009](0009-extract-reusable-framework-into-shared.md) | Extract the reusable framework into shared/, superseding ADR-0004's extraction deferral | Accepted |
+| [0010](0010-stable-id-for-triples.md) | A stable `id` field for Triple, separate from the (subject, predicate) key | Accepted |
 
 ## Adding a new ADR
 
