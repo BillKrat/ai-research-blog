@@ -182,7 +182,9 @@ choices built on top of it.
    `triple_store` (including the `unit-test-1`/`unit-test-2` fixture rows
    the test suite asserts on) on first run — matches `.env.example`'s
    default `DATABASE_URL`
-   (`postgresql://postgres:postgres@localhost:5432/blogresearch`). Stop it
+   (`postgresql://postgres:postgres@localhost:5432/railway` — named
+   `railway` rather than after the app itself, so the same URL shape works
+   against Railway's managed Postgres too). Stop it
    with `docker compose -f local/postgres/docker-compose.yml down`; its
    data lives in `local/postgres/data/` (gitignored).
 
