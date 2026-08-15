@@ -24,7 +24,6 @@
                 "run",
                 "dev"
             ],
-            "preLaunchTask": "API: uvicorn",
             "console": "integratedTerminal",
             "skipFiles": [
                 "<node_internals>/**"
@@ -40,6 +39,7 @@
         {
             "name": "Full stack: client + services",
             "configurations": [
+                "FastAPI: app.py",
                 "Next.js: frontend"
             ]
         }
