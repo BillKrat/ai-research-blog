@@ -9,6 +9,8 @@ docs/adr/0008 for how it relates to IDbProvider.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
+from shared.recordset import RecordSet
+
 
 @dataclass(frozen=True)
 class Triple:
@@ -85,3 +87,54 @@ class TripleRepository(ABC):
     @abstractmethod
     def list(self, subject: str | None = None) -> list[Triple]:
         """Return all triples, or all triples for one subject if given."""
+
+
+class UserRepository(ABC):
+    """CRUDL access to users, in RecordSet shape - never a Triple.
+
+    This is the boundary docs/adr/0011 draws: a UserRepository
+    implementation is free to be triple-backed underneath (see
+    shared/repositories/triple_user_repository.py, the one
+    implementation today), but nothing that calls this interface - a
+    UserService, a presenter, a view-model - ever sees a Triple, a
+    subject URI, or knows a triple store is involved at all. Every
+    method here operates purely in `user_id` (a bare id, typically a
+    uuid4 string) and RecordSet (shared/recordset.py) terms.
+
+    Unlike TripleRepository, which is single-valued per (subject,
+    predicate) but multi-subject by nature (list() spans every
+    subject), a "user" here is one whole record spanning several
+    predicates at once - closer to a row than a fact. create()/read()/
+    update() each return a RecordSet containing exactly one row so a
+    caller always has the display schema (Column.label/sequence/type)
+    alongside the data, without a separate schema lookup - list()
+    returns the same shape with every user as a row.
+    """
+
+    @abstractmethod
+    def create(self, name: str, email: str) -> RecordSet:
+        """Create a new user, minting its id. Returns a one-row RecordSet
+        for the created user, including the minted id as a column value."""
+
+    @abstractmethod
+    def read(self, user_id: str) -> RecordSet | None:
+        """Return a one-row RecordSet for user_id, or None if no such user exists."""
+
+    @abstractmethod
+    def update(self, user_id: str, name: str, email: str) -> RecordSet:
+        """Change an existing user's fields. Returns the updated one-row RecordSet.
+
+        Raises ProviderError if no user exists for user_id.
+        """
+
+    @abstractmethod
+    def delete(self, user_id: str) -> None:
+        """Remove the user for user_id.
+
+        Idempotent - no error if it doesn't exist, matching
+        TripleRepository.delete()'s same idempotency.
+        """
+
+    @abstractmethod
+    def list(self) -> RecordSet:
+        """Return every user as a RecordSet, one row per user."""
