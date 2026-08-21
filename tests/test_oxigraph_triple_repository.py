@@ -333,6 +333,76 @@ def test_list_ignores_rdf_not_written_through_this_repository():
     assert repository.list() == [Triple("subject-1", "kind", "widget")]
 
 
+# --- find(): compound queries ---
+#
+# Added once "list everything" was recognized as the exception rather
+# than the norm (2026-08-20 follow-up to the original user-CRUDL
+# design). No fake needed here either, same reason list()'s tests don't
+# use one - a real in-memory Store is already instant, and pyoxigraph
+# indexes all triple permutations internally, so a value-based lookup
+# (quads_for_pattern with the object bound) is native, not a workaround.
+
+
+def test_find_returns_full_triples_for_every_matching_subject():
+    """A subject satisfying every (predicate, object_value) pair gets ALL
+    of its triples back, not just the ones matched on - same "no second
+    round trip" promise as the Postgres implementation, proven here
+    against real quad-pattern matching instead of a fake cursor."""
+    repository = OxigraphTripleRepository()
+    repository.create("subject-1", "kind", "widget")
+    repository.create("subject-1", "color", "blue")
+    repository.create("subject-2", "kind", "widget")  # only matches one of the two criteria
+
+    result = repository.find({"kind": "widget", "color": "blue"})
+
+    assert sorted(result, key=lambda t: t.predicate) == [
+        Triple("subject-1", "color", "blue"),
+        Triple("subject-1", "kind", "widget"),
+    ]
+
+
+def test_find_is_a_real_and_not_an_or():
+    repository = OxigraphTripleRepository()
+    repository.create("subject-1", "kind", "widget")
+    repository.create("subject-2", "color", "blue")
+
+    # No single subject has both - a real AND must reject both.
+    assert repository.find({"kind": "widget", "color": "blue"}) == []
+
+
+def test_find_returns_an_empty_list_when_nothing_matches():
+    repository = OxigraphTripleRepository()
+    repository.create("subject-1", "kind", "widget")
+
+    assert repository.find({"kind": "nonexistent"}) == []
+
+
+def test_find_with_empty_criteria_returns_empty_list():
+    repository = OxigraphTripleRepository()
+    repository.create("subject-1", "kind", "widget")
+
+    assert repository.find({}) == []
+
+
+def test_find_ignores_rdf_not_written_through_this_repository():
+    """Same isolation as list()'s own version of this test - a value-based
+    match must not pick up quads this repository didn't write itself,
+    even if they happen to share a predicate/object value by coincidence."""
+    store = ox.Store()
+    repository = OxigraphTripleRepository(store=store)
+    repository.create("subject-1", "kind", "widget")
+
+    store.add(
+        ox.Quad(
+            ox.NamedNode("https://blogresearch.net/id/organizations/id=unrelated"),
+            ox.NamedNode("https://blogresearch.net/id/organizations#kind"),
+            ox.Literal("widget"),
+        )
+    )
+
+    assert repository.find({"kind": "widget"}) == [Triple("subject-1", "kind", "widget")]
+
+
 # --- Subject/predicate strings that aren't themselves valid IRIs ---
 #
 # TripleRepository's contract takes arbitrary opaque strings, the same

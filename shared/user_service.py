@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from shared.recordset import RecordSet
-from shared.repositories.interfaces import UserRepository
+from shared.repositories.interfaces import UserRepository, UserSearchFilter
 
 
 @dataclass(frozen=True)
@@ -75,8 +75,8 @@ class UserService:
     def delete(self, user_id: str) -> None:
         self._user_repository.delete(user_id)
 
-    def list(self) -> RecordSet:
-        return self._user_repository.list()
+    def list(self, *, filters: UserSearchFilter | None = None) -> RecordSet:
+        return self._user_repository.list(filters=filters)
 
 
 __all__ = ["UserService", "UserCreateRequest", "UserUpdateRequest"]

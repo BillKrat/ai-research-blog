@@ -59,7 +59,7 @@ class _FakeUserService(UserService):
         self._maybe_raise("delete")
         self.users.pop(user_id, None)
 
-    def list(self) -> RecordSet:
+    def list(self, *, filters=None) -> RecordSet:
         self._maybe_raise("list")
         return RecordSet(columns=_COLUMNS, rows=list(self.users.values()))
 

@@ -6,8 +6,21 @@ why. This is the first Repository in the codebase; see
 docs/adr/0008 for how it relates to IDbProvider.
 """
 
+# Required: TripleRepository has a method literally named `list`. Class
+# bodies execute like a function body with their own namespace, so once
+# `def list(...):` runs, the name `list` inside THIS class body refers to
+# that method, not the builtin - any annotation on a method defined after
+# it that writes `list[Triple]` would resolve `list` to the method and
+# raise "'function' object is not subscriptable" at import time. This
+# defers all annotations to strings (PEP 563), evaluated lazily, so the
+# shadowing never actually triggers a lookup. Without it, method order
+# inside TripleRepository/UserRepository becomes load-bearing in a way
+# that isn't obvious from reading the class.
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from typing import Mapping
 
 from shared.recordset import Column, RecordSet
 
@@ -88,6 +101,32 @@ class TripleRepository(ABC):
     def list(self, subject: str | None = None) -> list[Triple]:
         """Return all triples, or all triples for one subject if given."""
 
+    @abstractmethod
+    def find(self, criteria: Mapping[str, str]) -> list[Triple]:
+        """Compound AND query: every triple belonging to a subject that has
+        a matching triple for EVERY (predicate, object_value) pair in
+        criteria - not just the triples that were matched on. A subject
+        satisfying `{email_predicate: "a@example.com", name_predicate:
+        "Ada"}` has both its own name and email triples returned, the
+        same way list(subject=...) returns everything for one subject -
+        this exists so a caller (e.g. TripleUserRepository.list()) can
+        pivot a matched subject's full record without a second round
+        trip to look up the rest of its fields.
+
+        This is the one place TripleRepository does real querying rather
+        than a direct (subject, predicate) key lookup - see docs/adr's
+        note on point lookups vs. pivots (ADR-0005) for why that
+        distinction matters for performance at scale. Both concrete
+        implementations back this with a real index/query capability
+        (Postgres: predicate/object_value equality + GROUP BY; Oxigraph:
+        native quad-pattern matching, which pyoxigraph indexes
+        internally) rather than a full Python-side scan.
+
+        Empty criteria returns an empty list, deliberately - "no
+        conditions" isn't a meaningful compound query to ask this method;
+        use list() (no arguments) for "give me everything" instead.
+        """
+
 
 USER_COLUMNS: list[Column] = [
     Column(name="id", label="ID", sequence=0, type="string"),
@@ -102,6 +141,33 @@ particular implementation pivots triples. A presenter needs this same
 schema before any row has ever been loaded (e.g. to render an empty
 "add a user" form), which is the concrete reason it lives somewhere a
 presenter can import without reaching into a triple-specific module."""
+
+
+@dataclass(frozen=True)
+class UserSearchFilter:
+    """Optional compound filter for UserRepository.list()/UserService.list().
+
+    Every field is optional; only the ones you set are AND-combined into
+    the query. Deliberately scoped to USER_COLUMNS' actual filterable
+    fields - name and email - not a speculative superset (no `status`,
+    no `date_start`): a filter object invented ahead of a real field
+    existing on this entity is exactly the kind of premature
+    generalization AGENTS.md warns against, and it wouldn't actually be
+    "decoupled from a use case" so much as coupled to a *different,
+    imagined* one.
+
+    No `id` field, on purpose: id identifies a specific subject
+    directly - filtering "by id" is what read(user_id) already is, not
+    a compound-query question. Including it here would invite confusion
+    about which method to reach for on a known id.
+
+    All-None (the default) means "no filter" - UserRepository.list()
+    with an all-None or omitted filters behaves identically to calling
+    it with no filter at all.
+    """
+
+    name: str | None = None
+    email: str | None = None
 
 
 class UserRepository(ABC):
@@ -151,5 +217,6 @@ class UserRepository(ABC):
         """
 
     @abstractmethod
-    def list(self) -> RecordSet:
-        """Return every user as a RecordSet, one row per user."""
+    def list(self, *, filters: UserSearchFilter | None = None) -> RecordSet:
+        """Return every user as a RecordSet, one row per user - or only
+        those matching `filters`, if given and non-empty."""

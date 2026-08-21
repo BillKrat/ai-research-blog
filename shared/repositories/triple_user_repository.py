@@ -13,7 +13,13 @@ import uuid
 
 from shared.exceptions import ProviderError
 from shared.recordset import RecordSet
-from shared.repositories.interfaces import USER_COLUMNS, TripleRepository, UserRepository
+from shared.repositories.interfaces import (
+    USER_COLUMNS,
+    Triple,
+    TripleRepository,
+    UserRepository,
+    UserSearchFilter,
+)
 from shared.vocabulary import Vocabulary
 
 
@@ -70,33 +76,75 @@ class TripleUserRepository(UserRepository):
         for triple in self._triple_repository.list(subject=subject):
             self._triple_repository.delete(subject, triple.predicate)
 
-    def list(self) -> RecordSet:
-        # TripleRepository.list() with no subject spans the whole store -
-        # every subject, every predicate, not just users. Everything else
-        # in the store today is seed vocabulary (shared/seed_data), but
-        # that's exactly why filtering to `type == person_type` matters
-        # here: it's what tells a Person subject apart from anything else
-        # that might share the store later (a future form's rows, e.g.).
-        all_triples = self._triple_repository.list()
-        person_subjects = {
-            triple.subject
-            for triple in all_triples
-            if triple.predicate == self._vocabulary.type and triple.object_value == self._vocabulary.person_type
-        }
+    def list(self, *, filters: UserSearchFilter | None = None) -> RecordSet:
+        if filters is None or (filters.name is None and filters.email is None):
+            # TripleRepository.list() with no subject spans the whole
+            # store - every subject, every predicate, not just users.
+            # Everything else in the store today is seed vocabulary
+            # (shared/seed_data), but that's exactly why filtering to
+            # `type == person_type` matters here: it's what tells a
+            # Person subject apart from anything else that might share
+            # the store later (a future form's rows, e.g.).
+            all_triples = self._triple_repository.list()
+            person_subjects = {
+                triple.subject
+                for triple in all_triples
+                if triple.predicate == self._vocabulary.type
+                and triple.object_value == self._vocabulary.person_type
+            }
+            matched_triples = [triple for triple in all_triples if triple.subject in person_subjects]
+        else:
+            matched_triples = self._triple_repository.find(self._criteria_from(filters))
 
+        return RecordSet(columns=USER_COLUMNS, rows=self._rows_from(matched_triples))
+
+    def _criteria_from(self, filters: UserSearchFilter) -> dict[str, str]:
+        # type == person_type is always included, even though the caller
+        # never set it - name/email are generic predicates (see
+        # shared/vocabulary.py) that a future non-User entity could also
+        # use, so a bare {name: "Ada"} query could otherwise match a
+        # same-named subject that isn't a Person at all. This is the same
+        # scoping the unfiltered branch above does via person_subjects,
+        # just expressed as a query criterion instead of a post-filter.
+        criteria = {self._vocabulary.type: self._vocabulary.person_type}
+        if filters.name is not None:
+            criteria[self._vocabulary.name] = filters.name
+        if filters.email is not None:
+            criteria[self._vocabulary.email] = filters.email
+        return criteria
+
+    def _rows_from(self, triples: "list[Triple]") -> "list[dict]":
+        """Pivot a flat list of triples (possibly spanning several
+        subjects) into one row dict per subject - the shared logic
+        behind both list() branches and read()/_one_row()'s single-row
+        case, so the "how do triples become a User row" rule lives in
+        exactly one place.
+
+        Annotations above are quoted, not bare: `list` is a method on
+        this class (defined above), which shadows the builtin `list` for
+        the rest of this class body - see shared/repositories/interfaces.py's
+        note on the same trap. Unlike that file, this class can't fix it
+        with `from __future__ import annotations` module-wide: the
+        container auto-wires TripleUserRepository's __init__ by reading
+        its parameters' actual type *objects* off
+        inspect.signature(...).parameters[...].annotation - deferring
+        annotations to strings there would silently break that
+        resolution (the container would look up the literal string
+        "TripleRepository" instead of the class itself). Quoting only
+        the one annotation that needs it avoids that collision.
+        """
         subject_prefix = self._vocabulary.person("")
-        rows = []
-        for subject in person_subjects:
-            by_predicate = {t.predicate: t.object_value for t in all_triples if t.subject == subject}
-            rows.append(
-                {
-                    "id": subject.removeprefix(subject_prefix),
-                    "name": by_predicate.get(self._vocabulary.name, ""),
-                    "email": by_predicate.get(self._vocabulary.email, ""),
-                }
+        rows_by_subject: dict[str, dict] = {}
+        for triple in triples:
+            row = rows_by_subject.setdefault(
+                triple.subject,
+                {"id": triple.subject.removeprefix(subject_prefix), "name": "", "email": ""},
             )
-
-        return RecordSet(columns=USER_COLUMNS, rows=rows)
+            if triple.predicate == self._vocabulary.name:
+                row["name"] = triple.object_value
+            elif triple.predicate == self._vocabulary.email:
+                row["email"] = triple.object_value
+        return list(rows_by_subject.values())
 
     def _one_row(self, user_id: str, name: str, email: str) -> RecordSet:
         return RecordSet(columns=USER_COLUMNS, rows=[{"id": user_id, "name": name, "email": email}])

@@ -23,7 +23,7 @@ import pytest
 
 from shared.exceptions import ProviderError
 from shared.recordset import RecordSet
-from shared.repositories.interfaces import Triple, TripleRepository
+from shared.repositories.interfaces import Triple, TripleRepository, UserSearchFilter
 from shared.repositories.triple_user_repository import USER_COLUMNS, TripleUserRepository
 from shared.vocabulary import Vocabulary
 
@@ -64,6 +64,23 @@ class _FakeTripleRepository(TripleRepository):
     def list(self, subject=None):
         values = list(self._triples.values())
         return [triple for triple in values if subject is None or triple.subject == subject]
+
+    def find(self, criteria):
+        if not criteria:
+            return []
+        matching_subjects = None
+        for predicate, object_value in criteria.items():
+            subjects_for_pair = {
+                triple.subject
+                for triple in self._triples.values()
+                if triple.predicate == predicate and triple.object_value == object_value
+            }
+            matching_subjects = (
+                subjects_for_pair if matching_subjects is None else matching_subjects & subjects_for_pair
+            )
+            if not matching_subjects:
+                return []
+        return [triple for triple in self._triples.values() if triple.subject in matching_subjects]
 
 
 @pytest.fixture
@@ -197,3 +214,86 @@ def test_a_custom_vocabulary_controls_the_subject_uri_namespace_but_not_the_publ
     # ...but the triples underneath really were written under the custom base URI.
     subject = custom_vocabulary.person(user_id)
     assert triple_repository.read(subject, custom_vocabulary.name).object_value == "Ada Lovelace"
+
+
+# --- list(filters=...): compound queries, added once "list everything" was
+# recognized as the exception rather than the norm (2026-08-20 follow-up
+# to the original CRUDL design session). These prove list(filters=...) is
+# not just a thinner wrapper over the same "fetch everything, filter in
+# Python" logic the unfiltered branch above uses - it round-trips through
+# TripleRepository.find(), the actual compound-query primitive, so this
+# file also stands as _FakeTripleRepository.find()'s only test coverage
+# (a full round-trip test doubles as the fake's own correctness proof).
+
+
+def test_list_with_no_filters_set_behaves_like_plain_list(repository):
+    """UserSearchFilter() with every field left at its default (None) must
+    be indistinguishable from calling list() with no filters argument at
+    all - "I built a filter object but didn't set anything on it" is a
+    real, easy-to-hit caller mistake this must not punish."""
+    repository.create(name="Ada Lovelace", email="ada@example.com")
+
+    plain = repository.list()
+    empty_filter = repository.list(filters=UserSearchFilter())
+
+    assert plain.rows == empty_filter.rows
+
+
+def test_list_filters_by_email(repository):
+    repository.create(name="Ada Lovelace", email="ada@example.com")
+    repository.create(name="Grace Hopper", email="grace@example.com")
+
+    result = repository.list(filters=UserSearchFilter(email="grace@example.com"))
+
+    assert len(result.rows) == 1
+    assert result.rows[0]["name"] == "Grace Hopper"
+
+
+def test_list_filters_by_name(repository):
+    repository.create(name="Ada Lovelace", email="ada@example.com")
+    repository.create(name="Grace Hopper", email="grace@example.com")
+
+    result = repository.list(filters=UserSearchFilter(name="Ada Lovelace"))
+
+    assert len(result.rows) == 1
+    assert result.rows[0]["email"] == "ada@example.com"
+
+
+def test_list_combines_name_and_email_with_and_not_or(repository):
+    """The whole point of a *compound* query: both conditions must hold on
+    the SAME user, not either/or across different users."""
+    repository.create(name="Ada Lovelace", email="ada@example.com")
+    repository.create(name="Grace Hopper", email="grace@example.com")
+
+    # Mismatched pairing - no single user has this name AND this email.
+    result = repository.list(filters=UserSearchFilter(name="Ada Lovelace", email="grace@example.com"))
+
+    assert result.rows == []
+
+
+def test_list_with_a_filter_that_matches_nobody_returns_an_empty_recordset_not_none(repository):
+    repository.create(name="Ada Lovelace", email="ada@example.com")
+
+    result = repository.list(filters=UserSearchFilter(email="nobody@example.com"))
+
+    assert result.columns == USER_COLUMNS
+    assert result.rows == []
+
+
+def test_list_filters_ignore_non_person_triples_sharing_the_same_predicate_values():
+    """The concrete risk _criteria_from()'s always-included type==person_type
+    criterion guards against: name/email are generic, reusable predicates
+    (shared/vocabulary.py) - a non-Person subject that happens to reuse
+    the `name` predicate with the same value must never leak into a User
+    query's results."""
+    triple_repository = _FakeTripleRepository()
+    user_repository = TripleUserRepository(triple_repository)
+    user_repository.create(name="Ada Lovelace", email="ada@example.com")
+
+    vocabulary = Vocabulary()
+    triple_repository.create("https://example.test/some-blog", vocabulary.name, "Ada Lovelace")
+
+    result = user_repository.list(filters=UserSearchFilter(name="Ada Lovelace"))
+
+    assert len(result.rows) == 1
+    assert result.rows[0]["email"] == "ada@example.com"

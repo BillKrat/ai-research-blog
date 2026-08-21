@@ -104,12 +104,22 @@ class _FakeCursor:
     `executed` records every (sql, params) pair passed to execute(),
     so a test can assert on *which* statement ran and with *what*
     parameters, without needing a real database to check against.
+
+    `fetchall_results` (plural) is for find(), the one method that
+    issues two SELECTs in sequence (matching subjects, then their full
+    triples) and needs a different canned result for each - a list
+    consumed one entry per fetchall() call. Optional: everything else
+    in this file only ever does one SELECT per method call, so
+    `fetchall_result` (singular, repeated every call) is enough for it
+    and stays the default.
     """
 
-    def __init__(self, fetchone_result=None, fetchall_result=None, rowcount=1):
+    def __init__(self, fetchone_result=None, fetchall_result=None, fetchall_results=None, rowcount=1):
         self.executed = []
         self.fetchone_result = fetchone_result
         self.fetchall_result = fetchall_result if fetchall_result is not None else []
+        self._fetchall_results = fetchall_results
+        self._fetchall_call_count = 0
         self.rowcount = rowcount
 
     def execute(self, sql, params=None):
@@ -119,6 +129,10 @@ class _FakeCursor:
         return self.fetchone_result
 
     def fetchall(self):
+        if self._fetchall_results is not None:
+            result = self._fetchall_results[self._fetchall_call_count]
+            self._fetchall_call_count += 1
+            return result
         return self.fetchall_result
 
     def __enter__(self):
@@ -255,11 +269,11 @@ def test_triple_is_hashable_because_it_is_frozen():
 def test_triple_repository_cannot_be_instantiated_directly():
     """abc.ABC + @abstractmethod block instantiating the interface itself.
 
-    TripleRepository declares five @abstractmethod stubs and no
+    TripleRepository declares six @abstractmethod stubs and no
     implementation - Python refuses to construct it directly, the same
     way you can't `new` a C# interface. This is what forces every
-    concrete subclass (today, just PostgresTripleRepository) to
-    actually implement all five methods, or fail the same way at
+    concrete subclass (PostgresTripleRepository, OxigraphTripleRepository)
+    to actually implement all six methods, or fail the same way at
     import/instantiation time.
     """
     with pytest.raises(TypeError):
@@ -547,6 +561,76 @@ def test_list_returns_an_empty_list_not_none_when_nothing_matches():
     assert repository.list(subject="nobody-home") == []
 
 
+# --- find(): compound queries ---
+#
+# Added once "list everything" was recognized as the exception rather
+# than the norm (2026-08-20 follow-up to the original user-CRUDL
+# design). Unlike list(), find() issues two SELECTs in sequence - see
+# _FakeCursor's fetchall_results (plural) docstring above for how these
+# tests distinguish each one.
+
+
+def test_find_returns_full_triples_for_every_matching_subject():
+    """A subject satisfying every (predicate, object_value) pair in
+    criteria gets ALL of its triples back, not just the ones matched on
+    - proof of the "no second round trip" promise in find()'s own
+    docstring (shared/repositories/interfaces.py)."""
+    cursor = _FakeCursor(
+        fetchall_results=[
+            [("subject-1",)],  # first SELECT: matching subjects
+            [  # second SELECT: every triple for those subjects
+                ("subject-1", "kind", "widget", "id-1"),
+                ("subject-1", "color", "blue", "id-2"),
+            ],
+        ]
+    )
+    repository, _ = _repository(cursor)
+
+    result = repository.find({"kind": "widget", "color": "blue"})
+
+    assert result == [
+        Triple("subject-1", "kind", "widget"),
+        Triple("subject-1", "color", "blue"),
+    ]
+    # First query: a real AND, not an OR - COUNT(DISTINCT predicate) must
+    # equal the number of criteria given, so a subject matching only one
+    # of the two pairs is excluded.
+    first_sql, first_params = cursor.executed[0]
+    assert "HAVING COUNT(DISTINCT predicate) = %s" in first_sql
+    assert first_params[-1] == 2  # 2 criteria given
+    # Second query: fetches by subject list, not by re-filtering on the
+    # original criteria - a matched subject's OTHER fields (untouched by
+    # the filter) still need to come back.
+    second_sql, second_params = cursor.executed[1]
+    assert "WHERE subject = ANY(%s)" in second_sql
+    assert second_params == (["subject-1"],)
+
+
+def test_find_short_circuits_when_no_subject_matches_all_criteria():
+    """When the first query finds no matching subject, find() must not
+    issue the second SELECT at all - there's nothing to look up."""
+    cursor = _FakeCursor(fetchall_results=[[]])
+    repository, _ = _repository(cursor)
+
+    result = repository.find({"kind": "nonexistent"})
+
+    assert result == []
+    assert len(cursor.executed) == 1  # only the first query ran
+
+
+def test_find_with_empty_criteria_returns_empty_list_without_querying():
+    """Empty criteria is a deliberately meaningless compound query (see
+    find()'s docstring) - it must return [] without touching the
+    database at all, not silently match everything."""
+    cursor = _FakeCursor()
+    repository, _ = _repository(cursor)
+
+    result = repository.find({})
+
+    assert result == []
+    assert cursor.executed == []
+
+
 # --- Error wrapping ---
 
 
@@ -644,6 +728,27 @@ def test_live_list_filters_by_subject(live_repository):
         Triple(subject, "kind", "widget"),
     ]
     assert all(uuid.UUID(triple.id) for triple in results)
+
+
+def test_live_find_compound_query_against_the_real_table(live_repository):
+    """find() against the real table: a genuine AND across two predicates,
+    proving the GROUP BY/HAVING approach actually works against real SQL,
+    not just the fake cursor's canned responses above."""
+    repository, subject = live_repository
+
+    repository.create(subject, "kind", "widget")
+    repository.create(subject, "color", "blue")
+
+    matches_both = repository.find({"kind": "widget", "color": "blue"})
+    assert matches_both == [
+        Triple(subject, "color", "blue"),
+        Triple(subject, "kind", "widget"),
+    ]
+
+    # A real subject that only satisfies ONE of the two conditions must
+    # not come back - this is the actual AND-not-OR proof.
+    matches_only_one = repository.find({"kind": "widget", "color": "a color nobody has"})
+    assert matches_only_one == []
 
 
 def test_live_unique_constraint_is_enforced_by_the_database(live_repository):

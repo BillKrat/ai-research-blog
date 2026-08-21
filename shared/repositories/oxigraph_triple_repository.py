@@ -13,9 +13,16 @@ component - see _ID_NS below for why that's the correct RDF-native
 slot for it, rather than a synthetic fourth triple.
 """
 
+# Required - see shared/repositories/interfaces.py's own copy of this
+# comment: a method named `list` shadows the builtin for the rest of
+# this class body, breaking a later method's `-> list[Triple]`
+# annotation unless annotations are deferred to strings.
+from __future__ import annotations
+
 import os
 import uuid
 from pathlib import Path
+from typing import Mapping
 from urllib.parse import quote, unquote
 
 import pyoxigraph as ox
@@ -204,4 +211,47 @@ class OxigraphTripleRepository(TripleRepository):
             if quad.subject.value.startswith(_SUBJECT_NS)
             and quad.predicate.value.startswith(_PREDICATE_NS)
         ]
+        return sorted(triples, key=lambda t: (t.subject, t.predicate))
+
+    def find(self, criteria: Mapping[str, str]) -> list[Triple]:
+        if not criteria:
+            return []
+        try:
+            matching_subjects: set[ox.NamedNode] | None = None
+            for predicate, object_value in criteria.items():
+                subjects_for_pair = {
+                    quad.subject
+                    for quad in self.store.quads_for_pattern(
+                        None, _predicate_node(predicate), ox.Literal(object_value)
+                    )
+                    if quad.subject.value.startswith(_SUBJECT_NS)
+                }
+                # Intersect across pairs - a real AND, same as the
+                # Postgres implementation's HAVING COUNT(DISTINCT
+                # predicate) = len(pairs). Short-circuits the moment the
+                # running intersection is empty, since it can only shrink
+                # from there - pyoxigraph's native quad-pattern matching
+                # already makes each individual lookup cheap, this just
+                # avoids doing unnecessary further lookups on top of that.
+                matching_subjects = (
+                    subjects_for_pair
+                    if matching_subjects is None
+                    else matching_subjects & subjects_for_pair
+                )
+                if not matching_subjects:
+                    return []
+
+            triples = [
+                Triple(
+                    _decode(quad.subject, _SUBJECT_NS),
+                    _decode(quad.predicate, _PREDICATE_NS),
+                    quad.object.value,
+                    id=_decode(quad.graph_name, _ID_NS),
+                )
+                for subject in matching_subjects
+                for quad in self.store.quads_for_pattern(subject, None, None)
+                if quad.predicate.value.startswith(_PREDICATE_NS)
+            ]
+        except OSError as exc:
+            raise ProviderError(f"Oxigraph error: {exc}") from exc
         return sorted(triples, key=lambda t: (t.subject, t.predicate))

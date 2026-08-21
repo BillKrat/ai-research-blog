@@ -10,7 +10,7 @@ test_triple_user_repository.py's _FakeTripleRepository.
 """
 
 from shared.recordset import RecordSet
-from shared.repositories.interfaces import USER_COLUMNS, UserRepository
+from shared.repositories.interfaces import USER_COLUMNS, UserRepository, UserSearchFilter
 from shared.user_service import UserCreateRequest, UserService, UserUpdateRequest
 
 _COLUMNS = USER_COLUMNS
@@ -45,8 +45,8 @@ class _FakeUserRepository(UserRepository):
         self.calls.append(("delete", (user_id,), {}))
         self._users.pop(user_id, None)
 
-    def list(self):
-        self.calls.append(("list", (), {}))
+    def list(self, *, filters=None):
+        self.calls.append(("list", (), {"filters": filters}))
         return RecordSet(columns=_COLUMNS, rows=list(self._users.values()))
 
 
@@ -129,5 +129,15 @@ def test_list_returns_the_repository_result_unchanged():
 
     result = service.list()
 
-    assert ("list", (), {}) in fake_repository.calls
+    assert ("list", (), {"filters": None}) in fake_repository.calls
     assert {row["name"] for row in result.rows} == {"Ada Lovelace", "Grace Hopper"}
+
+
+def test_list_passes_filters_through_to_the_repository():
+    fake_repository = _FakeUserRepository()
+    service = UserService(fake_repository)
+    filters = UserSearchFilter(email="ada@example.com")
+
+    service.list(filters=filters)
+
+    assert ("list", (), {"filters": filters}) in fake_repository.calls

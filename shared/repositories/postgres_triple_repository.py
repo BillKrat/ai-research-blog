@@ -6,10 +6,16 @@ IDbProvider stays the minimal, single-purpose DAL it is today; see
 docs/adr/0008 for why this repository doesn't route through it.
 """
 
+# Required - see shared/repositories/interfaces.py's own copy of this
+# comment: a method named `list` shadows the builtin for the rest of
+# this class body, breaking a later method's `-> list[Triple]`
+# annotation unless annotations are deferred to strings.
+from __future__ import annotations
+
 import os
 import uuid
 from contextlib import closing
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 import psycopg2
 
@@ -136,4 +142,40 @@ class PostgresTripleRepository(TripleRepository):
             raise ProviderError(f"PostgreSQL error: {exc}") from exc
         # Column order matches Triple's field order exactly, so the row
         # tuple unpacks positionally with no manual remapping.
+        return [Triple(*row) for row in rows]
+
+    def find(self, criteria: Mapping[str, str]) -> list[Triple]:
+        if not criteria:
+            return []
+        pairs = list(criteria.items())
+        try:
+            with closing(self._connect(self.conn_string)) as conn:
+                with conn.cursor() as cur:
+                    # A subject matches only if it has a row for every
+                    # (predicate, object_value) pair - HAVING COUNT(DISTINCT
+                    # predicate) = len(pairs) is what turns "at least one
+                    # pair matched" into "every pair matched" (a real AND
+                    # across rows, not an OR). Relies on criteria having no
+                    # duplicate predicate keys, which a Mapping already
+                    # guarantees by construction.
+                    placeholders = ", ".join(["(%s, %s)"] * len(pairs))
+                    params: list[str] = [value for pair in pairs for value in pair]
+                    cur.execute(
+                        f"SELECT subject FROM triple_store "
+                        f"WHERE (predicate, object_value) IN ({placeholders}) "
+                        f"GROUP BY subject HAVING COUNT(DISTINCT predicate) = %s",
+                        (*params, len(pairs)),
+                    )
+                    subjects = [row[0] for row in cur.fetchall()]
+                    if not subjects:
+                        return []
+
+                    cur.execute(
+                        "SELECT subject, predicate, object_value, id FROM triple_store "
+                        "WHERE subject = ANY(%s) ORDER BY subject, predicate",
+                        (subjects,),
+                    )
+                    rows = cur.fetchall()
+        except psycopg2.Error as exc:
+            raise ProviderError(f"PostgreSQL error: {exc}") from exc
         return [Triple(*row) for row in rows]
