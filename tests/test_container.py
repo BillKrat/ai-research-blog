@@ -53,10 +53,49 @@ class _Thing:
     value: str
 
 
+# --- Sample classes for the general-purpose Container suite below, ported
+# from poc/pycontainer.py's test suite as part of promoting PyContainer
+# into shared/container.py (see docs/adr - the container promotion step
+# of the user-CRUDL plan). Underscore-prefixed, matching _FakeView/_Thing
+# above, to keep them clearly test-only and out of any real class's way.
+
+
+class _Database:
+    def __init__(self, connection_string: str):
+        self.connection_string = connection_string
+
+
+class _Repository:
+    def __init__(self, db: _Database):
+        self.db = db
+
+
+class _DisposableService:
+    def __init__(self):
+        self.is_disposed = False
+
+    def dispose(self):
+        self.is_disposed = True
+
+
+class _ILogger:
+    pass
+
+
+class _FileLogger(_ILogger):
+    def __init__(self):
+        self.log_type = "File"
+
+
+class _ConsoleLogger(_ILogger):
+    def __init__(self):
+        self.log_type = "Console"
+
+
 def test_container_can_register_and_resolve_a_function_factory():
     container = Container()
 
-    container.add_transient("hello", lambda: _Thing("hello from function"))
+    container.register_transient("hello", lambda: _Thing("hello from function"))
 
     resolved = container.resolve("hello")
 
@@ -73,7 +112,7 @@ def test_container_can_register_and_resolve_a_singleton_factory():
         calls.append("called")
         return _Thing("singleton")
 
-    container.add_singleton("thing", build_thing)
+    container.register_singleton("thing", build_thing)
 
     first = container.resolve("thing")
     second = container.resolve("thing")
@@ -82,23 +121,130 @@ def test_container_can_register_and_resolve_a_singleton_factory():
     assert calls == ["called"]
 
 
-def test_container_can_resolve_scoped_values_from_a_scope():
+def test_transient_lifetime_creates_new_instances():
+    """Transient registrations must yield a fresh instance every time they are resolved."""
+    container = Container()
+    container.register_transient(_Database, lambda: _Database("Server=Main;"))
+
+    db1 = container.resolve(_Database)
+    db2 = container.resolve(_Database)
+
+    assert db1 is not db2
+
+
+def test_on_the_fly_overwriting():
+    """Re-registering a service overwrites it, dropping any cached singleton instance."""
+    container = Container()
+    container.register_singleton(_Database, lambda: _Database("Server=Old;"))
+
+    assert container.resolve(_Database).connection_string == "Server=Old;"
+
+    container.register_singleton(_Database, lambda: _Database("Server=New;"))
+
+    assert container.resolve(_Database).connection_string == "Server=New;"
+
+
+def test_named_registrations():
+    """Multiple variants of the same key can be distinguished by name."""
+    container = Container()
+    container.register_singleton(_Database, lambda: _Database("Server=Primary;"), name="Primary")
+    container.register_singleton(_Database, lambda: _Database("Server=Replica;"), name="Replica")
+
+    primary = container.resolve(_Database, name="Primary")
+    replica = container.resolve(_Database, name="Replica")
+
+    assert primary.connection_string == "Server=Primary;"
+    assert replica.connection_string == "Server=Replica;"
+
+
+def test_automatic_constructor_injection():
+    """The container auto-wires a class's constructor dependencies from type hints."""
+    container = Container()
+    container.register_singleton(_Database, lambda: _Database("Server=Autoinject;"))
+    container.register_transient(_Repository, _Repository)
+
+    repo = container.resolve(_Repository)
+
+    assert isinstance(repo, _Repository)
+    assert repo.db.connection_string == "Server=Autoinject;"
+
+
+def test_hierarchical_fallback_to_parent():
+    """A child container falls back to its parent for a registration it doesn't have locally."""
+    root = Container()
+    root.register_singleton(_Database, lambda: _Database("Server=ParentDB;"))
+
+    child = root.create_child_container()
+
+    resolved_db = child.resolve(_Database)
+    assert resolved_db.connection_string == "Server=ParentDB;"
+
+
+def test_local_scope_shadowing_overrides_parent():
+    """A child container can override a parent registration without touching the parent."""
+    root = Container()
+    root.register_singleton(_Database, lambda: _Database("Server=ParentDB;"))
+
+    child = root.create_child_container()
+    child.register_singleton(_Database, lambda: _Database("Server=ChildDB;"))
+
+    assert child.resolve(_Database).connection_string == "Server=ChildDB;"
+    assert root.resolve(_Database).connection_string == "Server=ParentDB;"
+
+
+def test_automatic_resource_cleanup_on_dispose():
+    """Disposing a container cleans up any disposable singletons it instantiated."""
+    container = Container()
+    container.register_singleton(_DisposableService, _DisposableService)
+
+    service = container.resolve(_DisposableService)
+    assert service.is_disposed is False
+
+    container.dispose()
+    assert service.is_disposed is True
+
+
+def test_context_manager_scope_cleanup():
+    """A container used as a context manager disposes automatically on block exit."""
+    service_reference = None
+
+    with Container() as scope:
+        scope.register_singleton(_DisposableService, _DisposableService)
+        service_reference = scope.resolve(_DisposableService)
+        assert service_reference.is_disposed is False
+
+    assert service_reference.is_disposed is True
+
+
+def test_actions_prevented_after_dispose():
+    """A disposed container refuses further reads or writes."""
+    container = Container()
+    container.dispose()
+
+    with pytest.raises(RuntimeError, match="Cannot perform actions on a disposed container."):
+        container.resolve(_Database)
+
+
+def test_registration_with_class_mapping_overload():
+    """register_singleton(Interface, Class) auto-wires Class like a compiled DI container."""
     container = Container()
 
-    calls = []
+    container.register_singleton(_ILogger, _FileLogger)
 
-    def build_thing():
-        calls.append("called")
-        return _Thing("scoped")
+    logger = container.resolve(_ILogger)
+    assert isinstance(logger, _FileLogger)
+    assert logger.log_type == "File"
 
-    container.add_scoped("thing", build_thing)
 
-    scope = container.create_scope()
-    first = scope.resolve("thing")
-    second = scope.resolve("thing")
+def test_registration_with_factory_overload():
+    """register_singleton(Interface, factory) still works alongside the class-mapping overload."""
+    container = Container()
 
-    assert first is second
-    assert calls == ["called"]
+    container.register_singleton(_ILogger, lambda: _ConsoleLogger())
+
+    logger = container.resolve(_ILogger)
+    assert isinstance(logger, _ConsoleLogger)
+    assert logger.log_type == "Console"
 
 
 def test_app_container_registers_selected_provider_services():
@@ -284,7 +430,7 @@ def test_app_container_resolves_triple_repository_as_a_singleton():
     # on-disk store can only be held open by one live Store at a time (a
     # RocksDB file lock - see its docstring), so a new instance per
     # resolve() would break the very first time two call sites needed it
-    # in the same process. add_singleton is what makes "keep one
+    # in the same process. register_singleton is what makes "keep one
     # long-lived instance" true in practice, not just in a comment.
     container = build_container(AppSettings(triple_repository_name="oxigraph"))
 

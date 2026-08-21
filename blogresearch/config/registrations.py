@@ -44,7 +44,7 @@ def _build_postgres_triple_repository() -> TripleRepository:
 
 
 def _build_oxigraph_triple_repository() -> TripleRepository:
-    # One instance for the whole app lifetime: add_singleton below caches
+    # One instance for the whole app lifetime: register_singleton below caches
     # it, matching the one-live-Store-per-path constraint documented on
     # OxigraphTripleRepository (a second Store on the same on-disk path
     # while this one is alive raises ProviderError).
@@ -83,9 +83,9 @@ def register_app_services(container: Container, settings: AppSettings | None = N
     name = settings.provider_name.strip().lower()
 
     if name in LLM_PROVIDER_FACTORIES:
-        container.add_singleton(IProvider, lambda: resolve_llm_provider(settings))
+        container.register_singleton(IProvider, lambda: resolve_llm_provider(settings))
     elif name in DB_PROVIDER_FACTORIES:
-        container.add_singleton(IDbProvider, lambda: resolve_db_provider(settings))
+        container.register_singleton(IDbProvider, lambda: resolve_db_provider(settings))
     else:
         known = sorted(set(LLM_PROVIDER_FACTORIES) | set(DB_PROVIDER_FACTORIES))
         raise ValueError(
@@ -95,13 +95,40 @@ def register_app_services(container: Container, settings: AppSettings | None = N
     # Always registered, unlike the IProvider/IDbProvider branch above -
     # triple_repository_name is its own axis, not part of the
     # provider_name choice.
-    container.add_singleton(TripleRepository, lambda: resolve_triple_repository(settings))
+    container.register_singleton(TripleRepository, lambda: resolve_triple_repository(settings))
     return container
 
 
 def build_container(settings: AppSettings | None = None) -> Container:
     """Create a container with the app's registrations applied."""
     return register_app_services(Container(), settings)
+
+
+_root_container: Container | None = None
+
+
+def get_root_container() -> Container:
+    """The process-wide root container, built once from environment settings.
+
+    Only meaningful for the real request path: `app.py` never passes
+    `settings` to `resolve_presenter()`, so every request would otherwise
+    call `build_container()` fresh, defeating `TripleRepository`'s
+    singleton registration in practice - `OxigraphTripleRepository`'s
+    on-disk store can only be held open by one live `Store` at a time (see
+    its docstring), so a second instance from a second per-request
+    container would fail outright, not just waste a reconnect. Building
+    the root once and handing out a child per request keeps one real
+    process-wide singleton instead of one per container.
+
+    Tests that pass `settings` explicitly bypass this entirely (see
+    `resolve_presenter()`) and always get their own fresh container, so a
+    test's chosen configuration is honored exactly as given - this cache
+    only ever reflects the environment `AppSettings()` read on first use.
+    """
+    global _root_container
+    if _root_container is None:
+        _root_container = build_container(AppSettings())
+    return _root_container
 
 
 def resolve_llm_provider(settings: AppSettings) -> IProvider:
@@ -163,9 +190,18 @@ def resolve_presenter(view: IView, settings: AppSettings | None = None) -> IPres
     settings defaults to AppSettings() (environment-driven) when not
     given - same pattern as PostgresProvider's conn_string parameter.
     Pass settings explicitly in tests to avoid monkeypatching env vars.
+
+    When settings is omitted (the real request path), this resolves
+    against a child of the process-wide root container (see
+    get_root_container()) rather than building a fresh container per
+    call - see that function's docstring for why. Passing settings
+    explicitly (as tests do) opts out of the root cache entirely, so
+    each such call gets its own independently-configured container,
+    unaffected by whatever the root happened to resolve first.
     """
+    explicit_settings = settings is not None
     settings = settings if settings is not None else AppSettings()
-    container = build_container(settings)
+    container = build_container(settings) if explicit_settings else get_root_container().create_child_container()
     name = settings.provider_name.strip().lower()
 
     if name in DB_PROVIDER_FACTORIES:

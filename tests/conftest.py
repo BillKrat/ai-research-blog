@@ -7,12 +7,29 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from blogresearch.config import registrations  # noqa: E402
 from shared import environment as env  # noqa: E402
 
 # Load .env once for the whole test session - this is the one place test
 # code is responsible for bootstrapping the environment; application
 # modules never do it as an import-time side effect.
 env.load()
+
+
+@pytest.fixture(autouse=True)
+def _reset_root_container():
+    """Give every test a clean process-wide root container.
+
+    registrations.get_root_container() caches its result at module
+    level by design (see its docstring - the whole point is to be
+    built once per process, not once per request). Without this reset,
+    whichever test happens to call resolve_presenter()/get_root_container()
+    first each pytest session would freeze every later default-settings
+    test onto its environment, since a real process only ever needs one
+    root but a test session runs many different "processes" worth of
+    settings back to back.
+    """
+    registrations._root_container = None
 
 
 @pytest.fixture(autouse=True)
