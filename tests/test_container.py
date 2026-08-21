@@ -8,22 +8,27 @@ import pytest
 from blogresearch.presenters.custom_presenter import CustomPresenter
 from blogresearch.presenters.db_hello_presenter import DbHelloPresenter
 from blogresearch.presenters.hello_presenter import HelloPresenter
+from blogresearch.presenters.user_profile_presenter import UserProfilePresenter
 from blogresearch.config.app_settings import AppSettings
 from blogresearch.config.registrations import (
     build_container,
+    get_root_container,
     resolve_db_provider,
     resolve_llm_provider,
     resolve_presenter,
     resolve_triple_repository,
+    resolve_user_profile_presenter,
 )
 from shared.container import Container
 from shared.providers.claude_provider import ClaudeProvider
 from shared.providers.dci_provider import DCIProvider
 from shared.providers.postgres_provider import PostgresProvider
 from shared.providers.interfaces import IDbProvider, IProvider
-from shared.repositories.interfaces import TripleRepository
+from shared.repositories.interfaces import TripleRepository, UserRepository
 from shared.repositories.oxigraph_triple_repository import OxigraphTripleRepository
 from shared.repositories.postgres_triple_repository import PostgresTripleRepository
+from shared.repositories.triple_user_repository import TripleUserRepository
+from shared.user_service import UserService
 
 
 class _FakeView:
@@ -480,3 +485,56 @@ def test_app_container_resolves_triple_repository_as_a_singleton():
     second = container.resolve(TripleRepository)
 
     assert first is second
+
+
+# --- resolve_user_profile_presenter(): the first real child-container
+# registrations in this codebase - proving the design agreed during the
+# 2026-08-20 plan review actually holds: page-specific registrations
+# (UserRepository/UserService) live only on the child, while
+# TripleRepository stays a single, real, process-wide instance on the
+# root that the child falls back to rather than re-registering.
+
+
+def test_resolve_user_profile_presenter_wires_the_full_chain():
+    presenter = resolve_user_profile_presenter()
+
+    assert isinstance(presenter, UserProfilePresenter)
+
+
+def test_resolve_user_profile_presenter_registers_the_expected_types_on_its_child():
+    container = get_root_container().create_child_container()
+
+    resolve_user_profile_presenter(container)
+
+    assert isinstance(container.resolve(UserRepository), TripleUserRepository)
+    assert isinstance(container.resolve(UserService), UserService)
+
+
+def test_resolve_user_profile_presenter_shares_the_roots_triple_repository():
+    # If two separately-resolved presenters didn't share the same
+    # underlying TripleRepository (and therefore the same store), a user
+    # created through one would be invisible to the other - this is an
+    # end-to-end proof of the whole Step 1 + Step 5 wiring, not just a
+    # unit check.
+    first_presenter = resolve_user_profile_presenter()
+    first_presenter.on_add(name="Ada Lovelace", email="ada@example.com")
+    user_id = first_presenter.view_model.row["id"]
+
+    second_presenter = resolve_user_profile_presenter()
+    second_presenter.on_load(user_id)
+
+    assert second_presenter.view_model.error == ""
+    assert second_presenter.view_model.row["name"] == "Ada Lovelace"
+
+
+def test_resolve_user_profile_presenter_with_an_explicit_container_bypasses_the_root():
+    # Same opt-out resolve_presenter() offers via its settings parameter -
+    # tests (or a future caller) can resolve against a container they
+    # built themselves, independent of the process-wide root/its cache.
+    container = Container()
+    container.register_singleton(TripleRepository, OxigraphTripleRepository)
+
+    presenter = resolve_user_profile_presenter(container)
+    presenter.on_add(name="Grace Hopper", email="grace@example.com")
+
+    assert presenter.view_model.row["name"] == "Grace Hopper"

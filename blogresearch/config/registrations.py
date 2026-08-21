@@ -10,6 +10,7 @@ from typing import Callable
 from blogresearch.presenters.custom_presenter import CustomPresenter
 from blogresearch.presenters.db_hello_presenter import DbHelloPresenter
 from blogresearch.presenters.hello_presenter import HelloPresenter
+from blogresearch.presenters.user_profile_presenter import UserProfilePresenter
 from blogresearch.config.app_settings import AppSettings
 from shared.container import Container
 from shared.interfaces import IPresenter, IView, IViewModel
@@ -18,9 +19,11 @@ from shared.providers.dci_provider import DCIProvider
 from shared.providers.postgres_provider import PostgresProvider
 from shared.providers.interfaces import IDbProvider, IProvider
 from shared.mapping_view_model import MappingViewModel
-from shared.repositories.interfaces import TripleRepository
+from shared.repositories.interfaces import TripleRepository, UserRepository
 from shared.repositories.oxigraph_triple_repository import OxigraphTripleRepository
 from shared.repositories.postgres_triple_repository import PostgresTripleRepository
+from shared.repositories.triple_user_repository import TripleUserRepository
+from shared.user_service import UserService
 
 
 def _get_anthropic_api_key() -> str | None:
@@ -217,3 +220,36 @@ def resolve_presenter(view: IView, settings: AppSettings | None = None) -> IPres
     raise ValueError(
         f"Unknown provider '{settings.provider_name}'. Known providers: {', '.join(known)}"
     )
+
+
+def resolve_user_profile_presenter(container: Container | None = None) -> UserProfilePresenter:
+    """Resolve a UserProfilePresenter from a child of the root container.
+
+    The first real page-specific registrations in this codebase - a
+    concrete proof of the child-container design agreed during the
+    2026-08-20 plan review: UserRepository/UserService are registered
+    only on the child, scoped to this one page, while TripleRepository
+    stays registered exactly once, on the root (see
+    register_app_services()) - the child never re-registers or
+    reconstructs it, it just falls back to the parent automatically.
+    UserProfilePresenter is also registered on the child (mapped to
+    itself, the same self-mapping pattern
+    test_registration_with_class_mapping_overload demonstrates on
+    shared/container.py's own test suite) so child.resolve() has
+    something to auto-wire in the first place - resolve() only ever
+    builds a *registered* target, even one being auto-wired by type
+    hint. From there it walks the whole remaining chain
+    (UserProfilePresenter -> UserService -> UserRepository ->
+    TripleRepository) using those three registrations plus the root's
+    existing TripleRepository one.
+
+    container defaults to a fresh child of get_root_container() -
+    tests pass one explicitly (typically a bare Container() wired with
+    a fake UserRepository/UserService) to resolve against, the same
+    opt-out-of-the-root-cache pattern resolve_presenter() uses.
+    """
+    container = container if container is not None else get_root_container().create_child_container()
+    container.register_singleton(UserRepository, TripleUserRepository)
+    container.register_singleton(UserService, UserService)
+    container.register_transient(UserProfilePresenter, UserProfilePresenter)
+    return container.resolve(UserProfilePresenter)

@@ -9,7 +9,7 @@ docs/adr/0008 for how it relates to IDbProvider.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
-from shared.recordset import RecordSet
+from shared.recordset import Column, RecordSet
 
 
 @dataclass(frozen=True)
@@ -87,6 +87,21 @@ class TripleRepository(ABC):
     @abstractmethod
     def list(self, subject: str | None = None) -> list[Triple]:
         """Return all triples, or all triples for one subject if given."""
+
+
+USER_COLUMNS: list[Column] = [
+    Column(name="id", label="ID", sequence=0, type="string"),
+    Column(name="name", label="Name", sequence=1, type="string"),
+    Column(name="email", label="Email", sequence=2, type="string"),
+]
+"""The fixed schema every UserRepository implementation's RecordSets are
+shaped by. Lives here, next to the contract, rather than inside
+TripleUserRepository - it describes what a User *is* (part of the
+interface every implementation must honor), not a detail of how one
+particular implementation pivots triples. A presenter needs this same
+schema before any row has ever been loaded (e.g. to render an empty
+"add a user" form), which is the concrete reason it lives somewhere a
+presenter can import without reaching into a triple-specific module."""
 
 
 class UserRepository(ABC):

@@ -9,15 +9,11 @@ was called with, the same "fakes, not mocks" style as
 test_triple_user_repository.py's _FakeTripleRepository.
 """
 
-from shared.recordset import Column, RecordSet
-from shared.repositories.interfaces import UserRepository
+from shared.recordset import RecordSet
+from shared.repositories.interfaces import USER_COLUMNS, UserRepository
 from shared.user_service import UserCreateRequest, UserService, UserUpdateRequest
 
-_COLUMNS = [
-    Column(name="id", label="ID", sequence=0, type="string"),
-    Column(name="name", label="Name", sequence=1, type="string"),
-    Column(name="email", label="Email", sequence=2, type="string"),
-]
+_COLUMNS = USER_COLUMNS
 
 
 class _FakeUserRepository(UserRepository):

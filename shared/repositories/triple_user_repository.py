@@ -12,24 +12,9 @@ swaps the backing store with zero change here.
 import uuid
 
 from shared.exceptions import ProviderError
-from shared.recordset import Column, RecordSet
-from shared.repositories.interfaces import TripleRepository, UserRepository
+from shared.recordset import RecordSet
+from shared.repositories.interfaces import USER_COLUMNS, TripleRepository, UserRepository
 from shared.vocabulary import Vocabulary
-
-USER_COLUMNS: list[Column] = [
-    Column(name="id", label="ID", sequence=0, type="string"),
-    Column(name="name", label="Name", sequence=1, type="string"),
-    Column(name="email", label="Email", sequence=2, type="string"),
-]
-"""The fixed schema every RecordSet this repository returns is shaped by.
-
-A module-level constant, not something computed per call - it doesn't
-vary per user, so there's nothing to gain from rebuilding it every
-time. If a second user-shaped repository ever exists, it would define
-its own schema rather than import this one - USER_COLUMNS describes
-*this implementation's* pivot, not a general "User" contract other
-implementations must match.
-"""
 
 
 class TripleUserRepository(UserRepository):
