@@ -93,7 +93,16 @@ choices built on top of it.
   (inherently app-specific — it wires this app's concrete choices):
   `LLM_PROVIDER_FACTORIES` / `DB_PROVIDER_FACTORIES` registries;
   `resolve_presenter()` returns the matching presenter type, resolving
-  through [shared/container.py](shared/container.py)'s reusable `Container`.
+  through [shared/container.py](shared/container.py)'s reusable
+  `Container` — parent/child scoping, named registrations, and
+  constructor auto-injection by type hint. A process-wide root
+  container is built once (lazily, from environment settings);
+  `resolve_presenter()`/`resolve_user_profile_presenter()` each resolve
+  against a **child** of it, so page-specific registrations
+  (`UserRepository`/`UserService`) never leak between pages while
+  singletons like `TripleRepository` stay truly process-wide (not
+  rebuilt per request — see the on-disk `OxigraphTripleRepository`
+  constraint noted below).
   `TRIPLE_REPOSITORY_FACTORIES` is a third, independent registry —
   registered unconditionally (not gated by `PROVIDER_NAME`), since which
   `TripleRepository` backend is active has nothing to do with which
@@ -116,9 +125,30 @@ choices built on top of it.
   [artifacts/rdf-poc/FINDINGS.md](artifacts/rdf-poc/FINDINGS.md)).
   Both are wired into the composition root as a `TripleRepository`
   singleton, selected by `TRIPLE_REPOSITORY_NAME` — its own axis,
-  independent of `PROVIDER_NAME` (see "Local setup" below). No UI
-  feature consumes it yet; see
+  independent of `PROVIDER_NAME` (see "Local setup" below). See
   [docs/adr/0008](docs/adr/0008-triple-repository-first-implementation.md).
+  `TripleRepository.find(criteria)` adds a compound (AND-combined)
+  query on top of `list()`, backed by a real index/query capability on
+  both implementations rather than a full scan — see its docstring.
+- **`UserRepository`/`UserService`** — the first real feature built on
+  the triple store (users, fully triple-based — see
+  [docs/adr/0011](docs/adr/0011-fully-triple-based-users-identity-anchor-deferred.md)).
+  [`TripleUserRepository`](shared/repositories/triple_user_repository.py)
+  is the one `UserRepository` implementation, composing an injected
+  `TripleRepository` — callers work purely in `user_id` and
+  [`RecordSet`](shared/recordset.py) (a `Column`-described schema
+  paired with row dicts) terms, never a `Triple` or a subject URI.
+  `UserSearchFilter` (`name`/`email`) is an optional compound filter on
+  `list()`. [`UserService`](shared/user_service.py) is a thin CRUDL
+  pass-through business layer on top, the seam
+  [ASR-008](docs/ASR.md#asr-008-locked-value--versioned-bll-for-regulated-data)'s
+  locked/versioned-BLL roadmap expects to grow real logic into later.
+  [`UserProfilePresenter`](blogresearch/presenters/user_profile_presenter.py)/
+  [`UserProfileViewModel`](blogresearch/viewmodels/user_profile_view_model.py)
+  expose it as full CRUDL through `/api/users` (see "What the app does
+  today") — purpose-built types, not `IView`/`IViewModel`/`IPresenter`,
+  since that trio is shaped for the hello-world demo's single
+  result/error pair.
 
 ### What the app does today
 
@@ -132,6 +162,12 @@ choices built on top of it.
   - `claude` (default) — Anthropic API (`IProvider`)
   - `dci` — fixed-response provider for local/offline flows (`IProvider`)
   - `postgres` — reads one row from a fixture table (`IDbProvider`)
+- Full user CRUDL through `/api/users` (`GET`/`POST`/`PUT`/`DELETE`),
+  backed end-to-end by the triple store — no frontend page yet (still
+  ahead, tracked as the next step on the branch this shipped from), but
+  verified live end-to-end via `curl`/the FastAPI docs UI. Errors come
+  back as a JSON `error` field with HTTP 200, matching `/api/ask`'s
+  existing convention, not per-case HTTP status codes.
 
 ## Local setup
 
@@ -315,6 +351,17 @@ pytest
   `seed_initial_vocabulary()` (conflict-safe: leaves existing data
   alone) and `reseed()` (destructive kill-and-fill), both against an
   in-memory fake `TripleRepository`.
+- [tests/test_recordset.py](tests/test_recordset.py) — `Column`/
+  `RecordSet`'s contract (frozen shape, row-by-column-name access).
+- [tests/test_triple_user_repository.py](tests/test_triple_user_repository.py) —
+  `TripleUserRepository` CRUDL and `find()`-backed compound-filter
+  logic against a fake `TripleRepository`.
+- [tests/test_user_service.py](tests/test_user_service.py) —
+  `UserService`'s pass-through behavior against a fake `UserRepository`.
+- [tests/test_user_profile_view_model.py](tests/test_user_profile_view_model.py) /
+  [tests/test_user_profile_presenter.py](tests/test_user_profile_presenter.py) —
+  `UserProfileViewModel`/`UserProfilePresenter`, including `undo()`'s
+  snapshot behavior, against a fake `UserService`.
 
 ## Project structure
 
@@ -328,21 +375,25 @@ local/postgres/              # local Postgres (docker compose - see "Local setup
 scripts/
   reseed_triple_store.py       # kill-and-fill the active TripleRepository from the seed file
 shared/                     # reusable framework - no app-specific vocabulary (ADR-0009)
-  container.py              # reusable DI container primitives
+  container.py              # reusable DI container: parent/child scoping, auto-injection
   interfaces.py              # IView, IViewModel, IPresenter, ViewModelResolver
+  recordset.py                  # Column/RecordSet - the schema-shaped DTO above any repository
+  user_service.py               # UserService (CRUDL pass-through) + UserCreateRequest/UserUpdateRequest
   exceptions.py               # ProviderError
   environment.py               # .env loading (no import-time side effects)
   api_view.py                   # IView adapter for HTTP requests
   mapping_view_model.py         # IViewModel adapter for request state
+  vocabulary.py                 # Vocabulary - predicate/type URIs, person(user_id) subject minting
   providers/
     interfaces.py                 # IProvider, IDbProvider, IToolProvider
     claude_provider.py            # IProvider
     dci_provider.py               # IProvider
     postgres_provider.py          # IDbProvider
   repositories/
-    interfaces.py                 # Triple, TripleRepository
+    interfaces.py                 # Triple, TripleRepository (incl. find()); UserRepository, UserSearchFilter
     postgres_triple_repository.py  # TripleRepository backed by triple_store
     oxigraph_triple_repository.py  # TripleRepository backed by an embedded pyoxigraph.Store
+    triple_user_repository.py      # UserRepository, composing an injected TripleRepository
   seed_data/
     initial_triples.json          # the master seed file scripts/reseed_triple_store.py loads
     loader.py                     # seed_initial_vocabulary() (safe) and reseed() (destructive)
@@ -351,6 +402,9 @@ blogresearch/                # this app's own choices, built on shared/ - delibe
     hello_presenter.py       # IProvider-backed presenter (owns success/error flow)
     custom_presenter.py      # overrides HelloPresenter's result formatting only
     db_hello_presenter.py    # IDbProvider-backed presenter (separate on purpose)
+    user_profile_presenter.py # UserService-backed CRUDL presenter (no IView/resolver indirection)
+  viewmodels/
+    user_profile_view_model.py # purpose-built ViewModel: row/columns/error + undo() snapshot
   config/
     app_settings.py          # AppSettings — env-driven provider/presenter choice
     registrations.py         # app composition root: per-family registries + resolve_*()
