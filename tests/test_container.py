@@ -169,6 +169,48 @@ def test_automatic_constructor_injection():
     assert repo.db.connection_string == "Server=Autoinject;"
 
 
+def test_automatic_injection_falls_back_to_a_parameters_own_default():
+    """A constructor parameter with a default (e.g. an optional collaborator
+    nothing has registered) should use that default rather than blow up -
+    the container only needs to provide what it actually knows about."""
+
+    class _OptionalLogger:
+        def __init__(self):
+            self.marker = "built-in default"
+
+    class _ServiceWithOptionalDependency:
+        def __init__(self, db: _Database, logger: "_OptionalLogger | None" = None):
+            self.db = db
+            self.logger = logger
+
+    container = Container()
+    container.register_singleton(_Database, lambda: _Database("Server=Main;"))
+    container.register_transient(_ServiceWithOptionalDependency, _ServiceWithOptionalDependency)
+    # Deliberately no registration for _OptionalLogger.
+
+    service = container.resolve(_ServiceWithOptionalDependency)
+
+    assert service.db.connection_string == "Server=Main;"
+    assert service.logger is None  # __init__'s own default, not a container error
+
+
+def test_automatic_injection_still_prefers_a_real_registration_over_a_default():
+    """The default-fallback above must not shadow a real registration - if
+    something IS registered for an optional parameter's type, that wins."""
+
+    class _ServiceWithOptionalDependency:
+        def __init__(self, db: _Database | None = None):
+            self.db = db
+
+    container = Container()
+    container.register_singleton(_Database, lambda: _Database("Server=Registered;"))
+    container.register_transient(_ServiceWithOptionalDependency, _ServiceWithOptionalDependency)
+
+    service = container.resolve(_ServiceWithOptionalDependency)
+
+    assert service.db.connection_string == "Server=Registered;"
+
+
 def test_hierarchical_fallback_to_parent():
     """A child container falls back to its parent for a registration it doesn't have locally."""
     root = Container()

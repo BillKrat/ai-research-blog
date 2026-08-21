@@ -9,11 +9,30 @@ lets multiple registrations share one key (see `resolve(..., name=...)`).
 """
 
 import inspect
-from typing import Any, Callable, TypeVar
+import types
+from typing import Any, Callable, TypeVar, Union, get_args, get_origin
 
 T = TypeVar("T")
 
 _RegistrationTarget = type[T] | Callable[[], T]
+
+
+def _unwrap_optional(annotation: Any) -> Any:
+    """`X | None` (or `Optional[X]`) resolves as a registration for X.
+
+    A constructor written as `vocabulary: Vocabulary | None = None` means
+    "an optional Vocabulary", not literally a registration under the key
+    `Vocabulary | None` - resolving against the raw union object would
+    never match a registration made with `register_singleton(Vocabulary,
+    ...)`. Any other annotation (including a union of two real types,
+    with no None arm) is returned unchanged - this only unwraps the
+    specific "one real type, optionally None" shape.
+    """
+    is_union = isinstance(annotation, types.UnionType) or get_origin(annotation) is Union
+    if not is_union:
+        return annotation
+    args = [arg for arg in get_args(annotation) if arg is not type(None)]
+    return args[0] if len(args) == 1 else annotation
 
 
 class Container:
@@ -132,6 +151,21 @@ class Container:
         container (recursively auto-wiring that parameter's own
         dependencies in turn) - a bare, unannotated parameter falls
         back to resolving by its parameter name instead.
+
+        An `X | None` annotation (the common way to write an optional
+        constructor dependency) resolves as a registration for X, via
+        `_unwrap_optional` - see that function's own docstring.
+
+        A parameter with a default value that has nothing registered
+        for it is left unresolved rather than raising - the default
+        applies instead, the same way it would on a plain, non-injected
+        call. Without this, a constructor like `def __init__(self,
+        repo: TripleRepository, vocabulary: Vocabulary | None = None)`
+        would refuse to auto-wire unless something had also explicitly
+        registered Vocabulary - defeating the point of giving it a
+        default in the first place. A registered value still wins over
+        the default when one exists; this only changes what happens
+        when nothing is registered at all.
         """
         if not inspect.isclass(target):
             return target()
@@ -140,10 +174,19 @@ class Container:
         if init is object.__init__:
             return target()
 
-        parameters = inspect.signature(init).parameters
-        dependencies = {
-            name: self.resolve(param.annotation if param.annotation != inspect.Parameter.empty else name)
-            for name, param in parameters.items()
-            if name != "self"
-        }
+        dependencies = {}
+        for name, param in inspect.signature(init).parameters.items():
+            if name == "self":
+                continue
+            if param.annotation == inspect.Parameter.empty:
+                key = name
+            else:
+                key = _unwrap_optional(param.annotation)
+            try:
+                dependencies[name] = self.resolve(key)
+            except KeyError:
+                if param.default is inspect.Parameter.empty:
+                    raise
+                # Leave this key out of dependencies entirely - target(**dependencies)
+                # then falls through to __init__'s own default for it.
         return target(**dependencies)

@@ -39,12 +39,33 @@ class Vocabulary:
         return self.uri("description")
 
     @property
+    def email(self) -> str:
+        return self.uri("email")
+
+    @property
     def database_schema(self) -> str:
         return self.uri("database-schema")
 
     @property
-    def person(self) -> str:
+    def person_type(self) -> str:
+        """The class/type URI for a Person - the object_value a `type`
+        triple points at, e.g. `(subject, vocabulary.type,
+        vocabulary.person_type)`. Not a specific person - see `person()`
+        below for minting one of those."""
         return self.uri("Person")
+
+    def person(self, user_id: str) -> str:
+        """Mint the subject URI for one specific user, keyed by user_id.
+
+        Every triple describing that user (name, email, later roles/
+        groups) is written against this one subject - see docs/adr/0011
+        and shared/repositories/triple_user_repository.py. user_id is
+        the bare id UserRepository callers work with (typically a
+        uuid4 string); this method is the only place that id gets
+        turned into a URI - callers above UserRepository never see
+        this shape at all.
+        """
+        return self.uri(f"person/{user_id}")
 
     @property
     def dataset(self) -> str:

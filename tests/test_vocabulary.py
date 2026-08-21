@@ -26,10 +26,12 @@ class MemoryTripleRepository:
 def test_vocabulary_uses_the_application_base_uri():
     vocabulary = Vocabulary("https://example.test/2026/08/")
 
-    assert vocabulary.person == "https://example.test/2026/08/Person"
+    assert vocabulary.person_type == "https://example.test/2026/08/Person"
+    assert vocabulary.person("abc-123") == "https://example.test/2026/08/person/abc-123"
     assert vocabulary.dataset == "https://example.test/2026/08/DataSet"
     assert vocabulary.database_schema_class == "https://example.test/2026/08/DatabaseSchema"
     assert vocabulary.type == "https://example.test/2026/08/type"
+    assert vocabulary.email == "https://example.test/2026/08/email"
 
 
 def test_default_vocabulary_base_uri_is_the_live_site():
