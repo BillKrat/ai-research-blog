@@ -70,12 +70,11 @@ two different performance concerns, and the wrong one was cited.
 
 ## Open questions
 
-- Exact shape of the identity anchor — a tiny fixed table (user id,
-  email, password hash) with everything else (roles, groups, features,
-  blog memberships) as triples referencing that id, or fully
-  triple-based including the anchor itself. Leaning toward a fixed
-  anchor given how narrow and well-understood credential storage is,
-  but this is not decided.
+- ~~Exact shape of the identity anchor~~ — resolved by
+  [ADR-0011](0011-fully-triple-based-users-identity-anchor-deferred.md):
+  fully triple-based, no fixed anchor table. Credential/login mechanics
+  themselves remain deferred, not resolved by 0011 — see its own open
+  questions.
 - `IUserProvider`'s exact method signatures — same "expand when there's
   a second real need" discipline `IDbProvider` was built with.
 - **Configuration abstraction (raised 2026-08-03, not yet warranted):**
