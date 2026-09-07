@@ -1,0 +1,19 @@
+[project]
+name = "ai-research-blog"
+version = "0.0.0"
+description = "AI research blog - fresh start, TDD from the DAL up."
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.116",
+    "uvicorn[standard]>=0.35",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4",
+    "httpx>=0.28",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
