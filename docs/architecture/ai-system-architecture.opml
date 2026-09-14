@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+	<head>
+		<dateCreated>Sun Sep 06 2026 21:31:15 GMT-0500 (Central Daylight Time)</dateCreated>
+		<dateModified>Sun Sep 13 2026 19:35:00 GMT-0500 (Central Daylight Time)</dateModified>
+	</head>
+	<body>
+		<outline text="AI" _note="https://app.xmind.com/share/khOtUph9?xid=qXXIFBlE&#10;&#10;Source-of-truth note: MindMapAI (https://mindmapai.app) is the live, working version of this map. Its per-node Notes feature is not yet released (&quot;coming soon&quot; as of Sep 2026), so this OPML file is kept in the repo as the durable home for design-rationale notes that MindMapAI cannot yet hold. Node topics/structure here are kept in alignment with the live canvas; once MindMapAI ships Notes, these _note fields can be pushed back in.&#10;">
+			<outline text="UI (app)" _note="Core Function: Orchestration of User Experience. The UI manages the conversation state.&#10;&#10;">
+				<outline text="Core Function">
+					<outline text="Presents the machine&apos;s state to the user and translates human intent into actionable forms"></outline>
+					<outline text="Supports a readable, responsive interaction layer"></outline>
+				</outline>
+				<outline text="Responsibilities" _note="How it Feels and Looks When It Happens.&#10;Responsibilities:&#10;Input Scrubbing/Refinement: Ensuring the input passed to the Agent is clean and actionable.&#10;Visual Feedback: Providing loading states, success banners, error visualization (e.g., showing a &quot;404 Page Not Found&quot; is different from simply saying &quot;Error&quot;).&#10;Session Management: Managing the life cycle of a multi-turn task (e.g., &quot;Waiting for user confirmation before sending the &apos;Book Flight&apos; command&quot;).&#10;&#10;&#10;">
+					<outline text="The UI is the conductor of presentation and interaction"></outline>
+					<outline text="Input Capture &amp; Formatting">
+						<outline text="Translates raw user input into a digital, machine-readable format ready for the Agent"></outline>
+						<outline text="Formats user input for the cognitive engine"></outline>
+					</outline>
+					<outline text="State Visualization">
+						<outline text="Handles the mechanical exchange of information"></outline>
+						<outline text="Provides real-time feedback that maps machine states to human comprehension"></outline>
+					</outline>
+					<outline text="Session Life Cycle Management">
+						<outline text="Controls the start, pause, and restart of multi-turn conversations"></outline>
+						<outline text="Preserves accessibility for the end user"></outline>
+					</outline>
+					<outline text="Output rendering">
+						<outline text="Displays generated content in a digestible format"></outline>
+						<outline text="Can transform raw text into bullets, markdown tables, or voice output"></outline>
+					</outline>
+				</outline>
+				<outline text="Collaborators">
+					<outline text="Cognitive Pipeline (UI-&gt;Agent-&gt;Tool)" _note="(The &quot;Always&quot; scenario for complex AI)&#10;&#10;Flow: User &#10;→→ UI (captures text) &#10;→→ Agent (translates intent, plans steps) &#10;→→ Tool (executes action) &#10;→→ Agent (receives result, formats narrative) &#10;→→ UI (displays).&#10;Why it exists: This adds a layer of intelligence and robustness. The Agent handles the &quot;fuzzy&quot; middle ground:&#10;Ambiguity: User says, &quot;Check on that trip.&quot; The Agent remembers the context: &quot;Are they asking about the flight to Paris or the hotel booking?&quot;&#10;Planning: User says, &quot;Plan my trip.&quot; The Agent knows this requires five steps (Flight &#10;→→ Hotel &#10;→→ Activities &#10;→→ Budget &#10;→→ Book).&#10;Error Recovery: The Agent can try to fix a poorly formed API request or retry the search if the first attempt fails.&#10;Conclusion: If the task is complex, requires human-level planning, or involves natural language inputs, the Agent is a mandatory semantic bridge.&#10;">
+						<outline text="Agent"></outline>
+					</outline>
+					<outline text="Direct Transactional Pipeline (UI-&gt;Tool)" _note="(The Simple/Structured Scenario)&#10;&#10;Flow: User &#10;→→ UI (fills out a structured form with specific variables) &#10;→→ Tool (executes action).&#10;Why it exists: Efficiency and simplicity. If the user is interacting with a clean, defined interface (e.g., a booking form where they select &quot;Origin,&quot; &quot;Destination,&quot; and click &quot;Search&quot;), the UI is already doing the translation work. The cognitive overhead of an LLM/Agent is simply removed because it&apos;s unnecessary complexity for a known command.&#10;Conclusion: When the input is highly structured, the Agent can be skipped. The UI is effectively handling the translation job upfront.&#10;">
+						<outline text="Tool"></outline>
+					</outline>
+					<outline text="Security">
+						<outline text="Receives and displays security alerts"></outline>
+					</outline>
+				</outline>
+			</outline>
+			<outline text="Agent" _note="Core Function: Orchestration of Cognitive Tasks. The Agent makes the decision.&#10;&#10;Note: Agent&apos;s reasoning is typically implemented via calls to Model (LLM); this split represents separable responsibilities for design purposes, not necessarily separate runtime components.&#10;&#10;">
+				<outline text="Core Function">
+					<outline text="The system&apos;s decision layer"></outline>
+					<outline text="Bridges ambiguity in human language to mechanical precision"></outline>
+				</outline>
+				<outline text="Responsibilities" _note="Why and What to Do&#10;Responsibilities:&#10;Intention Detection: Identifying that the user&apos;s goal requires an external action (e.g., &quot;This is not a question; it&apos;s a command.&quot;).&#10;Tool Selection: Choosing the correct, available tool from the library (e.g., &quot;I need WeatherAPI&quot;).&#10;Parameter Mapping: Translating the ambiguous natural language into precise, structured inputs for the tool (e.g., &quot;Hot today&quot; &#10;→→ {&quot;units&quot;: &quot;celsius&quot;, &quot;location_id&quot;: 123}).&#10;Execution Flow Control: Receiving the tool&apos;s output and deciding how to proceed (e.g., &quot;Tool succeeded, now synthesize the answer,&quot; or &quot;Tool failed, inform Agent to attempt retry&quot;).&#10;&#10;">
+					<outline text="Detects intent, selects tools, maps parameters, and controls execution flow"></outline>
+					<outline text="Intent Translation">
+						<outline text="Maps high-level human goals into specific executable commands and required parameters for the Tool (legacy framing — with native function-calling models the Model authors this mapping directly)"></outline>
+						<outline text="With native function-calling models, the Model itself authors the structured call (function + parameters); the Agent&apos;s role narrows to validating that call, resolving which registered Tool it maps to, and dispatching it — see Model &gt; Tool Invocation (Function Calling)"></outline>
+					</outline>
+					<outline text="Cognitive Planning">
+						<outline text="Breaks down complex user goals (&quot;Plan my trip&quot;) into a sequence of dependent sub-tasks (Flight -&gt; Hotel -&gt; Budget)"></outline>
+					</outline>
+					<outline text="Error Recovery &amp; Retries">
+						<outline text="Interprets mechanical failures (Tool timeouts, API errors) and attempts to reformulate the command or query"></outline>
+					</outline>
+				</outline>
+				<outline text="Collaborators">
+					<outline text="Model (LLM)">
+						<outline text="Synthesizes"></outline>
+						<outline text="Receives the Model&apos;s structured tool calls; in agent-mediated architectures validates and dispatches them, though many stacks have the runtime execute them directly"></outline>
+					</outline>
+					<outline text="Tool">
+						<outline text="Executes command"></outline>
+						<outline text="Receives execution milestones"></outline>
+					</outline>
+					<outline text="Memory">
+						<outline text="Instructs the memory system on what context is needed to move forward"></outline>
+					</outline>
+					<outline text="Security">
+						<outline text="Passes control to Security when malicious intent is detected"></outline>
+					</outline>
+					<outline text="Cognitive Pipeline (UI-&gt;Agent-&gt;Tool)" _note="(The &quot;Always&quot; scenario for complex AI)&#10;&#10;Flow: User &#10;→→ UI (captures text) &#10;→→ Agent (translates intent, plans steps) &#10;→→ Tool (executes action) &#10;→→ Agent (receives result, formats narrative) &#10;→→ UI (displays).&#10;Why it exists: This adds a layer of intelligence and robustness. The Agent handles the &quot;fuzzy&quot; middle ground:&#10;Ambiguity: User says, &quot;Check on that trip.&quot; The Agent remembers the context: &quot;Are they asking about the flight to Paris or the hotel booking?&quot;&#10;Planning: User says, &quot;Plan my trip.&quot; The Agent knows this requires five steps (Flight &#10;→→ Hotel &#10;→→ Activities &#10;→→ Budget &#10;→→ Book).&#10;Error Recovery: The Agent can try to fix a poorly formed API request or retry the search if the first attempt fails.&#10;Conclusion: If the task is complex, requires human-level planning, or involves natural language inputs, the Agent is a mandatory semantic bridge.&#10;">
+						<outline text="UI"></outline>
+						<outline text="Tool"></outline>
+					</outline>
+					<outline text="MCP Host" _note="Added when the map's MCP Host / MCP Server distinction was introduced (Sep 2026): the Agent's tool calls don't reach a Tool directly in an MCP-based design — they're routed through the Host, which holds the MCP client connections. See the MCP Host branch.&#10;">
+						<outline text="Provides the standardized channel through which the Agent&apos;s tool calls reach real Tools"></outline>
+					</outline>
+				</outline>
+			</outline>
+			<outline text="Model (LLM)" _note="Note: Tool/function calling is a native capability of modern LLMs &#8212; the model itself emits the structured call; the Agent&apos;s role in that loop is to validate, dispatch, and sequence it against the Tool, then feed results back for synthesis. This differs from legacy LLMs (pre function-calling support, e.g., early GPT-3-class base/completion models), which had no structured output capability &#8212; tool use there was simulated externally via prompting patterns (e.g., ReAct-style &quot;Thought/Action/Observation&quot; text), forcing the Agent/orchestration layer to parse free text for tool intent rather than receive a structured call.&#10;&#10;">
+				<outline text="Core Function">
+					<outline text="The system&apos;s thought process"></outline>
+					<outline text="Handles the Why and the What, not the mechanics of how"></outline>
+				</outline>
+				<outline text="Responsibilities">
+					<outline text="Semantic Resolution">
+						<outline text="Interprets implicit context, tone, and underlying user goals from the input stream"></outline>
+						<outline text="Recognizes whether the user wants facts, comparison, or another type of answer"></outline>
+					</outline>
+					<outline text="Knowledge Synthesis">
+						<outline text="Structures raw data (from Tool/Retrieval) into a coherent, conversational narrative that addresses the user&apos;s prompt"></outline>
+						<outline text="Synthesizes information and applies complex logic"></outline>
+						<outline text="Handles consequence reasoning when one condition affects another"></outline>
+					</outline>
+					<outline text="Response Generation">
+						<outline text="Outputs the final, polished tokens that define the quality and depth of the answer"></outline>
+						<outline text="Owns the quality, depth, and accuracy of the response"></outline>
+					</outline>
+					<outline text="Context management">
+						<outline text="Consumes assembled context to connect earlier conversation state to the current prompt"></outline>
+						<outline text="Note: the model itself is stateless per call — persistence across turns is owned by Memory/Agent, which assemble and pass in the context"></outline>
+					</outline>
+					<outline text="Tool Invocation (Function Calling)" _note="This is the responsibility the model owns natively; the Agent&apos;s &apos;Tool Selection&apos; and &apos;Parameter Mapping&apos; responsibilities describe what happens with that call once emitted (validation, dispatch, retries) — not who authors it.&#10;&#10;Expanded Sep 2026 with the fuller tool_choice / parallel-tool-use / execution-loop / MCP framing below, superseding the original three-bullet version.&#10;&#10;">
+						<outline text="Tool definitions are supplied by the caller in the request — name, description, and a JSON Schema for arguments. The model selects from this list; it has no innate knowledge of available tools."></outline>
+						<outline text="When the model judges it needs an external action or data it cannot produce itself, it emits a structured tool call (tool name + JSON arguments) instead of, or alongside, narrative text; the API flags this with a distinct stop reason (e.g. tool_use / finish_reason: tool_calls)."></outline>
+						<outline text="The caller controls invocation via tool_choice: auto (model decides), required/any (must call something), forced (a named tool), or none."></outline>
+						<outline text="Modern / native function-calling models (current GPT, Claude, Gemini families) are post-trained to choose the tool and construct schema-valid arguments directly."></outline>
+						<outline text="Legacy models (pre function-calling): no structured-output path — tool use was simulated via prompt conventions (e.g. ReAct), with the caller parsing the model&apos;s prose for an intended tool and arguments. More fragile and error-prone."></outline>
+						<outline text="Models can emit multiple tool calls in a single turn (parallel tool use)."></outline>
+						<outline text="Execution is a loop: model emits call -&gt; runtime executes the real function -&gt; result returned to the model as a tool-result message -&gt; model calls again or produces the final answer. The model never executes anything itself."></outline>
+						<outline text="Schema-valid is not the same as correct — models still hallucinate or misfill parameters, so validation and retry/repair sit in the loop."></outline>
+						<outline text="Emerging: MCP (Model Context Protocol) standardizes how tools/resources are exposed to models; provider-hosted tools (web search, code execution) run server-side with the model only consuming results."></outline>
+					</outline>
+				</outline>
+				<outline text="Collaborators">
+					<outline text="Agent">
+						<outline text="The LLM synthesizes the raw data dump from the API into a readable narrative response for the user."></outline>
+						<outline text="Recieves refined execution status"></outline>
+						<outline text="Emits structured tool calls (tool name + JSON arguments); a runtime/harness executes them directly. Some architectures interpose an agent layer for validation, policy, and routing."></outline>
+					</outline>
+					<outline text="Tool" _note="Indirect collaborator: the Model does not call the Tool directly. It emits the structured call to the Agent (or directly to a runtime/harness), which validates and dispatches it to the Tool, then routes the raw result back to the Model for synthesis.&#10;&#10;">
+						<outline text="Drives Tool execution indirectly: emits the call, a runtime executes the real function, and the result is fed back to the model (an agent layer may validate/route first)."></outline>
+						<outline text="Receives back the Tool&apos;s raw result (via the Agent) to synthesize into a narrative response"></outline>
+					</outline>
+					<outline text="Retrieval">
+						<outline text="Uses contextural data"></outline>
+					</outline>
+					<outline text="Memory">
+						<outline text="Consumes memory chunks to maintain narrative consistency and coherence"></outline>
+					</outline>
+				</outline>
+			</outline>
+			<outline text="Tool">
+				<outline text="Core Function">
+					<outline text="A fixed, deterministic executor of operations"></outline>
+					<outline text="A black box that reliably performs a function when given perfect instructions"></outline>
+				</outline>
+				<outline text="Responsibilities">
+					<outline text="Command Execution">
+						<outline text="Takes a perfectly structured command and executes the required operation (e.g., search_flight(origin, dest))"></outline>
+					</outline>
+					<outline text="Data Return">
+						<outline text="Returns the raw, ground-truth result of the operation (e.g., a JSON array of flights)"></outline>
+					</outline>
+				</outline>
+				<outline text="Collaborators">
+					<outline text="Agent">
+						<outline text="Receives and validates the command"></outline>
+					</outline>
+					<outline text="Security">
+						<outline text="Enforces granular access controls during execution"></outline>
+					</outline>
+					<outline text="Cognitive Pipeline (UI-&gt;Agent-&gt;Tool)" _note="(The &quot;Always&quot; scenario for complex AI)&#10;&#10;Flow: User &#10;→→ UI (captures text) &#10;→→ Agent (translates intent, plans steps) &#10;→→ Tool (executes action) &#10;→→ Agent (receives result, formats narrative) &#10;→→ UI (displays).&#10;Why it exists: This adds a layer of intelligence and robustness. The Agent handles the &quot;fuzzy&quot; middle ground:&#10;Ambiguity: User says, &quot;Check on that trip.&quot; The Agent remembers the context: &quot;Are they asking about the flight to Paris or the hotel booking?&quot;&#10;Planning: User says, &quot;Plan my trip.&quot; The Agent knows this requires five steps (Flight &#10;→→ Hotel &#10;→→ Activities &#10;→→ Budget &#10;→→ Book).&#10;Error Recovery: The Agent can try to fix a poorly formed API request or retry the search if the first attempt fails.&#10;Conclusion: If the task is complex, requires human-level planning, or involves natural language inputs, the Agent is a mandatory semantic bridge.&#10;">
+						<outline text="Agent"></outline>
+					</outline>
+					<outline text="Direct Transactional Pipeline (UI-&gt;Tool)" _note="(The Simple/Structured Scenario)&#10;&#10;Flow: User &#10;→→ UI (fills out a structured form with specific variables) &#10;→→ Tool (executes action).&#10;Why it exists: Efficiency and simplicity. If the user is interacting with a clean, defined interface (e.g., a booking form where they select &quot;Origin,&quot; &quot;Destination,&quot; and click &quot;Search&quot;), the UI is already doing the translation work. The cognitive overhead of an LLM/Agent is simply removed because it&apos;s unnecessary complexity for a known command.&#10;Conclusion: When the input is highly structured, the Agent can be skipped. The UI is effectively handling the translation job upfront.&#10;">
+						<outline text="UI"></outline>
+					</outline>
+					<outline text="MCP Server" _note="Added when the map's MCP Host / MCP Server distinction was introduced (Sep 2026): in an MCP-based design, a Tool is deployed and reached through an MCP Server rather than being called in-process. See the MCP Server branch.&#10;">
+						<outline text="Packages this Tool for network-reachable, standardized discovery and invocation by an MCP Host"></outline>
+					</outline>
+				</outline>
+			</outline>
+			<outline text="Retrieval">
+				<outline text="Core Function">
+					<outline text="Provides the AI with external, proprietary knowledge that exists outside its training cut-off"></outline>
+				</outline>
+				<outline text="Responsibilities">
+					<outline text="Query Vectorization">
+						<outline text="Transforms the Agent&apos;s conceptual need into an efficient, high-dimensional search query"></outline>
+					</outline>
+					<outline text="Scoring &amp; Filtering">
+						<outline text="Searches the corpus and ranks candidate documents based on semantic similarity to the current prompt"></outline>
+					</outline>
+					<outline text="Contextual Injection">
+						<outline text="Retrieves top-ranked, most relevant text chunks and delivers them alongside the prompt"></outline>
+						<outline text="Packages retrieved context into a concise block for the LLM to synthesize"></outline>
+					</outline>
+				</outline>
+				<outline text="Collaborators">
+					<outline text="Agent">
+						<outline text="Determines the trigger point and content requirement"></outline>
+						<outline text="Triggers the search"></outline>
+					</outline>
+					<outline text="Model (LLM)">
+						<outline text="Synthesizes retrieved documents into a conversational answer"></outline>
+						<outline text="Uses injected context to answer"></outline>
+					</outline>
+				</outline>
+			</outline>
+			<outline text="Memory">
+				<outline text="Core Function">
+					<outline text="Sustains the continuity of the entire user experience across time scales"></outline>
+					<outline text="Supports both short-term and long-term memory"></outline>
+				</outline>
+				<outline text="Responsibilities">
+					<outline text="Session Buffer (Short-Term)">
+						<outline text="Holds the transient, active details of the current task"></outline>
+						<outline text="Keeps track of active details such as destinations, budgets, and decisions"></outline>
+					</outline>
+					<outline text="Episodic Archival (Long-Term)">
+						<outline text="Stores past completed tasks, preferences, and decision paths"></outline>
+					</outline>
+					<outline text="Context Relevance Scoring">
+						<outline text="Identifies which pieces of data are currently most relevant to the active task and highlights them for the LLM or Agent"></outline>
+					</outline>
+					<outline text="Decay and Pruning">
+						<outline text="Maintains selective forgetting when context is no longer relevant"></outline>
+					</outline>
+				</outline>
+				<outline text="Collaborators">
+					<outline text="Agent">
+						<outline text="Instructs the memory system on what context is needed to move forward"></outline>
+						<outline text="Requests context needed for planning"></outline>
+					</outline>
+					<outline text="Model (LLM)">
+						<outline text="Consumes memory chunks to maintain narrative consistency and coherence"></outline>
+					</outline>
+					<outline text="Security">
+						<outline text="Encrypts and anonymizes PII before it moves into long-term storage"></outline>
+					</outline>
+				</outline>
+			</outline>
+			<outline text="Security">
+				<outline text="Core Function">
+					<outline text="Maintains system integrity and data governance. It is the firewall for both input and output."></outline>
+				</outline>
+				<outline text="Responsibilities">
+					<outline text="Access Control AuthZ AuthN">
+						<outline text="Verifies who the user is and what they are allowed to do"></outline>
+					</outline>
+					<outline text="Guardrail Enforcement">
+						<outline text="Detects and blocks malicious inputs or forbidden actions"></outline>
+					</outline>
+					<outline text="Data Protection">
+						<outline text="Handles encryption and anonymization of PII before it moves to long-term storage"></outline>
+					</outline>
+					<outline text="Compliance Logging">
+						<outline text="Maintains audit trails necessary for regulatory compliance"></outline>
+					</outline>
+				</outline>
+				<outline text="Collaborators">
+					<outline text="UI">
+						<outline text="Receives and displays security alerts"></outline>
+					</outline>
+					<outline text="Agent">
+						<outline text="Detects malicious intent and passes control to Security when needed"></outline>
+					</outline>
+					<outline text="Tool">
+						<outline text="Enforces granular access controls during execution"></outline>
+					</outline>
+					<outline text="Memory">
+						<outline text="Receives PII for encryption/anonymization before long-term storage"></outline>
+					</outline>
+				</outline>
+			</outline>
+			<outline text="MCP Host" _note="Added Sep 2026, during the ai-blog-research architecture discussion. &quot;MCP Host&quot; names the ROLE, not a specific implementation — a Web API, desktop app, CLI, or background service can all be a Host; it is deliberately not called &quot;WebApi&quot; on this map so the concept stays reusable outside any one project.&#10;&#10;Core Function: the general architectural role of embedding an LLM client and orchestrating tool use via one or more MCP Servers.&#10;&#10;Concrete instance: in the ai-blog-research project, AiBlogResearch.WebApi plays this role, with a Microsoft Agent Framework (MAF) agent embedded inside it as the orchestration loop, and the official Anthropic C# SDK making the actual Claude calls.&#10;&#10;">
+				<outline text="Core Function">
+					<outline text="Embeds an LLM client and orchestrates tool use on the model&apos;s behalf"></outline>
+					<outline text="Not a fixed form — can be a Web API, desktop app, CLI, or background service"></outline>
+				</outline>
+				<outline text="Responsibilities">
+					<outline text="MCP Client Management">
+						<outline text="Establishes and maintains connections to one or more MCP Servers"></outline>
+					</outline>
+					<outline text="Tool/Resource Discovery">
+						<outline text="Queries connected servers for their available tools and resources, and supplies them to the Model as callable definitions"></outline>
+					</outline>
+					<outline text="Request Routing">
+						<outline text="Routes a Model-emitted tool call to the correct MCP Server and returns its result"></outline>
+					</outline>
+					<outline text="Context Assembly">
+						<outline text="Combines results from multiple MCP Servers into the context passed back to the Model"></outline>
+					</outline>
+				</outline>
+				<outline text="Collaborators">
+					<outline text="Agent">
+						<outline text="The Host embeds the Agent&apos;s orchestration loop; the Agent decides which tool to call, the Host executes it via the right MCP Server"></outline>
+					</outline>
+					<outline text="Model (LLM)">
+						<outline text="Supplies the Model with tool/resource definitions gathered from its MCP Servers"></outline>
+					</outline>
+					<outline text="MCP Server">
+						<outline text="Connects to one or more MCP Servers as a client, calling their exposed tools and resources"></outline>
+					</outline>
+					<outline text="Security">
+						<outline text="Enforces authentication/authorization between itself and each MCP Server it connects to"></outline>
+					</outline>
+				</outline>
+			</outline>
+			<outline text="MCP Server" _note="Added Sep 2026, alongside MCP Host, during the ai-blog-research architecture discussion.&#10;&#10;Core Function: a standalone component that exposes a narrow, single-domain set of tools/resources over the Model Context Protocol, so any compliant Host can discover and call them without custom integration.&#10;&#10;Each MCP Server owns only the credentials/access its own domain needs (e.g., a database server holds the DB connection string; a file server holds storage access) — the Host itself never sees those secrets directly, only the tool call results.&#10;&#10;Concrete instances: in the ai-blog-research project this is McpServer.FileSearch and McpServer.Database, each a small standalone ASP.NET Core app speaking MCP&apos;s stateless HTTP transport (2026-07-28 spec) — hostable anywhere that runs an ordinary ASP.NET Core app, including shared hosts like SmarterASP.NET.&#10;&#10;">
+				<outline text="Core Function">
+					<outline text="Exposes a defined set of tools and/or resources over the Model Context Protocol"></outline>
+					<outline text="Owns a single, narrow domain of capability (e.g., filesystem, database) and nothing else"></outline>
+				</outline>
+				<outline text="Responsibilities">
+					<outline text="Tool Exposure">
+						<outline text="Declares its available tools with names, descriptions, and schemas so a Host can discover them"></outline>
+					</outline>
+					<outline text="Resource Exposure">
+						<outline text="Optionally exposes readable resources (files, records) a Host can request directly"></outline>
+					</outline>
+					<outline text="Isolated Execution">
+						<outline text="Executes each tool call within its own scope, holding only the credentials/access its domain needs"></outline>
+					</outline>
+					<outline text="Protocol Compliance">
+						<outline text="Speaks MCP&apos;s standardized transport (e.g., stateless HTTP) so any compliant Host can connect without custom integration"></outline>
+					</outline>
+				</outline>
+				<outline text="Collaborators">
+					<outline text="MCP Host">
+						<outline text="Receives tool calls from, and returns results to, one or more Hosts"></outline>
+					</outline>
+					<outline text="Tool">
+						<outline text="Is the deployable, network-reachable packaging of one or more Tools"></outline>
+					</outline>
+					<outline text="Security">
+						<outline text="Holds and protects the domain-specific credentials (e.g., a DB connection string) the Host never sees directly"></outline>
+					</outline>
+				</outline>
+			</outline>
+		</outline>
+	</body>
+</opml>

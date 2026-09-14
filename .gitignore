@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Artifacts / Docs — large reference downloads only, not the folder itself
+artifacts/*.epub
+
 # Distribution / packaging
 .Python
 build/
