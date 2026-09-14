@@ -2,6 +2,17 @@
 
 Status as of 2026-09-13. Read this first in any new session before touching architecture or deployment — it's the source of truth for decisions made so far, so nothing above it should be reconstructed from memory or re-litigated without reading this.
 
+## Cross-machine continuity (Mac ↔ Windows/Parallels)
+
+Work happens from two Claude Code instances: this one (macOS) and a Windows one running under Parallels. **They share the same physical filesystem** — Parallels maps the Mac home directory as `M:\` in Windows, so `M:\Dev\repos\ai-research-blog` is not a clone, it's the *same files* as this repo. No git push/pull is needed for either side to see the other's committed (or even uncommitted) changes — normal editor/OS file-locking caveats aside, saving a file on one side makes it immediately visible on the other.
+
+That means two things are available to a fresh Windows session, in order of reliability:
+
+1. **This file** (`docs/SESSION_HANDOFF.md`) — read it first, always. It's project-specific and lives in the repo, so it's versioned and travels with the code.
+2. **The Mac-side auto-memory files**, also reachable from Windows via the same shared mount: `M:\.claude\projects\-Users-billkratochvil-Dev\memory\MEMORY.md` and the individual `.md` files it indexes. These hold general context about Bill and this project (background, decision-making style, stack rationale) that isn't repo-specific. Windows Claude Code won't auto-load these (its own memory store is keyed to its own project path, `M:\Dev\repos\...`, which reads as a different project than `/Users/billkratochvil/Dev`), so they need to be pointed at explicitly if wanted.
+
+**Peer-to-peer session messaging** (`SendMessage`/`ListAgents`) also exists as a mechanism for two live Claude sessions to talk directly, but it depends on a "Remote Control" account feature whose behavior across the Mac↔Parallels boundary hasn't been confirmed yet. Worth testing when both sessions are up at the same time (run `ListAgents` from either side to see if the other appears) — if it works, it's a nice-to-have for future sessions, but the file-based handoff above is the one to actually depend on.
+
 ## Where the project actually is right now
 
 `app.py` in the repo root is still the original minimal FastAPI/Python skeleton. **None of the stack below has been scaffolded yet.** Tomorrow's session (on Windows/Visual Studio 2026, via Parallels) is the first coding session for the new stack.
