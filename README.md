@@ -1,28 +1,3 @@
 # ai-research-blog
 
-Fresh start. FastAPI hello-world now; TDD from the DAL up on a branch.
-
-## Setup
-
-```bash
-uv sync
-```
-
-## Run
-
-```bash
-uv run uvicorn app:app --reload
-```
-
-Then open http://localhost:8000 — and http://localhost:8000/health.
-
-## Test
-
-```bash
-uv run pytest
-```
-
-## Deploy
-
-Railway builds with NIXPACKS and starts `uvicorn app:app` on `$PORT`
-(see `railway.toml`). Pushing `main` deploys.
+Angular + ASP.NET Core (MCP Host) + Aspire. See [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md) for the full architecture, decisions, and current status before touching anything here.

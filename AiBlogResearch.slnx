@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="client/ai-blog-research-ui/ai-blog-research-ui.client.esproj">
+      <Build />
+      <Deploy />
+    </Project>
+    <Project Path="src/AiBlogResearch.WebApi/AiBlogResearch.WebApi.csproj" />
+  </Folder>
+  <Project Path="AiBlogResearch.AppHost/AiBlogResearch.AppHost.csproj" />
+  <Project Path="AiBlogResearch.ServiceDefaults/AiBlogResearch.ServiceDefaults.csproj" />
+</Solution>

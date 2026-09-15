@@ -1,0 +1,29 @@
+<div class="page">
+  <header class="page__header">
+    <h1>{{ title() }}</h1>
+    <button
+      mat-icon-button
+      (click)="toggleTheme()"
+      [attr.aria-label]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+    >
+      <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+  </header>
+
+  <section class="page__status">
+    <span>WebApi health:</span>
+    @switch (healthState()) {
+      @case ('checking') {
+        <span class="badge badge--info">checking...</span>
+      }
+      @case ('healthy') {
+        <span class="badge badge--success">healthy as of {{ healthCheckedAt() }}</span>
+      }
+      @case ('unreachable') {
+        <span class="badge badge--danger">unreachable</span>
+      }
+    }
+  </section>
+
+  <router-outlet />
+</div>
