@@ -2,6 +2,20 @@
 
 Status as of 2026-09-14. Read this first in any new session before touching architecture or deployment — it's the source of truth for decisions made so far, so nothing above it should be reconstructed from memory or re-litigated without reading this.
 
+**Current branch: `rebuild/dotnet-angular-scaffold`** (off `main`), one commit, not yet merged/pushed — today's full scaffold (see below) is committed there.
+
+## Immediate next session: deployment (reprioritized ahead of McpHost/MCP servers)
+
+**Objective: local dev loop AND a deployed WebApi + Angular client both working by end of that session.** Concretely:
+1. Browse the actual SmarterASP.NET control panel / `global-webnet.com` site setup (see "Hosting reality" below for account/site details already known) to determine the most efficient deploy path for *this* project's shape — don't assume VSDeploy vs GitHub Deploy in advance, look at what's actually there first.
+2. Get the WebApi deployed and reachable first.
+3. Angular's `dist/` output will likely need a manual build + FTP upload (`ng build` doesn't auto-deploy) — but hold off on solving that until the WebApi side is actually working, per the user's own sequencing.
+4. This is the **first deploy of the new stack to `global-webnet.com`** (the DEV site) — nothing from today's session has touched hosting yet.
+
+## Then: Security / Auth (foundational, blocks most feature work after)
+
+User is leaning toward **building a minimal, in-house Auth0-style auth service** rather than adopting a third-party IdP — "at minimal scale to get the job done." Explicitly called out as foundational to everything going forward, so it comes right after deployment is working, before McpHost/MCP-server/agent work resumes. No design decisions made yet on this — user wants a tech assist (options, tradeoffs, scope-appropriate architecture) when that session starts. Worth weighing against the project's own stated vendor-risk framework (see "Why not Blazor / Python" below) if a third-party option comes up again: rolling your own auth has its own well-known risk profile (session/token handling, password storage, key rotation) that's worth naming explicitly rather than assuming "minimal scale" avoids it.
+
 ## Where the project actually is right now (updated 2026-09-14)
 
 **First 7 objectives complete and verified end-to-end** (Windows session): Python skeleton purged, Aspire solution scaffolded, Angular 22 + Angular Material client built, WebApi health-check controller wired, Angular calls it through the dev proxy, and `dotnet run` on the AppHost brings up both WebApi and Angular together locally. Confirmed working in-browser (dark-by-default theme, toggle to light, green "healthy" badge from a live `/api/health` call).
@@ -98,11 +112,11 @@ Account `billkrat-001` (plan W1000-US, Premium tier as of Sep 2026 → unlimited
 - Architecture concept map (UI/Agent/Model/Tool/Retrieval/Memory/Security/MCP Host/MCP Server): live at MindMapAI — `https://mindmapai.app/canvas/dfe305970dd2afbc23718d38f9f3b1a74a971480214e374e5fcd11dcc3e540f1/edit`. MindMapAI's per-node Notes feature isn't shipped yet, so `docs/architecture/ai-system-architecture.opml` in this repo is the durable backup for design-rationale notes — keep it in sync with the canvas whenever the canvas structure changes.
 - `artifacts/docs-research-arch.md` — raw transcript excerpts from the stack-selection debate, kept for anyone who wants the full reasoning trail.
 
-## Next session: what to actually do
+## After deployment and auth: the MCP/agent work (McpHost, MCP servers, MAF)
 
-Objectives 1–7 (purge Python, scaffold Aspire solution, Angular + Material client, WebApi health check, Angular↔WebApi wired and running locally) are **done** — see "Where the project actually is right now" at the top. Remaining:
+Objectives 1–7 (purge Python, scaffold Aspire solution, Angular + Material client, WebApi health check, Angular↔WebApi wired and running locally) are **done** — see "Where the project actually is right now" at the top. This section is now **third in line**, after deployment and auth (see the top of this doc) — not the next thing to pick up:
 
 1. Add `AiBlogResearch.McpHost` class library with the `IResearchAgent` interface, DI-registered into WebApi.
 2. Scaffold `McpServer.FileSearch` and `McpServer.Database` as standalone ASP.NET Core minimal API projects, wired into the AppHost as their own resources.
 3. Wire MAF + the Anthropic C# SDK, and get a minimal working path end-to-end: Angular → WebApi → `IResearchAgent` (MAF) → one MCP server tool call → Claude via Anthropic SDK → response back to Angular.
-4. Defer: production deploy pipeline, the `/BlogAi` housekeeping cleanup, and moving the Railway domains — none of these block getting a working local dev loop.
+4. Defer: the `/BlogAi` housekeeping cleanup and moving the Railway domains — neither blocks the work above.
