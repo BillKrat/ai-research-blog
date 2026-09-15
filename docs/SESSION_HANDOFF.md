@@ -2,7 +2,7 @@
 
 Status as of 2026-09-14. Read this first in any new session before touching architecture or deployment — it's the source of truth for decisions made so far, so nothing above it should be reconstructed from memory or re-litigated without reading this.
 
-**Current branch: `rebuild/dotnet-angular-scaffold`** (off `main`), one commit, not yet merged/pushed — today's full scaffold (see below) is committed there.
+**Current branch: `rebuild/dotnet-angular-scaffold`** (off `main`), two commits, not yet merged/pushed — today's full scaffold (see below) is committed there.
 
 ## Immediate next session: deployment (reprioritized ahead of McpHost/MCP servers)
 
@@ -12,9 +12,11 @@ Status as of 2026-09-14. Read this first in any new session before touching arch
 3. Angular's `dist/` output will likely need a manual build + FTP upload (`ng build` doesn't auto-deploy) — but hold off on solving that until the WebApi side is actually working, per the user's own sequencing.
 4. This is the **first deploy of the new stack to `global-webnet.com`** (the DEV site) — nothing from today's session has touched hosting yet.
 
-## Then: Security / Auth (foundational, blocks most feature work after)
+## Then (third session): Security / Auth — **decided: Auth0, not a custom auth service**
 
-User is leaning toward **building a minimal, in-house Auth0-style auth service** rather than adopting a third-party IdP — "at minimal scale to get the job done." Explicitly called out as foundational to everything going forward, so it comes right after deployment is working, before McpHost/MCP-server/agent work resumes. No design decisions made yet on this — user wants a tech assist (options, tradeoffs, scope-appropriate architecture) when that session starts. Worth weighing against the project's own stated vendor-risk framework (see "Why not Blazor / Python" below) if a third-party option comes up again: rolling your own auth has its own well-known risk profile (session/token handling, password storage, key rotation) that's worth naming explicitly rather than assuming "minimal scale" avoids it.
+**Decision (2026-09-14, reversed from the initial "build our own minimal Auth0-style service" idea):** use the user's existing Auth0 account rather than rolling custom auth. Reasoning, for anyone tempted to re-litigate this: auth is adversarial in a way the rest of this stack isn't — a subtle bug in a hand-rolled token/session/password-reset flow is catastrophic (account takeover, breach) in a way a subtle bug in the Angular UI or WebApi just isn't, and "minimal scale" doesn't mean "minimal risk" here. Auth0's free tier fits this project's scale, and unlike Blazor (the project's actual vendor-risk precedent, see "Why not Blazor / Python" below), Auth0 sits behind a standard protocol (OIDC/OAuth2) rather than a proprietary API — migrating off it later, if ever needed, isn't the same kind of lock-in trap that killed Blazor.
+
+**Known issue to fix, not a reason to reconsider the decision:** the user finds Auth0's login/callback flow "quirky" — symptom not yet diagnosed (could be redirect-loop, wrong callback URL registered for one of the environments — local `localhost:4200` vs `global-webnet.com` vs eventual production, token not persisting across the Angular SPA, or something else). First thing to do in that session: get the actual symptom and fix the integration (most likely using `@auth0/auth0-angular` on the client + standard OIDC validation on the WebApi) rather than treat it as a sign Auth0 itself is the wrong call.
 
 ## Where the project actually is right now (updated 2026-09-14)
 
