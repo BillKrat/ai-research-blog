@@ -44,6 +44,7 @@ jobs:
 
       - name: Bring API back online
         if: always()
+        continue-on-error: true
         run: |
           curl --ftp-method nocwd --ftp-pasv --quote "DELE app_offline.htm" \
             --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
