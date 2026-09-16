@@ -44,17 +44,12 @@ jobs:
           server-dir: /
 
       - name: Bring API back online
-        if: steps.ftp_deploy.conclusion == 'success'
-        run: |
-          curl --ftp-method nocwd --ftp-pasv --quote "DELE app_offline.htm" \
-            --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
-            "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/"
-
-      - name: Bring API back online after failed deploy
-        if: steps.ftp_deploy.conclusion == 'failure'
+        if: always()
         continue-on-error: true
         run: |
-          echo "Deployment failed; removing app_offline.htm so the previous deployment can continue serving traffic."
+          if [ "${{ steps.ftp_deploy.conclusion }}" = "failure" ]; then
+            echo "Deployment failed; removing app_offline.htm so the previous deployment can continue serving traffic."
+          fi
           curl --ftp-method nocwd --ftp-pasv --quote "DELE app_offline.htm" \
             --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
             "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/"
