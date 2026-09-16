@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface HealthResponse {
   status: string;
@@ -12,6 +13,6 @@ export class HealthService {
   private readonly http = inject(HttpClient);
 
   check(): Observable<HealthResponse> {
-    return this.http.get<HealthResponse>('/api/health');
+    return this.http.get<HealthResponse>(`${environment.apiUrl}/api/health`);
   }
 }
