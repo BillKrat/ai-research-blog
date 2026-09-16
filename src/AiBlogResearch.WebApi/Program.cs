@@ -4,12 +4,16 @@ builder.AddServiceDefaults();
 
 // Add services to the container.
 
-const string AngularDevCorsPolicy = "AngularDev";
+const string AngularCorsPolicy = "Angular";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(AngularDevCorsPolicy, policy =>
+    options.AddPolicy(AngularCorsPolicy, policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+        policy.WithOrigins(
+                "http://localhost:4200",
+                "https://localhost:4200",
+                "http://global-webnet.com",
+                "https://global-webnet.com")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -27,8 +31,9 @@ app.MapDefaultEndpoints();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseCors(AngularDevCorsPolicy);
 }
+
+app.UseCors(AngularCorsPolicy);
 
 app.UseHttpsRedirection();
 

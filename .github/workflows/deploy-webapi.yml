@@ -1,0 +1,35 @@
+name: Deploy WebApi to api.global-webnet.com
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/AiBlogResearch.WebApi/**"
+      - "AiBlogResearch.ServiceDefaults/**"
+      - ".github/workflows/deploy-webapi.yml"
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish (Release)
+        run: dotnet publish src/AiBlogResearch.WebApi/AiBlogResearch.WebApi.csproj -c Release -o publish
+
+      - name: Deploy to SmarterASP.NET via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.SMARTERASP_FTP_SERVER }}
+          username: ${{ secrets.SMARTERASP_API_FTP_USERNAME }}
+          password: ${{ secrets.SMARTERASP_API_FTP_PASSWORD }}
+          protocol: ftp
+          local-dir: publish/
+          server-dir: /
