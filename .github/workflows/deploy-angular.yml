@@ -39,4 +39,4 @@ jobs:
           password: ${{ secrets.SMARTERASP_FTP_PASSWORD }}
           protocol: ftp
           local-dir: client/ai-blog-research-ui/dist/ai-blog-research-ui/browser/
-          server-dir: /global/
+          server-dir: /
