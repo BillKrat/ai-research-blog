@@ -46,12 +46,13 @@ jobs:
           server-dir: /
 
       - name: Bring API back online
-        if: always() && steps.put_offline.outputs.uploaded == 'true'
-        continue-on-error: true
+        if: success() && steps.put_offline.outputs.uploaded == 'true'
         run: |
-          if [ "${{ steps.ftp_deploy.conclusion }}" = "failure" ]; then
-            echo "Deployment failed; removing app_offline.htm so the previous deployment can continue serving traffic."
-          fi
           curl --ftp-method nocwd --ftp-pasv --quote "DELE app_offline.htm" \
             --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
             "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/"
+
+      - name: Keep API offline after failed deploy
+        if: failure() && steps.put_offline.outputs.uploaded == 'true'
+        run: |
+          echo "Deployment failed after app_offline.htm was uploaded; the API remains offline to avoid serving a partial deployment."
