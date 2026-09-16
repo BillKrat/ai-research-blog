@@ -26,7 +26,13 @@ Status as of 2026-09-15. Read this first in any new session before touching arch
 
 **Decision (2026-09-14, reversed from the initial "build our own minimal Auth0-style service" idea):** use the user's existing Auth0 account rather than rolling custom auth. Reasoning, for anyone tempted to re-litigate this: auth is adversarial in a way the rest of this stack isn't — a subtle bug in a hand-rolled token/session/password-reset flow is catastrophic (account takeover, breach) in a way a subtle bug in the Angular UI or WebApi just isn't, and "minimal scale" doesn't mean "minimal risk" here. Auth0's free tier fits this project's scale, and unlike Blazor (the project's actual vendor-risk precedent, see "Why not Blazor / Python" below), Auth0 sits behind a standard protocol (OIDC/OAuth2) rather than a proprietary API — migrating off it later, if ever needed, isn't the same kind of lock-in trap that killed Blazor.
 
-**Known issue to fix, not a reason to reconsider the decision:** the user finds Auth0's login/callback flow "quirky" — symptom not yet diagnosed (could be redirect-loop, wrong callback URL registered for one of the environments — local `localhost:4200` vs `global-webnet.com` vs eventual production, token not persisting across the Angular SPA, or something else). First thing to do in that session: get the actual symptom and fix the integration (most likely using `@auth0/auth0-angular` on the client + standard OIDC validation on the WebApi) rather than treat it as a sign Auth0 itself is the wrong call.
+**Clarified 2026-09-15 — not a bug in this project yet, a design goal for the one we build:** the "quirky" callback concern isn't a symptom hit in this project (Auth0 isn't wired up yet) — it's the user having watched another company's product get this wrong: their callback flow waited on something to be triggered async, and the UI would visibly stick mid-transition (stuck on "logging in" or similar) when that didn't fire cleanly. The goal for our integration is simply to avoid that class of problem — a clean, deterministic login flow with no visible hang state. **Nothing fancy required, just clean and functional.**
+
+**Concrete objective for next session:** wire up Auth0 (most likely `@auth0/auth0-angular` on the client + standard OIDC validation on the WebApi) such that the Angular page header:
+1. Shows a login control when the user is unauthenticated.
+2. After login, shows the authenticated user's name in the header.
+
+That's the whole scope for the first pass — don't over-build (no profile pages, no role/permission UI, etc.) until asked.
 
 ## Where the project actually is right now (updated 2026-09-14)
 
