@@ -24,6 +24,14 @@ jobs:
       - name: Publish (Release)
         run: dotnet publish src/AiBlogResearch.WebApi/AiBlogResearch.WebApi.csproj -c Release -o publish
 
+      - name: Put API offline for deployment
+        run: |
+          printf '<html><body><h1>Maintenance</h1><p>Deployment in progress. Please retry shortly.</p></body></html>' > /tmp/app_offline.htm
+          curl --ftp-method nocwd --ftp-pasv -T /tmp/app_offline.htm \
+            --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
+            "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/app_offline.htm"
+          sleep 5
+
       - name: Deploy to SmarterASP.NET via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -33,3 +41,10 @@ jobs:
           protocol: ftp
           local-dir: publish/
           server-dir: /
+
+      - name: Bring API back online
+        if: always()
+        run: |
+          curl --ftp-method nocwd --ftp-pasv --quote "DELE app_offline.htm" \
+            --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
+            "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/"
