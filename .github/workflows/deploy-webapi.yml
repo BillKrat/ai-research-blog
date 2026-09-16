@@ -25,11 +25,13 @@ jobs:
         run: dotnet publish src/AiBlogResearch.WebApi/AiBlogResearch.WebApi.csproj -c Release -o publish
 
       - name: Put API offline for deployment
+        id: put_offline
         run: |
           printf '<html><body><h1>Maintenance</h1><p>Deployment in progress. Please retry shortly.</p></body></html>' > /tmp/app_offline.htm
           curl --ftp-method nocwd --ftp-pasv -T /tmp/app_offline.htm \
             --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
             "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/app_offline.htm"
+          echo "uploaded=true" >> "$GITHUB_OUTPUT"
           sleep 5
 
       - name: Deploy to SmarterASP.NET via FTP
@@ -44,7 +46,7 @@ jobs:
           server-dir: /
 
       - name: Bring API back online
-        if: always()
+        if: always() && steps.put_offline.outputs.uploaded == 'true'
         continue-on-error: true
         run: |
           if [ "${{ steps.ftp_deploy.conclusion }}" = "failure" ]; then
