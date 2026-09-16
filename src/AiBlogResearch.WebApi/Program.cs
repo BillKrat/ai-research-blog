@@ -5,15 +5,13 @@ builder.AddServiceDefaults();
 // Add services to the container.
 
 const string AngularCorsPolicy = "Angular";
+
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(AngularCorsPolicy, policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:4200",
-                "https://localhost:4200",
-                "http://global-webnet.com",
-                "https://global-webnet.com")
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -25,17 +23,18 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
+// UseCors must come before any Map* calls so it runs ahead of terminal
+// middleware (health checks, controllers) and can attach CORS headers.
+app.UseHttpsRedirection();
+app.UseCors(AngularCorsPolicy);
+
 app.MapDefaultEndpoints();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-app.UseCors(AngularCorsPolicy);
-
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
