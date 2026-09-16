@@ -1,8 +1,12 @@
 # Session Handoff — AI Research Blog Rebuild
 
-Status as of 2026-09-15. Read this first in any new session before touching architecture or deployment — it's the source of truth for decisions made so far, so nothing above it should be reconstructed from memory or re-litigated without reading this.
+Status as of 2026-09-16. Read this first in any new session before touching architecture or deployment — it's the source of truth for decisions made so far, so nothing above it should be reconstructed from memory or re-litigated without reading this.
 
 **Current branch: `main`** — the `rebuild/dotnet-angular-scaffold` branch was fast-forward-merged and pushed to `origin/main` on 2026-09-15. All work described below (scaffold, deployment, CI/CD, developer guide) is live on `main`.
+
+## Resolved (2026-09-16): production CORS/"unreachable" scare — was a transient deploy-window issue, not a code bug
+
+Site briefly showed "WebApi health: unreachable" with a browser console CORS error + `net::ERR_FAILED` for `api.global-webnet.com/api/health`. Root cause: the CORS fix commit ([36fee51](../../../commit/36fee5195de28834f5f6aa48cb4a0ac28c3e79e7)) was correct in code, but its GitHub Actions FTP-deploy step **failed** (IIS held a file lock on the running WebApi process, blocking the overwrite) — the exact failure mode the very next commit ([353535c](../../../commit/353535c8b805f8cb7eceda2c092e214d2c16808b), Copilot-authored) fixed by toggling an `app_offline.htm` before/after the FTP step in [deploy-webapi.yml](../.github/workflows/deploy-webapi.yml). Once that landed, the CORS-fix deploy re-ran successfully and the site has been healthy since (verified via `curl` with an `Origin` header showing `Access-Control-Allow-Origin` present, and in-browser badge showing "healthy"). **Lesson: a screenshot/observation taken during a failed-then-retried deploy window can show stale/broken behavior even after the fix is merged to `main` — check the GitHub Actions run status for the relevant workflow before assuming a merged fix didn't work.**
 
 ## Completed (2026-09-15): full CI/CD deployment — both WebApi and Angular live
 
