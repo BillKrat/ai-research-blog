@@ -33,6 +33,7 @@ jobs:
           sleep 5
 
       - name: Deploy to SmarterASP.NET via FTP
+        id: ftp_deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.SMARTERASP_FTP_SERVER }}
@@ -43,8 +44,17 @@ jobs:
           server-dir: /
 
       - name: Bring API back online
-        if: success()
+        if: steps.ftp_deploy.conclusion == 'success'
         run: |
+          curl --ftp-method nocwd --ftp-pasv --quote "DELE app_offline.htm" \
+            --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
+            "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/"
+
+      - name: Bring API back online after failed deploy
+        if: steps.ftp_deploy.conclusion == 'failure'
+        continue-on-error: true
+        run: |
+          echo "Deployment failed; removing app_offline.htm so the previous deployment can continue serving traffic."
           curl --ftp-method nocwd --ftp-pasv --quote "DELE app_offline.htm" \
             --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
             "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/"
