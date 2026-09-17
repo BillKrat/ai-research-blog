@@ -2,6 +2,8 @@
 
 Working context for any agent touching this repo — Claude Code (Windows/macOS) or the local LM Studio agent described below. **Read [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md) first** — it's the source of truth for current status, decided architecture, and what's next. This file is about *how agents work in this repo*, not what's been decided about the product.
 
+**Machine-bootstrap / non-project tooling now lives in a separate repo: [`dev-tools`](https://github.com/BillKrat/dev-tools).** The `blog_repo_runner.py` MCP tool referenced below has its canonical source there (`lmstudio/tools/blog_repo_runner.py`) — this repo's copy at `~/.lmstudio/tools/blog_repo_runner.py` is a deployed instance, not the source of truth. If you edit its behavior, edit it in `dev-tools` and redeploy, or the change is lost if this machine is ever replaced.
+
 ## Local LM Studio Agent — Role & Workflow
 
 **Why:** peak Claude sessions are rate-limited. When a limit is hit (or Claude isn't available), a local model in LM Studio on the Mac Mini (currently `qwen/qwen3.8-27b` via MLX) can keep doing legwork — exploration, running builds/tests, drafting small fixes — so time isn't lost waiting. This mirrors the pattern used in the (now-retired) `poc/` repo; see `poc/AGENTS.md`'s "Local LM Studio Agent" section for the original design if more detail is ever needed.
@@ -18,6 +20,10 @@ Given that, the guardrails below are deliberate, not an oversight.
   - `dotnet_build(project)` — `webapi` / `apphost` / `servicedefaults` (fixed set; deliberately never builds the `.slnx`, since its `.esproj` is VS-only and may not resolve via plain `dotnet` — use `ng_build` for the Angular client instead).
   - `ng_build()`, `ng_test()`, `npm_install()` — Angular client (`client/ai-blog-research-ui`).
   - `git_status()`, `git_diff(staged)`, `git_log(count)` — **read-only.**
+
+**`npm_install` is last-resort, not routine — it prunes the shared `node_modules`' native platform binaries (e.g. `@esbuild/win32-x64` vs `@esbuild/darwin-arm64`) for whichever OS runs it.** This isn't an npm bug or a flag to disable — npm intentionally reconciles OS/CPU-tagged optional dependencies against the current platform on every install, removing what doesn't match. There's no "keep both platforms installed" option. Since day-to-day development now happens in VS Code (client) and Visual Studio 2026 (WebApi) on Windows, and LM Studio's role is occasional verification, not continuous serving:
+- Only call `npm_install` if `ng_build`/`ng_test` actually fails with a platform-mismatch or missing-module error — don't run it speculatively "just in case."
+- If you do run it, say so prominently in the dated Local Agent Log entry (not buried) — it means the *next* Windows-side build will fail until `npm install` runs there too, and that's the one thing the next session needs to see before it assumes the client still builds.
 
 **No `git commit` or `git push` tool exists, on purpose.** The local agent explores, builds, tests, and edits files (via `filesystem`) freely — but leaves the working tree dirty. It does not commit, does not push, and does not switch branches. The next Claude session reviews `git diff`/`git status` and decides what to commit.
 
@@ -36,6 +42,18 @@ Given that, the guardrails below are deliberate, not an oversight.
 ## Local Agent Log
 
 (Dated entries from the local LM Studio agent go here — findings, blockers, what it verified. Newest first.)
+
+### 2026-09-17 — Full solution build verified on macOS; esbuild platform-mismatch in shared node_modules (recurring gotcha)
+
+Bill asked for a full solution build. The `.slnx` itself can't be built via plain `dotnet` (VS-only `.esproj`, per the tooling note above), so built the documented equivalent — `dotnet_build` for webapi + apphost, `ng_build` for the client:
+
+- **WebApi** (incl. ServiceDefaults): ✅ 0 warnings / 0 errors.
+- **AppHost** (all three .NET projects): ✅ 0 warnings / 0 errors.
+- **Angular `ng build`**: ❌ first attempt failed — `You installed esbuild for another platform… "@esbuild/win32-x64" is present but this platform needs "@esbuild/darwin-arm64"`. Root cause: `node_modules` was last installed on the Windows side of the shared Parallels tree, so its platform-specific native binaries are for win32-x64. **Fixed with `npm_install` on the Mac side** (added 10 / removed 14 packages — swaps the platform binaries in place). Re-ran `ng_build`: ✅ (initial bundle 290.59 kB raw / 79.30 kB transfer). `ng_test`: ✅ 2/2 tests passed.
+
+**Recurring gotcha to remember:** every time the active machine flips between Windows ↔ macOS, the first `ng build`/`ng serve` on the newly-active side will fail with an esbuild (or similar native-dep) platform mismatch until `npm install` is run there. Not a bug to "fix" in code — just run `npm_install` on whichever side is driving before building the client.
+
+Side note: `npm install` warned that `fsevents@2.3.3`'s install script was skipped under npm's allow-scripts policy. Harmless for `ng build` (fsevents is only used by file-watching), but if a Mac-side `ng serve`/watch build ever misbehaves on file changes, that's the first thing to check (`npm approve-scripts fsevents`).
 
 ### 2026-09-16 — LMS_TRIAGE_HANDOFF items closed (macOS Claude session)
 
