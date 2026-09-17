@@ -36,3 +36,12 @@ Given that, the guardrails below are deliberate, not an oversight.
 ## Local Agent Log
 
 (Dated entries from the local LM Studio agent go here — findings, blockers, what it verified. Newest first.)
+
+### 2026-09-16 — LMS_TRIAGE_HANDOFF items closed (macOS Claude session)
+
+Both open items from [docs/LMS_TRIAGE_HANDOFF.md](docs/LMS_TRIAGE_HANDOFF.md) are resolved:
+
+- **Item 1 (tool-confirmation bypass):** `js-code-sandbox` disabled entirely for this workspace in LM Studio's per-chat tool picker (done by Bill in the UI). `~/.lmstudio/settings.json`'s `skipToolConfirmationPatterns` no longer has a path to arbitrary shell/subprocess execution — `blog-repo-runner` (build/test/read-only-git) and `filesystem` (file edits) are the only capabilities available to the local agent, matching the division of labor above. Also flagged as a side note: `mcp/poc-test-runner:*` was still lingering in that same settings list as a dead entry (the server itself was already removed from `mcp.json`) — harmless, but worth deleting next time that file is opened.
+- **Item 2 (dirty-working-tree mystery):** root-caused, not the "stale LM Studio context" hypothesis — a native macOS `git status`/`git diff` also showed all ~45-48 files dirty, confirming it was real. Actual cause: `core.fileMode=false` (the earlier fix) was correctly in place and had already eliminated the mode-bit noise, but every file was still CRLF on disk vs. LF in the committed blobs. Since `M:\Dev\repos\ai-research-blog` (Windows) and `~/Dev/repos/ai-research-blog` (macOS) are the same physical working tree via Parallels, per-machine `core.autocrlf` settings can't be the fix — whichever side last checked out or saved a file wins, dirtying the other side. Fixed at the repo level instead: added [.gitattributes](.gitattributes) with `* text=auto eol=lf` (plus explicit `binary` declarations for `favicon.ico` and other image/font types, to prevent `text=auto`'s heuristic from ever corrupting a binary file via CRLF conversion). Committed and pushed as `f8f33bc` — working tree was fully clean immediately after (git's clean/smudge filters now normalize CRLF↔LF consistently regardless of which OS's git or editor touches the files next).
+
+Nothing further to do on either item. If a fresh dirty-tree report ever recurs, re-verify natively (`git status --porcelain=v1 -b` + `git diff --stat`, not through the LM Studio MCP tool) before assuming it's the same root cause — this fix addresses line endings specifically, not every possible cross-platform git artifact.
