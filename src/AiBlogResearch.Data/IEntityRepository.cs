@@ -13,7 +13,14 @@ public interface IEntityRepository
     /// <summary>Retrieves a single entity by id, or <c>null</c> if it does not exist.</summary>
     Task<Entity?> GetAsync(Guid id, CancellationToken cancellationToken = default);
 
-    /// <summary>Updates an existing entity's standard fields. Returns <c>false</c> if no entity with that id exists.</summary>
+    /// <summary>
+    /// Updates an existing entity's standard fields. <paramref name="entity"/>.RowVersion must be the
+    /// version last read by the caller (optimistic concurrency) — the update is applied only if the
+    /// stored row still has that version. Returns <c>false</c> if no entity with that id exists <em>or</em>
+    /// if it exists but was modified since, changing its row_version (a concurrency conflict) — the two
+    /// cases aren't distinguished by the return value; callers that need to tell them apart should
+    /// <see cref="GetAsync"/> the current row afterward.
+    /// </summary>
     Task<bool> UpdateAsync(Entity entity, CancellationToken cancellationToken = default);
 
     /// <summary>Deletes an entity by id. Returns <c>false</c> if no entity with that id existed.</summary>

@@ -47,7 +47,7 @@ public sealed class PostgresEntityRepository(ISqlExecutor executor) : IEntityRep
             UPDATE entities
             SET tenant = @Tenant, org = @Org, entity_type = @EntityType,
                 standard_fields = @StandardFieldsJson::jsonb, updated_at = @UpdatedAt, row_version = row_version + 1
-            WHERE id = @Id
+            WHERE id = @Id AND row_version = @RowVersion
             """;
 
         var affected = await _executor.ExecuteAsync(sql, entity with { UpdatedAt = DateTimeOffset.UtcNow }, cancellationToken);

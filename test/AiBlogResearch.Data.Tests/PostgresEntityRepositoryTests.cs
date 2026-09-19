@@ -88,6 +88,33 @@ public class PostgresEntityRepositoryTests
     }
 
     [Fact]
+    public async Task UpdateAsync_FiltersOnRowVersionForOptimisticConcurrency()
+    {
+        var executor = new FakeSqlExecutor { ExecuteResult = 1 };
+        var repository = new PostgresEntityRepository(executor);
+        var entity = SampleEntity() with { RowVersion = 3 };
+
+        await repository.UpdateAsync(entity);
+
+        Assert.Contains("row_version = @RowVersion", executor.ExecuteCalls[0].Sql);
+        var sentEntity = Assert.IsType<Entity>(executor.ExecuteCalls[0].Parameters);
+        Assert.Equal(3L, sentEntity.RowVersion);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReturnsFalseOnStaleRowVersion()
+    {
+        // Simulates another writer having already advanced row_version: the WHERE clause matches
+        // zero rows even though the entity still exists, which must surface as a failed update.
+        var executor = new FakeSqlExecutor { ExecuteResult = 0 };
+        var repository = new PostgresEntityRepository(executor);
+
+        var updated = await repository.UpdateAsync(SampleEntity() with { RowVersion = 1 });
+
+        Assert.False(updated);
+    }
+
+    [Fact]
     public async Task DeleteAsync_ReturnsTrueWhenRowAffected()
     {
         var executor = new FakeSqlExecutor { ExecuteResult = 1 };
