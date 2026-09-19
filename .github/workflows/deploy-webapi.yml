@@ -52,7 +52,32 @@ jobs:
             --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
             "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/"
 
+      # Added 2026-09-19, after a deploy reported "success" while the live app was actually
+      # 500ing on every request for hours (missing Jwt__SigningKey app-pool env var) and nobody
+      # noticed until someone happened to check the URL by hand. A GitHub Actions run going green
+      # never meant the app actually worked - this step is what makes that gap loud instead of
+      # silent. Retries with backoff since IIS needs a moment to cold-start the app after a
+      # deploy; fails the whole workflow (red X, visible in the Actions tab and any configured
+      # notifications) if the app never comes up healthy.
+      - name: Smoke test deployed health endpoint
+        if: success()
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsS "https://api.global-webnet.com/api/health"; then
+              echo "Health check passed on attempt $attempt"
+              exit 0
+            fi
+            echo "Health check failed on attempt $attempt, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::Deployed WebApi did not become healthy after deploy - check logs/webapi-*.log and logs/stdout*.log on the server via FTP/File Manager."
+          exit 1
+
       - name: Keep API offline after failed deploy
-        if: failure() && steps.put_offline.outputs.uploaded == 'true'
+        # Scoped to the FTP step's own outcome specifically (not the generic failure() - that
+        # would also match the smoke-test step below failing, but by the time the smoke test
+        # runs, "Bring API back online" has already deleted app_offline.htm, so there's nothing
+        # left to "keep offline" and this message would be misleading in that case).
+        if: steps.ftp_deploy.outcome == 'failure' && steps.put_offline.outputs.uploaded == 'true'
         run: |
           echo "Deployment failed after app_offline.htm was uploaded; the API remains offline to avoid serving a partial deployment."

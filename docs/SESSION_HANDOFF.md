@@ -4,6 +4,10 @@ Status as of 2026-09-19. Read this first in any new session before touching arch
 
 **Current branch: `main`** — the `rebuild/dotnet-angular-scaffold` branch was fast-forward-merged and pushed to `origin/main` on 2026-09-15. All work described below (scaffold, deployment, CI/CD, developer guide) is live on `main`.
 
+## Production incident (above, further down) resolved — demo credentials decision (2026-09-19)
+
+The `Jwt__SigningKey`/`DemoUser__UserName`/`DemoUser__Password` environment variables are now set on the `billkrat-001611` IIS Application Pool (SmarterASP Pool Manager), and the pool was restarted — `api.global-webnet.com` is healthy again. **`DemoUser` credentials are `Admin` / `Password`, by explicit user decision** — deliberately the same as BlogEngine.NET's own long-standing default admin login, which the user considers published/public information already, not a secret to protect. This is intentionally simple for now: **no forced-password-change on the demo login yet** — that's explicitly deferred until a real end-to-end login flow exists (see `IUserAccountService` work below), at which point it becomes a "must_change_password" requirement like `seed-tenant-admin.sql`'s tenant-admin seed already does. Don't add forced-rotation to the current config-based `AuthController` demo login prematurely; the user was explicit that keeping this simple now is the right call while more infrastructure gets built.
+
 ## PRODUCTION INCIDENT (2026-09-19): `api.global-webnet.com` 500s on every request — root cause confirmed, **fix requires action outside this repo**
 
 **Symptom:** `https://api.global-webnet.com/api/health` returns a bare IIS `HTTP ERROR 500` (no JSON body at all — meaning IIS itself is producing the error page, not the .NET app). Discovered by the user checking the live site after an unrelated deploy; the WebApi worked fine locally the whole time.
