@@ -25,6 +25,7 @@ public static class JwtServiceCollectionExtensions
             .ValidateDataAnnotations();
 
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
         var jwtOptions = configuration.GetSection(sectionName).Get<JwtTokenOptions>() ?? new JwtTokenOptions();
 

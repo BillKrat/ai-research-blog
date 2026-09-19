@@ -6,9 +6,11 @@
     </Project>
     <Project Path="src/AiBlogResearch.WebApi/AiBlogResearch.WebApi.csproj" />
     <Project Path="src/AiBlogResearch.Security/AiBlogResearch.Security.csproj" />
+    <Project Path="src/AiBlogResearch.Data/AiBlogResearch.Data.csproj" />
   </Folder>
   <Project Path="AiBlogResearch.AppHost/AiBlogResearch.AppHost.csproj" />
   <Project Path="test/AiBlogResearch.Security.Tests/AiBlogResearch.Security.Tests.csproj" />
   <Project Path="test/AiBlogResearch.WebApi.Tests/AiBlogResearch.WebApi.Tests.csproj" />
+  <Project Path="test/AiBlogResearch.Data.Tests/AiBlogResearch.Data.Tests.csproj" />
   <Project Path="AiBlogResearch.ServiceDefaults/AiBlogResearch.ServiceDefaults.csproj" />
 </Solution>
