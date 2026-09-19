@@ -9,11 +9,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageReference Include="Adventures.Security" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\AiBlogResearch.ServiceDefaults\AiBlogResearch.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\AiBlogResearch.Security\AiBlogResearch.Security.csproj" />
   </ItemGroup>
 
 </Project>

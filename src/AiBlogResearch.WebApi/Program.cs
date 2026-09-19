@@ -1,4 +1,4 @@
-using AiBlogResearch.Security;
+using Adventures.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 

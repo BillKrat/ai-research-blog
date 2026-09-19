@@ -1,4 +1,4 @@
-using AiBlogResearch.Security;
+using Adventures.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
