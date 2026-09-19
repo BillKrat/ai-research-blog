@@ -4,6 +4,27 @@ Status as of 2026-09-19. Read this first in any new session before touching arch
 
 **Current branch: `main`** — the `rebuild/dotnet-angular-scaffold` branch was fast-forward-merged and pushed to `origin/main` on 2026-09-15. All work described below (scaffold, deployment, CI/CD, developer guide) is live on `main`.
 
+## PRODUCTION INCIDENT (2026-09-19): `api.global-webnet.com` 500s on every request — root cause confirmed, **fix requires action outside this repo**
+
+**Symptom:** `https://api.global-webnet.com/api/health` returns a bare IIS `HTTP ERROR 500` (no JSON body at all — meaning IIS itself is producing the error page, not the .NET app). Discovered by the user checking the live site after an unrelated deploy; the WebApi worked fine locally the whole time.
+
+**Root cause, confirmed by local reproduction** (ran the published DLL directly, bypassing `launchSettings.json`, with `ASPNETCORE_ENVIRONMENT=Production` and `Jwt__SigningKey=""` — got the identical 500, with this exact stack trace):
+```
+System.ArgumentException: IDX10703: Cannot create a 'Microsoft.IdentityModel.Tokens.SymmetricSecurityKey', key length is zero.
+   at Adventures.Security.JwtServiceCollectionExtensions.<>c__DisplayClass0_0.<AddSharedJwtAuthentication>b__0(JwtBearerOptions bearerOptions)
+   ...
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+```
+`Jwt:SigningKey` is deliberately never committed (see the "Security / Auth" section further below — it's meant to come from `dotnet user-secrets` locally or an environment variable in production). Locally, user-secrets supply it, so everything works. **On the production SmarterASP host, no `Jwt__SigningKey` environment variable was ever configured** — and because `app.UseAuthentication()` runs unconditionally for every request in `Program.cs` (regardless of whether the hit endpoint has `[Authorize]` — `/api/health` doesn't), the JWT bearer handler's options get constructed on every single request, throwing immediately. **This has almost certainly been broken since the security foundation was first deployed this morning (`02:48 GMT`, commit `45413e3`/`d5cec0f` era) — not something introduced by today's later `Adventures.Security` package extraction.** Nothing in the deploy pipeline smoke-tests the live endpoint after a deploy, so a `dotnet build`+FTP-upload reporting "success" in GitHub Actions never meant the app actually ran correctly afterward — worth keeping in mind for any future "deploy succeeded" claim.
+
+**Fixed in this repo (2026-09-19), independent of the actual config gap:** `Program.cs` had no exception handling and no logging at all — a startup or request-time crash produced literally nothing to diagnose from, anywhere. Added:
+- A Serilog two-stage bootstrap (`CreateBootstrapLogger()` + `try/catch/finally` around the whole top-level `Program.cs` body) so even a crash *before* the DI container is built gets logged, not just silently swallowed by the host.
+- `app.UseSerilogRequestLogging()` plus a `Serilog.Sinks.File` sink writing to `logs/webapi-.log` (daily rolling, 14-day retention) next to the deployed DLL — retrievable via the same FTP access already used for deploys.
+- `app.UseExceptionHandler(...)` in non-Development environments, logging the full exception and returning a minimal `application/problem+json` body instead of falling through to IIS's bare error page. `app.UseDeveloperExceptionPage()` restored for Development.
+- Verified this doesn't break `WebApplicationFactory<Program>`-based integration tests (`AiBlogResearch.WebApi.Tests` still 12/12 passing) — the `try { ... } catch (Exception ex) { Log.Fatal(...); throw; }` pattern re-throws rather than swallowing, which is what keeps the test host's own interception working.
+
+**What actually fixes the outage — not done yet, requires the SmarterASP control panel, not a code change:** add an environment variable to the `api.global-webnet.com` site: `Jwt__SigningKey` (double underscore — ASP.NET Core's env-var-to-nested-config-key convention), value a random secret of at least 32 bytes (256 bits, since it signs HMAC-SHA256 tokens). **Until that's set, the site will keep 500ing on every request even with the logging fix deployed** — the logging fix only makes the *next* incident (of any kind) diagnosable, it doesn't paper over this specific missing config. Worth checking at the same time whether `DemoUser__UserName`/`DemoUser__Password` are also set in production (needed for `POST /api/auth/token` to work at all, per the "Security / Auth" section below) — likely has the same gap, just not yet hit because nothing has tried to log in against production yet.
+
 ## `AiBlogResearch.Security`/`.Data` extracted to `Adventures.Foundation` (2026-09-19) — **RESOLVED, pushed to `origin/main`**
 
 **What happened:** `src/AiBlogResearch.Security/` and `src/AiBlogResearch.Data/` (plus their test projects) were removed from this repo and now live in a new sibling repo, [`github.com/BillKrat/Adventures.Foundation`](https://github.com/BillKrat/Adventures.Foundation), as `Adventures.Security`/`Adventures.Data` — see the "Decision" paragraph below this one for why. `AiBlogResearch.WebApi` and `AiBlogResearch.WebApi.Tests` now reference `Adventures.Security` via `PackageReference Version="0.1.0"`.
