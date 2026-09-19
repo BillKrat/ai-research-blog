@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aiblogresearch-webapi-c9b1f4b2-8f3a-4a3a-9d1e-6a6b4d0b3f21</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\AiBlogResearch.ServiceDefaults\AiBlogResearch.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\AiBlogResearch.Security\AiBlogResearch.Security.csproj" />
   </ItemGroup>
 
 </Project>

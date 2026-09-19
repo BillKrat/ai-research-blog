@@ -1,3 +1,5 @@
+using AiBlogResearch.Security;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
@@ -21,6 +23,14 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddSharedJwtAuthentication(builder.Configuration);
+
+builder.Services.AddOptions<M2MClientsOptions>()
+    .Bind(builder.Configuration.GetSection(M2MClientsOptions.SectionName));
+builder.Services.AddSingleton<IClientSecretHasher, ClientSecretHasher>();
+builder.Services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
+builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search");
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -36,6 +46,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

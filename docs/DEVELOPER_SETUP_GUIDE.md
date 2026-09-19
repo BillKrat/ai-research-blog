@@ -272,5 +272,20 @@ app.UseCors("Client"); // apply unconditionally, not just in Development
 ## Coming as this project builds it
 
 - Wiring a database (connection strings, migrations in CI)
-- Authentication setup
 - Deploying background/agent services alongside the API
+
+## Authentication: self-hosted JWT, not Auth0 — and why that matters for a starter kit
+
+This project deliberately does **not** use Auth0 (or any external identity provider) for authentication, even though Auth0 was seriously evaluated first. The reasoning matters if you're forking this project for your own use, so it's worth understanding rather than just copying:
+
+**Auth0's free tier looks generous until you check the machine-to-machine (M2M) quota.** 25,000 monthly active users costs nothing — genuinely fine for almost any hobby/learning project. But the free tier caps **machine-to-machine token requests at 1,000/month**. That's a hard problem for *this specific* architecture: `ai-research-blog` is built around an MCP Host that talks to two MCP servers (PostgreSQL query, File Search) for what is normal, everyday app usage — every content/blog search and every database-backed query is an M2M call. 1,000 requests/month isn't a safety margin for "occasional service-to-service calls," it's the app's core request volume, and it would be exhausted almost immediately by anyone actually using the search features this project exists to demonstrate.
+
+**Why not just pay for the upgrade?** Because this project is explicitly an **AI starter kit** — a reference/learning project meant to help other developers stand up their own AI-assisted research/blog system as cheaply as possible, not a funded product with an ops budget. If a core piece of the security foundation only works within a free tier that the app's own intended usage pattern blows past, every developer who clones this project inherits that cost cliff on day one. That's a fine, normal tradeoff for a company building a real funded product — it's the wrong tradeoff for a project whose entire purpose is staying accessible to developers learning this stack.
+
+**What was built instead:** a small, self-hosted, reusable `AiBlogResearch.Security` class library (see `src/AiBlogResearch.Security/`) providing:
+- HMAC-SHA256 signed JWTs for regular user login (`POST /api/auth/token`).
+- OAuth2 **client-credentials grant** for M2M auth between the MCP Host and MCP servers (`POST /api/auth/m2m/token`), with per-client scopes (e.g. `mcp.postgres.query`, `mcp.filesearch.search`) enforced via ASP.NET Core authorization policies.
+- No per-request cost, no external quota of any kind — signing/validation is local.
+
+This isn't a claim that self-hosted auth is always the right call — for a real company shipping a real product, Auth0 (or similar) buys you a lot (breach-tested flows, admin UI, compliance features) that's worth paying for. It's the right call **here** because this project's job is to be cheap and easy for a developer to stand up and learn from, and a security dependency that caps out on the app's own core usage pattern undermines that job. See `docs/SESSION_HANDOFF.md` ("Security / Auth" section) for the full decision history if you want more detail.
+
