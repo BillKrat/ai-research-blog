@@ -1,12 +1,30 @@
 <Solution>
-  <Folder Name="/src/">
+  <Folder Name="/Adventures/">
+    <Project Path="../Adventures.Foundation/src/Adventures.Data/Adventures.Data.csproj" />
+    <Project Path="../Adventures.Foundation/src/Adventures.Identity/Adventures.Identity.csproj" />
+    <Project Path="../Adventures.Foundation/src/Adventures.Security/Adventures.Security.csproj" />
+  </Folder>
+  <Folder Name="/Adventures/Tests/">
+    <Project Path="../Adventures.Foundation/test/Adventures.Data.Tests/Adventures.Data.Tests.csproj" />
+    <Project Path="../Adventures.Foundation/test/Adventures.Identity.Tests/Adventures.Identity.Tests.csproj" />
+    <Project Path="../Adventures.Foundation/test/Adventures.Security.Tests/Adventures.Security.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Apps/" />
+  <Folder Name="/Apps/ai-blog-research/">
+    <Project Path="AiBlogResearch.AppHost/AiBlogResearch.AppHost.csproj" />
+    <Project Path="AiBlogResearch.ServiceDefaults/AiBlogResearch.ServiceDefaults.csproj" />
     <Project Path="client/ai-blog-research-ui/ai-blog-research-ui.client.esproj">
       <Build />
       <Deploy />
     </Project>
     <Project Path="src/AiBlogResearch.WebApi/AiBlogResearch.WebApi.csproj" />
   </Folder>
-  <Project Path="AiBlogResearch.AppHost/AiBlogResearch.AppHost.csproj" />
-  <Project Path="test/AiBlogResearch.WebApi.Tests/AiBlogResearch.WebApi.Tests.csproj" />
-  <Project Path="AiBlogResearch.ServiceDefaults/AiBlogResearch.ServiceDefaults.csproj" />
+  <Folder Name="/Apps/ai-blog-research/Tests/">
+    <Project Path="test/AiBlogResearch.WebApi.Tests/AiBlogResearch.WebApi.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Solution/">
+    <File Path="artifacts/solution-uml.jpg" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
 </Solution>

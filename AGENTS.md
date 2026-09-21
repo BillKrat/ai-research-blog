@@ -4,6 +4,16 @@ Working context for any agent touching this repo — Claude Code (Windows/macOS)
 
 **Machine-bootstrap / non-project tooling now lives in a separate repo: [`dev-tools`](https://github.com/BillKrat/dev-tools).** The `blog_repo_runner.py` MCP tool referenced below has its canonical source there (`lmstudio/tools/blog_repo_runner.py`) — this repo's copy at `~/.lmstudio/tools/blog_repo_runner.py` is a deployed instance, not the source of truth. If you edit its behavior, edit it in `dev-tools` and redeploy, or the change is lost if this machine is ever replaced.
 
+## Review cadence: staged blog-entry summaries under `docs/artifacts/`
+
+**Decided 2026-09-20, after a long architecture-design session (see [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md)'s 2026-09-20 entry) — this is a working-process rule for any agent doing multi-stage development in this repo, not a one-off request.**
+
+After a realistically-scoped chunk of development work is finished — the agent doing the work judges what counts as a stage, there's no fixed line-count or time box — write a short review blog entry (an overview plus a Mermaid diagram of what was actually built/changed) and save it as a new file under `docs/artifacts/` (create that directory if it doesn't exist yet; name files `<date>-<short-topic>.md`, e.g. `2026-09-25-generic-dal-bll.md`). Then stop and let the user review it and ask questions before starting the next stage — this is a deliberate checkpoint, not a formality to skip through.
+
+**Why a repo file, not a claude.ai Artifact link:** the [Login Path Autopsy](https://claude.ai/artifact/WuFQzaVGDYvFjjYxjesdYf) Claude Artifact referenced in SESSION_HANDOFF.md's 2026-09-19 "NEW DIRECTION" entry proved the concept (overview + Mermaid sequence diagram of real session work) but was explicitly "not itself part of any repo's code." This is that same shape, made durable — a plain Markdown file with fenced `mermaid` code blocks (renders natively on GitHub, diffable, survives session deletion) instead of a session-scoped link. This is the practiced, concrete version of the larger "BlogAI (new)" product vision described in that same SESSION_HANDOFF.md entry: a human reviewer can't keep up reading every line of AI-written code, but can review a concise overview and diagram and approve or redirect from there.
+
+**Keep each entry scoped to that stage's actual diff, not a cumulative running summary** — same dated/additive spirit as `SESSION_HANDOFF.md`, just per development stage instead of per session.
+
 ## Local LM Studio Agent — Role & Workflow
 
 **Why:** peak Claude sessions are rate-limited, and Copilot usage is now also time-shared against the same monthly limits (the user alternates between Claude Code and GitHub Copilot depending on which has remaining quota). When both are exhausted or unavailable, a local model in LM Studio on the Mac Mini (currently `qwen/qwen3.8-27b` via MLX, on 48GB unified memory) can keep doing legwork — exploration, running builds/tests, drafting small fixes — so time isn't lost waiting. This mirrors the pattern used in the (now-retired) `poc/` repo; see `poc/AGENTS.md`'s "Local LM Studio Agent" section for the original design if more detail is ever needed.

@@ -1,3 +1,5 @@
+using Adventures.Data;
+using Adventures.Identity;
 using Adventures.Security;
 using Microsoft.AspNetCore.Diagnostics;
 using Serilog;
@@ -53,6 +55,18 @@ try
     builder.Services.AddSingleton<IClientSecretHasher, ClientSecretHasher>();
     builder.Services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
     builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search");
+
+    // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available for
+    // verification and for AuthController to switch to later (see docs/SESSION_HANDOFF.md,
+    // "Adventures.Identity published" - deliberately not wired into AuthController yet). Lazy:
+    // NpgsqlSqlExecutor doesn't open a connection until something actually queries through it, so
+    // this registration alone can't reproduce today's Jwt:SigningKey-shaped startup crash even if
+    // ConnectionStrings:Postgres is ever missing in an environment.
+    builder.Services.AddSingleton<ISqlExecutor>(_ =>
+        new NpgsqlSqlExecutor(builder.Configuration.GetConnectionString("Postgres")
+            ?? throw new InvalidOperationException("ConnectionStrings:Postgres is not configured.")));
+    builder.Services.AddScoped<IEntityRepository, PostgresEntityRepository>();
+    builder.Services.AddUserIdentity();
 
     var app = builder.Build();
 
