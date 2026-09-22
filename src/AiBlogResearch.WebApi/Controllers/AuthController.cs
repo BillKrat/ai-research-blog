@@ -1,5 +1,4 @@
-using System.Security.Claims;
-using Adventures.Security;
+using Adventures.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,34 +6,36 @@ namespace AiBlogResearch.WebApi.Controllers;
 
 public sealed record TokenRequest(string UserName, string Password);
 
-public sealed record TokenResponse(string AccessToken, DateTimeOffset ExpiresAtUtc);
+public sealed record TokenResponse(string AccessToken, DateTimeOffset ExpiresAtUtc, bool MustChangePassword);
 
 /// <summary>
-/// Issues JWTs after validating credentials.
-/// NOTE: credential validation below is a placeholder (configuration-backed demo user) and must be
-/// replaced with a real user store (e.g. ASP.NET Identity, a database, etc.) before production use.
+/// Issues JWTs after validating credentials against the real user store (Adventures.Data +
+/// Adventures.Identity), replacing the config-seeded demo-user placeholder this controller used
+/// to have - see docs/SESSION_HANDOFF.md's "Adventures.Identity" entries for why that replacement
+/// was deliberately deferred until the underlying login path was verified end-to-end first.
 /// </summary>
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(IJwtTokenService tokenService, IConfiguration configuration) : ControllerBase
+public sealed class AuthController(IUserAccountService accountService, IConfiguration configuration) : ControllerBase
 {
+    /// <summary>
+    /// Single-tenant today (see <c>Auth:Tenant</c> in configuration, defaulting to
+    /// "global-webnet.com") - <see cref="IUserAccountService.LoginAsync"/> is tenant-scoped for
+    /// when this app supports more than one, but nothing yet needs the client to supply it.
+    /// </summary>
+    private string Tenant => configuration["Auth:Tenant"] ?? "global-webnet.com";
+
     [HttpPost("token")]
     [AllowAnonymous]
-    public ActionResult<TokenResponse> Token([FromBody] TokenRequest request)
+    public async Task<ActionResult<TokenResponse>> Token([FromBody] TokenRequest request)
     {
-        var demoUserName = configuration["DemoUser:UserName"];
-        var demoPassword = configuration["DemoUser:Password"];
-
-        if (string.IsNullOrEmpty(demoUserName) || string.IsNullOrEmpty(demoPassword)
-            || request.UserName != demoUserName || request.Password != demoPassword)
+        var result = await accountService.LoginAsync(Tenant, request.UserName, request.Password);
+        if (!result.Succeeded)
         {
             return Unauthorized();
         }
 
-        var claims = new[] { new Claim(ClaimTypes.Name, request.UserName) };
-        var issued = tokenService.IssueToken(request.UserName, claims);
-
-        return Ok(new TokenResponse(issued.AccessToken, issued.ExpiresAtUtc));
+        return Ok(new TokenResponse(result.AccessToken!, result.ExpiresAtUtc!.Value, result.MustChangePassword));
     }
 
     /// <summary>Sample protected endpoint to prove JWT validation works end to end.</summary>

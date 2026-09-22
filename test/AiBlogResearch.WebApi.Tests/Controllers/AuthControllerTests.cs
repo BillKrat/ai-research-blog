@@ -1,72 +1,70 @@
-using Adventures.Security;
+using Adventures.Identity;
 using AiBlogResearch.WebApi.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace AiBlogResearch.WebApi.Tests.Controllers;
 
 public class AuthControllerTests
 {
-    private static IConfiguration BuildConfiguration(string? userName = "demo", string? password = "ChangeMe123!") =>
+    private static IConfiguration BuildConfiguration(string? tenant = "global-webnet.com") =>
         new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["DemoUser:UserName"] = userName,
-                ["DemoUser:Password"] = password,
+                ["Auth:Tenant"] = tenant,
             })
             .Build();
 
-    private static IJwtTokenService BuildTokenService() =>
-        new JwtTokenService(Options.Create(new JwtTokenOptions
-        {
-            Issuer = "TestIssuer",
-            Audience = "TestAudience",
-            SigningKey = "0123456789abcdef0123456789abcdef",
-            AccessTokenLifetime = TimeSpan.FromMinutes(30),
-        }));
-
     [Fact]
-    public void Token_ReturnsOkWithAccessToken_WhenCredentialsAreValid()
+    public async Task Token_ReturnsOkWithAccessToken_WhenCredentialsAreValid()
     {
-        var controller = new AuthController(BuildTokenService(), BuildConfiguration());
+        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(30);
+        var accountService = new FakeUserAccountService(LoginResult.Success("fake-token", expiresAt, mustChangePassword: true));
+        var controller = new AuthController(accountService, BuildConfiguration());
 
-        var result = controller.Token(new TokenRequest("demo", "ChangeMe123!"));
+        var result = await controller.Token(new TokenRequest("Admin", "Password"));
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var tokenResponse = Assert.IsType<TokenResponse>(okResult.Value);
-        Assert.False(string.IsNullOrWhiteSpace(tokenResponse.AccessToken));
-        Assert.True(tokenResponse.ExpiresAtUtc > DateTimeOffset.UtcNow);
+        Assert.Equal("fake-token", tokenResponse.AccessToken);
+        Assert.Equal(expiresAt, tokenResponse.ExpiresAtUtc);
+        Assert.True(tokenResponse.MustChangePassword);
+        Assert.Equal("global-webnet.com", accountService.LastTenant);
+        Assert.Equal("Admin", accountService.LastUsername);
+        Assert.Equal("Password", accountService.LastPassword);
     }
 
     [Theory]
-    [InlineData("demo", "WrongPassword")]
-    [InlineData("wrong-user", "ChangeMe123!")]
+    [InlineData("wrong-user", "Password")]
+    [InlineData("Admin", "WrongPassword")]
     [InlineData("", "")]
-    public void Token_ReturnsUnauthorized_WhenCredentialsAreInvalid(string userName, string password)
+    public async Task Token_ReturnsUnauthorized_WhenCredentialsAreInvalid(string userName, string password)
     {
-        var controller = new AuthController(BuildTokenService(), BuildConfiguration());
+        var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.InvalidCredentials));
+        var controller = new AuthController(accountService, BuildConfiguration());
 
-        var result = controller.Token(new TokenRequest(userName, password));
+        var result = await controller.Token(new TokenRequest(userName, password));
 
         Assert.IsType<UnauthorizedResult>(result.Result);
     }
 
     [Fact]
-    public void Token_ReturnsUnauthorized_WhenDemoUserIsNotConfigured()
+    public async Task Token_UsesConfiguredTenant_DefaultingToGlobalWebnetWhenUnset()
     {
-        var controller = new AuthController(BuildTokenService(), BuildConfiguration(userName: null, password: null));
+        var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.InvalidCredentials));
+        var controller = new AuthController(accountService, BuildConfiguration(tenant: null));
 
-        var result = controller.Token(new TokenRequest("demo", "ChangeMe123!"));
+        await controller.Token(new TokenRequest("Admin", "Password"));
 
-        Assert.IsType<UnauthorizedResult>(result.Result);
+        Assert.Equal("global-webnet.com", accountService.LastTenant);
     }
 
     [Fact]
     public void WhoAmI_ReturnsUnknown_WhenNoAuthenticatedUserIsSet()
     {
-        var controller = new AuthController(BuildTokenService(), BuildConfiguration());
+        var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.InvalidCredentials));
+        var controller = new AuthController(accountService, BuildConfiguration());
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext(),
@@ -76,5 +74,22 @@ public class AuthControllerTests
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         Assert.Equal("unknown", okResult.Value);
+    }
+
+    private sealed class FakeUserAccountService(LoginResult result) : IUserAccountService
+    {
+        public string? LastTenant { get; private set; }
+
+        public string? LastUsername { get; private set; }
+
+        public string? LastPassword { get; private set; }
+
+        public Task<LoginResult> LoginAsync(string tenant, string username, string password, CancellationToken cancellationToken = default)
+        {
+            LastTenant = tenant;
+            LastUsername = username;
+            LastPassword = password;
+            return Task.FromResult(result);
+        }
     }
 }
