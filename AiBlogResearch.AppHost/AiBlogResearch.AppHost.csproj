@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\AiBlogResearch.WebApi\AiBlogResearch.WebApi.csproj" />
+    <ProjectReference Include="..\src\McpServer.WebApi\McpServer.WebApi.csproj" />
   </ItemGroup>
 
   <ItemGroup>
