@@ -1,0 +1,29 @@
+<section class="profile">
+  <h2>Profile</h2>
+
+  @if (isLoading()) {
+    <p>Loading profile...</p>
+  } @else {
+    <form class="profile__form" [formGroup]="form" (ngSubmit)="submit()">
+      @for (field of fields(); track field.id) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ field.name }}</mat-label>
+          <input matInput [type]="field.type" [formControlName]="field.id" [required]="field.isRequired" />
+        </mat-form-field>
+      }
+
+      @switch (saveState()) {
+        @case ('saved') {
+          <p class="profile__status profile__status--success" role="status">Saved.</p>
+        }
+        @case ('error') {
+          <p class="profile__status profile__status--error" role="alert">Couldn't save your profile. Try again.</p>
+        }
+      }
+
+      <button mat-flat-button type="submit" [disabled]="form.invalid || saveState() === 'saving'">
+        {{ saveState() === 'saving' ? 'Saving...' : 'Save' }}
+      </button>
+    </form>
+  }
+</section>

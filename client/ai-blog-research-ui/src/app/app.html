@@ -1,13 +1,37 @@
 <div class="page">
   <header class="page__header">
     <h1>{{ title() }}</h1>
-    <button
-      mat-icon-button
-      (click)="toggleTheme()"
-      [attr.aria-label]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
-    >
-      <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-    </button>
+
+    <div class="page__header-actions">
+      <button
+        mat-icon-button
+        (click)="toggleTheme()"
+        [attr.aria-label]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+      >
+        <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+
+      @if (isAuthenticated()) {
+        <button mat-button [matMenuTriggerFor]="userMenu" aria-label="Account menu">
+          <mat-icon>account_circle</mat-icon>
+          {{ username() }}
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <a mat-menu-item routerLink="/profile">
+            <mat-icon>person</mat-icon>
+            <span>Profile</span>
+          </a>
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Log out</span>
+          </button>
+        </mat-menu>
+      } @else {
+        <button mat-icon-button routerLink="/login" aria-label="Sign in">
+          <mat-icon>login</mat-icon>
+        </button>
+      }
+    </div>
   </header>
 
   <section class="page__status">

@@ -1,0 +1,27 @@
+<section class="login">
+  <h2>Sign in</h2>
+
+  <form class="login__form" [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field appearance="outline">
+      <mat-label>Username</mat-label>
+      <input matInput formControlName="userName" autocomplete="username" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" formControlName="password" autocomplete="current-password" />
+    </mat-form-field>
+
+    @if (errorMessage(); as message) {
+      <p class="login__error" role="alert">{{ message }}</p>
+    }
+
+    <button mat-flat-button type="submit" [disabled]="form.invalid || isSubmitting()">
+      @if (isSubmitting()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        Sign in
+      }
+    </button>
+  </form>
+</section>
