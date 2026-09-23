@@ -67,7 +67,7 @@ intended: an AI agent with real infrastructure access, but with hard lines it wo
 own around live credentials.
 
 For a solo or small-team developer, the combination is genuinely inexpensive: a SmarterASP.NET
-Windows hosting plan (around $38/month in this project's own case) that supports
+Windows hosting plan (around $38/qtr in this project's own case) that supports
 [.NET Aspire](https://learn.microsoft.com/dotnet/aspire/) for local development composition and
 deploys straight from GitHub Actions to that same hosting account, alongside a Claude
 subscription doing the actual engineering work. That's a full multi-site .NET hosting environment
