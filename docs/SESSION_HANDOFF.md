@@ -2,7 +2,7 @@
 
 Status as of 2026-09-19. Read this first in any new session before touching architecture or deployment — it's the source of truth for decisions made so far, so nothing above it should be reconstructed from memory or re-litigated without reading this.
 
-**Current branch: `main`** — the `rebuild/dotnet-angular-scaffold` branch was fast-forward-merged and pushed to `origin/main` on 2026-09-15. All work described below (scaffold, deployment, CI/CD, developer guide) is live on `main`. **Not yet pushed as of this entry:** the login-screen work below is complete and verified locally but sits uncommitted in the working tree - see that entry for why (this repo's GitHub Actions deploy straight to production on push to `main`, so committing/pushing was left for explicit review rather than done automatically).
+**Current branch: `main`** — the `rebuild/dotnet-angular-scaffold` branch was fast-forward-merged and pushed to `origin/main` on 2026-09-15. All work described below (scaffold, deployment, CI/CD, developer guide) is live on `main`. **Not yet pushed as of this entry:** the login-screen work below is committed locally (`78a0cef`) but deliberately not pushed - the user asked to commit as work lands but hold pushes for an end-of-day review, since this repo's GitHub Actions deploy straight to production on push to `main`.
 
 ## RESOLVED (2026-09-24, Windows session): a real login screen, end to end — closes the 2026-09-23 "NEXT UP" entry below, all three flagged gaps resolved
 
@@ -10,7 +10,7 @@ Status as of 2026-09-19. Read this first in any new session before touching arch
 
 **Quick summary for anyone not reading that file first:** gap 1 (username to the client) resolved via `GET /api/auth/whoami` right after login - zero backend changes, confirmed by reflecting on the published `Adventures.Identity` DLL that `LoginResult` has no username field, so the alternative would have needed a new package version. Gap 2 (`TokenResponse` drift) fixed - client interface now has `mustChangePassword`, still not acted on (deferred a third time, consistent with the 2026-09-19/21 entries). Gap 3 (schema-driven profile form) resolved with a new `ProfileController` reading/writing `IEntityRepository` directly (not a `GenericDal`/`GenericBll` port) and a Profile Angular component rendering whatever fields it returns generically. 120/120 .NET tests passing (was 109 before the 2026-09-23 mcp work landed, now +20 WebApi incl. 5 new `ProfileController` tests), 2/2 Angular tests, plus a full manual browser pass against the live dev Postgres (login, profile view/edit/save round-trip cleaned up afterward, logout, auth-guard redirect all confirmed working).
 
-**Not committed yet, on purpose** - all of the above is sitting as uncommitted changes in the working tree as of this entry (`ProfileController.cs`, its tests, `AuthController`/`AuthService`/routes/header changes). Committing wasn't done automatically because this repo's push-to-`main` triggers a production deploy (`deploy-webapi.yml`/`deploy-*.yml`) - left for the user's own review/commit decision rather than assumed.
+**Committed (`78a0cef`), not pushed, on purpose** - the user's own instruction this session: commit as work lands, but hold `git push` for an end-of-day review, since this repo's push-to-`main` triggers a production deploy (`deploy-webapi.yml`/`deploy-*.yml`). Don't push this without the user's explicit go-ahead.
 
 ## NEXT UP (queued 2026-09-23 evening, resolved 2026-09-24 - kept for history): a real login screen, end to end
 
