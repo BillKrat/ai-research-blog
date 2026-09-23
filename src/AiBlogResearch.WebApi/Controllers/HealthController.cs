@@ -15,8 +15,8 @@ public class HealthController(
     [HttpGet]
     public async Task<ActionResult<HealthResponse>> Get(CancellationToken cancellationToken)
     {
-        var mcpMessage = await TryGetMcpHelloMessageAsync(cancellationToken);
-        return Ok(new HealthResponse("Healthy", DateTimeOffset.UtcNow, mcpMessage));
+        var (mcpMessage, mcpStatus) = await TryGetMcpHelloMessageAsync(cancellationToken);
+        return Ok(new HealthResponse("Healthy", DateTimeOffset.UtcNow, mcpMessage, mcpStatus));
     }
 
     /// <summary>
@@ -25,8 +25,11 @@ public class HealthController(
     /// key - see docs/artifacts/2026-09-23-mcp-m2m-hello-world.md for the full pipeline). Fails soft:
     /// a down/misconfigured mcp site degrades this one field instead of making /api/health itself
     /// unavailable, since this is a downstream dependency check, not the health of this app itself.
+    /// McpStatus is deliberately non-sensitive (a short reason code, never a token/secret/exception
+    /// message) - added after this pipeline's first real deploy silently returned a null message
+    /// with nothing to diagnose it by (see docs/artifacts/2026-09-23-mcp-m2m-hello-world.md).
     /// </summary>
-    private async Task<string?> TryGetMcpHelloMessageAsync(CancellationToken cancellationToken)
+    private async Task<(string? Message, string Status)> TryGetMcpHelloMessageAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -39,21 +42,28 @@ public class HealthController(
             using var response = await client.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning("mcp.global-webnet.com/api/hello returned {StatusCode}", response.StatusCode);
-                return null;
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                logger.LogWarning(
+                    "mcp.global-webnet.com/api/hello returned {StatusCode} {ReasonPhrase}. Body: {Body}",
+                    (int)response.StatusCode,
+                    response.ReasonPhrase,
+                    body);
+                return (null, $"http_{(int)response.StatusCode}");
             }
 
-            var body = await response.Content.ReadFromJsonAsync<McpHelloResponse>(cancellationToken);
-            return body?.Message;
+            var parsed = await response.Content.ReadFromJsonAsync<McpHelloResponse>(cancellationToken);
+            return (parsed?.Message, "ok");
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        catch (Exception ex)
         {
+            // Broad catch deliberately: this is a downstream health probe, not core request
+            // handling - no exception type here should ever turn /api/health itself into a 500.
             logger.LogWarning(ex, "Failed to reach mcp.global-webnet.com for the health check's mcp message.");
-            return null;
+            return (null, $"exception_{ex.GetType().Name}");
         }
     }
 
     private sealed record McpHelloResponse(string Message);
 }
 
-public record HealthResponse(string Status, DateTimeOffset TimestampUtc, string? McpMessage = null);
+public record HealthResponse(string Status, DateTimeOffset TimestampUtc, string? McpMessage = null, string? McpStatus = null);

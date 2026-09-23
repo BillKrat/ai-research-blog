@@ -56,6 +56,7 @@ public class HealthControllerTests
         var response = Assert.IsType<HealthResponse>(okResult.Value);
         Assert.Equal("Healthy", response.Status);
         Assert.Equal("hello world", response.McpMessage);
+        Assert.Equal("ok", response.McpStatus);
 
         Assert.NotNull(handler.LastRequest);
         Assert.Equal("Bearer", handler.LastRequest!.Headers.Authorization?.Scheme);
@@ -75,6 +76,7 @@ public class HealthControllerTests
         var response = Assert.IsType<HealthResponse>(okResult.Value);
         Assert.Equal("Healthy", response.Status);
         Assert.Null(response.McpMessage);
+        Assert.StartsWith("exception_", response.McpStatus);
     }
 
     [Fact]
@@ -88,5 +90,6 @@ public class HealthControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<HealthResponse>(okResult.Value);
         Assert.Null(response.McpMessage);
+        Assert.Equal("http_401", response.McpStatus);
     }
 }
