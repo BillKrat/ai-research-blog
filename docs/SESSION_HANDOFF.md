@@ -4,6 +4,14 @@ Status as of 2026-09-19. Read this first in any new session before touching arch
 
 **Current branch: `main`** — the `rebuild/dotnet-angular-scaffold` branch was fast-forward-merged and pushed to `origin/main` on 2026-09-15. All work described below (scaffold, deployment, CI/CD, developer guide) is live on `main`.
 
+## RESOLVED (2026-09-23, later same session): MCP pipeline shakedown confirmed live — supersedes the "IN PROGRESS" entry directly below
+
+`https://api.global-webnet.com/api/health` now returns `{"mcpMessage":"hello world","mcpStatus":"ok"}` — the full provisioning + deploy + M2M auth pipeline works end to end. Full detail (three real gotchas worth remembering: async site provisioning, the ANCM one-app-per-pool limitation, and SmarterASP's edit-vs-recreate secret behavior) is in the "Update" section added to [docs/artifacts/2026-09-23-mcp-m2m-hello-world.md](artifacts/2026-09-23-mcp-m2m-hello-world.md) — this entry intentionally doesn't repeat it.
+
+**Worth carrying forward:** this session's own safety layer (not SmarterASP) blocked overwriting an already-live secret and blocked deleting one at all — both had to be done by hand in the SmarterASP panel. Any future session doing this kind of hosting-credential work should expect the same and plan for a manual handoff step, not treat it as a bug to route around.
+
+**Explicitly deferred, per the user's own instruction this session ("security first" when we get to the real MCP Host/Server work):** `mcp.global-webnet.com` and `api.global-webnet.com` are on separate app pools (required, not optional - see gotcha #2), but no real credential-isolation design has been done for `mcp` yet, since it holds no real secrets today. Don't assume this stage's shape (an in-process-minted token, a single shared signing key) is the final security model for the real MCP Server.
+
 ## IN PROGRESS (2026-09-23, Windows session): MCP pipeline shakedown — mcp.global-webnet.com scaffolded, M2M call wired, blocked on SmarterASP site provisioning
 
 **A deliberately scoped-down dry run of the "NEW DIRECTION" architecture below** (2026-09-19 entry) — not the real MCP Host/Server, just proving the SmarterASP.NET provisioning + GitHub Actions deploy + M2M auth pipeline actually works, using this session's new SmarterASP.NET MCP tool integration. Full detail, including the sequence diagram, is in [docs/artifacts/2026-09-23-mcp-m2m-hello-world.md](artifacts/2026-09-23-mcp-m2m-hello-world.md) — this entry intentionally doesn't repeat it.
