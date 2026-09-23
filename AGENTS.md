@@ -4,6 +4,14 @@ Working context for any agent touching this repo — Claude Code (Windows/macOS)
 
 **Machine-bootstrap / non-project tooling now lives in a separate repo: [`dev-tools`](https://github.com/BillKrat/dev-tools).** The `blog_repo_runner.py` MCP tool referenced below has its canonical source there (`lmstudio/tools/blog_repo_runner.py`) — this repo's copy at `~/.lmstudio/tools/blog_repo_runner.py` is a deployed instance, not the source of truth. If you edit its behavior, edit it in `dev-tools` and redeploy, or the change is lost if this machine is ever replaced.
 
+## Working with the user: asynchronous, not real-time
+
+**Decided 2026-09-23 — a Claude (peak) session should not assume the user is watching in real time.** The user checks in periodically during the work day rather than staying continuously engaged, and does a more thorough review at the end of the day. Practical consequences:
+- **Scope and checkpoint work so there's always something coherent to show at a check-in**, not a half-finished change mid-refactor. A "stage" boundary, in the same sense the review-cadence rule below already uses, is the natural checkpoint here too — the two conventions reinforce each other.
+- **Keep making progress on the agreed plan rather than idling** if a response doesn't come back immediately — that's expected, not a stall.
+- **For anything genuinely blocking** (an architecture fork only the user can settle, a destructive/credential-affecting action, ambiguity in what was asked) — still stop and record the exact open question as a dated entry in `docs/SESSION_HANDOFF.md` (see "NEXT UP" for the current example) rather than guessing to keep moving. The user may not see the question until their next check-in, so it needs to be self-contained enough to answer cold, without re-reading the whole conversation that led to it.
+- The staged review-blog entries under `docs/artifacts/` (below) are what makes the end-of-day, more relaxed review possible — keep writing them at real stage boundaries, not just when explicitly asked.
+
 ## Review cadence: staged blog-entry summaries under `docs/artifacts/`
 
 **Decided 2026-09-20, after a long architecture-design session (see [docs/SESSION_HANDOFF.md](docs/SESSION_HANDOFF.md)'s 2026-09-20 entry) — this is a working-process rule for any agent doing multi-stage development in this repo, not a one-off request.**
