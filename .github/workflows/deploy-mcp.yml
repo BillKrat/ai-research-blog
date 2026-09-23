@@ -1,0 +1,74 @@
+name: Deploy McpServer.WebApi to mcp.global-webnet.com
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/McpServer.WebApi/**"
+      - "AiBlogResearch.ServiceDefaults/**"
+      - ".github/workflows/deploy-mcp.yml"
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish (Release)
+        run: dotnet publish src/McpServer.WebApi/McpServer.WebApi.csproj -c Release -o publish
+
+      - name: Put mcp offline for deployment
+        id: put_offline
+        run: |
+          printf '<html><body><h1>Maintenance</h1><p>Deployment in progress. Please retry shortly.</p></body></html>' > /tmp/app_offline.htm
+          curl --ftp-method nocwd --ftp-pasv -T /tmp/app_offline.htm \
+            --user "${{ secrets.SMARTERASP_MCP_FTP_USERNAME }}:${{ secrets.SMARTERASP_MCP_FTP_PASSWORD }}" \
+            "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/app_offline.htm"
+          echo "uploaded=true" >> "$GITHUB_OUTPUT"
+          sleep 5
+
+      - name: Deploy to SmarterASP.NET via FTP
+        id: ftp_deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.SMARTERASP_FTP_SERVER }}
+          username: ${{ secrets.SMARTERASP_MCP_FTP_USERNAME }}
+          password: ${{ secrets.SMARTERASP_MCP_FTP_PASSWORD }}
+          protocol: ftp
+          local-dir: publish/
+          server-dir: /
+
+      - name: Bring mcp back online
+        if: success() && steps.put_offline.outputs.uploaded == 'true'
+        run: |
+          curl --ftp-method nocwd --ftp-pasv --quote "DELE app_offline.htm" \
+            --user "${{ secrets.SMARTERASP_MCP_FTP_USERNAME }}:${{ secrets.SMARTERASP_MCP_FTP_PASSWORD }}" \
+            "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/"
+
+      # Same reasoning as deploy-webapi.yml's own smoke test (see that file, added 2026-09-19):
+      # a green Actions run must mean the app actually came up, not just that files were copied.
+      - name: Smoke test deployed health endpoint
+        if: success()
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsS "https://mcp.global-webnet.com/api/health"; then
+              echo "Health check passed on attempt $attempt"
+              exit 0
+            fi
+            echo "Health check failed on attempt $attempt, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::Deployed McpServer.WebApi did not become healthy after deploy - check logs/stdout*.log on the server via FTP/File Manager."
+          exit 1
+
+      - name: Keep mcp offline after failed deploy
+        if: steps.ftp_deploy.outcome == 'failure' && steps.put_offline.outputs.uploaded == 'true'
+        run: |
+          echo "Deployment failed after app_offline.htm was uploaded; mcp remains offline to avoid serving a partial deployment."

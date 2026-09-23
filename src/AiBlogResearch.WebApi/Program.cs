@@ -56,6 +56,18 @@ try
     builder.Services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
     builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search");
 
+    // McpServer:BaseUrl -> mcp.global-webnet.com. HealthController calls this over M2M auth (minting
+    // its own "mcp-host" token in-process via IJwtTokenService, since this app IS the token issuer -
+    // see docs/artifacts/2026-09-23-mcp-m2m-hello-world.md) to prove the cross-site M2M pipeline end
+    // to end. A short timeout keeps a slow/unreachable mcp site from hanging /api/health itself.
+    builder.Services.AddHttpClient("McpServer", (services, client) =>
+    {
+        var baseUrl = services.GetRequiredService<IConfiguration>()["McpServer:BaseUrl"]
+            ?? throw new InvalidOperationException("McpServer:BaseUrl is not configured.");
+        client.BaseAddress = new Uri(baseUrl);
+        client.Timeout = TimeSpan.FromSeconds(10);
+    });
+
     // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available for
     // verification and for AuthController to switch to later (see docs/SESSION_HANDOFF.md,
     // "Adventures.Identity published" - deliberately not wired into AuthController yet). Lazy:
