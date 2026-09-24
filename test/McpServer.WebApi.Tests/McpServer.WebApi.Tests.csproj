@@ -13,11 +13,11 @@
 	<PackageReference Include="xunit" Version="2.9.2" />
 	<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
 	<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
-	<PackageReference Include="Adventures.Security" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup>
 	<ProjectReference Include="..\..\src\McpServer.WebApi\McpServer.WebApi.csproj" />
+	<ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Security\Adventures.Security.csproj" />
   </ItemGroup>
 
 </Project>

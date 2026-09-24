@@ -8,11 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Adventures.Security" Version="0.1.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\AiBlogResearch.ServiceDefaults\AiBlogResearch.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Security\Adventures.Security.csproj" />
   </ItemGroup>
 
 </Project>
