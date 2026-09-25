@@ -1,5 +1,30 @@
 # AI_Stop.md — session close, 2026-09-24
 
+## Addendum: commit history rewritten to add "Copilot:" prefix
+
+After the initial close-out below was written, the user asked to retroactively prefix this
+session's commit messages with "Copilot:" (missed at commit time). Since this user is the sole
+contributor to both `ai-research-blog` and `Adventures.Foundation` right now, history was rewritten
+safely via cherry-pick (content verified byte-identical via `git diff` against the originals,
+author/dates preserved) and force-pushed with `--force-with-lease`. **The commit SHAs referenced
+later in this file under "Repository state at session end" are now stale** — the authoritative
+final SHAs are:
+
+- `Adventures.Foundation` (nguid-slice), pushed to `origin/nguid-slice`:
+  - `93da19b` — "Copilot: red-green: populate nquad store"
+  - `ba7917d` (HEAD) — "Copilot: Created entities project and pulling UserSchema and User objects"
+- `ai-research-blog` (nguid-slice), pushed to `origin/nguid-slice`:
+  - `c56aca3` — "Copilot: red-green: populate nquad store"
+  - `32b5192` — "Copilot: Created entities project and pulling UserSchema and User objects"
+  - `39fbf1d` — "Copilot: add AI_Start.md session entry point, update AGENTS.md session log, link
+    from README"
+  - `79096a8` (HEAD) — "Copilot: add AI_Stop.md session close-out for 2026-09-24 handoff"
+
+Both repos verified clean working tree with local HEAD == `origin/nguid-slice` immediately before
+this session ended. No further action needed on this — captured here only so a future session
+doesn't get confused by the old SHAs mentioned below or wonder why local history diverged from any
+older clone/fetch.
+
 ## How AI_Start.md was updated
 
 `AI_Start.md` was created new (this repo didn't have one before). It captures: the multi-repo
