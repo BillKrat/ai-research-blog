@@ -2,12 +2,14 @@
   <Folder Name="/Adventures/">
     <Project Path="../Adventures.Foundation/src/Adventures.Data.NQuad/Adventures.Data.NQuad.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Data/Adventures.Data.csproj" />
+    <Project Path="../Adventures.Foundation/src/Adventures.Entities/Adventures.Entities.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Identity/Adventures.Identity.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Security/Adventures.Security.csproj" />
   </Folder>
   <Folder Name="/Adventures/Tests/">
     <Project Path="../Adventures.Foundation/test/Adventures.Data.NQuad.Tests/Adventures.Data.NQuad.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Data.Tests/Adventures.Data.Tests.csproj" />
+    <Project Path="../Adventures.Foundation/test/Adventures.Entities.Tests/Adventures.Entities.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Identity.Tests/Adventures.Identity.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Security.Tests/Adventures.Security.Tests.csproj" />
   </Folder>
