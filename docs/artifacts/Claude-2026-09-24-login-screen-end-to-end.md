@@ -1,7 +1,7 @@
 # Stage: a real login screen, end to end — login icon, username in header, Profile page with a schema-driven form
 
 **Date:** 2026-09-24
-**Closes:** the "NEXT UP" item queued in `SESSION_HANDOFF.md` on 2026-09-23 evening — all three flagged gaps resolved, not deferred further.
+**Closes:** the "NEXT UP" item queued in `SESSION_HANDOFF.md` (retired 2026-09-25; see git history) on 2026-09-23 evening — all three flagged gaps resolved, not deferred further.
 **Tests:** 120/120 passing across the .NET solution (24 Adventures.Data + 51 Adventures.Security + 22 Adventures.Identity + 20 AiBlogResearch.WebApi, up from 12 — the new `ProfileController` tests) + 2/2 Angular unit tests (`ng test`). Also verified live in a real browser against the live dev Postgres (`pg8001.site4now.net`/`db_a2cb58_aiblogdv`), not just unit tests — see "Verified for real" below.
 
 ## What this stage was about

@@ -1,7 +1,7 @@
 # Stage: end-to-end MCP pipeline shakedown — a "hello world" service on mcp.global-webnet.com, called from api.global-webnet.com over machine-to-machine auth
 
 **Date:** 2026-09-23
-**Closes:** a deliberate, scoped-down dry run of the "NEW DIRECTION" architecture decision in `SESSION_HANDOFF.md` (2026-09-19) — proving the SmarterASP.NET provisioning + GitHub Actions deploy + M2M auth pipeline actually works end to end, without building any real MCP Host/Server logic yet. Explicitly not the MEF-composed MCP Server itself — see "Explicitly not touched this stage" below.
+**Closes:** a deliberate, scoped-down dry run of the "NEW DIRECTION" architecture decision in `docs/Claude-architecture-decisions.md` (2026-09-19) — proving the SmarterASP.NET provisioning + GitHub Actions deploy + M2M auth pipeline actually works end to end, without building any real MCP Host/Server logic yet. Explicitly not the MEF-composed MCP Server itself — see "Explicitly not touched this stage" below.
 **Tests:** 3/3 new `McpServer.WebApi.Tests` (integration, via `WebApplicationFactory`, exercising the real JWT/scope-authorization pipeline — not a bare controller-action call) + 15/15 `AiBlogResearch.WebApi.Tests` (12 pre-existing + 3 new `HealthControllerTests`), all passing locally.
 
 ## Update (2026-09-23, later same session): confirmed live — `https://api.global-webnet.com/api/health` returns `{"mcpMessage":"hello world","mcpStatus":"ok"}`
@@ -65,6 +65,6 @@ sequenceDiagram
 
 ## Explicitly not touched this stage
 
-- No MEF composition, no real MCP Host/Server logic, no PostgreSQL/SQL Server/file-search tool modules — this stage is infrastructure-only, deliberately scoped down from the full "NEW DIRECTION" architecture in `SESSION_HANDOFF.md` (2026-09-19) to just prove the pipeline mechanics.
+- No MEF composition, no real MCP Host/Server logic, no PostgreSQL/SQL Server/file-search tool modules — this stage is infrastructure-only, deliberately scoped down from the full "NEW DIRECTION" architecture in `docs/Claude-architecture-decisions.md` (2026-09-19) to just prove the pipeline mechanics.
 - `AiBlogResearch.AppHost` (the local Aspire orchestration) was **not** updated to include `McpServer.WebApi` as a resource — local `dotnet run` via Aspire won't spin up mcp alongside api yet. Low cost to add later; skipped here to stay scoped to the actual ask (the production SmarterASP/GitHub pipeline, not the local dev loop).
 - The end-to-end verification (actually seeing `"hello world"` come back through `api.global-webnet.com/api/health` in production) is **not yet done as of this entry** — blocked on SmarterASP finishing async provisioning of the new site's application pool and SSL certificate. This entry will be superseded by a dated update once that's confirmed live, rather than rewritten.
