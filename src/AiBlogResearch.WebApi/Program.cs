@@ -68,9 +68,9 @@ try
         client.Timeout = TimeSpan.FromSeconds(10);
     });
 
-    // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available for
-    // verification and for AuthController to switch to later (see docs/SESSION_HANDOFF.md,
-    // "Adventures.Identity published" - deliberately not wired into AuthController yet). Lazy:
+    // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available to
+    // AuthController, which uses it for the real login (see
+    // docs/artifacts/Claude-2026-09-21-real-login-wired.md). Lazy:
     // NpgsqlSqlExecutor doesn't open a connection until something actually queries through it, so
     // this registration alone can't reproduce today's Jwt:SigningKey-shaped startup crash even if
     // ConnectionStrings:Postgres is ever missing in an environment.

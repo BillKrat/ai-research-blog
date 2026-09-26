@@ -22,8 +22,8 @@ Start with the workspace `AGENTS.md` (`M:\Dev\repos\AGENTS.md`) if you have it. 
 
 Owner: Claude. Angular + ASP.NET Core (Aspire-composed) AI starter kit replacing the legacy BlogEngine.NET site. Decisions and rationale: [docs/Claude-architecture-decisions.md](docs/Claude-architecture-decisions.md).
 
-- **Layout:** `AiBlogResearch.slnx`; `AiBlogResearch.AppHost` (starts everything), `AiBlogResearch.ServiceDefaults`; `src/` = `AiBlogResearch.WebApi` (MCP Host role), `McpServer.WebApi`, `AiBlogResearch.Security`, `AiBlogResearch.Data`; `test/` = matching xUnit projects; `client/ai-blog-research-ui` = Angular 22 + Material. The `.slnx` also references `Adventures.Foundation` projects by relative path (sibling repo, branch `nguid-slice`).
-- **Run:** `dotnet run --project AiBlogResearch.AppHost` starts the WebApi and Angular together (Angular on fixed port 4200, proxying `/api`). Aspire won't start while the Proxyman system proxy is on (Ctrl-Shift-O to toggle).
+- **Layout:** `AiBlogResearch.slnx`; `AiBlogResearch.AppHost` (starts everything), `AiBlogResearch.ServiceDefaults`; `src/` = `AiBlogResearch.WebApi` (MCP Host role), `McpServer.WebApi` (Data and Security live in `Adventures.Foundation`); `test/` = matching xUnit projects; `client/ai-blog-research-ui` = Angular 22 + Material. The `.slnx` also references `Adventures.Foundation` projects by relative path (sibling repo, branch `nguid-slice`).
+- **Run:** `dotnet run --project AiBlogResearch.AppHost` starts the WebApi and Angular together (Angular on fixed port 4200, proxying `/api`). Outside Aspire, use VS Code: `client/ai-blog-research-ui/.vscode/launch.json` ("ng serve") starts Angular, and `angular.json` wires `proxy.conf.js` (`/api` to `BACKEND_URL`, default `https://localhost:7052`, the WebApi https profile). Aspire won't start while the Proxyman system proxy is on (Ctrl-Shift-O to toggle).
 - **Test:** `dotnet restore AiBlogResearch.slnx`, then `dotnet test` on the `.slnx` or a test project. Live-Postgres tests are opt-in and need the `ConnectionStrings:Postgres` user-secret.
 - **Deploy:** GitHub Actions (`.github/workflows/deploy-*.yml`) FTP-deploys to SmarterASP.NET on push to `main`. Dev sites: www / api / mcp `.global-webnet.com`.
 - **Reference sandbox:** the `poc` repo is read-only reference; do not edit it from here.
@@ -31,9 +31,9 @@ Owner: Claude. Angular + ASP.NET Core (Aspire-composed) AI starter kit replacing
 
 ## Claude
 
-**Last worked on (2026-09-25):** context restructure and a full test run, all green (WebApi 20, McpServer 3, Angular 2; full `.slnx` builds clean). Before that: real login screen end to end (2026-09-24) and the MCP M2M shakedown (2026-09-23).
+**Last worked on (2026-09-26):** removed the four empty leftover folders, corrected the `Program.cs` login comment and three other comments that pointed at the retired `SESSION_HANDOFF.md`, documented the VS Code run path. Before that (2026-09-25): context restructure and a full test run, all green (WebApi 20, McpServer 3, Angular 2).
 
-**Remaining:** next work is in the `Adventures.Foundation` repo (in-memory N-Quad store; see its Claude section). Here: empty leftover folders `test/AiBlogResearch.Data.Tests`, `test/AiBlogResearch.Security.Tests`, `src/AiBlogResearch.Data`, `src/AiBlogResearch.Security` (safe to delete, human's call); stale comment in `Program.cs` says login is "not wired into AuthController yet" (it is). Known gap: no local `ng serve` proxy wiring outside Aspire (noted in the login-screen review).
+**Remaining:** next work is in the `Adventures.Foundation` repo (in-memory N-Quad store; see its Claude section), plus active `Adventures.Entities` work with the human.
 
 ## Copilot
 

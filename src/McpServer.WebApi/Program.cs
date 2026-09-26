@@ -19,7 +19,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    // Mirrors AiBlogResearch.WebApi's pipeline test incident (docs/SESSION_HANDOFF.md, 2026-09-19):
+    // Mirrors AiBlogResearch.WebApi's pipeline test incident (2026-09-19; history in docs/Claude-architecture-decisions.md):
     // an unhandled exception here would otherwise fall through to IIS's bare error page with no
     // trace anywhere. stdoutLogEnabled in web.config is this project's diagnostic trail instead of
     // Serilog, since this service has no file-logging dependency of its own.

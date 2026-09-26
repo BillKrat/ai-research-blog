@@ -8,7 +8,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 
 /// <summary>One renderable field, mirroring poc/nquad-end-to-end-poc's EntitySchemaField shape
 /// (Id/Name/Type/IsRequired) closely enough that the client's form can stay schema-driven - see
-/// docs/SESSION_HANDOFF.md's 2026-09-23 "NEXT UP" entry, gap 3. This is deliberately a small,
+/// docs/artifacts/Claude-2026-09-24-login-screen-end-to-end.md, gap 3. This is deliberately a small,
 /// hand-written field list, not the full GenericDal/GenericBll engine (that doesn't exist in this
 /// repo - see the POC's own docs/artifacts/ for its current state).</summary>
 public sealed record ProfileField(string Id, string Name, string Type, bool IsRequired, bool IsReadOnly, string Value);
