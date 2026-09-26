@@ -31,9 +31,9 @@ Owner: Claude. Angular + ASP.NET Core (Aspire-composed) AI starter kit replacing
 
 ## Claude
 
-**Last worked on (2026-09-25):** context restructure. Before that: real login screen end to end (2026-09-24) and the MCP M2M shakedown (2026-09-23).
+**Last worked on (2026-09-25):** context restructure and a full test run, all green (WebApi 20, McpServer 3, Angular 2; full `.slnx` builds clean). Before that: real login screen end to end (2026-09-24) and the MCP M2M shakedown (2026-09-23).
 
-**Remaining:** none queued; ask the human. Known gap: no local `ng serve` proxy wiring outside Aspire (noted in the login-screen review).
+**Remaining:** next work is in the `Adventures.Foundation` repo (in-memory N-Quad store; see its Claude section). Here: empty leftover folders `test/AiBlogResearch.Data.Tests`, `test/AiBlogResearch.Security.Tests`, `src/AiBlogResearch.Data`, `src/AiBlogResearch.Security` (safe to delete, human's call); stale comment in `Program.cs` says login is "not wired into AuthController yet" (it is). Known gap: no local `ng serve` proxy wiring outside Aspire (noted in the login-screen review).
 
 ## Copilot
 
