@@ -1,5 +1,9 @@
 # Bug Report: "Edit outside workspace" trust dialog hangs AI-agent tool calls and cannot be dismissed
 
+## Status
+
+-- **Confirmed workaround** (see "Workaround Currently in Use" below) verified working in a live session: the agent successfully wrote a test value to a file outside the workspace via a PowerShell terminal command (`Add-Content`), then removed it (`Get-Content -Raw` + regex `-replace` + `Set-Content`), with the file's original content and line count verified intact afterward via a follow-up read. The built-in edit tool, by contrast, hung on the trust dialog on the same file/path in the same session and had to be canceled from the agent side to recover.
+
 ## Summary
 
 When a GitHub Copilot / AI coding agent running inside Visual Studio invokes a file-editing tool (create/edit) against a file path that lies **outside the currently open workspace/solution root** — but still on the local disk (e.g. a sibling git repository referenced via a relative `../` path in a `.slnx`/`.sln`) — Visual Studio raises a modal "trust"/"edit outside workspace" confirmation dialog. This dialog:

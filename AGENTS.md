@@ -45,7 +45,7 @@ Owner: Claude. Angular + ASP.NET Core (Aspire-composed) AI starter kit replacing
 
 **Remaining:** open decision, not chosen: the next increment is a second entity type (needs new quads in all three seed files), the first update/delete using `FieldValue.Id`, or broader `NQuadUserAdapter` coverage. Ask the human before coding.
 
-Constraint: editing files in sibling repos from Visual Studio hangs on an "edit outside workspace" dialog; use terminal PowerShell for those. See [docs/Copilot-vs-edit-outside-workspace-hang.md](docs/Copilot-vs-edit-outside-workspace-hang.md).
+Constraint: any file write (create or edit, any file type, not just AGENTS.md) targeting a sibling repo outside this workspace hangs Visual Studio's "edit outside workspace" dialog; use terminal PowerShell (`Set-Content`/`Add-Content`/`-replace`) for all such writes instead of the editor tool. See [docs/Copilot-vs-edit-outside-workspace-hang.md](docs/Copilot-vs-edit-outside-workspace-hang.md).
 
 ## LM Studio
 
