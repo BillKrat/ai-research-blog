@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Adventures.Foundation\Adventures.Ioc\Adventures.Ioc.csproj" />
     <ProjectReference Include="..\..\AiBlogResearch.ServiceDefaults\AiBlogResearch.ServiceDefaults.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Data\Adventures.Data.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Identity\Adventures.Identity.csproj" />
