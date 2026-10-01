@@ -111,18 +111,20 @@ try
     // reflection scan across every loaded assembly, not just what this host actually uses - ASP.NET
     // Core validates every registered service graph is resolvable at Build() time (Development
     // default), so SchemaEntity/SchemaFieldEntity repositories are needed here even though nothing
-    // in this app calls ISchemaBll yet. Reuses the same seeded store; each carries its own
-    // hand-authored bootstrap MetaSchema, not the User schema.
+    // in this app calls ISchemaBll yet. Reuses the same seeded store; each schema is loaded the
+    // same way the User schema above is - via SchemaDal.Load - no hardcoded MetaSchema anymore.
+    var schemaEntitySchema = SchemaDal.Load(userQuads, EntityConstants.Schema.EntityTypeIri);
+    var schemaFieldEntitySchema = SchemaDal.Load(userQuads, EntityConstants.Schema.FieldEntityTypeIri);
     builder.Services.AddScoped<IEntityRepository<SchemaEntity>>(services => new NQuadEntityRepository<SchemaEntity>(
         services.GetRequiredService<INQuadStore>(),
-        SchemaEntity.MetaSchema,
+        schemaEntitySchema,
         EntityConstants.Schema.EntityBaseIri,
         EntityConstants.Schema.EntityTypeIri,
         EntityConstants.User.DefaultGraph,
         schema => new SchemaEntity(schema)));
     builder.Services.AddScoped<IEntityRepository<SchemaFieldEntity>>(services => new NQuadEntityRepository<SchemaFieldEntity>(
         services.GetRequiredService<INQuadStore>(),
-        SchemaFieldEntity.MetaSchema,
+        schemaFieldEntitySchema,
         EntityConstants.Schema.FieldEntityBaseIri,
         EntityConstants.Schema.FieldEntityTypeIri,
         EntityConstants.User.DefaultGraph,
