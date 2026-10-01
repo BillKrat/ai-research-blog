@@ -1,46 +1,37 @@
 using Adventures.Entities;
-using AiBlogResearch.WebApi.Presenters;
+using Adventures.WebApi;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AiBlogResearch.WebApi.Controllers;
 
 /// <summary>
-/// Full CRUDL over User, on the new schema-driven Adventures.Entities/NQuadEntityRepository stack -
-/// not the older entities/standard_fields JSONB one ProfileController used before this stage. The
+/// Full CRUDL over User, on the schema-driven Adventures.Entities/NQuadEntityRepository stack. The
 /// only business rule (you cannot delete your own account) lives in IUserBll, not here; this
 /// controller only resolves the current user id (from the same claim AuthController.WhoAmI reads)
-/// to pass to it.
+/// to pass to it. Get/List/Create/Update delegate straight to the promoted EntityControllerBase{User}
+/// helpers from Adventures.WebApi - Delete stays bespoke since the guard needs the acting user id.
 /// </summary>
 [ApiController]
 [Route("api/users")]
 [Authorize]
-public sealed class UsersController(IUserPresenter presenter) : ControllerBase
+public sealed class UsersController(IUserPresenter presenter) : EntityControllerBase<User>
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<UserSummary>>> List(CancellationToken cancellationToken) =>
-        Ok(await presenter.ListAsync(cancellationToken));
+    public Task<ActionResult<IReadOnlyList<EntityDataModel>>> List(CancellationToken cancellationToken) =>
+        ListAsync(presenter, cancellationToken);
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<EntityFormModel>> Get(string id, CancellationToken cancellationToken)
-    {
-        var form = await presenter.GetFormAsync(id, cancellationToken);
-        return form is null ? NotFound() : Ok(form);
-    }
+    public Task<ActionResult<EntityFormModel>> Get(string id, CancellationToken cancellationToken) =>
+        GetAsync(presenter, id, cancellationToken);
 
     [HttpPost]
-    public async Task<ActionResult<EntityFormModel>> Create([FromBody] EntityDataModel request, CancellationToken cancellationToken)
-    {
-        var created = await presenter.CreateAsync(request, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = created.Entity.EntityId }, created);
-    }
+    public Task<ActionResult<EntityFormModel>> Create([FromBody] EntityDataModel request, CancellationToken cancellationToken) =>
+        CreateAsync(presenter, request, cancellationToken);
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<EntityFormModel>> Update(string id, [FromBody] EntityDataModel request, CancellationToken cancellationToken)
-    {
-        var updated = await presenter.UpdateAsync(id, request, cancellationToken);
-        return updated is null ? NotFound() : Ok(updated);
-    }
+    public Task<ActionResult<EntityFormModel>> Update(string id, [FromBody] EntityDataModel request, CancellationToken cancellationToken) =>
+        UpdateAsync(presenter, id, request, cancellationToken);
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
@@ -51,15 +42,11 @@ public sealed class UsersController(IUserPresenter presenter) : ControllerBase
             return Unauthorized();
         }
 
-        try
+        return await GuardedAsync(async () =>
         {
             var deleted = await presenter.DeleteAsync(id, currentUserId, cancellationToken);
             return deleted ? NoContent() : NotFound();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(ex.Message);
-        }
+        });
     }
 
     private async Task<string?> ResolveCurrentUserIdAsync(CancellationToken cancellationToken)

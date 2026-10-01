@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Adventures.Entities;
-using AiBlogResearch.WebApi.Presenters;
 using AiBlogResearch.WebApi.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -26,14 +25,18 @@ public class UsersControllerTests
     {
         var presenter = new FakeUserPresenter
         {
-            Summaries = [new(BillId, "BillKrat", "Bill Kratochvil"), new(ClaudeId, "Claude", "Claude")],
+            Summaries =
+            [
+                new EntityDataModel(BillId, new Dictionary<string, string?> { ["UserName"] = "BillKrat" }),
+                new EntityDataModel(ClaudeId, new Dictionary<string, string?> { ["UserName"] = "Claude" }),
+            ],
         };
         var controller = BuildController(presenter, callerUserName: "BillKrat");
 
         var result = await controller.List(CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
-        var summaries = Assert.IsAssignableFrom<IReadOnlyList<UserSummary>>(ok.Value);
+        var summaries = Assert.IsAssignableFrom<IReadOnlyList<EntityDataModel>>(ok.Value);
         Assert.Equal(2, summaries.Count);
     }
 
@@ -57,7 +60,8 @@ public class UsersControllerTests
 
         var result = await controller.Create(request, CancellationToken.None);
 
-        var created = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var created = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(201, created.StatusCode);
         var form = Assert.IsType<EntityFormModel>(created.Value);
         Assert.Equal("Claude", form.Entity.Values["UserName"]);
         Assert.Same(request, presenter.LastCreateRequest);

@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Adventures.Entities;
 using AiBlogResearch.WebApi.Controllers;
-using AiBlogResearch.WebApi.Presenters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
