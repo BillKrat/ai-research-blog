@@ -1,72 +1,69 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { ProfileField, ProfileService } from '../../services/profile.service';
+import { EntityForm } from '../../components/entity-form/entity-form';
+import { EntityDataModel, EntityFormModel } from '../../models/entity-form.model';
+import { ProfileService } from '../../services/profile.service';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type DeleteState = 'idle' | 'deleting' | 'error';
 
 /**
- * Renders whatever fields the server sends (ProfileController.cs's ProfileField list) from one
- * generic loop, the same technique poc/nquad-end-to-end-poc's app-screen.html demonstrates for a
- * fully schema-driven entity form - a field is rendered by iterating metadata, not by a
- * hand-written <input> per property. This is deliberately the "modest" version recommended in
- * docs/SESSION_HANDOFF.md's 2026-09-23 "NEXT UP" entry, gap 3: one real entity (the current user),
- * not the full GenericDal/GenericBll engine, which doesn't exist in this repo yet.
+ * Hosts the reusable EntityForm for the current user's own profile - the Schema/Entity pair now
+ * comes from the real, schema-driven Adventures.Entities.User engine (Adventures.Foundation),
+ * not a hand-written field list, so First/Last/Phone/DOB show up here without any client change
+ * when the backend schema grows. "Delete my account" exists specifically to demonstrate the
+ * server's delete-own-account guard, which always rejects this exact call.
  */
 @Component({
   selector: 'app-profile',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [MatButtonModule, EntityForm],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
 export class Profile implements OnInit {
   private readonly profileService = inject(ProfileService);
 
-  protected readonly fields = signal<ProfileField[]>([]);
+  protected readonly model = signal<EntityFormModel | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly saveState = signal<SaveState>('idle');
-  protected readonly form = new UntypedFormGroup({});
+  protected readonly deleteState = signal<DeleteState>('idle');
 
   ngOnInit(): void {
-    this.profileService.getMyProfile().subscribe((response) => this.applyFields(response.fields));
+    this.profileService.getMyProfile().subscribe({
+      next: (form) => {
+        this.model.set(form);
+        this.isLoading.set(false);
+      },
+      error: () => this.isLoading.set(false),
+    });
   }
 
-  submit(): void {
-    if (this.form.invalid || this.saveState() === 'saving') {
+  onSave(values: Record<string, string | null>): void {
+    const current = this.model();
+    if (!current || this.saveState() === 'saving') {
       return;
     }
 
     this.saveState.set('saving');
-    this.profileService
-      .updateMyProfile({
-        email: this.form.controls['email'].value as string,
-        displayName: this.form.controls['display_name'].value as string,
-      })
-      .subscribe({
-        next: (response) => {
-          this.applyFields(response.fields);
-          this.saveState.set('saved');
-        },
-        error: () => this.saveState.set('error'),
-      });
+    const request: EntityDataModel = { entityId: current.entity.entityId, values };
+    this.profileService.updateMyProfile(request).subscribe({
+      next: (form) => {
+        this.model.set(form);
+        this.saveState.set('saved');
+      },
+      error: () => this.saveState.set('error'),
+    });
   }
 
-  private applyFields(fields: ProfileField[]): void {
-    this.fields.set(fields);
-    this.isLoading.set(false);
+  deleteMyAccount(): void {
+    if (this.deleteState() === 'deleting') {
+      return;
+    }
 
-    for (const key of Object.keys(this.form.controls)) {
-      this.form.removeControl(key);
-    }
-    for (const field of fields) {
-      const validators = field.isRequired ? [Validators.required] : [];
-      const control = new UntypedFormControl(field.value, validators);
-      if (field.isReadOnly) {
-        control.disable();
-      }
-      this.form.addControl(field.id, control);
-    }
+    this.deleteState.set('deleting');
+    this.profileService.deleteMyAccount().subscribe({
+      next: () => this.deleteState.set('idle'),
+      error: () => this.deleteState.set('error'),
+    });
   }
 }
