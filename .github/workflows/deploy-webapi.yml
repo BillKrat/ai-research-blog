@@ -21,12 +21,11 @@ jobs:
       # out as an actual sibling directory of this one - both repos are public, no extra secret
       # needed. Pinned to main: Adventures.Foundation's own main is the "deploy-ready" branch,
       # mirroring this repo's own convention.
+      # actions/checkout@v4 refuses a `path` outside its own repo's checkout folder (found the
+      # hard way: "Repository path ... is not under ..."), so a sibling clone has to be a plain
+      # git clone instead - not subject to that restriction.
       - name: Checkout Adventures.Foundation
-        uses: actions/checkout@v4
-        with:
-          repository: BillKrat/Adventures.Foundation
-          ref: main
-          path: ../Adventures.Foundation
+        run: git clone --depth 1 --branch main https://github.com/BillKrat/Adventures.Foundation.git ../Adventures.Foundation
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
