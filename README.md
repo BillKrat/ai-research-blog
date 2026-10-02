@@ -5,6 +5,8 @@ AI Research Blog is an early-stage, open-source replacement for
 [BlogEngine.NET fork](https://github.com/BillKrat/BlogAI). It is being built as an Angular and
 ASP.NET Core application, with Aspire providing the local development composition.
 
+- [AGENTS.md](AGENTS.md) — AI context index: repo state, per-AI sections, docs index
+
 ## Current State
 
 The foundation is running today: an Angular client is deployed at

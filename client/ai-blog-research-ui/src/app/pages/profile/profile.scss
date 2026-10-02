@@ -6,12 +6,6 @@
     margin-bottom: 1rem;
   }
 
-  &__form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
   &__status {
     margin: 0 0 0.5rem;
     font-size: 0.9rem;
@@ -23,5 +17,9 @@
     &--error {
       color: var(--mat-sys-error);
     }
+  }
+
+  &__danger-zone {
+    margin-top: 1.5rem;
   }
 }

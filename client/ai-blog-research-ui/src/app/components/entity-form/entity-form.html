@@ -1,0 +1,10 @@
+<form class="entity-form" [formGroup]="form" (ngSubmit)="submit()">
+  @for (field of model.schema.fields; track field.name) {
+    <mat-form-field appearance="outline">
+      <mat-label>{{ field.name }}</mat-label>
+      <input matInput type="text" [formControlName]="field.name" [required]="field.isRequired" />
+    </mat-form-field>
+  }
+
+  <ng-content></ng-content>
+</form>

@@ -1,7 +1,7 @@
 # Stage: replacing the demo-user login placeholder with real `Adventures.Identity` login
 
 **Date:** 2026-09-21
-**Closes:** the "Adventures.Identity" step 4 item open since `SESSION_HANDOFF.md`'s 2026-09-19 entries ("deliberately not wired into `AuthController` yet").
+**Closes:** the "Adventures.Identity" step 4 item open since `SESSION_HANDOFF.md` (retired 2026-09-25; see git history)'s 2026-09-19 entries ("deliberately not wired into `AuthController` yet").
 **Tests:** 109/109 passing across the solution (24 Adventures.Data + 22 Adventures.Identity + 51 Adventures.Security + 12 AiBlogResearch.WebApi). Verified against the real dev Postgres, not just unit tests with a fake.
 
 ## What this stage was about

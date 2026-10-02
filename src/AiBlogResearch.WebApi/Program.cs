@@ -1,5 +1,8 @@
 using Adventures.Data;
+using Adventures.Data.NQuad;
+using Adventures.Entities;
 using Adventures.Identity;
+using Adventures.Ioc.Extensions;
 using Adventures.Security;
 using Microsoft.AspNetCore.Diagnostics;
 using Serilog;
@@ -68,9 +71,9 @@ try
         client.Timeout = TimeSpan.FromSeconds(10);
     });
 
-    // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available for
-    // verification and for AuthController to switch to later (see docs/SESSION_HANDOFF.md,
-    // "Adventures.Identity published" - deliberately not wired into AuthController yet). Lazy:
+    // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available to
+    // AuthController, which uses it for the real login (see
+    // docs/artifacts/Claude-2026-09-21-real-login-wired.md). Lazy:
     // NpgsqlSqlExecutor doesn't open a connection until something actually queries through it, so
     // this registration alone can't reproduce today's Jwt:SigningKey-shaped startup crash even if
     // ConnectionStrings:Postgres is ever missing in an environment.
@@ -79,6 +82,53 @@ try
             ?? throw new InvalidOperationException("ConnectionStrings:Postgres is not configured.")));
     builder.Services.AddScoped<IEntityRepository, PostgresEntityRepository>();
     builder.Services.AddUserIdentity();
+
+    // Adventures.Ioc's reflection-based auto-registration for the Bll/Dal/Presenter MvpVm pattern
+    // (see Adventures.Common.Tests/MvpVmTests.cs) - picks up UserBll and UserPresenter below.
+    builder.Services.AddLifetimeServices();
+
+    // User CRUDL runs on the newer, schema-driven Adventures.Entities/NQuadEntityRepository stack -
+    // separate from the entities/standard_fields JSONB store IUserAccountService/login use above.
+    // InMemoryNQuadStore, seeded from seed.nq at startup: no real persistence yet, matches "start
+    // simple" for this stage - a Postgres-backed INQuadStore is a later swap, not decided here.
+    var nquadStore = new InMemoryNQuadStore();
+    var nquadSeedPath = Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed.nq");
+    await nquadStore.SeedFromFileAsync(nquadSeedPath);
+    var userQuads = await nquadStore.QueryAsync();
+    var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
+
+    builder.Services.AddSingleton<INQuadStore>(nquadStore);
+    builder.Services.AddSingleton(userSchema);
+    builder.Services.AddScoped<IEntityRepository<User>>(services => new NQuadEntityRepository<User>(
+        services.GetRequiredService<INQuadStore>(),
+        services.GetRequiredService<EntitySchema>(),
+        EntityConstants.User.BaseIri,
+        EntityConstants.User.TypeIri,
+        EntityConstants.User.DefaultGraph,
+        schema => new User(schema)));
+
+    // SchemaBll (Adventures.Entities) is auto-registered by AddLifetimeServices above via its
+    // reflection scan across every loaded assembly, not just what this host actually uses - ASP.NET
+    // Core validates every registered service graph is resolvable at Build() time (Development
+    // default), so SchemaEntity/SchemaFieldEntity repositories are needed here even though nothing
+    // in this app calls ISchemaBll yet. Reuses the same seeded store; each schema is loaded the
+    // same way the User schema above is - via SchemaDal.Load - no hardcoded MetaSchema anymore.
+    var schemaEntitySchema = SchemaDal.Load(userQuads, EntityConstants.Schema.EntityTypeIri);
+    var schemaFieldEntitySchema = SchemaDal.Load(userQuads, EntityConstants.Schema.FieldEntityTypeIri);
+    builder.Services.AddScoped<IEntityRepository<SchemaEntity>>(services => new NQuadEntityRepository<SchemaEntity>(
+        services.GetRequiredService<INQuadStore>(),
+        schemaEntitySchema,
+        EntityConstants.Schema.EntityBaseIri,
+        EntityConstants.Schema.EntityTypeIri,
+        EntityConstants.User.DefaultGraph,
+        schema => new SchemaEntity(schema)));
+    builder.Services.AddScoped<IEntityRepository<SchemaFieldEntity>>(services => new NQuadEntityRepository<SchemaFieldEntity>(
+        services.GetRequiredService<INQuadStore>(),
+        schemaFieldEntitySchema,
+        EntityConstants.Schema.FieldEntityBaseIri,
+        EntityConstants.Schema.FieldEntityTypeIri,
+        EntityConstants.User.DefaultGraph,
+        schema => new SchemaFieldEntity(schema)));
 
     var app = builder.Build();
 

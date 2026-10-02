@@ -11,8 +11,8 @@ public sealed record TokenResponse(string AccessToken, DateTimeOffset ExpiresAtU
 /// <summary>
 /// Issues JWTs after validating credentials against the real user store (Adventures.Data +
 /// Adventures.Identity), replacing the config-seeded demo-user placeholder this controller used
-/// to have - see docs/SESSION_HANDOFF.md's "Adventures.Identity" entries for why that replacement
-/// was deliberately deferred until the underlying login path was verified end-to-end first.
+/// to have - see docs/artifacts/Claude-2026-09-21-real-login-wired.md for why that replacement
+/// was deferred until the underlying login path was verified end-to-end first.
 /// </summary>
 [ApiController]
 [Route("api/auth")]

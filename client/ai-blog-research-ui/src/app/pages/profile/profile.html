@@ -3,15 +3,8 @@
 
   @if (isLoading()) {
     <p>Loading profile...</p>
-  } @else {
-    <form class="profile__form" [formGroup]="form" (ngSubmit)="submit()">
-      @for (field of fields(); track field.id) {
-        <mat-form-field appearance="outline">
-          <mat-label>{{ field.name }}</mat-label>
-          <input matInput [type]="field.type" [formControlName]="field.id" [required]="field.isRequired" />
-        </mat-form-field>
-      }
-
+  } @else if (model()) {
+    <app-entity-form [model]="model()!" (save)="onSave($event)">
       @switch (saveState()) {
         @case ('saved') {
           <p class="profile__status profile__status--success" role="status">Saved.</p>
@@ -21,9 +14,19 @@
         }
       }
 
-      <button mat-flat-button type="submit" [disabled]="form.invalid || saveState() === 'saving'">
+      <button mat-flat-button type="submit" [disabled]="saveState() === 'saving'">
         {{ saveState() === 'saving' ? 'Saving...' : 'Save' }}
       </button>
-    </form>
+    </app-entity-form>
+
+    <div class="profile__danger-zone">
+      @if (deleteState() === 'error') {
+        <p class="profile__status profile__status--error" role="alert">You can't delete your own account.</p>
+      }
+
+      <button mat-stroked-button color="warn" type="button" (click)="deleteMyAccount()" [disabled]="deleteState() === 'deleting'">
+        {{ deleteState() === 'deleting' ? 'Deleting...' : 'Delete my account' }}
+      </button>
+    </div>
   }
 </section>
