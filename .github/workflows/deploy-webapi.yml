@@ -16,6 +16,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # AiBlogResearch.WebApi.csproj references Adventures.Foundation's projects by relative
+      # sibling path (not NuGet, see that repo's AGENTS.md), so the runner needs that repo checked
+      # out as an actual sibling directory of this one - both repos are public, no extra secret
+      # needed. Pinned to main: Adventures.Foundation's own main is the "deploy-ready" branch,
+      # mirroring this repo's own convention.
+      - name: Checkout Adventures.Foundation
+        uses: actions/checkout@v4
+        with:
+          repository: BillKrat/Adventures.Foundation
+          ref: main
+          path: ../Adventures.Foundation
+
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:

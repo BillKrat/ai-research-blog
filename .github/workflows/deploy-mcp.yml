@@ -16,6 +16,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Same reasoning as deploy-webapi.yml's own Adventures.Foundation checkout step:
+      # McpServer.WebApi.csproj references Adventures.Security by relative sibling path.
+      - name: Checkout Adventures.Foundation
+        uses: actions/checkout@v4
+        with:
+          repository: BillKrat/Adventures.Foundation
+          ref: main
+          path: ../Adventures.Foundation
+
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
