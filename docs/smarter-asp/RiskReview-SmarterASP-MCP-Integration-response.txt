@@ -1,0 +1,42 @@
+-----------------------------------------------------------------------------
+IMPORTANT: If you reply to this email, please do not change the Email Subject.
+-----------------------------------------------------------------------------
+
+
+Our Support Staff Ailen has replied to your ticket # PD-3710717
+[Reply Time 10/2/2026 2:46:50 AM]
+-----------------------------------------------------------------------------
+Dear Customer,
+
+Thank you for the structured review — this is the right set of questions to ask before an integration with this reach grows.
+
+1. Token scoping and least privilege
+
+MCP API keys support two scopes: hosting.read (read-only) and hosting.read hosting.write. Write capability is enforced server-side on each endpoint, so a read-only key is rejected for any mutating operation.
+Keys can be created with an expiration (from 5 minutes up to 1 year) and revoked at any time. Revocation takes effect on the next request, not at next token refresh.
+The panel shows each key's last-used timestamp, so unused or stale keys are easy to identify and revoke. Key management is self-service in your control panel; SmarterASP support staff acting under delegated/staff login cannot create or revoke a customer's keys.
+Known limitation, stated plainly: scopes are not currently granular per capability or per resource. A write-capable key can act on any website, database, DNS zone, or mailbox owned by your account — you cannot issue a key restricted to, for example, DNS-only or to a single site. Your read of the blast radius is correct. The practical mitigations today are: issue read-only keys by default, issue separate short-lived write keys per task, and revoke immediately after use.
+
+2. Credential handling
+
+The API key is generated with a cryptographically secure random source. We store only a keyed HMAC of it; the plaintext is returned once at creation and is not recoverable afterwards, by you or by us.
+The key is exchanged for a short-lived internal access token scoped to the same permissions, so the long-lived secret is not replayed on every call.
+
+3. Monitoring and audit logging
+
+Every MCP API request produces an audit record capturing route, HTTP method, response status, outcome, duration, and a correlation id. Caller identifiers are stored as keyed HMAC values, so the audit trail does not contain raw tokens, IP addresses, or user agents.
+Operational alerting covers authentication denials, rate-limit rejections, server errors, latency outliers, and audit-pipeline failures, evaluated on a rolling window.
+Requests are rate limited; excessive volume is rejected with HTTP 429.
+
+4. Suggested next steps on your side
+
+Based on what you described, your current posture (secret store, no plaintext credentials through tool parameters, guarded destructive operations, treating tool output as untrusted data) matches or exceeds what we'd recommend. Two additions worth considering: split the single standing key into a read-only key for routine inspection plus a short-lived write key issued per task, and set an expiration on every write key so a forgotten key expires on its own.
+
+Thank you.
+
+
+
+-----------------------------------------------------------------------------
+You can respond to this ticket by replying to this email OR login and reply
+in your hosting control panel - https://www.smarterasp.net
+-----------------------------------------------------------------------------
