@@ -21,6 +21,15 @@ export interface EntityDataModel {
   values: Record<string, string | null>;
 }
 
+/**
+ * Mirrors Adventures.Entities.EntityGridModel: the columns (a schema) and one data model per row. The grid-contract stage
+ * adds paging, sorting and per-row permissions; this is its first, minimal form.
+ */
+export interface EntityGridModel {
+  schema: EntitySchemaModel;
+  rows: EntityDataModel[];
+}
+
 export interface EntityFormModel {
   schema: EntitySchemaModel;
   entity: EntityDataModel;

@@ -1,0 +1,53 @@
+.entity-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  th {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  &__row {
+    cursor: pointer;
+
+    &:hover,
+    &--open {
+      background: var(--mat-sys-surface-container-high);
+    }
+  }
+
+  &__message {
+    max-width: 24rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__details dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25rem 1rem;
+    margin: 0;
+  }
+
+  &__details dt {
+    font-weight: 600;
+  }
+
+  &__details dd {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: ui-monospace, monospace;
+    font-size: 0.8rem;
+  }
+}

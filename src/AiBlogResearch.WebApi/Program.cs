@@ -4,6 +4,7 @@ using Adventures.Entities;
 using Adventures.Identity;
 using Adventures.Ioc.Extensions;
 using Adventures.Security;
+using AiBlogResearch.WebApi;
 using Microsoft.AspNetCore.Diagnostics;
 using Serilog;
 
@@ -108,12 +109,14 @@ try
 
     var nquadSeedPath = Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed.nq");
     var seeded = await nquadStore.SeedOnceAsync(nquadSeedPath, "baseline");
+    // Named, once-only seeds added after the baseline (each ships as its own file, never merged into seed.nq).
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-002-exception-log.nq"), EntityConstants.ExceptionLog.SeedName);
     Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
 
     builder.Services.AddSingleton<INQuadStore>(nquadStore);
-    builder.Services.AddSingleton(userSchema);
     // The audit trail records who made each change: the signed-in user for a request, "system" otherwise.
     builder.Services.AddHttpContextAccessor();
     static string? CurrentActor(IServiceProvider services) =>
@@ -133,6 +136,14 @@ try
     // default), so SchemaEntity/SchemaFieldEntity repositories are needed here even though nothing
     // in this app calls ISchemaBll yet. Reuses the same seeded store; each schema is loaded the
     // same way the User schema above is - via SchemaDal.Load - no hardcoded MetaSchema anymore.
+    builder.Services.AddNQuadEntityRepository(
+        SchemaDal.Load(userQuads, EntityConstants.ExceptionLog.SchemaIri),
+        EntityConstants.ExceptionLog.BaseIri,
+        EntityConstants.ExceptionLog.TypeIri,
+        EntityConstants.ExceptionLog.DefaultGraph,
+        schema => new ExceptionLogEntry(schema),
+        CurrentActor);
+
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, EntityConstants.Schema.EntityTypeIri),
         EntityConstants.Schema.EntityBaseIri,
@@ -160,30 +171,15 @@ try
     app.UseWhen(context => !context.Request.Path.Equals("/"), branch => branch.UseHttpsRedirection());
     app.UseCors(AngularCorsPolicy);
 
+    // One handler in every environment, so what a developer sees is what production does: the full exception goes to the
+    // log file and the exception log, the client gets a shielded body with a reference (see UnhandledExceptionHandler).
+    // Without a handler an exception anywhere in the pipeline (authentication and authorization included) would fall
+    // through to IIS's own bare error page with nothing logged.
+    app.UseExceptionHandler(errorApp => errorApp.Run(UnhandledExceptionHandler.HandleAsync));
+
     if (app.Environment.IsDevelopment())
     {
-        app.UseDeveloperExceptionPage();
         app.MapOpenApi();
-    }
-    else
-    {
-        // Without this, an unhandled exception anywhere in the pipeline below (including inside
-        // authentication/authorization, which run on every request) falls through to IIS's own
-        // bare error page - no JSON body, no log entry, nothing to diagnose from. This logs the
-        // full exception and returns a minimal problem-details body instead.
-        app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
-        {
-            var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
-            Log.Error(exception, "Unhandled exception handling {Method} {Path}", context.Request.Method, context.Request.Path);
-
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            context.Response.ContentType = "application/problem+json";
-            await context.Response.WriteAsJsonAsync(new
-            {
-                status = 500,
-                title = "An unexpected error occurred.",
-            });
-        }));
     }
 
     app.MapDefaultEndpoints();
@@ -192,6 +188,16 @@ try
     app.UseAuthorization();
 
     app.MapControllers();
+
+    if (app.Environment.IsDevelopment())
+    {
+        // Test aid, not a feature: throws on purpose so the exception log, the header warning and the Exceptions screen
+        // can be exercised end to end. Development only (not mapped in production), administrators only.
+        static IResult ThrowDeliberately() => throw new InvalidOperationException("Deliberate test exception from /api/dev/throw.");
+        app.MapGet("/api/dev/throw", ThrowDeliberately)
+            .RequireAuthorization(WellKnownClaims.TenantAdminPolicy)
+            .ExcludeFromDescription();
+    }
 
     // SmarterASP's free-SSL request (issue and renewal) requires the domain root to return HTTP 200.
     app.MapGet("/", () => Results.Ok(new { service = "AiBlogResearch.WebApi", status = "ok" }))

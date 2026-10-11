@@ -1,0 +1,42 @@
+<table class="entity-grid">
+  <thead>
+    <tr>
+      @for (column of columns; track column) {
+        <th scope="col">{{ column }}</th>
+      }
+      @if (hasMessage) {
+        <th scope="col">Message</th>
+      }
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of model.rows; track row.entityId) {
+      <tr
+        class="entity-grid__row"
+        [class.entity-grid__row--open]="expandedId === row.entityId"
+        tabindex="0"
+        (click)="toggle(row.entityId)"
+        (keydown.enter)="toggle(row.entityId)"
+      >
+        @for (column of columns; track column) {
+          <td>{{ cell(row, column) }}</td>
+        }
+        @if (hasMessage) {
+          <td class="entity-grid__message">{{ cell(row, 'Message') }}</td>
+        }
+      </tr>
+      @if (expandedId === row.entityId) {
+        <tr class="entity-grid__details">
+          <td [attr.colspan]="columns.length + (hasMessage ? 1 : 0)">
+            <dl>
+              @for (field of model.schema.fields; track field.name) {
+                <dt>{{ field.name }}</dt>
+                <dd>{{ cell(row, field.name) }}</dd>
+              }
+            </dl>
+          </td>
+        </tr>
+      }
+    }
+  </tbody>
+</table>

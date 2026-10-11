@@ -1,0 +1,30 @@
+<section class="admin-exceptions">
+  <h2>Exceptions</h2>
+
+  @for (message of errors(); track message) {
+    <p class="admin-exceptions__error" role="alert">{{ message }}</p>
+  }
+
+  @if (isLoading()) {
+    <p>Loading exceptions...</p>
+  } @else if (model(); as grid) {
+    @if (grid.rows.length === 0) {
+      <p>No active exceptions.</p>
+    } @else {
+      <app-entity-grid [model]="grid" />
+    }
+  }
+
+  <div class="admin-exceptions__actions">
+    <button mat-flat-button type="button" (click)="ok()">OK</button>
+    <button
+      mat-stroked-button
+      color="warn"
+      type="button"
+      (click)="purge()"
+      [disabled]="isPurging() || !model() || model()!.rows.length === 0"
+    >
+      {{ isPurging() ? 'Purging...' : 'Purge' }}
+    </button>
+  </div>
+</section>

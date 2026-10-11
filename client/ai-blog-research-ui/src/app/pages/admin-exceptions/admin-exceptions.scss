@@ -1,0 +1,18 @@
+.admin-exceptions {
+  margin: 2rem 0 0;
+
+  h2 {
+    margin-bottom: 1rem;
+  }
+
+  &__error {
+    color: var(--mat-sys-error);
+    margin: 0 0 0.5rem;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+}

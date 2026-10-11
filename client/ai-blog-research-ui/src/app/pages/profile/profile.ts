@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { EntityForm } from '../../components/entity-form/entity-form';
+import { describeApiError } from '../../models/api-error';
 import { EntityDataModel, EntityFormModel } from '../../models/entity-form.model';
 import { ProfileService } from '../../services/profile.service';
 
@@ -28,6 +29,10 @@ export class Profile implements OnInit {
   protected readonly saveState = signal<SaveState>('idle');
   protected readonly deleteState = signal<DeleteState>('idle');
 
+  /** What the server said went wrong, in its own words (the Bll writes the text), shown in a caption bar above Save. */
+  protected readonly saveErrors = signal<string[]>([]);
+  protected readonly deleteErrors = signal<string[]>([]);
+
   ngOnInit(): void {
     this.profileService.getMyProfile().subscribe({
       next: (form) => {
@@ -45,13 +50,17 @@ export class Profile implements OnInit {
     }
 
     this.saveState.set('saving');
+    this.saveErrors.set([]);
     const request: EntityDataModel = { entityId: current.entity.entityId, values };
     this.profileService.updateMyProfile(request).subscribe({
       next: (form) => {
         this.model.set(form);
         this.saveState.set('saved');
       },
-      error: () => this.saveState.set('error'),
+      error: (error) => {
+        this.saveErrors.set(describeApiError(error, "Couldn't save your profile. Try again."));
+        this.saveState.set('error');
+      },
     });
   }
 
@@ -61,9 +70,13 @@ export class Profile implements OnInit {
     }
 
     this.deleteState.set('deleting');
+    this.deleteErrors.set([]);
     this.profileService.deleteMyAccount().subscribe({
       next: () => this.deleteState.set('idle'),
-      error: () => this.deleteState.set('error'),
+      error: (error) => {
+        this.deleteErrors.set(describeApiError(error, "Couldn't delete your account."));
+        this.deleteState.set('error');
+      },
     });
   }
 }

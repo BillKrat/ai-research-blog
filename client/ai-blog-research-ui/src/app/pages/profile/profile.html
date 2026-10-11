@@ -10,7 +10,14 @@
           <p class="profile__status profile__status--success" role="status">Saved.</p>
         }
         @case ('error') {
-          <p class="profile__status profile__status--error" role="alert">Couldn't save your profile. Try again.</p>
+          <div class="profile__errors" role="alert">
+            <p class="profile__errors-title">Your profile was not saved.</p>
+            <ul>
+              @for (message of saveErrors(); track message) {
+                <li>{{ message }}</li>
+              }
+            </ul>
+          </div>
         }
       }
 
@@ -21,7 +28,9 @@
 
     <div class="profile__danger-zone">
       @if (deleteState() === 'error') {
-        <p class="profile__status profile__status--error" role="alert">You can't delete your own account.</p>
+        @for (message of deleteErrors(); track message) {
+          <p class="profile__status profile__status--error" role="alert">{{ message }}</p>
+        }
       }
 
       <button mat-stroked-button color="warn" type="button" (click)="deleteMyAccount()" [disabled]="deleteState() === 'deleting'">

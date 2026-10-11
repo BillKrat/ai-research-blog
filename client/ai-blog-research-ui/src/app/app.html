@@ -11,6 +11,21 @@
         <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
 
+      @if (isAuthenticated() && activeExceptionCount() > 0) {
+        <a
+          mat-icon-button
+          class="page__exceptions"
+          routerLink="/admin/exceptions"
+          [matBadge]="activeExceptionCount()"
+          matBadgeColor="warn"
+          matBadgeSize="small"
+          [attr.aria-label]="activeExceptionCount() + (activeExceptionCount() === 1 ? ' active exception' : ' active exceptions') + '. Open the exception log.'"
+          title="Server exceptions need review"
+        >
+          <mat-icon>warning</mat-icon>
+        </a>
+      }
+
       @if (isAuthenticated()) {
         <button mat-button [matMenuTriggerFor]="userMenu" aria-label="Account menu">
           <mat-icon>account_circle</mat-icon>

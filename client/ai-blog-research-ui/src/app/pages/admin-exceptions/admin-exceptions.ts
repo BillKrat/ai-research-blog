@@ -1,0 +1,68 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { EntityGrid } from '../../components/entity-grid/entity-grid';
+import { describeApiError } from '../../models/api-error';
+import { EntityGridModel } from '../../models/entity-form.model';
+import { AdminExceptionsService } from '../../services/admin-exceptions.service';
+
+/**
+ * The administrator's exception log: a grid of the active exceptions (newest first), [OK] to leave, [Purge] to retire
+ * them all. Purge is a soft delete on the server like any other delete, so the history stays in the store.
+ */
+@Component({
+  selector: 'app-admin-exceptions',
+  imports: [MatButtonModule, EntityGrid],
+  templateUrl: './admin-exceptions.html',
+  styleUrl: './admin-exceptions.scss',
+})
+export class AdminExceptions implements OnInit {
+  private readonly service = inject(AdminExceptionsService);
+  private readonly router = inject(Router);
+
+  protected readonly model = signal<EntityGridModel | null>(null);
+  protected readonly isLoading = signal(true);
+  protected readonly errors = signal<string[]>([]);
+  protected readonly isPurging = signal(false);
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  ok(): void {
+    this.router.navigateByUrl('/');
+  }
+
+  purge(): void {
+    if (this.isPurging() || !window.confirm('Purge all exceptions? They are hidden from this list but stay in the store.')) {
+      return;
+    }
+
+    this.isPurging.set(true);
+    this.service.purge().subscribe({
+      next: () => {
+        this.isPurging.set(false);
+        this.load();
+      },
+      error: (error) => {
+        this.isPurging.set(false);
+        this.errors.set(describeApiError(error, "Couldn't purge the exceptions. Try again."));
+      },
+    });
+  }
+
+  private load(): void {
+    this.errors.set([]);
+    this.service.grid().subscribe({
+      next: (grid) => {
+        this.model.set(grid);
+        this.isLoading.set(false);
+        this.service.refresh();
+      },
+      error: (error) => {
+        this.isLoading.set(false);
+        this.errors.set(describeApiError(error, "Couldn't load the exceptions."));
+      },
+    });
+  }
+}

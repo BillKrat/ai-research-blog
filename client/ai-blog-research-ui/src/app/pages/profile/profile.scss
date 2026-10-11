@@ -19,6 +19,25 @@
     }
   }
 
+  &__errors {
+    margin: 0 0 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-left: 4px solid var(--mat-sys-error);
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+    font-size: 0.9rem;
+
+    ul {
+      margin: 0;
+      padding-left: 1.1rem;
+    }
+  }
+
+  &__errors-title {
+    margin: 0 0 0.25rem;
+    font-weight: 600;
+  }
+
   &__danger-zone {
     margin-top: 1.5rem;
   }
