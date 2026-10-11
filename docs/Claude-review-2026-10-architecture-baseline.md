@@ -80,3 +80,24 @@ Severity: **H** fix before real data/users, **M** fix in the next phase, **L** n
 ## Merge readiness
 
 `main` in `Adventures.Foundation` already holds everything (merged and deployed 2026-10-02; tests green). `ai-research-blog`'s `main` is missing only three docs commits on `claude-session-notes-2026-10-11` (this review, the principles doc and `AGENTS.md` notes): no code change, so merging deploys nothing new beyond whatever the deploy workflow does on any `main` push. The root workspace repo's `standard-updates` branch is docs/tooling only. No code on any branch is waiting to merge.
+
+## Resolution (2026-10-11, branch `claude-architecture-alignment` in both repos)
+
+The human agreed the findings, the D-1 direction (thin Angular client, server does the work) and D-2 (fix F-1 now), and asked Claude to resolve what applies. Foundation: 238 tests pass; app: 31 (plus 3 in the MCP server). Each fix was also exercised against a locally run API (admin, a second user, unauthenticated; bad input; delete-own), which caught one bug the unit tests missed (JWT bearer remaps the `roles` claim to `ClaimTypes.Role`).
+
+| # | Outcome |
+|---|---|
+| F-1 | **Fixed.** `IEntityBll<T>`/`EntityBll<T>`; `EntityPresenter<T>` and `UserPresenter` depend on the Bll only; `UserBll` derives from the generic one. A user can no longer be deleted without an acting user at any layer. |
+| F-2 | **Fixed.** `RoleAuthorizationHandler`/`AddRoleAuthorization`; `UsersController` requires the `TenantAdmin` role (403 otherwise). Tenant/Org-scoped roles remain F-14. |
+| F-3 | **Fixed for entities.** `EntityInputValidator` rejects unknown fields and wrong types with our own messages, and missing required fields on create; `EntityBll` enforces required on create and update. Field length/range rules are not in the schema yet and are not enforced. |
+| F-4 | **Fixed.** `BusinessRuleException` (409, message shown) and `InputValidationException` (400, field errors); `GuardedAsync` catches only those. System exceptions reach the global handler. Create and update are guarded too. |
+| F-5 | **Fixed.** `AddNQuadEntityRepository<T>` in `Adventures.Data.NQuad`; `Program.cs` no longer knows IRIs or builds repositories. |
+| F-6 | **Fixed.** Blank credentials return 400 (was 500). |
+| F-8 | **Fixed.** The audit actor is the signed-in user's name per request (`system` outside a request). User-management events are covered by that audit trail; no separate application log line yet. |
+| F-17 | **Fixed.** `ProfileController` lookup extracted. |
+| F-10, F-18 | **Left, with comments** in `EntityPresenter` and `auth.service.ts`. |
+| F-16 | **Left** (accepted by the human). The password-change caption and "Update password" action are planned for when data updates are real. |
+| F-11 | **Left**, already commented in `UserBll`; replace with a Dal query with the Postgres store. |
+| F-9 | **Deferred**: next. Switch the user store to `NpgsqlNQuadStore` (seeded on first start only). |
+| F-7, F-12, F-13, F-14 | **Deferred**: they are the design-phase items (retire the Postgres entities store, MEF, version-keyed Bll, Tenant/Org and the BlogEngine schemas). |
+| F-15 | **Designed, not built**: [Claude-decision-2026-10-server-driven-forms.md](Claude-decision-2026-10-server-driven-forms.md). |

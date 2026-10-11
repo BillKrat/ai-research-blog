@@ -9,6 +9,9 @@ export interface TokenResponse {
   mustChangePassword: boolean;
 }
 
+// Token kept in sessionStorage: readable by any script on the page (XSS), and there is no refresh token. A normal
+// SPA trade-off at this stage, reviewed and accepted 2026-10-11 (docs/Claude-review-2026-10-architecture-baseline.md
+// F-18); revisit with refresh tokens or an HttpOnly cookie before real user data.
 const TOKEN_STORAGE_KEY = 'auth.accessToken';
 const EXPIRY_STORAGE_KEY = 'auth.expiresAtUtc';
 const USERNAME_STORAGE_KEY = 'auth.username';
