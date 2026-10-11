@@ -137,7 +137,9 @@ try
     // Configure the HTTP request pipeline.
     // UseCors must come before any Map* calls so it runs ahead of terminal
     // middleware (health checks, controllers) and can attach CORS headers.
-    app.UseHttpsRedirection();
+    // The root stays reachable over plain HTTP: SmarterASP's free-SSL preflight requests it
+    // without following redirects, so redirecting "/" would fail issue and renewal.
+    app.UseWhen(context => !context.Request.Path.Equals("/"), branch => branch.UseHttpsRedirection());
     app.UseCors(AngularCorsPolicy);
 
     if (app.Environment.IsDevelopment())
