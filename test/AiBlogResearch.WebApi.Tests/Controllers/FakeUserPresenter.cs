@@ -55,7 +55,7 @@ internal sealed class FakeUserPresenter : IUserPresenter
         LastDeleteCall = (id, currentUserId);
         if (ThrowOnDelete)
         {
-            throw new InvalidOperationException("You cannot delete your own account.");
+            throw new Adventures.Common.Exceptions.BusinessRuleException("You cannot delete your own account.");
         }
 
         return Task.FromResult(DeleteResult);

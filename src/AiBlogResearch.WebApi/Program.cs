@@ -58,6 +58,7 @@ try
     builder.Services.AddSingleton<IClientSecretHasher, ClientSecretHasher>();
     builder.Services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
     builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search");
+    builder.Services.AddRoleAuthorization(WellKnownClaims.TenantAdminRole);
 
     // McpServer:BaseUrl -> mcp.global-webnet.com. HealthController calls this over M2M auth (minting
     // its own "mcp-host" token in-process via IJwtTokenService, since this app IS the token issuer -
@@ -99,13 +100,18 @@ try
 
     builder.Services.AddSingleton<INQuadStore>(nquadStore);
     builder.Services.AddSingleton(userSchema);
-    builder.Services.AddScoped<IEntityRepository<User>>(services => new NQuadEntityRepository<User>(
-        services.GetRequiredService<INQuadStore>(),
-        services.GetRequiredService<EntitySchema>(),
+    // The audit trail records who made each change: the signed-in user for a request, "system" otherwise.
+    builder.Services.AddHttpContextAccessor();
+    static string? CurrentActor(IServiceProvider services) =>
+        services.GetService<IHttpContextAccessor>()?.HttpContext?.User.Identity?.Name;
+
+    builder.Services.AddNQuadEntityRepository(
+        userSchema,
         EntityConstants.User.BaseIri,
         EntityConstants.User.TypeIri,
         EntityConstants.User.DefaultGraph,
-        schema => new User(schema)));
+        schema => new User(schema),
+        CurrentActor);
 
     // SchemaBll (Adventures.Entities) is auto-registered by AddLifetimeServices above via its
     // reflection scan across every loaded assembly, not just what this host actually uses - ASP.NET
@@ -113,22 +119,20 @@ try
     // default), so SchemaEntity/SchemaFieldEntity repositories are needed here even though nothing
     // in this app calls ISchemaBll yet. Reuses the same seeded store; each schema is loaded the
     // same way the User schema above is - via SchemaDal.Load - no hardcoded MetaSchema anymore.
-    var schemaEntitySchema = SchemaDal.Load(userQuads, EntityConstants.Schema.EntityTypeIri);
-    var schemaFieldEntitySchema = SchemaDal.Load(userQuads, EntityConstants.Schema.FieldEntityTypeIri);
-    builder.Services.AddScoped<IEntityRepository<SchemaEntity>>(services => new NQuadEntityRepository<SchemaEntity>(
-        services.GetRequiredService<INQuadStore>(),
-        schemaEntitySchema,
+    builder.Services.AddNQuadEntityRepository(
+        SchemaDal.Load(userQuads, EntityConstants.Schema.EntityTypeIri),
         EntityConstants.Schema.EntityBaseIri,
         EntityConstants.Schema.EntityTypeIri,
         EntityConstants.User.DefaultGraph,
-        schema => new SchemaEntity(schema)));
-    builder.Services.AddScoped<IEntityRepository<SchemaFieldEntity>>(services => new NQuadEntityRepository<SchemaFieldEntity>(
-        services.GetRequiredService<INQuadStore>(),
-        schemaFieldEntitySchema,
+        schema => new SchemaEntity(schema),
+        CurrentActor);
+    builder.Services.AddNQuadEntityRepository(
+        SchemaDal.Load(userQuads, EntityConstants.Schema.FieldEntityTypeIri),
         EntityConstants.Schema.FieldEntityBaseIri,
         EntityConstants.Schema.FieldEntityTypeIri,
         EntityConstants.User.DefaultGraph,
-        schema => new SchemaFieldEntity(schema)));
+        schema => new SchemaFieldEntity(schema),
+        CurrentActor);
 
     var app = builder.Build();
 
