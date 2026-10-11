@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AiBlogResearch.WebApi.Controllers;
 
-public sealed record TokenRequest(string UserName, string Password);
+public sealed record TokenRequest(string? UserName, string? Password);
 
 public sealed record TokenResponse(string AccessToken, DateTimeOffset ExpiresAtUtc, bool MustChangePassword);
 
@@ -29,13 +29,39 @@ public sealed class AuthController(IUserAccountService accountService, IConfigur
     [AllowAnonymous]
     public async Task<ActionResult<TokenResponse>> Token([FromBody] TokenRequest request)
     {
-        var result = await accountService.LoginAsync(Tenant, request.UserName, request.Password);
+        var errors = ValidateCredentials(request);
+        if (errors.Count > 0)
+        {
+            return BadRequest(new ValidationProblemDetails(errors) { Status = StatusCodes.Status400BadRequest });
+        }
+
+        var result = await accountService.LoginAsync(Tenant, request.UserName!, request.Password!);
         if (!result.Succeeded)
         {
             return Unauthorized();
         }
 
         return Ok(new TokenResponse(result.AccessToken!, result.ExpiresAtUtc!.Value, result.MustChangePassword));
+    }
+
+    /// <summary>
+    /// Trust-boundary validation (AppArch: validate all input, server-side): a missing body or blank field is a
+    /// client error (400), not a fault inside the login service. Says nothing about whether the account exists.
+    /// </summary>
+    private static Dictionary<string, string[]> ValidateCredentials(TokenRequest? request)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(request?.UserName))
+        {
+            errors[nameof(TokenRequest.UserName)] = ["UserName is required."];
+        }
+
+        if (string.IsNullOrWhiteSpace(request?.Password))
+        {
+            errors[nameof(TokenRequest.Password)] = ["Password is required."];
+        }
+
+        return errors;
     }
 
     /// <summary>Sample protected endpoint to prove JWT validation works end to end.</summary>

@@ -123,4 +123,24 @@ public class UsersControllerTests
             },
         };
     }
+
+    [Fact]
+    public void Controller_IsRestrictedToTheTenantAdminPolicy()
+    {
+        var authorize = Assert.Single(
+            typeof(UsersController).GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute), inherit: true)
+                .Cast<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>());
+
+        Assert.Equal(Adventures.Security.WellKnownClaims.TenantAdminPolicy, authorize.Policy);
+    }
+
+    [Fact]
+    public void NoActionOverridesTheClassPolicyWithAnAnonymousOrWeakerOne()
+    {
+        var weakened = typeof(UsersController).GetMethods()
+            .Where(m => m.DeclaringType == typeof(UsersController))
+            .Where(m => m.GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute), true).Length > 0);
+
+        Assert.Empty(weakened);
+    }
 }

@@ -19,32 +19,15 @@ public sealed class ProfileController(IUserPresenter presenter) : EntityControll
     [HttpGet("me")]
     public async Task<ActionResult<EntityFormModel>> Me(CancellationToken cancellationToken)
     {
-        var userName = ResolveUserName();
-        if (userName is null)
-        {
-            return Unauthorized();
-        }
-
-        var form = await presenter.GetFormByUserNameAsync(userName, cancellationToken);
-        return form is null ? NotFound() : Ok(form);
+        var (current, failure) = await ResolveCurrentAsync(cancellationToken);
+        return current is null ? failure! : Ok(current);
     }
 
     [HttpPut("me")]
     public async Task<ActionResult<EntityFormModel>> UpdateMe([FromBody] EntityDataModel request, CancellationToken cancellationToken)
     {
-        var userName = ResolveUserName();
-        if (userName is null)
-        {
-            return Unauthorized();
-        }
-
-        var current = await presenter.GetFormByUserNameAsync(userName, cancellationToken);
-        if (current is null)
-        {
-            return NotFound();
-        }
-
-        return await UpdateAsync(presenter, current.Entity.EntityId, request, cancellationToken);
+        var (current, failure) = await ResolveCurrentAsync(cancellationToken);
+        return current is null ? failure! : await UpdateAsync(presenter, current.Entity.EntityId, request, cancellationToken);
     }
 
     /// <summary>
@@ -55,16 +38,10 @@ public sealed class ProfileController(IUserPresenter presenter) : EntityControll
     [HttpDelete("me")]
     public async Task<IActionResult> DeleteMe(CancellationToken cancellationToken)
     {
-        var userName = ResolveUserName();
-        if (userName is null)
-        {
-            return Unauthorized();
-        }
-
-        var current = await presenter.GetFormByUserNameAsync(userName, cancellationToken);
+        var (current, failure) = await ResolveCurrentAsync(cancellationToken);
         if (current is null)
         {
-            return NotFound();
+            return failure!;
         }
 
         return await GuardedAsync(async () =>
@@ -74,6 +51,16 @@ public sealed class ProfileController(IUserPresenter presenter) : EntityControll
         });
     }
 
-    private string? ResolveUserName() =>
-        string.IsNullOrWhiteSpace(User.Identity?.Name) ? null : User.Identity!.Name;
+    /// <summary>The caller's own form, or the failure result to return (401 no usable name in the token, 404 no such user).</summary>
+    private async Task<(EntityFormModel? Current, ActionResult? Failure)> ResolveCurrentAsync(CancellationToken cancellationToken)
+    {
+        var userName = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return (null, Unauthorized());
+        }
+
+        var form = await presenter.GetFormByUserNameAsync(userName, cancellationToken);
+        return form is null ? (null, NotFound()) : (form, null);
+    }
 }

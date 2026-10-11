@@ -38,7 +38,6 @@ public class AuthControllerTests
     [Theory]
     [InlineData("wrong-user", "Password")]
     [InlineData("Admin", "WrongPassword")]
-    [InlineData("", "")]
     public async Task Token_ReturnsUnauthorized_WhenCredentialsAreInvalid(string userName, string password)
     {
         var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.InvalidCredentials));
@@ -47,6 +46,24 @@ public class AuthControllerTests
         var result = await controller.Token(new TokenRequest(userName, password));
 
         Assert.IsType<UnauthorizedResult>(result.Result);
+    }
+
+    [Theory]
+    [InlineData("", "")]
+    [InlineData("Admin", "")]
+    [InlineData("  ", "Password")]
+    [InlineData(null, null)]
+    public async Task Token_ReturnsBadRequestNotAServerError_WhenCredentialsAreBlank(string? userName, string? password)
+    {
+        var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.InvalidCredentials));
+        var controller = new AuthController(accountService, BuildConfiguration());
+
+        var result = await controller.Token(new TokenRequest(userName, password));
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
+        var problem = Assert.IsType<ValidationProblemDetails>(badRequest.Value);
+        Assert.Equal(400, problem.Status);
+        Assert.Null(accountService.LastUsername);
     }
 
     [Fact]

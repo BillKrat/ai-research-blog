@@ -1,4 +1,5 @@
 using Adventures.Entities;
+using Adventures.Security;
 using Adventures.WebApi;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace AiBlogResearch.WebApi.Controllers;
 
 /// <summary>
-/// Full CRUDL over User, on the schema-driven Adventures.Entities/NQuadEntityRepository stack. The
+/// Full CRUDL over User - administrators only (the TenantAdmin role; every other signed-in user is refused with 403,
+/// self-service stays on <see cref="ProfileController"/>), on the schema-driven Adventures.Entities/NQuadEntityRepository stack. The
 /// only business rule (you cannot delete your own account) lives in IUserBll, not here; this
 /// controller only resolves the current user id (from the same claim AuthController.WhoAmI reads)
 /// to pass to it. Get/List/Create/Update delegate straight to the promoted EntityControllerBase{User}
@@ -14,7 +16,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/users")]
-[Authorize]
+[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
 public sealed class UsersController(IUserPresenter presenter) : EntityControllerBase<User>
 {
     [HttpGet]
