@@ -90,11 +90,25 @@ try
 
     // User CRUDL runs on the newer, schema-driven Adventures.Entities/NQuadEntityRepository stack -
     // separate from the entities/standard_fields JSONB store IUserAccountService/login use above.
-    // InMemoryNQuadStore, seeded from seed.nq at startup: no real persistence yet, matches "start
-    // simple" for this stage - a Postgres-backed INQuadStore is a later swap, not decided here.
-    var nquadStore = new InMemoryNQuadStore();
+    // The N-Quad store is PostgreSQL-backed whenever ConnectionStrings:Postgres is configured (edits survive restarts
+    // and app-pool recycles), in a table of its own - never "n_quads", which the Foundation test suite purges and
+    // reseeds. NQuadStore:Provider = "Memory" opts out (offline development); NQuadStore:Table renames the table.
+    // seed.nq is applied once (a marker quad records it) and never merged again: re-inserting it on a later start would
+    // resurrect values the users have since edited. A seed change ships as a new, separately named seed file.
+    var postgresConnection = builder.Configuration.GetConnectionString("Postgres");
+    var useMemoryStore = string.Equals(builder.Configuration["NQuadStore:Provider"], "Memory", StringComparison.OrdinalIgnoreCase)
+        || string.IsNullOrWhiteSpace(postgresConnection);
+    INQuadStore nquadStore = useMemoryStore
+        ? new InMemoryNQuadStore()
+        : new NpgsqlNQuadStore(postgresConnection!, builder.Configuration["NQuadStore:Table"] ?? "app_n_quads");
+    if (nquadStore is INQuadStoreInitializer initializer)
+    {
+        await initializer.InitializeAsync();
+    }
+
     var nquadSeedPath = Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed.nq");
-    await nquadStore.SeedFromFileAsync(nquadSeedPath);
+    var seeded = await nquadStore.SeedOnceAsync(nquadSeedPath, "baseline");
+    Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
 

@@ -1,6 +1,6 @@
 # Decision: server-driven forms and grids (D-1)
 
-**Status:** direction agreed in chat 2026-10-11 (the Angular app is as light as possible; the server does the work; any layer replaceable without a refactor). The *contract shape* below is Claude's proposal for the human to review. Nothing here is built yet except the current `EntityFormModel`.
+**Status:** direction and contract accepted by the human 2026-10-11 after user testing; the three open questions are answered below. Only the current `EntityFormModel` is built so far.
 
 ## The pattern, mapped from MVPVM to Angular + ASP.NET Core
 
@@ -69,8 +69,28 @@ classDiagram
 4. **Role-based field filtering** at materialisation.
 5. Then the BlogEngine entity set (Posts, Pages, Categories, Tags, Comments, Settings) as schemas only, per the design page, with no new client code.
 
-## Open questions for the human
+## Decisions (2026-10-11)
 
-- Relationship syntax in the N-Quad schema (`ref:`/`refs:` field types, or an explicit relationship entity)?
-- Where do list-visible columns come from: a schema flag per field, or a separate "list view" definition (BlogEngine's grids show fewer columns than its edit forms)?
-- Menu/navigation as a server-supplied model now, or after Users and Roles work?
+### 1. Relationships in the N-Quad schema
+
+The human delegated this, ranking **query performance first, then standards, then complexity**. Decision: **a relationship is a plain quad between the two entities' subjects; there is no join entity unless the link itself carries data.**
+
+- **One-to-many (parent/child):** the pointer lives on the **child**: `(child, parent-predicate, parent)`. Page → parent Page, Comment → Post, Post → Blog. The children of P are one reverse lookup, `predicate = X AND object = P`. No multi-valued field grows on the parent, and moving a child is one superseded quad plus one new quad.
+- **Many-to-many without data** (Post ↔ Tag, Post ↔ Category): one quad per link, stored on the owning side; the other direction is the same reverse lookup.
+- **Many-to-many with data** (User ↔ Role *scoped to a Tenant or Org*, the design page's role model): an explicit association entity (`RoleAssignment`: User, Role, Scope), because the scope is data about the link. This is the only case that needs one.
+- **Schema syntax:** a field of type `ref:<Schema>` (one) or `refs:<Schema>` (many) holds the pointer; the *inverse* side (the parent's children) is a **computed** relation `children:<Schema>.<Field>` that is never stored. The presenter discovers parent/child structure from the schema, the way it discovers fields.
+- **Why this wins on the ranked criteria:** *Performance:* both directions are single index seeks, `(subject, predicate)` forward and `(predicate, left(object, 255))` reverse. Both indexes now exist (`NpgsqlNQuadStore`); a reified relationship entity costs an extra hop and two or three extra quads per link, on every read of the relation. *Standards:* a quad whose object is another subject is exactly an RDF object property, and it maps one to one onto BlogEngine's foreign-key columns (`ParentID` and the like), which the migration needs. *Complexity:* fewest moving parts; the association entity appears only where data demands it.
+- **Not yet decided:** the exact predicate IRIs, and how a computed `children:` relation declares its page size and sort.
+
+### 2. List-visible columns
+
+A **visibility flag on the schema field** (`isListVisible`, sent with every field of a grid's schema). A gear icon on a grid lists all available columns with their types and a toggle each; the toggle starts from the flag. Per-user overrides are a later, separate piece (a stored per-user column preference); the server-computed default comes first.
+
+### 3. Menu and navigation
+
+Deferred until the Users and Roles work is complete; it is driven by the Admin > Content > Pages work and is its own phase. Brief recorded from the human so it is not lost:
+
+- No hardcoded pages (BlogEngine hardcodes Home, Contact and Disclaimer). A page such as Contact is not shown unless it has been configured and validated; by default it is a dead page.
+- The Home link appears only if a Page is pinned as Home **or** at least one post exists (BlogEngine's existing logic).
+- A page's "show in list" flag puts it in the menu; its parent/child hierarchy produces menus and submenus; one page can be pinned as the Home page, otherwise the blog posts are the main page.
+- Before that phase starts, Claude reviews how BlogEngine's Page editor manages those fields (list visibility, hierarchy, pin as Home versus posts as the main page).
