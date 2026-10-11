@@ -173,6 +173,10 @@ try
 
     app.MapControllers();
 
+    // SmarterASP's free-SSL request (issue and renewal) requires the domain root to return HTTP 200.
+    app.MapGet("/", () => Results.Ok(new { service = "AiBlogResearch.WebApi", status = "ok" }))
+        .ExcludeFromDescription();
+
     app.Run();
 }
 catch (Exception ex)

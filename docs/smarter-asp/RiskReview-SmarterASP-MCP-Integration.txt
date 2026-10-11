@@ -1,0 +1,88 @@
+Vendor Security Review — Draft for Support/Security Team
+
+# Risk Review: SmarterASP MCP Integration
+
+A review of the standing capabilities granted to the SmarterASP-hosted MCP server (`mcp.site4now.net`) we use for AI-assisted administration of our hosting account, with specific questions for your team.
+
+Prepared by
+
+Account holder (hosting account a2cb58\_\*), with AI-assisted drafting
+
+Date
+
+2026-10-01
+
+Scope
+
+The `smarterasp` MCP endpoint only - not a general account security audit
+
+Project stage
+
+Early development - low production exposure today, which is exactly why we want this settled before it isn't
+
+## 1. Why we're asking
+
+We use an AI coding assistant that calls your official MCP server directly, with standing access to database credential rotation, FTP user management, DNS, email, SSL, and website configuration on our account. Before that capability grows alongside our project, we want written answers on how it's secured on your side - not because we suspect anything today, but because the blast radius of a mistake (ours or yours) scales with what the integration can touch.
+
+**Context worth naming directly:** this account experienced a platform-level security incident a few years ago that took down every domain we hosted with you and required a full rebuild from scratch. We stayed, on the assumption that the incident prompted real hardening on your side. This review is our way of asking you to confirm that, specifically for the newer MCP/API surface - not to relitigate the past.
+
+## 2. What the integration can currently do
+
+Capability groups exposed by the `smarterasp` MCP server, as we currently have it configured (authenticated via a single bearer API key):
+
+| Capability area | Representative actions | Risk if misused |
+| --- | --- | --- |
+| Database credentials | Create/delete DB users, rotate DB and DB-user passwords, create backups, restore backups | High |
+| FTP accounts | Create, update, delete FTP users | High |
+| Website secrets & config | Set/delete environment secrets, change app-pool runtime, enable/disable Web Deploy, rotate Web Deploy credentials | High |
+| DNS | Upsert/delete DNS records, attach/detach domains | High |
+| Email | Create/delete mailboxes and aliases, rotate credentials, change forwarding/SMTP settings | Medium |
+| SSL | Request certificates, check status | Medium |
+| Hosting lifecycle | Create/delete whole websites, start/stop/restart | High |
+| Support | Create/reply/close support tickets | Low |
+| Read-only status | Resource usage, logs, operation status, plan/account listings | Low |
+
+In practice, one leaked API key is equivalent to broad control-panel access across every one of these areas, for every site and database under the account.
+
+## 3. What we already do on our side
+
+- The API key is never typed into chat, logged, or committed - it's resolved from an OS-level secret store into a short-lived child process environment variable at the moment of use.
+- Credential rotation never passes the new plaintext through an AI-visible tool parameter; the human copies it directly from your panel into our own vault.
+- We route destructive file operations (FTP deletes, overwrites) through our own guarded script with dry-run defaults, local backups, and a folder/filename allowlist, rather than any raw delete capability the MCP server exposes.
+- Everything the MCP server returns is treated as untrusted data by our assistant, never as instructions - a standard precaution independent of how much we trust SmarterASP specifically.
+
+## 4. Questions for your team
+
+### Token scope & authentication
+
+1. Can an MCP API key be scoped to a subset of the capabilities above (e.g. database-only, read-only) rather than full-account access? If not today, is scoped access on your roadmap?
+2. Is the bearer token used by the MCP endpoint the same credential as portal/API access generally, or a distinct token type with its own lifecycle?
+3. What is the recommended rotation cadence for this token, and is there a self-service way to revoke/reissue it immediately if compromise is suspected?
+
+### Monitoring & auditability
+
+1. Do you log API/MCP calls per-key in a way we can review (who/what/when, not payload contents)?
+2. Is there anomaly detection on this account for bursts of credential rotations, DNS changes, or mass deletions originating from a single key?
+3. Would you notify us proactively if the key tied to our MCP integration were used from an unfamiliar IP range or in an unusual pattern?
+
+### Incident history & hardening
+
+1. In broad terms, what changed in your platform's architecture or monitoring after the incident referenced in section 1, specifically around containment - i.e., preventing one compromised credential or account from cascading across unrelated domains/tenants?
+2. Is tenant isolation between customer accounts stronger today than it was at that time?
+3. Is the MCP endpoint (`mcp.site4now.net`) operated directly by SmarterASP, or by a third-party integrator on your behalf?
+
+### Data handling
+
+1. Does the MCP server log full request/response bodies? If so, what's the retention period, and who can access those logs internally?
+2. When we call a credential-rotation action through the MCP server, does the new credential value ever get written to a log we don't control?
+
+### Business continuity
+
+1. What is the current backup/DR posture for hosted databases and sites, and is it architecturally independent of the single point of failure that caused the earlier incident?
+2. In the event of a platform-wide incident again, what is the realistic time-to-restore for a single customer account?
+
+## 5. What we'd like back
+
+Written answers to the questions above, at whatever level of detail you're comfortable sharing publicly (we understand some specifics may be confidential). Any existing documentation - a security whitepaper, SOC 2 summary, or pen-test attestation - would also help us close this out without further back-and-forth.
+
+Internal use: once this comes back, we'll decide whether a manual credential-rotation pass (Postgres, FTP, any M2M/API secrets touched by this review) is warranted before continuing active development.
