@@ -66,6 +66,16 @@ public sealed class HelloControllerTests : IClassFixture<HelloControllerTests.Te
     }
 
     [Fact]
+    public async Task Root_AnswersOk_OverPlainHttp_ForTheSslPreflight()
+    {
+        var client = _app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, BaseAddress = new Uri("http://localhost") });
+
+        var response = await client.GetAsync("/");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Response_CarriesAGeneratedCorrelationId_WhenTheCallerSendsNone()
     {
         var response = await _app.CreateClient().GetAsync("/api/hello");

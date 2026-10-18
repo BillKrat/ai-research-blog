@@ -15,7 +15,10 @@ builder.Services.AddCorrelationId();
 var app = builder.Build();
 
 app.UseCorrelationId();
-app.UseHttpsRedirection();
+// The root stays reachable over plain HTTP and answers 200: SmarterASP's free-SSL preflight requests it without following
+// redirects, so redirecting or 404ing "/" makes issue and renewal fail (same rule as AiBlogResearch.WebApi; OI-1).
+app.UseWhen(context => !context.Request.Path.Equals("/"), branch => branch.UseHttpsRedirection());
+app.MapGet("/", () => Results.Text("mcp ok")).ExcludeFromDescription();
 
 if (app.Environment.IsDevelopment())
 {
