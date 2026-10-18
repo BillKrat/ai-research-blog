@@ -30,6 +30,14 @@ describe('describeApiError', () => {
     expect(messages).toEqual(['Something went wrong on the server. Reference: abc-123.']);
   });
 
+  it('adds the trace id of the request to a 500', () => {
+    const messages = describeApiError(
+      failure(500, { title: 'Something went wrong.', errorId: 'abc-123', correlationId: 'trace-9' }),
+    );
+
+    expect(messages).toEqual(['Something went wrong. Reference: abc-123. Trace: trace-9.']);
+  });
+
   it('copes with a 500 that has no reference or body', () => {
     expect(describeApiError(failure(500))[0]).toContain('logged');
   });

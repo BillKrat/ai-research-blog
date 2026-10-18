@@ -5,6 +5,36 @@
     <p class="admin-exceptions__error" role="alert">{{ message }}</p>
   }
 
+  @if (signatures().length > 0) {
+    <h3>Kinds of failure</h3>
+    <p class="admin-exceptions__hint">Repeats of the same exception are grouped. Match a row below to a kind by its SignatureId.</p>
+    <table class="admin-exceptions__kinds">
+      <thead>
+        <tr>
+          <th>Seen</th>
+          <th>Type</th>
+          <th>Message</th>
+          <th>Where</th>
+          <th>Last seen</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (kind of signatures(); track kind.id) {
+          <tr>
+            <td class="admin-exceptions__count">{{ kind.occurrenceCount }}</td>
+            <td>{{ kind.exceptionType }}</td>
+            <td>{{ kind.messagePattern }}</td>
+            <td>{{ kind.topFrame }}</td>
+            <td>{{ kind.lastSeen }}</td>
+            <td>{{ kind.status }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <h3>Occurrences</h3>
+  }
+
   @if (isLoading()) {
     <p>Loading exceptions...</p>
   } @else if (model(); as grid) {

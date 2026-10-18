@@ -4,6 +4,18 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { EntityGridModel } from '../models/entity-form.model';
 
+/** One kind of failure: repeats of the same exception share it (the server groups them by signature). */
+export interface ExceptionSignatureSummary {
+  id: string;
+  exceptionType: string;
+  messagePattern: string;
+  topFrame: string;
+  firstSeen: string | null;
+  lastSeen: string | null;
+  occurrenceCount: number;
+  status: string;
+}
+
 /**
  * The administrator's exception log: the grid, purge, and the active count behind the header's warning icon. The count
  * is held here (a signal) so the header and the exceptions page share one value. Only administrators may call these
@@ -23,6 +35,11 @@ export class AdminExceptionsService implements OnDestroy {
 
   grid(): Observable<EntityGridModel> {
     return this.http.get<EntityGridModel>(this.baseUrl);
+  }
+
+  /** The kinds of failure seen (repeats grouped), most recently seen first. */
+  signatures(): Observable<ExceptionSignatureSummary[]> {
+    return this.http.get<ExceptionSignatureSummary[]>(`${this.baseUrl}/signatures`);
   }
 
   purge(): Observable<{ purged: number }> {

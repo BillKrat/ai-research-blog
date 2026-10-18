@@ -11,6 +11,9 @@ Guiding aim: keep eyes on the running system at every level (logs, exceptions, h
 - **Log and exception read tools for MCP.** Read-only tools on the MCP server: search logs by CorrelationId, list/inspect exceptions. Placeholder seam first.
 - **Health check detail.** `/api/health` reports each dependency (database, mcp) separately with timings.
 
+- **No silent errors audit (from the human, 2026-10-18).** Every failure must be visible to an administrator and traceable by CorrelationId. Known gaps: (1) the health probe swallows the mcp failure (logged as a warning, never reaches the exception log or the header icon); (2) browser-side errors (Angular `ErrorHandler`, failed requests with no response) are only in the console: add a small authenticated `POST /api/client-errors` that records them with the request's correlation id; (3) background work and startup failures (Serilog fatal log only); (4) failures that are handled and turned into a 4xx are not "exceptions" but may deserve a counter. Decide the rule (what counts as an exception worth the icon) before building; avoid flooding the log from health pollers.
+- **Admin dashboard.** Move the exceptions area onto a Dashboard (already planned) with signatures counted per day, acknowledge/fixed actions on a signature (Status beyond `New`), and links from a signature to its occurrences.
+
 ## Features
 
 - Form-contract stage 1 to 3, password-change caption and "Update password", Admin menu for the exception icon, per-field messages, targeted schema read at startup (see `AGENTS.md` Remaining).

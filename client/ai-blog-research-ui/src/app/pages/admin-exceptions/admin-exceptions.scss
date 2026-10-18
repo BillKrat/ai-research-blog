@@ -16,3 +16,27 @@
     margin-top: 1.5rem;
   }
 }
+
+.admin-exceptions__hint {
+  margin: 0 0 0.5rem;
+  opacity: 0.75;
+}
+
+.admin-exceptions__kinds {
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  width: 100%;
+
+  th,
+  td {
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+  }
+}
+
+.admin-exceptions__count {
+  font-weight: 600;
+  text-align: right;
+}

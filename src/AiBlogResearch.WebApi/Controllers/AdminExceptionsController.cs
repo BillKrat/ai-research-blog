@@ -17,8 +17,13 @@ public sealed record PurgeResult(int Purged);
 [ApiController]
 [Route("api/admin/exceptions")]
 [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
-public sealed class AdminExceptionsController(IExceptionLogPresenter presenter) : ControllerBase
+public sealed class AdminExceptionsController(IExceptionLogPresenter presenter, IExceptionSignatureBll signatures) : ControllerBase
 {
+    /// <summary>The kinds of failure seen (grouped repeats), most recently seen first, each with how often.</summary>
+    [HttpGet("signatures")]
+    public async Task<ActionResult<IReadOnlyList<ExceptionSignatureSummary>>> Signatures(CancellationToken cancellationToken) =>
+        Ok(await signatures.ListSummariesAsync(cancellationToken));
+
     [HttpGet]
     public async Task<ActionResult<EntityGridModel>> Grid(CancellationToken cancellationToken) =>
         Ok(await presenter.GetGridAsync(cancellationToken));

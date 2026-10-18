@@ -37,9 +37,16 @@ export function describeApiError(error: unknown, fallback = 'Something went wron
 
     default: {
       if (error.status >= 500) {
-        const problem = body && typeof body === 'object' ? (body as { title?: string; errorId?: string | null }) : undefined;
+        const problem =
+          body && typeof body === 'object'
+            ? (body as { title?: string; errorId?: string | null; correlationId?: string | null })
+            : undefined;
         const title = problem?.title ?? 'Something went wrong on the server. It has been logged.';
-        return [problem?.errorId ? `${title} Reference: ${problem.errorId}.` : title];
+        // The trace id finds every log line of the request, even when the exception itself could not be stored.
+        const traceId = problem?.correlationId ?? error.headers?.get('X-Correlation-Id');
+        const reference = problem?.errorId ? ` Reference: ${problem.errorId}.` : '';
+        const trace = traceId ? ` Trace: ${traceId}.` : '';
+        return [`${title}${reference}${trace}`];
       }
       return [fallback];
     }

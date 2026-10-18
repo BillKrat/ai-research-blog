@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { EntityGrid } from '../../components/entity-grid/entity-grid';
 import { describeApiError } from '../../models/api-error';
 import { EntityGridModel } from '../../models/entity-form.model';
-import { AdminExceptionsService } from '../../services/admin-exceptions.service';
+import { AdminExceptionsService, ExceptionSignatureSummary } from '../../services/admin-exceptions.service';
 
 /**
  * The administrator's exception log: a grid of the active exceptions (newest first), [OK] to leave, [Purge] to retire
@@ -24,6 +24,7 @@ export class AdminExceptions implements OnInit {
   protected readonly isLoading = signal(true);
   protected readonly errors = signal<string[]>([]);
   protected readonly isPurging = signal(false);
+  protected readonly signatures = signal<ExceptionSignatureSummary[]>([]);
 
   ngOnInit(): void {
     this.load();
@@ -59,10 +60,16 @@ export class AdminExceptions implements OnInit {
         this.isLoading.set(false);
         this.service.refresh();
       },
+      // (signatures load separately below so a failure there never hides the grid)
       error: (error) => {
         this.isLoading.set(false);
         this.errors.set(describeApiError(error, "Couldn't load the exceptions."));
       },
+    });
+
+    this.service.signatures().subscribe({
+      next: (signatures) => this.signatures.set(signatures),
+      error: (error) => this.errors.update((messages) => [...messages, ...describeApiError(error, "Couldn't load the exception kinds.")]),
     });
   }
 }
