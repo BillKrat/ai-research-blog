@@ -34,6 +34,12 @@ public static class UnhandledExceptionHandler
 
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         context.Response.ContentType = "application/problem+json";
-        await context.Response.WriteAsJsonAsync(new { status = 500, title = FriendlyTitle, errorId });
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = 500,
+            title = FriendlyTitle,
+            errorId,
+            correlationId = Adventures.WebApi.CorrelationIdMiddleware.Get(context),
+        });
     }
 }

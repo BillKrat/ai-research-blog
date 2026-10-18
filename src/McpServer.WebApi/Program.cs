@@ -1,4 +1,5 @@
 using Adventures.Security;
+using Adventures.WebApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,8 +10,11 @@ builder.Services.AddControllers();
 builder.Services.AddSharedJwtAuthentication(builder.Configuration);
 builder.Services.AddScopeAuthorization("mcp.hello");
 
+builder.Services.AddCorrelationId();
+
 var app = builder.Build();
 
+app.UseCorrelationId();
 app.UseHttpsRedirection();
 
 if (app.Environment.IsDevelopment())
@@ -27,7 +31,12 @@ else
     {
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         context.Response.ContentType = "application/problem+json";
-        await context.Response.WriteAsJsonAsync(new { status = 500, title = "An unexpected error occurred." });
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = 500,
+            title = "An unexpected error occurred.",
+            correlationId = CorrelationIdMiddleware.Get(context),
+        });
     }));
 }
 

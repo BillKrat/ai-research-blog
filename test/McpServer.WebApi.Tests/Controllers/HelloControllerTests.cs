@@ -54,6 +54,26 @@ public sealed class HelloControllerTests : IClassFixture<HelloControllerTests.Te
     }
 
     [Fact]
+    public async Task Response_EchoesTheCallersCorrelationId_EvenWhenRejected()
+    {
+        var client = _app.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Correlation-Id", "trace-from-the-api-42");
+
+        var response = await client.GetAsync("/api/hello");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal("trace-from-the-api-42", response.Headers.GetValues("X-Correlation-Id").Single());
+    }
+
+    [Fact]
+    public async Task Response_CarriesAGeneratedCorrelationId_WhenTheCallerSendsNone()
+    {
+        var response = await _app.CreateClient().GetAsync("/api/hello");
+
+        Assert.False(string.IsNullOrWhiteSpace(response.Headers.GetValues("X-Correlation-Id").Single()));
+    }
+
+    [Fact]
     public async Task Get_ReturnsUnauthorized_WhenNoTokenIsSupplied()
     {
         var client = _app.CreateClient();

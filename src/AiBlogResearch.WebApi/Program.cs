@@ -4,6 +4,7 @@ using Adventures.Entities;
 using Adventures.Identity;
 using Adventures.Ioc.Extensions;
 using Adventures.Security;
+using Adventures.WebApi;
 using AiBlogResearch.WebApi;
 using Microsoft.AspNetCore.Diagnostics;
 using Serilog;
@@ -22,12 +23,23 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    // Every line carries the request's CorrelationId (pushed by the middleware below into the LogContext). The text log is
+    // for people; the compact JSON sibling (one JSON object per line, "CorrelationId" a top-level field) is for tools - an
+    // MCP diagnostics tool filters it by id without parsing text.
+    const string LogTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{CorrelationId}] {Message:lj}{NewLine}{Exception}";
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
-        .WriteTo.Console()
+        .Enrich.FromLogContext()
+        .WriteTo.Console(outputTemplate: LogTemplate)
         .WriteTo.File(
             Path.Combine(AppContext.BaseDirectory, "logs", "webapi-.log"),
+            outputTemplate: LogTemplate,
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 14)
+        .WriteTo.File(
+            new Serilog.Formatting.Compact.RenderedCompactJsonFormatter(),
+            Path.Combine(AppContext.BaseDirectory, "logs", "webapi-.json.log"),
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: 14));
 
@@ -44,6 +56,7 @@ try
         {
             policy.WithOrigins(allowedOrigins)
                 .AllowAnyHeader()
+                .WithExposedHeaders(CorrelationIdMiddleware.HeaderName)
                 .AllowAnyMethod();
         });
     });
@@ -71,7 +84,8 @@ try
             ?? throw new InvalidOperationException("McpServer:BaseUrl is not configured.");
         client.BaseAddress = new Uri(baseUrl);
         client.Timeout = TimeSpan.FromSeconds(10);
-    });
+    }).AddCorrelationIdHandler();
+    builder.Services.AddCorrelationId();
 
     // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available to
     // AuthController, which uses it for the real login (see
@@ -161,6 +175,15 @@ try
 
     var app = builder.Build();
 
+    // First in the pipeline: everything after it (request logging, the exception handler, controllers) logs under the id.
+    app.UseCorrelationId();
+    app.Use(async (context, next) =>
+    {
+        using (Serilog.Context.LogContext.PushProperty(CorrelationIdMiddleware.LogPropertyName, CorrelationIdMiddleware.Get(context)))
+        {
+            await next(context);
+        }
+    });
     app.UseSerilogRequestLogging();
 
     // Configure the HTTP request pipeline.
