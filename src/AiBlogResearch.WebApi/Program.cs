@@ -126,6 +126,8 @@ try
     // Named, once-only seeds added after the baseline (each ships as its own file, never merged into seed.nq).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-002-exception-log.nq"), EntityConstants.ExceptionLog.SeedName);
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-003-exception-signature.nq"), EntityConstants.ExceptionLog.SignatureSeedName);
     Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
@@ -156,6 +158,14 @@ try
         EntityConstants.ExceptionLog.TypeIri,
         EntityConstants.ExceptionLog.DefaultGraph,
         schema => new ExceptionLogEntry(schema),
+        CurrentActor);
+
+    builder.Services.AddNQuadEntityRepository(
+        SchemaDal.Load(userQuads, EntityConstants.ExceptionSignatureEntity.SchemaIri),
+        EntityConstants.ExceptionSignatureEntity.BaseIri,
+        EntityConstants.ExceptionSignatureEntity.TypeIri,
+        EntityConstants.ExceptionSignatureEntity.DefaultGraph,
+        schema => new ExceptionSignatureEntry(schema),
         CurrentActor);
 
     builder.Services.AddNQuadEntityRepository(

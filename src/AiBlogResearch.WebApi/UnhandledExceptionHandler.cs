@@ -28,7 +28,8 @@ public static class UnhandledExceptionHandler
             var exceptionLog = context.RequestServices.GetService<IExceptionLogBll>();
             if (exceptionLog is not null)
             {
-                errorId = await exceptionLog.RecordAsync(exception, request, context.User.Identity?.Name);
+                errorId = await exceptionLog.RecordAsync(
+                    exception, request, context.User.Identity?.Name, Adventures.WebApi.CorrelationIdMiddleware.Get(context));
             }
         }
 

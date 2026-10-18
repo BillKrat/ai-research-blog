@@ -15,8 +15,11 @@ public sealed class UnhandledExceptionHandlerTests
     {
         public List<(Exception Exception, string? Request, string? UserName)> Recorded { get; } = [];
 
-        public Task<string?> RecordAsync(Exception exception, string? request, string? userName, CancellationToken cancellationToken = default)
+        public string? LastCorrelationId { get; private set; }
+
+        public Task<string?> RecordAsync(Exception exception, string? request, string? userName, string? correlationId = null, CancellationToken cancellationToken = default)
         {
+            LastCorrelationId = correlationId;
             Recorded.Add((exception, request, userName));
             return Task.FromResult(idToReturn);
         }
@@ -96,6 +99,19 @@ public sealed class UnhandledExceptionHandlerTests
         Assert.Equal("Admin", recorded.UserName);
         Assert.Equal(500, context.Response.StatusCode);
         Assert.Equal("abc-123", ReadBody(body).GetProperty("errorId").GetString());
+    }
+
+    [Fact]
+    public async Task HandleAsync_PassesTheCorrelationIdToTheLog_AndReturnsItToTheClient()
+    {
+        var log = new RecordingExceptionLog("abc-123");
+        var (context, body) = NewContext(new InvalidOperationException("boom"), log);
+        context.Items[Adventures.WebApi.CorrelationIdMiddleware.ItemsKey] = "corr-77";
+
+        await UnhandledExceptionHandler.HandleAsync(context);
+
+        Assert.Equal("corr-77", log.LastCorrelationId);
+        Assert.Equal("corr-77", ReadBody(body).GetProperty("correlationId").GetString());
     }
 
     [Fact]
