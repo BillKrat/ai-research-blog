@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Adventures.Entities;
 using Adventures.Security;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +11,24 @@ namespace AiBlogResearch.WebApi.Controllers;
 public class HealthController(
     IJwtTokenService tokenService,
     IHttpClientFactory httpClientFactory,
-    ILogger<HealthController> logger) : ControllerBase
+    ILogger<HealthController> logger,
+    IExceptionLogBll? exceptionLog = null) : ControllerBase
 {
+    /// <summary>A failing dependency reaches the exception log (and the admin icon) at most once per signature per hour.</summary>
+    internal static readonly TimeSpan ProbeFailureWindow = TimeSpan.FromHours(1);
+
+    private async Task RecordProbeFailureAsync(Exception failure, CancellationToken cancellationToken)
+    {
+        if (exceptionLog is null)
+        {
+            return;
+        }
+
+        await exceptionLog.RecordThrottledAsync(
+            failure, "health probe: mcp", null,
+            HttpContext is null ? null : Adventures.WebApi.CorrelationIdMiddleware.Get(HttpContext), ProbeFailureWindow, cancellationToken);
+    }
+
     [HttpGet]
     public async Task<ActionResult<HealthResponse>> Get(CancellationToken cancellationToken)
     {
@@ -48,6 +65,8 @@ public class HealthController(
                     (int)response.StatusCode,
                     response.ReasonPhrase,
                     body);
+                await RecordProbeFailureAsync(
+                    new HttpRequestException($"mcp /api/hello returned {(int)response.StatusCode} {response.ReasonPhrase}"), cancellationToken);
                 return (null, $"http_{(int)response.StatusCode}");
             }
 
@@ -59,6 +78,7 @@ public class HealthController(
             // Broad catch deliberately: this is a downstream health probe, not core request
             // handling - no exception type here should ever turn /api/health itself into a 500.
             logger.LogWarning(ex, "Failed to reach mcp.global-webnet.com for the health check's mcp message.");
+            await RecordProbeFailureAsync(ex, CancellationToken.None);
             return (null, $"exception_{ex.GetType().Name}");
         }
     }

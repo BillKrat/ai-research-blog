@@ -11,8 +11,17 @@ namespace AiBlogResearch.WebApi.Tests;
 
 public sealed class UnhandledExceptionHandlerTests
 {
-    private sealed class RecordingExceptionLog(string? idToReturn) : IExceptionLogBll
+    internal sealed class RecordingExceptionLog(string? idToReturn) : IExceptionLogBll
     {
+        public List<(Exception Exception, string? Request, string? CorrelationId, TimeSpan Window)> Throttled { get; } = [];
+
+        public Task<string?> RecordThrottledAsync(
+            Exception exception, string? request, string? userName, string? correlationId, TimeSpan window, CancellationToken cancellationToken = default)
+        {
+            Throttled.Add((exception, request, correlationId, window));
+            return Task.FromResult(idToReturn);
+        }
+
         public List<(Exception Exception, string? Request, string? UserName)> Recorded { get; } = [];
 
         public string? LastCorrelationId { get; private set; }

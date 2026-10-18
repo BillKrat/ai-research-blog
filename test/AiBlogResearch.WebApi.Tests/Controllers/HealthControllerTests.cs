@@ -92,4 +92,33 @@ public class HealthControllerTests
         Assert.Null(response.McpMessage);
         Assert.Equal("http_401", response.McpStatus);
     }
+
+    [Fact]
+    public async Task Get_RecordsAnUnreachableMcpInTheExceptionLog_ThrottledToOncePerHour()
+    {
+        var log = new UnhandledExceptionHandlerTests.RecordingExceptionLog("id-1");
+        var handler = new FakeHttpMessageHandler(_ => throw new HttpRequestException("simulated network failure"));
+        var controller = new HealthController(BuildTokenService(), new FakeHttpClientFactory(handler), NullLogger<HealthController>.Instance, log);
+
+        await controller.Get(CancellationToken.None);
+
+        var recorded = Assert.Single(log.Throttled);
+        Assert.Equal("health probe: mcp", recorded.Request);
+        Assert.Equal(TimeSpan.FromHours(1), recorded.Window);
+    }
+
+    [Fact]
+    public async Task Get_RecordsAnMcpErrorStatus_ButNotASuccess()
+    {
+        var log = new UnhandledExceptionHandlerTests.RecordingExceptionLog("id-1");
+        var failing = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        await new HealthController(BuildTokenService(), new FakeHttpClientFactory(failing), NullLogger<HealthController>.Instance, log)
+            .Get(CancellationToken.None);
+        Assert.Single(log.Throttled);
+
+        var healthy = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { message = "hi" }) });
+        await new HealthController(BuildTokenService(), new FakeHttpClientFactory(healthy), NullLogger<HealthController>.Instance, log)
+            .Get(CancellationToken.None);
+        Assert.Single(log.Throttled);
+    }
 }
