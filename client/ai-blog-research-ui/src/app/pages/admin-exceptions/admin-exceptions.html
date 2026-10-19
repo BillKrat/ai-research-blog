@@ -46,7 +46,7 @@
     @if (grid.rows.length === 0) {
       <p>{{ includePurged() ? 'No exceptions recorded.' : 'No active exceptions.' }}</p>
     } @else {
-      <app-entity-grid [model]="grid" />
+      <app-entity-grid [model]="grid" [rowTools]="rowTools" />
     }
   }
 
@@ -63,3 +63,44 @@
     </button>
   </div>
 </section>
+
+<ng-template #rowTools let-row>
+  @let id = row.values['CorrelationId'] ?? '';
+  <div class="admin-exceptions__diagnose">
+    @if (id) {
+      <button mat-stroked-button type="button" (click)="diagnose(id)" [disabled]="triaging()[id]">
+        {{ triaging()[id] ? 'Diagnosing...' : 'Diagnose' }}
+      </button>
+    } @else {
+      <span class="admin-exceptions__hint">No correlation id on this entry (recorded before ids existed).</span>
+    }
+
+    @if (triage()[id]; as result) {
+      <section class="triage" aria-live="polite">
+        <p class="triage__verdict">
+          <span class="triage__badge triage__badge--{{ result.verdict.toLowerCase().split(' ')[0] }}">{{ result.verdict }}</span>
+          {{ result.summary }}
+        </p>
+        <ul class="triage__findings">
+          @for (finding of result.findings; track $index) {
+            <li class="triage__finding triage__finding--{{ finding.severity }}">
+              <strong>{{ finding.title }}:</strong> {{ finding.detail }}
+            </li>
+          }
+        </ul>
+        @if (result.nextSteps.length > 0) {
+          <h4>Next</h4>
+          <ul>
+            @for (step of result.nextSteps; track $index) {
+              <li>{{ step }}</li>
+            }
+          </ul>
+        }
+        <h4>Hand to Claude</h4>
+        <p class="admin-exceptions__hint">Run this from the workspace root; Claude then reads the same evidence through the MCP diagnostics tool.</p>
+        <code class="triage__command">{{ result.handOffCommand }}</code>
+        <button mat-button type="button" (click)="copyHandOff(result)">{{ copied() === result.correlationId ? 'Copied' : 'Copy command' }}</button>
+      </section>
+    }
+  </div>
+</ng-template>

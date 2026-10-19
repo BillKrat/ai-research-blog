@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { EntityGrid } from '../../components/entity-grid/entity-grid';
 import { describeApiError } from '../../models/api-error';
 import { EntityGridModel } from '../../models/entity-form.model';
-import { AdminExceptionsService, ExceptionSignatureSummary } from '../../services/admin-exceptions.service';
+import { AdminExceptionsService, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
 
 /**
  * The administrator's exception log: a grid of the active exceptions (newest first), [OK] to leave, [Purge] to retire
@@ -25,6 +25,40 @@ export class AdminExceptions implements OnInit {
   protected readonly errors = signal<string[]>([]);
   protected readonly isPurging = signal(false);
   protected readonly includePurged = signal(false);
+
+  /** Triage answers by correlation id, and which ids are being triaged right now. */
+  protected readonly triage = signal<Record<string, TriageResult>>({});
+  protected readonly triaging = signal<Record<string, boolean>>({});
+  protected readonly copied = signal<string | null>(null);
+
+  /** Runs the read-only triage for one request and keeps the answer under its row. */
+  diagnose(correlationId: string): void {
+    if (!correlationId || this.triaging()[correlationId]) {
+      return;
+    }
+
+    this.triaging.update((state) => ({ ...state, [correlationId]: true }));
+    this.service.triage(correlationId).subscribe({
+      next: (result) => {
+        this.triage.update((state) => ({ ...state, [correlationId]: result }));
+        this.triaging.update((state) => ({ ...state, [correlationId]: false }));
+      },
+      error: (error) => {
+        this.triaging.update((state) => ({ ...state, [correlationId]: false }));
+        this.errors.set(describeApiError(error, "Couldn't run the diagnosis."));
+      },
+    });
+  }
+
+  /** Copies the command that hands this request to Claude (the console of whoever runs it needs the vault, not this page). */
+  async copyHandOff(result: TriageResult): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(result.handOffCommand);
+      this.copied.set(result.correlationId);
+    } catch {
+      this.copied.set(null);
+    }
+  }
   protected readonly signatures = signal<ExceptionSignatureSummary[]>([]);
 
   ngOnInit(): void {

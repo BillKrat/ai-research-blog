@@ -47,3 +47,66 @@
   gap: 0.4rem;
   margin: 0 0 0.75rem;
 }
+
+.admin-exceptions__diagnose {
+  margin-top: 0.75rem;
+}
+
+.triage {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.5rem;
+
+  h4 {
+    margin: 0.75rem 0 0.25rem;
+  }
+
+  &__verdict {
+    margin: 0 0 0.5rem;
+  }
+
+  &__badge {
+    padding: 0.1rem 0.5rem;
+    margin-right: 0.4rem;
+    border-radius: 1rem;
+    font-weight: 600;
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+
+    &--recovered {
+      background: #1b5e20;
+      color: #fff;
+    }
+
+    &--ongoing,
+    &--needs {
+      background: #f9a825;
+      color: #1a1a1a;
+    }
+  }
+
+  &__findings {
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+
+  &__finding--problem {
+    color: var(--mat-sys-error);
+  }
+
+  &__finding--warning strong {
+    color: #f9a825;
+  }
+
+  &__command {
+    display: block;
+    margin: 0.25rem 0;
+    padding: 0.5rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    background: var(--mat-sys-surface-container-high);
+    font-size: 0.8rem;
+  }
+}

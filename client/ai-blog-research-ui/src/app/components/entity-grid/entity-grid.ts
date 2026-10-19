@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, Input, TemplateRef } from '@angular/core';
 import { EntityGridModel } from '../../models/entity-form.model';
 
 /**
@@ -9,11 +10,15 @@ import { EntityGridModel } from '../../models/entity-form.model';
  */
 @Component({
   selector: 'app-entity-grid',
+  imports: [NgTemplateOutlet],
   templateUrl: './entity-grid.html',
   styleUrl: './entity-grid.scss',
 })
 export class EntityGrid {
   @Input({ required: true }) model!: EntityGridModel;
+
+  /** Optional extra content under a row's details (an action button, a result panel); gets the row as its context. */
+  @Input() rowTools?: TemplateRef<{ $implicit: EntityGridModel['rows'][number] }>;
 
   protected expandedId: string | null = null;
 

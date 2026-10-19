@@ -92,6 +92,7 @@ try
     .AddCorrelationIdHandler();
 #pragma warning restore EXTEXP0001
     builder.Services.AddCorrelationId();
+    builder.Services.AddScoped<IDependencyProbes, DependencyProbes>();
 
     // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available to
     // AuthController, which uses it for the real login (see

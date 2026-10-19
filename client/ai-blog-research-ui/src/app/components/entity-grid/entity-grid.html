@@ -34,6 +34,9 @@
                 <dd>{{ cell(row, field.name) }}</dd>
               }
             </dl>
+            @if (rowTools) {
+              <ng-container [ngTemplateOutlet]="rowTools" [ngTemplateOutletContext]="{ $implicit: row }" />
+            }
           </td>
         </tr>
       }

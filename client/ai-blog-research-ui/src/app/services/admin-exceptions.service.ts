@@ -4,6 +4,22 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { EntityGridModel } from '../models/entity-form.model';
 
+export interface TriageFinding {
+  title: string;
+  detail: string;
+  severity: 'info' | 'warning' | 'problem' | string;
+}
+
+/** The Diagnose answer for one request: a verdict, the findings behind it, what to do next, and the command that hands it to Claude. */
+export interface TriageResult {
+  correlationId: string;
+  verdict: string;
+  summary: string;
+  findings: TriageFinding[];
+  nextSteps: string[];
+  handOffCommand: string;
+}
+
 /** One kind of failure: repeats of the same exception share it (the server groups them by signature). */
 export interface ExceptionSignatureSummary {
   id: string;
@@ -49,6 +65,11 @@ export class AdminExceptionsService implements OnDestroy {
   /** The kinds of failure seen (repeats grouped), most recently seen first. */
   signatures(): Observable<ExceptionSignatureSummary[]> {
     return this.http.get<ExceptionSignatureSummary[]>(`${this.baseUrl}/signatures`);
+  }
+
+  /** Runs the server's triage of one request (read-only); the id is the CorrelationId shown in the grid. */
+  triage(correlationId: string): Observable<TriageResult> {
+    return this.http.get<TriageResult>(`${environment.apiUrl}/api/admin/diagnostics/${encodeURIComponent(correlationId)}/triage`);
   }
 
   purge(): Observable<{ purged: number }> {

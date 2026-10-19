@@ -29,8 +29,24 @@ internal static class DiagnosticsLookup
 [ApiController]
 [Route("api/admin/diagnostics")]
 [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
-public sealed class AdminDiagnosticsController(IDiagnosticsReader reader) : ControllerBase
+public sealed class AdminDiagnosticsController(IDiagnosticsReader reader, IDependencyProbes probes) : ControllerBase
 {
+    /// <summary>
+    /// The Diagnose button: triage of one request by its CorrelationId (what happened, whether it is still happening
+    /// through a live check, what the log says, what to do next, and the command that hands it to Claude). Read-only.
+    /// </summary>
+    [HttpGet("{correlationId}/triage")]
+    public async Task<ActionResult<TriageResult>> TriageRequest(string correlationId, CancellationToken cancellationToken)
+    {
+        if (!Adventures.WebApi.CorrelationIdMiddleware.IsWellFormed(correlationId))
+        {
+            return BadRequest(DiagnosticsLookup.BadIdMessage);
+        }
+
+        var found = await DiagnosticsLookup.ForRequestAsync(reader, correlationId, cancellationToken);
+        return Ok(await Triage.RunAsync(found.Report, found.LogLines, probes, DateTimeOffset.UtcNow, cancellationToken));
+    }
+
     [HttpGet("{correlationId}")]
     public async Task<ActionResult<RequestDiagnostics>> ForRequest(string correlationId, CancellationToken cancellationToken) =>
         Adventures.WebApi.CorrelationIdMiddleware.IsWellFormed(correlationId)

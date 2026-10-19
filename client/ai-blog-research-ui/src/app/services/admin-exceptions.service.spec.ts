@@ -39,4 +39,12 @@ describe('AdminExceptionsService', () => {
     service.grid(true).subscribe();
     expect(controller.expectOne((r) => r.url.endsWith('/api/admin/exceptions')).request.params.get('includePurged')).toBe('true');
   });
+
+  it('asks the server to triage one request by its correlation id', () => {
+    service.triage('abc-123').subscribe((result) => expect(result.verdict).toBe('Recovered'));
+
+    const request = controller.expectOne((r) => r.url.endsWith('/api/admin/diagnostics/abc-123/triage'));
+    expect(request.request.method).toBe('GET');
+    request.flush({ correlationId: 'abc-123', verdict: 'Recovered', summary: '', findings: [], nextSteps: [], handOffCommand: '' });
+  });
 });
