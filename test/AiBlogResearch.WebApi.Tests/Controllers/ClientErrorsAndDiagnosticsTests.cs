@@ -65,16 +65,19 @@ public sealed class ClientErrorsAndDiagnosticsTests
         var directory = Directory.CreateTempSubdirectory().FullName;
         try
         {
-            await File.WriteAllLinesAsync(Path.Combine(directory, "webapi-20261017.json.log"),
+            await File.WriteAllLinesAsync(Path.Combine(directory, "webapi-json-20261017.log"),
                 ["""{"@m":"old a","CorrelationId":"req-1"}""", """{"@m":"other","CorrelationId":"req-2"}"""]);
-            await File.WriteAllLinesAsync(Path.Combine(directory, "webapi-20261018.json.log"),
+            // the spelling Serilog produced for the first JSON log (webapi-.json.log) must keep being found
+            await File.WriteAllLinesAsync(Path.Combine(directory, "webapi-.json20261016.log"), ["""{"@m":"first spelling","CorrelationId":"req-1"}"""]);
+            await File.WriteAllLinesAsync(Path.Combine(directory, "webapi-json-20261018.log"),
                 ["""{"@m":"new a","CorrelationId":"req-1"}""", """{"@m":"none"}"""]);
 
             var lines = await LogSearch.FindLinesAsync(directory, "req-1");
 
-            Assert.Equal(2, lines.Count);
-            Assert.Contains("old a", lines[0]);
-            Assert.Contains("new a", lines[1]);
+            Assert.Equal(3, lines.Count);
+            Assert.Contains("first spelling", lines[0]);
+            Assert.Contains("old a", lines[1]);
+            Assert.Contains("new a", lines[2]);
             Assert.Empty(await LogSearch.FindLinesAsync(directory, "bad id!"));
             Assert.Empty(await LogSearch.FindLinesAsync(Path.Combine(directory, "missing"), "req-1"));
         }

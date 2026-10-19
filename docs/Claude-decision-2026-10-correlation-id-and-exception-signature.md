@@ -17,7 +17,7 @@ Goal: from one id, a human or an AI (through MCP) can pull every log line and ex
 - pushes `CorrelationId` into the Serilog `LogContext` so every line of the request carries it;
 - echoes `X-Correlation-Id` on the response, including error responses.
 
-**2. Logs show it.** The file and console output templates gain `{CorrelationId}`; the file sink also gets a compact JSON sibling (`webapi-.json.log`) so an MCP tool can filter by id without parsing text.
+**2. Logs show it.** The file and console output templates gain `{CorrelationId}`; the file sink also gets a compact JSON sibling (`webapi-json-<date>.log`) so an MCP tool can filter by id without parsing text.
 
 **3. Outbound calls carry it.** The `McpServer` HttpClient already propagates `traceparent`; add `X-Correlation-Id` too (a small delegating handler) so a non-OTel receiver is covered. `McpServer.WebApi` gets the same middleware.
 

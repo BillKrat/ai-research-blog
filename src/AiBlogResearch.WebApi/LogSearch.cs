@@ -3,7 +3,7 @@ using Adventures.WebApi;
 namespace AiBlogResearch.WebApi;
 
 /// <summary>
-/// Finds the log lines of one request in the compact-JSON log files (<c>webapi-*.json.log</c>), newest file first, so an
+/// Finds the log lines of one request in the compact-JSON log files (<c>webapi-json-*.log</c>; the pattern also accepts the earlier <c>webapi-.json*.log</c> spelling), newest file first, so an
 /// administrator or an MCP tool can read what a request did from its CorrelationId alone. Read-only; the id must be
 /// well formed (it is matched as text, never interpreted).
 /// </summary>
@@ -21,7 +21,7 @@ public static class LogSearch
 
         var needle = $"\"{CorrelationIdMiddleware.LogPropertyName}\":\"{correlationId}\"";
         var found = new List<string>();
-        foreach (var file in new DirectoryInfo(logDirectory).GetFiles("webapi-*.json.log").OrderByDescending(f => f.Name))
+        foreach (var file in new DirectoryInfo(logDirectory).GetFiles("webapi-*json*.log").OrderByDescending(f => f.Name))
         {
             // Serilog keeps today's file open for writing, so share it.
             await using var stream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);

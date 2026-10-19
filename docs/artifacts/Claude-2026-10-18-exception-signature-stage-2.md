@@ -30,7 +30,7 @@ SmarterASP lists `mcp.global-webnet.com` as `sslStatus: not_configured`. I tried
 ## How to test (about 5 minutes)
 
 1. Run the app, sign in as Admin, call `/api/dev/throw` twice (different calls, same failure). Open the Exceptions screen: both rows exist; with the grid's columns you can see `SignatureId` (same on both) and `CorrelationId` (different).
-2. Look at the JSON log `logs/webapi-<date>.json.log`: the two request lines and exception lines share the matching `CorrelationId`.
+2. Look at the JSON log `logs/webapi-json-<date>.log`: the two request lines and exception lines share the matching `CorrelationId`.
 3. The signature itself has no screen yet (stage 3); it is in the store (`ExceptionSignature` rows, `OccurrenceCount` 2).
 
 ## Defaults I chose

@@ -39,7 +39,7 @@ try
             retainedFileCountLimit: 14)
         .WriteTo.File(
             new Serilog.Formatting.Compact.RenderedCompactJsonFormatter(),
-            Path.Combine(AppContext.BaseDirectory, "logs", "webapi-.json.log"),
+            Path.Combine(AppContext.BaseDirectory, "logs", "webapi-json-.log"),
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: 14));
 

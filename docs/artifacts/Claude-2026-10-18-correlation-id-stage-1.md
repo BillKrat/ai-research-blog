@@ -6,7 +6,7 @@ Plan: [Claude-decision-2026-10-correlation-id-and-exception-signature.md](../Cla
 
 - `Adventures.WebApi` (Foundation): `CorrelationIdMiddleware`, `CorrelationIdHandler`, `AddCorrelationId` / `UseCorrelationId` / `AddCorrelationIdHandler`. 20 tests in `Adventures.WebApi.Tests` pass.
 - The id is the caller's `X-Correlation-Id` if well formed (letters, digits, `-`, `_`, at most 64), else the OpenTelemetry trace id, else a new GUID. It goes into: every log line, the request's Activity tag `correlation.id`, `HttpContext.Items`, the response header (also on 401/500), and the 500 body (`correlationId`).
-- WebApi: middleware first in the pipeline; console and text log lines now read `[LEVEL] [CorrelationId] message`; a second compact-JSON log (`logs/webapi-.json.log`, one object per line) for tools; the API-to-MCP call forwards the id; CORS exposes the header to Angular.
+- WebApi: middleware first in the pipeline; console and text log lines now read `[LEVEL] [CorrelationId] message`; a second compact-JSON log (`logs/webapi-json-<date>.log`, one object per line) for tools; the API-to-MCP call forwards the id; CORS exposes the header to Angular.
 - McpServer: same middleware, id in its error body.
 - Exception log, signature grouping and Angular are NOT in this stage (stages 2 and 3).
 
