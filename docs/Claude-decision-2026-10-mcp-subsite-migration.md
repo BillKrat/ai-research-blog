@@ -54,3 +54,10 @@ Until step 10 nothing is lost: delete the new subsite, re-add `mcp.global-webnet
 - The wildcard DNS record means no DNS change is needed; if the panel adds an explicit `mcp` A record for the subsite, that is fine too.
 - The workflow's HTTPS smoke test fails until the certificate exists (step 8); expected, not a deploy fault.
 - Site ids change (old `site-1885461`); the diagnostics notes and OI-1 get the new id after step 3.
+
+## Progress log
+
+- 2026-10-19 step 1 done (old site renamed `mcp-old`, `site-1885461`); step 2 done (`mcp.global-webnet.com` removed from it).
+- 2026-10-19 step 3 done: new subsite `mcp` = `site-1896089`, `mcp.global-webnet.com` mapped to it (DNS configured, SSL not yet). **Finding:** the panel reused the existing physical folder `h:\root\home\billkrat-001\www\mcp`, the same folder the FTP user `billkrat-mcp` already points at. So step 6 (FTP user) is **not needed** and the already-deployed files are live on the new site (it answers with our app's own error JSON, 500, because steps 4-5 are not done yet). The workflow needs no change at all.
+- **Warning for step 10:** `mcp-old` and `mcp` share one folder. When deleting `mcp-old`, do NOT delete its files/folder (untick any "delete files" option), or the new site loses its app. Safer: leave `mcp-old` in place, stopped, and delete it later.
+- New site differences found by the read-only tools: app pool runtime `aspnet-4` (api uses `no-managed-code`) and no environment secrets (`Jwt__SigningKey` missing). Those are steps 4 and 5.
