@@ -8,10 +8,23 @@ namespace AiBlogResearch.WebApi.Controllers;
 /// <summary>Everything known about one request: its recorded exceptions, their kinds of failure, and its log lines.</summary>
 public sealed record RequestDiagnostics(CorrelationReport Report, IReadOnlyList<string> LogLines);
 
+/// <summary>What both diagnostics controllers answer with, so an administrator and an MCP tool see the same thing.</summary>
+internal static class DiagnosticsLookup
+{
+    public const string BadIdMessage = "The correlation id may only contain letters, digits, '-' and '_' (at most 64 characters).";
+
+    public static async Task<RequestDiagnostics> ForRequestAsync(IDiagnosticsReader reader, string correlationId, CancellationToken cancellationToken)
+    {
+        var report = await reader.FindByCorrelationIdAsync(correlationId, cancellationToken);
+        var lines = await LogSearch.FindLinesAsync(Path.Combine(AppContext.BaseDirectory, "logs"), correlationId, cancellationToken: cancellationToken);
+        return new RequestDiagnostics(report, lines);
+    }
+}
+
 /// <summary>
-/// Eyes into the running system for an administrator, and the surface an MCP diagnostics tool will wrap: given a
-/// CorrelationId (shown in every error message and on every response) return what the system recorded for that request.
-/// Read-only; administrators only.
+/// Eyes into the running system for an administrator: given a CorrelationId (shown in every error message and on every
+/// response) return what the system recorded for that request. Read-only; administrators only. The same answers for a
+/// machine caller are at <see cref="McpDiagnosticsController"/>.
 /// </summary>
 [ApiController]
 [Route("api/admin/diagnostics")]
@@ -19,19 +32,39 @@ public sealed record RequestDiagnostics(CorrelationReport Report, IReadOnlyList<
 public sealed class AdminDiagnosticsController(IDiagnosticsReader reader) : ControllerBase
 {
     [HttpGet("{correlationId}")]
-    public async Task<ActionResult<RequestDiagnostics>> ForRequest(string correlationId, CancellationToken cancellationToken)
-    {
-        if (!Adventures.WebApi.CorrelationIdMiddleware.IsWellFormed(correlationId))
-        {
-            return BadRequest("The correlation id may only contain letters, digits, '-' and '_' (at most 64 characters).");
-        }
-
-        var report = await reader.FindByCorrelationIdAsync(correlationId, cancellationToken);
-        var lines = await LogSearch.FindLinesAsync(Path.Combine(AppContext.BaseDirectory, "logs"), correlationId, cancellationToken: cancellationToken);
-        return Ok(new RequestDiagnostics(report, lines));
-    }
+    public async Task<ActionResult<RequestDiagnostics>> ForRequest(string correlationId, CancellationToken cancellationToken) =>
+        Adventures.WebApi.CorrelationIdMiddleware.IsWellFormed(correlationId)
+            ? Ok(await DiagnosticsLookup.ForRequestAsync(reader, correlationId, cancellationToken))
+            : BadRequest(DiagnosticsLookup.BadIdMessage);
 
     [HttpGet("recent")]
     public async Task<ActionResult<IReadOnlyList<ExceptionOccurrence>>> Recent([FromQuery] int max = 50, CancellationToken cancellationToken = default) =>
         Ok(await reader.ListRecentAsync(max, cancellationToken));
+}
+
+/// <summary>
+/// The machine surface of the diagnostics: a token with the <c>mcp.diagnostics.read</c> scope (issued to the
+/// <c>claude-diagnostics</c> client by /api/auth/m2m/token) reads the same data, read-only. The MCP server's diagnostics
+/// tool forwards to these routes.
+/// </summary>
+[ApiController]
+[Route("api/diagnostics")]
+[Authorize(Policy = "Scope:" + McpDiagnosticsController.RequiredScope)]
+public sealed class McpDiagnosticsController(IDiagnosticsReader reader) : ControllerBase
+{
+    public const string RequiredScope = "mcp.diagnostics.read";
+
+    [HttpGet("{correlationId}")]
+    public async Task<ActionResult<RequestDiagnostics>> ForRequest(string correlationId, CancellationToken cancellationToken) =>
+        Adventures.WebApi.CorrelationIdMiddleware.IsWellFormed(correlationId)
+            ? Ok(await DiagnosticsLookup.ForRequestAsync(reader, correlationId, cancellationToken))
+            : BadRequest(DiagnosticsLookup.BadIdMessage);
+
+    [HttpGet("recent")]
+    public async Task<ActionResult<IReadOnlyList<ExceptionOccurrence>>> Recent([FromQuery] int max = 50, CancellationToken cancellationToken = default) =>
+        Ok(await reader.ListRecentAsync(max, cancellationToken));
+
+    [HttpGet("signatures")]
+    public async Task<ActionResult<IReadOnlyList<ExceptionSignatureSummary>>> Signatures(CancellationToken cancellationToken) =>
+        Ok(await reader.ListSignaturesAsync(cancellationToken));
 }

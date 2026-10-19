@@ -8,7 +8,7 @@ Guiding aim: keep eyes on the running system at every level (logs, exceptions, h
 
 - **CorrelationId end to end.** One id per process/request, carried through logs, outbound HTTP calls, the exception log and the error response. Plan: a Claude-decision doc (next step).
 - **Exception signature.** Hash the exception (type, message shape, top app frames) so a repeat reuses its existing exception id and only the occurrence is logged.
-- **MCP diagnostics tool.** The read seam exists (`IDiagnosticsReader`, `GET /api/admin/diagnostics/{id}`, stage 4); remaining: a tool module on McpServer wrapping it with scope `mcp.diagnostics.read` and an M2M client for Claude.
+- **MCP diagnostics tool.** The read seam exists (`IDiagnosticsReader`, `GET /api/admin/diagnostics/{id}`, stage 4); built in stage 5 (McpServer tool, scope `mcp.diagnostics.read`, client `claude-diagnostics`); remaining: the MCP wire-protocol wrapper (tool listing) and the human setting the client secret.
 - **Health check detail.** `/api/health` reports each dependency (database, mcp) separately with timings.
 
 - **No silent errors audit (from the human, 2026-10-18).** Every failure must be visible to an administrator and traceable by CorrelationId. Done in stage 4: dependency probe failures (hourly throttle) and browser errors (signed-in users). Still open: (1) anonymous browser errors (login page); (2) background work and startup failures (Serilog fatal log only); (3) handled 4xx failures are not "exceptions" but may deserve a counter; (4) the deploy workflow smoke tests are not visible in the app.

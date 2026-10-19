@@ -55,6 +55,8 @@ public sealed class ClientErrorsAndDiagnosticsTests
         Assert.NotEmpty(typeof(ClientErrorsController).GetCustomAttributes(typeof(AuthorizeAttribute), true));
         var admin = Assert.Single(typeof(AdminDiagnosticsController).GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>());
         Assert.Equal(Adventures.Security.WellKnownClaims.TenantAdminPolicy, admin.Policy);
+        var machine = Assert.Single(typeof(McpDiagnosticsController).GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>());
+        Assert.Equal("Scope:mcp.diagnostics.read", machine.Policy);
     }
 
     [Fact]

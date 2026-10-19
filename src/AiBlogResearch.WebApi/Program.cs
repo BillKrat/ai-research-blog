@@ -71,7 +71,7 @@ try
         .Bind(builder.Configuration.GetSection(M2MClientsOptions.SectionName));
     builder.Services.AddSingleton<IClientSecretHasher, ClientSecretHasher>();
     builder.Services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
-    builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search");
+    builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search", AiBlogResearch.WebApi.Controllers.McpDiagnosticsController.RequiredScope);
     builder.Services.AddRoleAuthorization(WellKnownClaims.TenantAdminRole);
 
     // McpServer:BaseUrl -> mcp.global-webnet.com. HealthController calls this over M2M auth (minting
