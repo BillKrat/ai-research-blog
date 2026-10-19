@@ -14,3 +14,12 @@ Known problems that are not the current path. "Put it in open issues" means appe
 - **Ticket:** SmarterASP #3715425 (2026-10-19) asks them to issue the free certificate for the mapped subsite. The subsite migration steps 1-5 are done (`mcp` = `site-1896089`, serving over HTTP); only the certificate is outstanding.
 - **Plan:** [Claude-decision-2026-10-mcp-subsite-migration.md](Claude-decision-2026-10-mcp-subsite-migration.md) (panel steps await the human's confirmation one by one).
 - **Related seam:** a failing optional dependency should not add 10 s to the health call; consider a shorter timeout and no retries for the health probe.
+
+## OI-2: the Angular site's index.html is cached for a year, so browsers keep the old UI (found 2026-10-19)
+
+- **Symptom:** after the 2026-10-19 deploy the signed-in Admin sees no new UI and no exception icon in production; the API log shows the browser never called `/api/admin/exceptions/count` after login (the old bundle in the browser does not do it).
+- **Evidence:** `https://global-webnet.com/` answers `Cache-Control: public,max-age=31536000` (one year) for `index.html`, so a browser that already has the page does not ask for the new one, and `index.html` is what names the new hashed bundle. The server has the new bundle (`main-UAORNZWN.js` contains `client-errors` and `X-Correlation-Id`).
+- **Cause:** the root `Web.Config` of the `global` site (a BlogEngine leftover, 20 KB) sets `<clientCache cacheControlMode="UseMaxAge" cacheControlMaxAge="365.00:00:00" cacheControlCustom="public" />` for all static content (line 223; the earlier `staticContent` block at line 170 is overridden). It is a protected file for `Claude-ftp.ps1` by design.
+- **Fix (human, SmarterASP File Manager or FTP, one line):** in `global/Web.Config` change line 223 to `<clientCache cacheControlMode="DisableCache" />`. Browsers then revalidate every static file by ETag (a 304, cheap at this traffic), so a new deploy shows up on the next page load. Hashed bundles stay correct either way. Keep a copy of the file first.
+- **Right now:** a hard refresh (Ctrl+Shift+R) loads the new UI for you. Other returning visitors keep the old page until their copy expires or they hard refresh; unavoidable for the already-cached ones.
+- **Longer term:** serve the Angular app from its own folder/site with its own `web.config` (no-cache for `index.html`, long cache for hashed files), when the BlogEngine leftovers on `global` are retired.
