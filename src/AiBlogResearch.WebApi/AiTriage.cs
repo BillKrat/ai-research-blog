@@ -22,6 +22,12 @@ public sealed class AnthropicOptions
 
     /// <summary>Most AI calls per hour across the app; a guard against a runaway cost.</summary>
     public int MaxCallsPerHour { get; set; } = 20;
+
+    /// <summary>
+    /// The day the key expires (not a secret, so it lives in appsettings.json). The health check warns from 14 days
+    /// before, so a key that expires does not fail silently; update it together with the key itself.
+    /// </summary>
+    public DateOnly? KeyExpiresOn { get; set; }
 }
 
 /// <summary>The AI's assessment of one request, or the reason there is none. Never carries the key or the report that was sent.</summary>
@@ -114,8 +120,10 @@ public sealed class AiTriage(
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning("AI triage for {CorrelationId} failed: HTTP {Status}", report.CorrelationId, (int)response.StatusCode);
-                return Unavailable($"The AI service answered HTTP {(int)response.StatusCode}.", settings.Model, text.Length);
+                var (kind, reason) = Explain((int)response.StatusCode, body);
+                logger.LogWarning("AI triage for {CorrelationId} failed: HTTP {Status} ({Kind})", report.CorrelationId, (int)response.StatusCode, kind);
+                await RecordFailureAsync(new HttpRequestException($"The Anthropic API answered {(int)response.StatusCode} ({kind})"), report.CorrelationId, cancellationToken);
+                return Unavailable(reason, settings.Model, text.Length);
             }
 
             var result = Parse(body, settings.Model, text.Length);
@@ -132,7 +140,60 @@ public sealed class AiTriage(
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
             logger.LogWarning(ex, "AI triage for {CorrelationId} could not reach the AI service", report.CorrelationId);
+            await RecordFailureAsync(ex, report.CorrelationId, CancellationToken.None);
             return Unavailable("The AI service could not be reached.", settings.Model, text.Length);
+        }
+    }
+
+    /// <summary>
+    /// What an error from the AI service means for the person holding the button, in plain words. The service's own error
+    /// type is kept (it never contains our key); a rejected key says how to replace it, a credit problem says to add funds.
+    /// </summary>
+    public static (string Kind, string Reason) Explain(int status, string body)
+    {
+        string kind = "unknown", message = string.Empty;
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (document.RootElement.TryGetProperty("error", out var error))
+            {
+                kind = error.TryGetProperty("type", out var t) ? t.GetString() ?? kind : kind;
+                message = error.TryGetProperty("message", out var m) ? m.GetString() ?? string.Empty : string.Empty;
+            }
+        }
+        catch (JsonException)
+        {
+            // not JSON: the status code alone has to do
+        }
+
+        var detail = message.Length == 0 ? string.Empty : $" The service says: {Redactor.ScrubAndLimit(message, 200)}";
+        var reason = status switch
+        {
+            401 => "The Anthropic API key was rejected (expired, revoked or mistyped). Create a new key, store it (vault set, then sync), update the host secret Anthropic__ApiKey and the date Anthropic:KeyExpiresOn, then restart the api site.",
+            403 => "The Anthropic API key is not allowed to do this (its workspace or permissions). Check the key's scope in the Anthropic console.",
+            429 => "The Anthropic API refused the call: a rate limit or the monthly spend limit was reached. Wait a little, or raise the limit in the Anthropic console.",
+            400 when message.Contains("credit", StringComparison.OrdinalIgnoreCase) => "The Anthropic account has no credit left. Add funds in the Anthropic console.",
+            >= 500 => "The Anthropic service is having trouble (overloaded or down). Try again in a few minutes.",
+            _ => $"The AI service answered HTTP {status}.",
+        };
+        return (kind, reason + detail);
+    }
+
+    /// <summary>An AI failure is an exception like any other: it reaches the exception log (and the admin icon), once an hour per kind.</summary>
+    private async Task RecordFailureAsync(Exception failure, string correlationId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var scope = scopes.CreateScope();
+            var log = scope.ServiceProvider.GetService<IExceptionLogBll>();
+            if (log is not null)
+            {
+                await log.RecordThrottledAsync(failure, "ai triage", null, correlationId, TimeSpan.FromHours(1), cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Could not record the AI triage failure in the exception log");
         }
     }
 

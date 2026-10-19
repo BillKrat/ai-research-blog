@@ -218,7 +218,7 @@ public sealed class AiTriageTests : IDisposable
         var result = await Build(handler).AskAsync(Sample().Report, [], Sample().Rules, CancellationToken.None);
 
         Assert.False(result.Available);
-        Assert.Contains("429", result.Reason);
+        Assert.Contains("rate limit", result.Reason);
         Assert.DoesNotContain("secret detail", result.Reason);
     }
 

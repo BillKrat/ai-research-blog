@@ -13,7 +13,9 @@ public class HealthController(
     IHttpClientFactory httpClientFactory,
     ILogger<HealthController> logger,
     IExceptionLogBll? exceptionLog = null,
-    Adventures.Data.NQuad.INQuadStore? store = null) : ControllerBase
+    Adventures.Data.NQuad.INQuadStore? store = null,
+    Microsoft.Extensions.Options.IOptions<AnthropicOptions>? anthropic = null,
+    TimeProvider? clock = null) : ControllerBase
 {
     /// <summary>How long the database check may take before it counts as failed.</summary>
     internal static readonly TimeSpan DatabaseCheckTimeout = TimeSpan.FromSeconds(5);
@@ -48,6 +50,12 @@ public class HealthController(
             dependencies.Add(database);
         }
 
+        var aiKey = await CheckAiKeyAsync();
+        if (aiKey is not null)
+        {
+            dependencies.Add(aiKey);
+        }
+
         // The API's own state: a failed database makes it Unhealthy (503, so a deploy smoke test fails), a failed mcp only
         // Degraded (200, because the API still serves its own work). The detail is a short code, never an exception message.
         var status = dependencies.Any(d => d.Name == "database" && d.Status != "ok") ? "Unhealthy"
@@ -58,6 +66,41 @@ public class HealthController(
             HttpContext is null ? null : Adventures.WebApi.CorrelationIdMiddleware.Get(HttpContext));
 
         return status == "Unhealthy" ? StatusCode(StatusCodes.Status503ServiceUnavailable, response) : Ok(response);
+    }
+
+    /// <summary>How many days before the AI key expires the health check starts to warn.</summary>
+    internal const int AiKeyWarningDays = 14;
+
+    /// <summary>
+    /// The AI key is a secret that expires (the date is Anthropic:KeyExpiresOn): from 14 days before, and after, the health
+    /// shows it as failed ("expires_in_9_days" / "expired") and the exception log gets one entry a day, so an expiring key
+    /// is seen before the button stops working. Null when no key (or no date) is configured.
+    /// </summary>
+    private async Task<DependencyHealth?> CheckAiKeyAsync()
+    {
+        var settings = anthropic?.Value;
+        if (settings is null || string.IsNullOrWhiteSpace(settings.ApiKey) || settings.KeyExpiresOn is not { } expires)
+        {
+            return null;
+        }
+
+        var today = DateOnly.FromDateTime((clock ?? TimeProvider.System).GetUtcNow().UtcDateTime);
+        var days = expires.DayNumber - today.DayNumber;
+        if (days > AiKeyWarningDays)
+        {
+            return new DependencyHealth("ai-key", "ok", 0, "ok");
+        }
+
+        var detail = days < 0 ? "expired" : $"expires_in_{days}_days";
+        if (exceptionLog is not null)
+        {
+            await exceptionLog.RecordThrottledAsync(
+                new InvalidOperationException($"The Anthropic API key {(days < 0 ? "has expired" : $"expires in {days} day(s)")} ({expires:yyyy-MM-dd}); rotate it."),
+                "health probe: ai key", null,
+                HttpContext is null ? null : Adventures.WebApi.CorrelationIdMiddleware.Get(HttpContext), TimeSpan.FromHours(24), CancellationToken.None);
+        }
+
+        return new DependencyHealth("ai-key", "failed", 0, detail);
     }
 
     /// <summary>Asks the N-Quad store (the database) for a count, which proves connection, credentials and the table. Null when no store is registered.</summary>

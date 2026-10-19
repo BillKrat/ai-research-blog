@@ -23,6 +23,15 @@ Sign in as Admin, Exceptions, Show purged, expand a row, **Diagnose**, then **As
 
 ## Not done / later
 
-- The key has a 30-day expiry: rotate it (vault `set`, `sync`, and the host secret).
+- The key has a 30-day expiry: now warned about in health (see the follow-up below); rotating still means vault `set`, `sync`, the host secret and the `KeyExpiresOn` date.
 - Per-user budget and a monthly total in the UI; today only the hourly cap.
 - Sending the MCP server's logs too, and a rule-learning loop (turn Claude's good answers into `Triage.cs` rules).
+
+## Follow-up: an expired or failing key is never silent (2026-10-19)
+
+The human asked what happens if the key is not rotated. Before this change: the button showed only "The AI service answered HTTP 401" and nothing reached the exception log or the header (a silent failure). Now:
+
+- **Plain-words reasons** (`AiTriage.Explain`): 401 says the key was rejected (expired, revoked or mistyped) and how to replace it (vault `set` + `sync`, host secret `Anthropic__ApiKey`, the date `Anthropic:KeyExpiresOn`, restart); 403 scope; 429 rate or spend limit; 400 "credit" no credit left (add funds); 5xx the service is busy. The service's own error message is appended after scrubbing; a secret in it cannot leak.
+- **Exception log**: any failure of the AI call (rejected key, no credit, outage, unreachable) is recorded once an hour per kind as `ai triage`, so the header icon and the Exceptions screen show it, with its Diagnose button.
+- **Warning before it happens**: `Anthropic:KeyExpiresOn` (in `appsettings.json`, now `2026-11-18`; not a secret) makes `/api/health` show a dependency `ai-key` as failed from 14 days before ("expires_in_N_days", then "expired"): the status badge turns amber (Degraded) and the exception log gets one entry a day. **When you rotate the key, update this date together with the key** (appsettings.json, then deploy), or the warning stays on.
+- Tests: WebApi 91 (13 new): every error kind, no secret leaks, a rejected key reaches the log, the 14-day boundary, expired, quiet when far from expiry or when no key or date is set.
