@@ -55,6 +55,7 @@ public class HealthControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<HealthResponse>(okResult.Value);
         Assert.Equal("Healthy", response.Status);
+        Assert.Equal("ok", Assert.Single(response.Dependencies!, d => d.Name == "mcp").Status);
         Assert.Equal("hello world", response.McpMessage);
         Assert.Equal("ok", response.McpStatus);
 
@@ -74,9 +75,12 @@ public class HealthControllerTests
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<HealthResponse>(okResult.Value);
-        Assert.Equal("Healthy", response.Status);
+        Assert.Equal("Degraded", response.Status);
         Assert.Null(response.McpMessage);
         Assert.StartsWith("exception_", response.McpStatus);
+        var mcp = Assert.Single(response.Dependencies!, d => d.Name == "mcp");
+        Assert.Equal("failed", mcp.Status);
+        Assert.StartsWith("exception_", mcp.Detail);
     }
 
     [Fact]
@@ -91,6 +95,55 @@ public class HealthControllerTests
         var response = Assert.IsType<HealthResponse>(okResult.Value);
         Assert.Null(response.McpMessage);
         Assert.Equal("http_401", response.McpStatus);
+        Assert.Equal("Degraded", response.Status);
+    }
+
+    private sealed class CountingStore(Func<Task<long>> count) : Adventures.Data.NQuad.INQuadStore
+    {
+        public Task<long> CountAsync(CancellationToken cancellationToken = default) => count();
+
+        public Task<int> InsertAsync(Adventures.Data.NQuad.NQuad quad, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<int> InsertManyAsync(IReadOnlyCollection<Adventures.Data.NQuad.NQuad> quads, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<IReadOnlyList<Adventures.Data.NQuad.NQuad>> QueryAsync(string? subject = null, string? predicate = null, string? @object = null, string? graph = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<IReadOnlyList<Adventures.Data.NQuad.NQuad>> QueryBySubjectsAsync(IReadOnlyCollection<string> subjects, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<int> PurgeAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    }
+
+    private static HealthController BuildController(FakeHttpMessageHandler handler, Adventures.Data.NQuad.INQuadStore store) =>
+        new(BuildTokenService(), new FakeHttpClientFactory(handler), NullLogger<HealthController>.Instance, null, store);
+
+    private static FakeHttpMessageHandler HealthyMcp() =>
+        new(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { message = "hi" }) });
+
+    [Fact]
+    public async Task Get_IsUnhealthyWith503_WhenTheDatabaseFails_EvenIfMcpIsFine()
+    {
+        var controller = BuildController(HealthyMcp(), new CountingStore(() => throw new InvalidOperationException("db down")));
+
+        var result = await controller.Get(CancellationToken.None);
+
+        var objectResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(503, objectResult.StatusCode);
+        var response = Assert.IsType<HealthResponse>(objectResult.Value);
+        Assert.Equal("Unhealthy", response.Status);
+        Assert.Equal("failed", Assert.Single(response.Dependencies!, d => d.Name == "database").Status);
+    }
+
+    [Fact]
+    public async Task Get_IsHealthy_WhenMcpAndDatabaseAreFine()
+    {
+        var controller = BuildController(HealthyMcp(), new CountingStore(() => Task.FromResult(42L)));
+
+        var result = await controller.Get(CancellationToken.None);
+
+        var response = Assert.IsType<HealthResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
+        Assert.Equal("Healthy", response.Status);
+        Assert.All(response.Dependencies!, d => Assert.Equal("ok", d.Status));
+        Assert.Equal(2, response.Dependencies!.Count);
     }
 
     [Fact]

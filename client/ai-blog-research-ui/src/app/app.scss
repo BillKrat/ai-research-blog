@@ -52,6 +52,11 @@
     color: #fff;
   }
 
+  &--warning {
+    background: #f9a825;
+    color: #1a1a1a;
+  }
+
   &--danger {
     background: var(--mat-sys-error-container);
     color: var(--mat-sys-on-error-container);

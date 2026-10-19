@@ -78,13 +78,19 @@ try
     // its own "mcp-host" token in-process via IJwtTokenService, since this app IS the token issuer -
     // see docs/artifacts/2026-09-23-mcp-m2m-hello-world.md) to prove the cross-site M2M pipeline end
     // to end. A short timeout keeps a slow/unreachable mcp site from hanging /api/health itself.
+#pragma warning disable EXTEXP0001 // RemoveAllResilienceHandlers is marked experimental; it is the supported way to opt one client out.
     builder.Services.AddHttpClient("McpServer", (services, client) =>
     {
         var baseUrl = services.GetRequiredService<IConfiguration>()["McpServer:BaseUrl"]
             ?? throw new InvalidOperationException("McpServer:BaseUrl is not configured.");
         client.BaseAddress = new Uri(baseUrl);
         client.Timeout = TimeSpan.FromSeconds(10);
-    }).AddCorrelationIdHandler();
+    })
+    // This client only serves the health probe: no retries (the default resilience handler would turn one failure into
+    // eight seconds of waiting), so /api/health answers promptly and says what failed.
+    .RemoveAllResilienceHandlers()
+    .AddCorrelationIdHandler();
+#pragma warning restore EXTEXP0001
     builder.Services.AddCorrelationId();
 
     // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available to

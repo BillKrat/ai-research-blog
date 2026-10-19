@@ -12,8 +12,12 @@ public class HealthController(
     IJwtTokenService tokenService,
     IHttpClientFactory httpClientFactory,
     ILogger<HealthController> logger,
-    IExceptionLogBll? exceptionLog = null) : ControllerBase
+    IExceptionLogBll? exceptionLog = null,
+    Adventures.Data.NQuad.INQuadStore? store = null) : ControllerBase
 {
+    /// <summary>How long the database check may take before it counts as failed.</summary>
+    internal static readonly TimeSpan DatabaseCheckTimeout = TimeSpan.FromSeconds(5);
+
     /// <summary>A failing dependency reaches the exception log (and the admin icon) at most once per signature per hour.</summary>
     internal static readonly TimeSpan ProbeFailureWindow = TimeSpan.FromHours(1);
 
@@ -32,8 +36,58 @@ public class HealthController(
     [HttpGet]
     public async Task<ActionResult<HealthResponse>> Get(CancellationToken cancellationToken)
     {
+        var dependencies = new List<DependencyHealth>();
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
         var (mcpMessage, mcpStatus) = await TryGetMcpHelloMessageAsync(cancellationToken);
-        return Ok(new HealthResponse("Healthy", DateTimeOffset.UtcNow, mcpMessage, mcpStatus));
+        dependencies.Add(new DependencyHealth("mcp", mcpStatus == "ok" ? "ok" : "failed", watch.ElapsedMilliseconds, mcpStatus));
+
+        var database = await CheckDatabaseAsync(cancellationToken);
+        if (database is not null)
+        {
+            dependencies.Add(database);
+        }
+
+        // The API's own state: a failed database makes it Unhealthy (503, so a deploy smoke test fails), a failed mcp only
+        // Degraded (200, because the API still serves its own work). The detail is a short code, never an exception message.
+        var status = dependencies.Any(d => d.Name == "database" && d.Status != "ok") ? "Unhealthy"
+            : dependencies.Any(d => d.Status != "ok") ? "Degraded"
+            : "Healthy";
+        var response = new HealthResponse(
+            status, DateTimeOffset.UtcNow, mcpMessage, mcpStatus, dependencies,
+            HttpContext is null ? null : Adventures.WebApi.CorrelationIdMiddleware.Get(HttpContext));
+
+        return status == "Unhealthy" ? StatusCode(StatusCodes.Status503ServiceUnavailable, response) : Ok(response);
+    }
+
+    /// <summary>Asks the N-Quad store (the database) for a count, which proves connection, credentials and the table. Null when no store is registered.</summary>
+    private async Task<DependencyHealth?> CheckDatabaseAsync(CancellationToken cancellationToken)
+    {
+        if (store is null)
+        {
+            return null;
+        }
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(DatabaseCheckTimeout);
+            await store.CountAsync(timeout.Token);
+            return new DependencyHealth("database", "ok", watch.ElapsedMilliseconds, "ok");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "The health check could not reach the database.");
+            if (exceptionLog is not null)
+            {
+                await exceptionLog.RecordThrottledAsync(
+                    ex, "health probe: database", null,
+                    HttpContext is null ? null : Adventures.WebApi.CorrelationIdMiddleware.Get(HttpContext), ProbeFailureWindow, CancellationToken.None);
+            }
+
+            return new DependencyHealth("database", "failed", watch.ElapsedMilliseconds, ex is OperationCanceledException ? "timeout" : $"exception_{ex.GetType().Name}");
+        }
     }
 
     /// <summary>
@@ -79,11 +133,21 @@ public class HealthController(
             // handling - no exception type here should ever turn /api/health itself into a 500.
             logger.LogWarning(ex, "Failed to reach mcp.global-webnet.com for the health check's mcp message.");
             await RecordProbeFailureAsync(ex, CancellationToken.None);
-            return (null, $"exception_{ex.GetType().Name}");
+            return (null, ex is OperationCanceledException ? "timeout" : $"exception_{ex.GetType().Name}");
         }
     }
 
     private sealed record McpHelloResponse(string Message);
 }
 
-public record HealthResponse(string Status, DateTimeOffset TimestampUtc, string? McpMessage = null, string? McpStatus = null);
+/// <summary>One thing the API depends on: ok or failed, how long the check took, and a short non-sensitive code.</summary>
+public sealed record DependencyHealth(string Name, string Status, long DurationMs, string? Detail);
+
+/// <summary>Healthy, Degraded (a dependency other than the database failed) or Unhealthy (the database failed; HTTP 503).</summary>
+public record HealthResponse(
+    string Status,
+    DateTimeOffset TimestampUtc,
+    string? McpMessage = null,
+    string? McpStatus = null,
+    IReadOnlyList<DependencyHealth>? Dependencies = null,
+    string? CorrelationId = null);

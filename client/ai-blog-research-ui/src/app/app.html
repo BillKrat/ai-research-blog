@@ -58,6 +58,16 @@
       @case ('healthy') {
         <span class="badge badge--success">healthy as of {{ healthCheckedAt() }}</span>
       }
+      @case ('degraded') {
+        <span class="badge badge--warning" [attr.title]="healthTrace() ? 'Trace: ' + healthTrace() : null">
+          degraded: {{ healthProblem() }} as of {{ healthCheckedAt() }}
+        </span>
+      }
+      @case ('unhealthy') {
+        <span class="badge badge--danger" [attr.title]="healthTrace() ? 'Trace: ' + healthTrace() : null">
+          unhealthy: {{ healthProblem() }} as of {{ healthCheckedAt() }}
+        </span>
+      }
       @case ('unreachable') {
         <span class="badge badge--danger">unreachable</span>
       }
