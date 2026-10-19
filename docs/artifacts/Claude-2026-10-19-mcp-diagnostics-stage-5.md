@@ -39,3 +39,7 @@ sequenceDiagram
 ## Questions for you
 
 - Merge `claude-observability` (stages 1-5) after you test? Merging deploys with the Claude client inactive until you set the secret.
+
+## Verified in production (2026-10-19)
+
+After the human stored the secret (vault + the api site's `M2MClients__Clients__3__Secret`), `docs/Claude-diagnose.ps1` (workspace root, through the vault `run`) obtained a token for `claude-diagnostics` (scope `mcp.diagnostics.read`) and called the MCP server over HTTPS: `/api/diagnostics/recent` listed the production `health probe: mcp` exceptions, and `/api/diagnostics/e733fe7df26543a5b96968a02acdeb73` returned that request's exception, its kind of failure and 27 log lines (the whole health call up to the TLS failure). An anonymous call is refused (401). Note: the exception log is shared with local runs (one dev entry appears with a correlation id that has no production log lines).
