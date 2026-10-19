@@ -60,6 +60,59 @@ public sealed class ClientErrorsAndDiagnosticsTests
     }
 
     [Fact]
+    public async Task LogSearch_ReturnsAnExceptionLineWhole_AndAGiantOneAsAValidStub()
+    {
+        var directory = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var bigStack = new string('s', 100_000);
+            var giant = new string('g', LogSearch.MaxLineLength + 10);
+            await File.WriteAllLinesAsync(Path.Combine(directory, "webapi-json-20261018.log"),
+            [
+                $$"""{"@t":"2026-10-18T10:00:00Z","@l":"Error","@m":"boom","@x":"{{bigStack}}","CorrelationId":"req-1"}""",
+                $$"""{"@t":"2026-10-18T10:00:01Z","@l":"Error","@m":"giant","@x":"{{giant}}","CorrelationId":"req-1"}""",
+            ]);
+
+            var lines = await LogSearch.FindLinesAsync(directory, "req-1");
+
+            Assert.Equal(2, lines.Count);
+            Assert.Contains(bigStack, lines[0]);
+            using var stub = System.Text.Json.JsonDocument.Parse(lines[1]);
+            Assert.True(stub.RootElement.GetProperty("truncated").GetBoolean());
+            Assert.Equal("giant", stub.RootElement.GetProperty("@m").GetString());
+            Assert.True(stub.RootElement.GetProperty("originalLength").GetInt32() > LogSearch.MaxLineLength);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task LogSearch_KeepsTheNewestLinesThatFitTheTotalBudget()
+    {
+        var directory = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var chunk = new string('c', 200_000);
+            var lines = Enumerable.Range(0, 30)
+                .Select(i => $$"""{"@m":"line {{i}}","@x":"{{chunk}}","CorrelationId":"req-1"}""")
+                .ToArray();
+            await File.WriteAllLinesAsync(Path.Combine(directory, "webapi-json-20261018.log"), lines);
+
+            var found = await LogSearch.FindLinesAsync(directory, "req-1");
+
+            Assert.True(found.Sum(l => l.Length) <= LogSearch.MaxTotalLength);
+            Assert.Contains("line 29", found[^1]);
+            Assert.True(found.Count < 30);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LogSearch_FindsOnlyTheLinesOfOneRequest_AcrossFiles()
     {
         var directory = Directory.CreateTempSubdirectory().FullName;
