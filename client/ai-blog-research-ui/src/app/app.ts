@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -35,6 +35,9 @@ export class App implements OnInit, OnDestroy {
 
   /** Active exceptions in the exception log; only ever above zero for an administrator (the server refuses everyone else). */
   protected readonly activeExceptionCount = this.adminExceptions.activeCount;
+
+  /** An administrator can always open the exception log while it holds anything, purged entries included. */
+  protected readonly showExceptionsLink = computed(() => this.adminExceptions.isAdministrator() && this.adminExceptions.totalCount() > 0);
 
   constructor(private readonly healthService: HealthService) {
     // Watch the exception count while signed in; the first refusal (not an administrator) ends the polling.

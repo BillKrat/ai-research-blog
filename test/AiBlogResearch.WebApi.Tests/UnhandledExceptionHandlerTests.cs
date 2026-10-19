@@ -33,6 +33,8 @@ public sealed class UnhandledExceptionHandlerTests
             return Task.FromResult(idToReturn);
         }
 
+        public Task<IReadOnlyList<ExceptionLogEntry>> ListIncludingPurgedAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
         public Task<int> CountActiveAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
 
         public Task<int> PurgeAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);

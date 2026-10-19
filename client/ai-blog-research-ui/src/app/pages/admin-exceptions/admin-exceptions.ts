@@ -24,6 +24,7 @@ export class AdminExceptions implements OnInit {
   protected readonly isLoading = signal(true);
   protected readonly errors = signal<string[]>([]);
   protected readonly isPurging = signal(false);
+  protected readonly includePurged = signal(false);
   protected readonly signatures = signal<ExceptionSignatureSummary[]>([]);
 
   ngOnInit(): void {
@@ -52,9 +53,15 @@ export class AdminExceptions implements OnInit {
     });
   }
 
+  /** Shows or hides the purged entries (a purge is a soft delete, so they are still in the store). */
+  togglePurged(show: boolean): void {
+    this.includePurged.set(show);
+    this.load();
+  }
+
   private load(): void {
     this.errors.set([]);
-    this.service.grid().subscribe({
+    this.service.grid(this.includePurged()).subscribe({
       next: (grid) => {
         this.model.set(grid);
         this.isLoading.set(false);

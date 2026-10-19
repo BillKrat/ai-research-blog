@@ -33,8 +33,17 @@ export class AdminExceptionsService implements OnDestroy {
   private readonly _activeCount = signal(0);
   readonly activeCount = this._activeCount.asReadonly();
 
-  grid(): Observable<EntityGridModel> {
-    return this.http.get<EntityGridModel>(this.baseUrl);
+  private readonly _totalCount = signal(0);
+  /** All exceptions ever recorded, purged ones included: while this is above zero there is history worth opening. */
+  readonly totalCount = this._totalCount.asReadonly();
+
+  private readonly _isAdministrator = signal(false);
+  /** True once the server has answered the count for this user (only administrators get an answer). */
+  readonly isAdministrator = this._isAdministrator.asReadonly();
+
+  /** The exceptions (newest first); with includePurged the purged ones too, each marked in its State column. */
+  grid(includePurged = false): Observable<EntityGridModel> {
+    return this.http.get<EntityGridModel>(this.baseUrl, { params: includePurged ? { includePurged: 'true' } : {} });
   }
 
   /** The kinds of failure seen (repeats grouped), most recently seen first. */
@@ -62,6 +71,8 @@ export class AdminExceptionsService implements OnDestroy {
       this.timer = null;
     }
     this._activeCount.set(0);
+    this._totalCount.set(0);
+    this._isAdministrator.set(false);
   }
 
   /** Asks the server for the current count; an error or a refusal means "show nothing". */
@@ -70,12 +81,18 @@ export class AdminExceptionsService implements OnDestroy {
       return;
     }
 
-    this.http.get<{ count: number }>(`${this.baseUrl}/count`).subscribe({
-      next: (result) => this._activeCount.set(result.count),
+    this.http.get<{ count: number; total?: number }>(`${this.baseUrl}/count`).subscribe({
+      next: (result) => {
+        this._activeCount.set(result.count);
+        this._totalCount.set(result.total ?? result.count);
+        this._isAdministrator.set(true);
+      },
       error: (error) => {
         this._activeCount.set(0);
         if (error?.status === 401 || error?.status === 403) {
           this.notAdministrator = true;
+          this._isAdministrator.set(false);
+          this._totalCount.set(0);
         }
       },
     });

@@ -35,11 +35,16 @@
     <h3>Occurrences</h3>
   }
 
+  <label class="admin-exceptions__toggle">
+    <input type="checkbox" [checked]="includePurged()" (change)="togglePurged($any($event.target).checked)" />
+    Show purged (history)
+  </label>
+
   @if (isLoading()) {
     <p>Loading exceptions...</p>
   } @else if (model(); as grid) {
     @if (grid.rows.length === 0) {
-      <p>No active exceptions.</p>
+      <p>{{ includePurged() ? 'No exceptions recorded.' : 'No active exceptions.' }}</p>
     } @else {
       <app-entity-grid [model]="grid" />
     }
