@@ -55,6 +55,7 @@ public sealed class AiTriage(
     IHttpClientFactory httpClientFactory,
     IOptions<AnthropicOptions> options,
     IServiceScopeFactory scopes,
+    IHostEnvironment environment,
     ILogger<AiTriage> logger) : IAiTriage
 {
     public const string ClientName = "Anthropic";
@@ -141,6 +142,9 @@ public sealed class AiTriage(
     {
         var builder = new StringBuilder();
         builder.AppendLine($"Correlation id: {report.CorrelationId}");
+        builder.AppendLine(environment.IsProduction()
+            ? "Environment: Production (the live checks ran from the production API)."
+            : $"Environment: {environment.EnvironmentName} - a developer machine: its live checks run with development settings, so a 401 from mcp there (different Jwt signing key) is expected and says nothing about production, and the log lines are the developer machine's own.");
         builder.AppendLine($"Rule-based triage verdict: {ruleResult.Verdict} - {Redactor.ScrubAndLimit(ruleResult.Summary, 300)}");
         foreach (var finding in ruleResult.Findings)
         {

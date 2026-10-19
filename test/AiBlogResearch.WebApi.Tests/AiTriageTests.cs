@@ -86,12 +86,24 @@ public sealed class AiTriageTests : IDisposable
     private const string GoodJson =
         """Here you go: {"summary":"mcp had no certificate","likelyCause":"TLS binding missing","confidence":"high","nextSteps":["check SSL status","retry"],"missingEvidence":[]}""";
 
-    private static AiTriage Build(FakeHandler handler, string? key = SecretKey, int maxPerHour = 20) =>
+    private static AiTriage Build(FakeHandler handler, string? key = SecretKey, int maxPerHour = 20, string environmentName = "Production") =>
         new(
             new FakeFactory(handler),
             Options.Create(new AnthropicOptions { ApiKey = key, MaxCallsPerHour = maxPerHour }),
             new ServiceCollection().BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(),
+            new FakeEnvironment(environmentName),
             NullLogger<AiTriage>.Instance);
+
+    private sealed class FakeEnvironment(string name) : Microsoft.Extensions.Hosting.IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = name;
+
+        public string ApplicationName { get; set; } = "test";
+
+        public string ContentRootPath { get; set; } = ".";
+
+        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } = new Microsoft.Extensions.FileProviders.NullFileProvider();
+    }
 
     private static (CorrelationReport Report, TriageResult Rules) Sample(string id = "req-1", string message = "The SSL connection could not be established")
     {
@@ -154,6 +166,19 @@ public sealed class AiTriageTests : IDisposable
         Assert.Contains("health probe: mcp", body);
         Assert.Contains("a signed-in user was involved: yes", body);
         Assert.DoesNotContain("\"Admin\"", body);
+    }
+
+    [Theory]
+    [InlineData("Production", "Environment: Production")]
+    [InlineData("Development", "a developer machine")]
+    public async Task TheReportSaysWhichEnvironmentTheLiveChecksRanIn(string environmentName, string expected)
+    {
+        var handler = new FakeHandler(_ => Answer(GoodJson));
+        var (report, rules) = Sample();
+
+        await Build(handler, environmentName: environmentName).AskAsync(report, [], rules, CancellationToken.None);
+
+        Assert.Contains(expected, Assert.Single(handler.Calls).Body);
     }
 
     [Fact]
