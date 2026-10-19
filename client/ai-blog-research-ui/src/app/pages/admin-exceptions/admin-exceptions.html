@@ -96,6 +96,44 @@
             }
           </ul>
         }
+        <h4>Ask Claude</h4>
+        <p class="admin-exceptions__hint">
+          Sends a scrubbed report of this request (no keys, tokens, passwords, e-mail or IP addresses) to Anthropic's Claude
+          for an assessment. It costs a little each time; the answer is kept for an hour.
+        </p>
+        <button mat-flat-button type="button" (click)="askClaude(id)" [disabled]="asking()[id]">
+          {{ asking()[id] ? 'Asking Claude...' : ai()[id] ? 'Ask again' : 'Ask Claude' }}
+        </button>
+        @if (ai()[id]; as answer) {
+          @if (answer.available) {
+            <section class="triage__ai" aria-live="polite">
+              <p><strong>{{ answer.summary }}</strong></p>
+              <p><strong>Likely cause:</strong> {{ answer.likelyCause }} <em>(confidence: {{ answer.confidence }})</em></p>
+              @if (answer.nextSteps.length > 0) {
+                <h4>Claude suggests</h4>
+                <ol>
+                  @for (step of answer.nextSteps; track $index) {
+                    <li>{{ step }}</li>
+                  }
+                </ol>
+              }
+              @if (answer.missingEvidence.length > 0) {
+                <h4>What would help</h4>
+                <ul>
+                  @for (item of answer.missingEvidence; track $index) {
+                    <li>{{ item }}</li>
+                  }
+                </ul>
+              }
+              <p class="admin-exceptions__hint">
+                {{ answer.model }}, {{ answer.inputTokens }} tokens in / {{ answer.outputTokens }} out,
+                {{ answer.sentCharacters }} characters sent{{ answer.fromCache ? ' (kept from earlier)' : '' }}.
+              </p>
+            </section>
+          } @else {
+            <p class="triage__finding triage__finding--warning">{{ answer.reason }}</p>
+          }
+        }
         <h4>Hand to Claude</h4>
         <p class="admin-exceptions__hint">Run this from the workspace root; Claude then reads the same evidence through the MCP diagnostics tool.</p>
         <code class="triage__command">{{ result.handOffCommand }}</code>

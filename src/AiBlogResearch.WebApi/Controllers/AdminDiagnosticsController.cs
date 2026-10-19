@@ -29,8 +29,26 @@ internal static class DiagnosticsLookup
 [ApiController]
 [Route("api/admin/diagnostics")]
 [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
-public sealed class AdminDiagnosticsController(IDiagnosticsReader reader, IDependencyProbes probes) : ControllerBase
+public sealed class AdminDiagnosticsController(IDiagnosticsReader reader, IDependencyProbes probes, IAiTriage aiTriage) : ControllerBase
 {
+    /// <summary>
+    /// "Ask Claude": the AI's assessment of one request. A POST because it costs money and sends a redacted report to
+    /// Anthropic, so it only ever runs from an explicit click; cached an hour per request and capped per hour in all.
+    /// Answers 200 with <c>Available: false</c> and a reason when the AI is not set up or unreachable.
+    /// </summary>
+    [HttpPost("{correlationId}/ai-triage")]
+    public async Task<ActionResult<AiTriageResult>> AskClaude(string correlationId, CancellationToken cancellationToken)
+    {
+        if (!Adventures.WebApi.CorrelationIdMiddleware.IsWellFormed(correlationId))
+        {
+            return BadRequest(DiagnosticsLookup.BadIdMessage);
+        }
+
+        var found = await DiagnosticsLookup.ForRequestAsync(reader, correlationId, cancellationToken);
+        var rules = await Triage.RunAsync(found.Report, found.LogLines, probes, DateTimeOffset.UtcNow, cancellationToken);
+        return Ok(await aiTriage.AskAsync(found.Report, found.LogLines, rules, cancellationToken));
+    }
+
     /// <summary>
     /// The Diagnose button: triage of one request by its CorrelationId (what happened, whether it is still happening
     /// through a live check, what the log says, what to do next, and the command that hands it to Claude). Read-only.

@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { EntityGrid } from '../../components/entity-grid/entity-grid';
 import { describeApiError } from '../../models/api-error';
 import { EntityGridModel } from '../../models/entity-form.model';
-import { AdminExceptionsService, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
+import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
 
 /**
  * The administrator's exception log: a grid of the active exceptions (newest first), [OK] to leave, [Purge] to retire
@@ -30,6 +30,29 @@ export class AdminExceptions implements OnInit {
   protected readonly triage = signal<Record<string, TriageResult>>({});
   protected readonly triaging = signal<Record<string, boolean>>({});
   protected readonly copied = signal<string | null>(null);
+
+  /** Claude's assessments by correlation id, and which ids are waiting for one. */
+  protected readonly ai = signal<Record<string, AiTriageResult>>({});
+  protected readonly asking = signal<Record<string, boolean>>({});
+
+  /** Sends a redacted report of this request to Claude and keeps the answer under the triage. */
+  askClaude(correlationId: string): void {
+    if (!correlationId || this.asking()[correlationId]) {
+      return;
+    }
+
+    this.asking.update((state) => ({ ...state, [correlationId]: true }));
+    this.service.askClaude(correlationId).subscribe({
+      next: (result) => {
+        this.ai.update((state) => ({ ...state, [correlationId]: result }));
+        this.asking.update((state) => ({ ...state, [correlationId]: false }));
+      },
+      error: (error) => {
+        this.asking.update((state) => ({ ...state, [correlationId]: false }));
+        this.errors.set(describeApiError(error, "Couldn't ask Claude."));
+      },
+    });
+  }
 
   /** Runs the read-only triage for one request and keeps the answer under its row. */
   diagnose(correlationId: string): void {

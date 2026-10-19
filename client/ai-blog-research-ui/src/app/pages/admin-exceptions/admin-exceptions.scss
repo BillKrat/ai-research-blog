@@ -110,3 +110,10 @@
     font-size: 0.8rem;
   }
 }
+
+.triage__ai {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-left: 3px solid var(--mat-sys-primary);
+  background: var(--mat-sys-surface-container);
+}

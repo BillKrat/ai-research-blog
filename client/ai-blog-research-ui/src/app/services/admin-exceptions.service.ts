@@ -20,6 +20,22 @@ export interface TriageResult {
   handOffCommand: string;
 }
 
+/** Claude's assessment of one request, or why there is none (not set up, limit reached, unreachable). */
+export interface AiTriageResult {
+  available: boolean;
+  reason: string | null;
+  model: string | null;
+  summary: string | null;
+  likelyCause: string | null;
+  confidence: string | null;
+  nextSteps: string[];
+  missingEvidence: string[];
+  inputTokens: number;
+  outputTokens: number;
+  sentCharacters: number;
+  fromCache: boolean;
+}
+
 /** One kind of failure: repeats of the same exception share it (the server groups them by signature). */
 export interface ExceptionSignatureSummary {
   id: string;
@@ -70,6 +86,14 @@ export class AdminExceptionsService implements OnDestroy {
   /** Runs the server's triage of one request (read-only); the id is the CorrelationId shown in the grid. */
   triage(correlationId: string): Observable<TriageResult> {
     return this.http.get<TriageResult>(`${environment.apiUrl}/api/admin/diagnostics/${encodeURIComponent(correlationId)}/triage`);
+  }
+
+  /** Asks Claude to assess one request. Sends a redacted report to Anthropic and costs money, so it only runs from a click. */
+  askClaude(correlationId: string): Observable<AiTriageResult> {
+    return this.http.post<AiTriageResult>(
+      `${environment.apiUrl}/api/admin/diagnostics/${encodeURIComponent(correlationId)}/ai-triage`,
+      {},
+    );
   }
 
   purge(): Observable<{ purged: number }> {

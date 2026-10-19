@@ -47,4 +47,12 @@ describe('AdminExceptionsService', () => {
     expect(request.request.method).toBe('GET');
     request.flush({ correlationId: 'abc-123', verdict: 'Recovered', summary: '', findings: [], nextSteps: [], handOffCommand: '' });
   });
+
+  it('asks Claude with a POST, never a GET (it costs money)', () => {
+    service.askClaude('abc-123').subscribe((result) => expect(result.available).toBe(true));
+
+    const request = controller.expectOne((r) => r.url.endsWith('/api/admin/diagnostics/abc-123/ai-triage'));
+    expect(request.request.method).toBe('POST');
+    request.flush({ available: true, reason: null, model: 'm', summary: 's', likelyCause: 'c', confidence: 'high', nextSteps: [], missingEvidence: [], inputTokens: 1, outputTokens: 1, sentCharacters: 1, fromCache: false });
+  });
 });

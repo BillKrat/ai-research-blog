@@ -94,6 +94,19 @@ try
     builder.Services.AddCorrelationId();
     builder.Services.AddScoped<IDependencyProbes, DependencyProbes>();
 
+    // The AI triage (an administrator's button): Anthropic:ApiKey is a secret (user-secrets locally, the host's environment
+    // secret Anthropic__ApiKey in production); without it the button answers "not set up". One call can take many seconds
+    // and is never retried automatically (a retry would double the cost), so this client opts out of the default resilience.
+    builder.Services.Configure<AnthropicOptions>(builder.Configuration.GetSection(AnthropicOptions.SectionName));
+#pragma warning disable EXTEXP0001
+    builder.Services.AddHttpClient(AiTriage.ClientName, client =>
+    {
+        client.BaseAddress = new Uri("https://api.anthropic.com/");
+        client.Timeout = TimeSpan.FromSeconds(90);
+    }).RemoveAllResilienceHandlers();
+#pragma warning restore EXTEXP0001
+    builder.Services.AddSingleton<IAiTriage, AiTriage>();
+
     // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available to
     // AuthController, which uses it for the real login (see
     // docs/artifacts/Claude-2026-09-21-real-login-wired.md). Lazy:
