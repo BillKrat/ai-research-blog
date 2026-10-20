@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
+    <!-- Aspire pulls MessagePack 2.5.302 (GHSA-qhrr-8q5h-9q3h) through StreamJsonRpc; pin the patched build of the same major until Aspire does. -->
+    <PackageReference Include="MessagePack" Version="2.5.307" />
   </ItemGroup>
 
   <PropertyGroup>
