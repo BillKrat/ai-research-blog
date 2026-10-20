@@ -18,6 +18,7 @@ builder.Services.AddHttpClient(McpServer.WebApi.Controllers.DiagnosticsControlle
 }).AddCorrelationIdHandler();
 
 builder.Services.AddCorrelationId();
+builder.Services.AddScoped<McpServer.WebApi.DiagnosticsApiClient>();
 
 var app = builder.Build();
 
