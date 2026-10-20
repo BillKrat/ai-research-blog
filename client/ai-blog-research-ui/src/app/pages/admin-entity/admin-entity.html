@@ -1,0 +1,45 @@
+<section class="admin-entity">
+  <h2>{{ title() }}</h2>
+
+  @for (message of loadErrors(); track message) {
+    <p class="admin-entity__error" role="alert">{{ message }}</p>
+  }
+
+  @if (isLoading()) {
+    <p>Loading...</p>
+  } @else if (model(); as form) {
+    <app-entity-form [model]="form" (save)="onSave($event)">
+      @switch (saveState()) {
+        @case ('saved') {
+          <p class="admin-entity__status" role="status">Saved.</p>
+        }
+        @case ('error') {
+          <div class="admin-entity__error" role="alert">
+            <p>Not saved.</p>
+            <ul>
+              @for (message of saveErrors(); track message) {
+                <li>{{ message }}</li>
+              }
+            </ul>
+          </div>
+        }
+      }
+
+      @if (form.permissions?.canUpdate !== false) {
+        <button mat-flat-button type="submit" [disabled]="saveState() === 'saving'">
+          {{ saveState() === 'saving' ? 'Saving...' : 'Save' }}
+        </button>
+      }
+      <button mat-button type="button" (click)="back()">Back to the list</button>
+    </app-entity-form>
+
+    @for (relation of form.relations ?? []; track relation.name) {
+      <h3>{{ relation.label }}</h3>
+      @if (relation.grid.rows.length === 0) {
+        <p class="admin-entity__hint">None.</p>
+      } @else {
+        <app-entity-grid [model]="relation.grid" />
+      }
+    }
+  }
+</section>

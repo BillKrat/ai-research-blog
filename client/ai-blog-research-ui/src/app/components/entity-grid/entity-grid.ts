@@ -6,7 +6,8 @@ import { EntityFieldSchema, EntityGridModel } from '../../models/entity-form.mod
 export type GridRequest =
   | { kind: 'next' }
   | { kind: 'previous' }
-  | { kind: 'sort'; field: string; descending: boolean };
+  | { kind: 'sort'; field: string; descending: boolean }
+  | { kind: 'open'; entityId: string; link: string };
 
 /**
  * Renders any EntityGridModel: one column per list-visible schema field (the server flags the defaults; the gear lets the
@@ -77,7 +78,7 @@ export class EntityGrid implements OnChanges {
   }
 
   protected cell(row: EntityGridModel['rows'][number], column: string): string {
-    return row.values[column] ?? '';
+    return row.display?.[column] ?? row.values[column] ?? '';
   }
 
   // --- sorting and paging (only when the server sent paging) ---
@@ -102,6 +103,7 @@ export class EntityGrid implements OnChanges {
     this.request.emit({ kind: 'sort', field: field.name, descending: current === 'ascending' });
   }
 
+/** The server-supplied form link of a row, when it gave one. */  protected rowLink(row: EntityGridModel['rows'][number]): string | null {    return this.model.links?.rows?.[row.entityId] ?? null;  }  protected open(row: EntityGridModel['rows'][number]): void {    const link = this.rowLink(row);    if (link) {      this.request.emit({ kind: 'open', entityId: row.entityId, link });    }  }
   protected next(): void {
     this.request.emit({ kind: 'next' });
   }

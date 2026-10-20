@@ -20,6 +20,8 @@ export interface EntityFieldSchema {
   isReadOnly?: boolean;
   order?: number;
   isListVisible?: boolean;
+  /** The schema a pointer field points at (a lookup is offered from it); null for an ordinary field. */
+  refSchema?: string | null;
 }
 
 /** What the caller may do with one entity; the server enforces it, the renderer only decides which buttons to show. */
@@ -36,6 +38,8 @@ export interface EntitySchemaModel {
 export interface EntityDataModel {
   entityId: string;
   values: Record<string, string | null>;
+  /** The text to show for a pointer field (its value is another entity id); absent when there is none. */
+  display?: Record<string, string> | null;
 }
 
 /**
@@ -58,6 +62,8 @@ export interface EntityGridLinks {
   create?: string | null;
   next?: string | null;
   previous?: string | null;
+  /** The form URL of each row, by entity id. */
+  rows?: Record<string, string> | null;
 }
 
 export interface EntityGridModel {
@@ -75,4 +81,12 @@ export interface EntityFormModel {
   entity: EntityDataModel;
   permissions?: EntityPermissions | null;
   contractVersion?: number;
+  /** The child collections the schema declares, each a grid (read from the server, never assembled here). */
+  relations?: EntityRelationModel[] | null;
+}
+
+export interface EntityRelationModel {
+  name: string;
+  label: string;
+  grid: EntityGridModel;
 }

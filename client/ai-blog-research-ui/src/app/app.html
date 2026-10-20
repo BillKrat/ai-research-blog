@@ -42,6 +42,12 @@
               <span>Users</span>
             </a>
           }
+          @if (showUsersLink()) {
+            <a mat-menu-item routerLink="/admin/roles">
+              <mat-icon>admin_panel_settings</mat-icon>
+              <span>Roles</span>
+            </a>
+          }
           @if (showExceptionsLink()) {
             <a mat-menu-item routerLink="/admin/exceptions">
               <mat-icon>warning</mat-icon>

@@ -1,0 +1,79 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { EntityGrid, GridRequest } from '../../components/entity-grid/entity-grid';
+import { describeApiError } from '../../models/api-error';
+import { EntityGridModel } from '../../models/entity-form.model';
+import { EntityApiService } from '../../services/entity-api.service';
+
+/**
+ * One admin list screen for every entity collection: the route says which (data: collection and title), the server says
+ * everything else (columns, order, paging, links). It fetches the grid model, renders it with the reusable grid, and turns the
+ * grid requests (next, previous, sort, open) into a server-supplied link, a sorted first page, or a navigation to the entity
+ * screen. Roles, Posts, Pages later are one route each.
+ */
+@Component({
+  selector: 'app-admin-grid',
+  imports: [EntityGrid],
+  templateUrl: './admin-grid.html',
+  styleUrl: './admin-grid.scss',
+})
+export class AdminGrid implements OnInit {
+  private readonly api = inject(EntityApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  protected readonly title = signal('');
+  protected readonly model = signal<EntityGridModel | null>(null);
+  protected readonly isLoading = signal(true);
+  protected readonly errors = signal<string[]>([]);
+
+  private collection = '';
+
+  ngOnInit(): void {
+    this.collection = this.route.snapshot.data['collection'] as string;
+    this.title.set(this.route.snapshot.data['title'] as string);
+    this.load(this.api.grid(this.collection));
+  }
+
+  protected onRequest(request: GridRequest): void {
+    const current = this.model();
+    if (!current) {
+      return;
+    }
+
+    switch (request.kind) {
+      case 'next':
+        if (current.links?.next) {
+          this.load(this.api.followGrid(current.links.next));
+        }
+        break;
+      case 'previous':
+        if (current.links?.previous) {
+          this.load(this.api.followGrid(current.links.previous));
+        }
+        break;
+      case 'sort':
+        this.load(this.api.grid(this.collection, { sort: request.field, descending: request.descending, pageSize: current.paging?.pageSize }));
+        break;
+      case 'open':
+        // the link is the server's; it travels with the navigation so the entity screen follows it instead of building a URL
+        void this.router.navigate([request.entityId], { relativeTo: this.route, state: { link: request.link } });
+        break;
+    }
+  }
+
+  private load(source: ReturnType<EntityApiService['grid']>): void {
+    this.isLoading.set(true);
+    this.errors.set([]);
+    source.subscribe({
+      next: (grid) => {
+        this.model.set(grid);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        this.isLoading.set(false);
+        this.errors.set(describeApiError(error, 'Could not load the list.'));
+      },
+    });
+  }
+}

@@ -155,6 +155,9 @@ try
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-002-exception-log.nq"), EntityConstants.ExceptionLog.SeedName);
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-003-exception-signature.nq"), EntityConstants.ExceptionLog.SignatureSeedName);
+    // The tenant and role model already in the baseline: seed 004 only describes it (schemas, and the User role-assignment relations).
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-004-identity.nq"), EntityConstants.Identity.SeedName);
     Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
@@ -209,6 +212,24 @@ try
         EntityConstants.User.DefaultGraph,
         schema => new SchemaFieldEntity(schema),
         CurrentActor);
+
+    // Identity schemas (seed 004): the data is untouched; each schema maps onto the existing predicates. Roles get an admin grid;
+    // the rest are read through the relation provider (a user role assignments) and need only their registrations.
+    static void AddIdentityEntity<TEntity>(
+        IServiceCollection services, IReadOnlyList<NQuad> quads, string schemaIri, string baseIri, string typeIri, Func<EntitySchema, TEntity> factory)
+        where TEntity : DynamicEntity =>
+        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, EntityConstants.Identity.DefaultGraph, factory, CurrentActor);
+
+    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.RoleSchemaIri, EntityConstants.Identity.RoleBaseIri, EntityConstants.Identity.RoleTypeIri, s => new Role(s));
+    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.TenantSchemaIri, EntityConstants.Identity.TenantBaseIri, EntityConstants.Identity.TenantTypeIri, s => new Tenant(s));
+    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.BlogSchemaIri, EntityConstants.Identity.BlogBaseIri, EntityConstants.Identity.BlogTypeIri, s => new Blog(s));
+    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.OrganizationSchemaIri, EntityConstants.Identity.OrganizationBaseIri, EntityConstants.Identity.OrganizationTypeIri, s => new Organization(s));
+    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.TenantRoleSchemaIri, EntityConstants.Identity.TenantRoleBaseIri, EntityConstants.Identity.TenantRoleTypeIri, s => new TenantRoleAssignment(s));
+    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.OrganizationRoleSchemaIri, EntityConstants.Identity.OrganizationRoleBaseIri, EntityConstants.Identity.OrganizationRoleTypeIri, s => new OrganizationRoleAssignment(s));
+    builder.Services.AddNQuadRelations();
+    builder.Services.AddScoped<IEntityBll<Role>>(provider => new EntityBll<Role>(provider.GetRequiredService<IEntityRepository<Role>>()));
+    builder.Services.AddScoped<IEntityPresenter<Role>>(provider => new RolePresenter(
+        provider.GetRequiredService<IEntityBll<Role>>(), provider.GetRequiredService<EntitySchemaOf<Role>>(), provider.GetService<IEntityRelationProvider>()));
 
     var app = builder.Build();
 

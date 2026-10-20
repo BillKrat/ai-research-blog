@@ -76,6 +76,9 @@
                 <dd>{{ cell(row, field.name) }}</dd>
               }
             </dl>
+            @if (rowLink(row)) {
+              <button type="button" class="entity-grid__open" (click)="open(row)">Open</button>
+            }
             @if (rowTools) {
               <ng-container [ngTemplateOutlet]="rowTools" [ngTemplateOutletContext]="{ $implicit: row }" />
             }

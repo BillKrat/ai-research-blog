@@ -98,4 +98,36 @@ describe('EntityGrid', () => {
     expect(plain.querySelector('.entity-grid__pager')).toBeNull();
     expect(plain.querySelector('thead th button')).toBeNull();
   });
+
+  it('shows the server display text for a pointer field instead of its raw id', () => {
+    const grid = model({
+      rows: [{ entityId: 'a1', values: { Id: 'a1', UserName: 'role-guid-1', Email: '' }, display: { UserName: 'Administrators' } }],
+      paging: null,
+      links: null,
+    });
+    const root = render(grid).nativeElement as HTMLElement;
+
+    expect(root.querySelector('tbody td')?.textContent).toBe('Administrators');
+  });
+
+  it('offers Open on a row only when the server gave a row link, and emits that link', () => {
+    const withLinks = model({ links: { self: '/api/users', rows: { u1: '/api/users/u1' } } });
+    const fixture = render(withLinks);
+    const root = fixture.nativeElement as HTMLElement;
+    const requests: GridRequest[] = [];
+    fixture.componentInstance.request.subscribe((r) => requests.push(r));
+
+    (root.querySelectorAll('tbody tr.entity-grid__row')[0] as HTMLElement).click();
+    fixture.detectChanges();
+    (root.querySelector('.entity-grid__open') as HTMLButtonElement).click();
+    expect(requests).toEqual([{ kind: 'open', entityId: 'u1', link: '/api/users/u1' }]);
+
+    (root.querySelectorAll('tbody tr.entity-grid__row')[1] as HTMLElement).click();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('.entity-grid__open').length).toBe(0); // one panel is open at a time, and u2 has no link
+
+    const noLinks = render(model({ links: { self: '/api/users' } })).nativeElement as HTMLElement;
+    (noLinks.querySelector('tbody tr.entity-grid__row') as HTMLElement).click();
+    expect(noLinks.querySelector('.entity-grid__open')).toBeNull();
+  });
 });
