@@ -18,6 +18,7 @@ Guiding aim: keep eyes on the running system at every level (logs, exceptions, h
 
 ## Features
 
+- **Richer typed controls (from the human, 2026-10-20).** Stage 1 already picks a native control from the type (date input, checkbox, number input, text). Upgrade to Material controls chosen the same way, from the type the schema declares: a Material date picker for `Date`, a date-time picker for `DateTime`/`DateTimeOffset` (time zone shown, UTC stored), a slide toggle or checkbox for `Bool` (configurable per field), a number field with step/min/max from schema metadata, a select for fields with `options` or a `ref:` lookup (stage 3), masked inputs for phone/e-mail via the value prefix. The mapping stays in one place (`EntityForm.kindOf`) and the server stays the only authority on what a type means; per-field overrides can come as optional schema quads (like label and order).
 - Form-contract stage 1 to 3, password-change caption and "Update password", Admin menu for the exception icon, per-field messages, targeted schema read at startup (see `AGENTS.md` Remaining).
 
 ## Infrastructure
