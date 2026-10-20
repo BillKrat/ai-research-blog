@@ -35,11 +35,7 @@
 
     @for (relation of form.relations ?? []; track relation.name) {
       <h3>{{ relation.label }}</h3>
-      @if (relation.grid.rows.length === 0) {
-        <p class="admin-entity__hint">None.</p>
-      } @else {
-        <app-entity-grid [model]="relation.grid" />
-      }
+      <app-relation-grid [relation]="relation" (changed)="reload()" />
     }
   }
 </section>

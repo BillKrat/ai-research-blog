@@ -17,15 +17,27 @@ namespace AiBlogResearch.WebApi.Controllers;
 [ApiController]
 [Route("api/users")]
 [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
-public sealed class UsersController(IUserPresenter presenter) : EntityControllerBase<User>
+public sealed class UsersController(IUserPresenter presenter, IEntityRelationWriter relationWriter, EntitySchemaOf<User> userSchema) : EntityControllerBase<User>
 {
     [HttpGet]
     public Task<ActionResult<EntityGridModel>> List([FromQuery] EntityGridQuery query, CancellationToken cancellationToken) =>
         GridAsync(presenter, query, cancellationToken);
 
     [HttpGet("{id}")]
-    public Task<ActionResult<EntityFormModel>> Get(string id, CancellationToken cancellationToken) =>
-        GetAsync(presenter, id, cancellationToken);
+    public async Task<ActionResult<EntityFormModel>> Get(string id, CancellationToken cancellationToken)
+    {
+        var form = await presenter.GetFormAsync(id, cancellationToken);
+        return form is null ? NotFound() : Ok(WithRelationLinks(form, $"{Request.Path.Value!.TrimEnd('/')}"));
+    }
+
+    /// <summary>Adds a role assignment (or any child of a declared relation) to the user: each child is saved through its own endpoint and rules, never as part of the user.</summary>
+    [HttpPost("{id}/relations/{relationName}")]
+    public Task<IActionResult> AddRelationChild(string id, string relationName, [FromBody] EntityDataModel request, CancellationToken cancellationToken) =>
+        AddRelationChildAsync(relationWriter, userSchema.Schema, id, relationName, request, cancellationToken);
+
+    [HttpDelete("{id}/relations/{relationName}/{childId}")]
+    public Task<IActionResult> RemoveRelationChild(string id, string relationName, string childId, CancellationToken cancellationToken) =>
+        RemoveRelationChildAsync(relationWriter, userSchema.Schema, id, relationName, childId, cancellationToken);
 
     [HttpPost]
     public Task<ActionResult<EntityFormModel>> Create([FromBody] EntityDataModel request, CancellationToken cancellationToken) =>

@@ -114,13 +114,67 @@ public class UsersControllerTests
         Assert.IsType<UnauthorizedResult>(result);
     }
 
-    private static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName)
+    private static readonly EntitySchema UserSchemaWithRelation = EntitySchema.Create(
+        "urn:test:User",
+        [new EntitySchemaField("urn:test:User", "f1", "UserName", "String", "urn:p:name")],
+        [new EntityRelationDefinition("TenantRoles", "Tenant roles", "urn:test:Assignment", "urn:p:has")]);
+
+    [Fact]
+    public async Task AddRelationChild_Returns201WithTheChild_AndPassesTheRequestToTheWriter()
+    {
+        var writer = new FakeRelationWriter();
+        var controller = BuildController(new FakeUserPresenter(), "BillKrat", writer);
+        var request = new EntityDataModel(string.Empty, new Dictionary<string, string?> { ["Role"] = "r1" });
+
+        var result = await controller.AddRelationChild(BillId, "TenantRoles", request, CancellationToken.None);
+
+        Assert.Equal(201, Assert.IsType<ObjectResult>(result).StatusCode);
+        Assert.Equal((BillId, "TenantRoles", request), writer.LastAdd);
+    }
+
+    [Fact]
+    public async Task AddRelationChild_IsNotFound_ForAnUnknownRelationOrAMissingParent_AndMapsRuleRefusals()
+    {
+        var writer = new FakeRelationWriter();
+        var controller = BuildController(new FakeUserPresenter(), "BillKrat", writer);
+        var request = new EntityDataModel(string.Empty, new Dictionary<string, string?>());
+
+        Assert.IsType<NotFoundResult>(await controller.AddRelationChild(BillId, "NoSuchRelation", request, CancellationToken.None));
+        Assert.Null(writer.LastAdd);
+
+        writer.AddResult = null;
+        Assert.IsType<NotFoundResult>(await controller.AddRelationChild(BillId, "TenantRoles", request, CancellationToken.None));
+
+        writer.Throw = new Adventures.Common.Exceptions.BusinessRuleException("This entry already exists.");
+        Assert.IsType<ConflictObjectResult>(await controller.AddRelationChild(BillId, "TenantRoles", request, CancellationToken.None));
+
+        writer.Throw = new Adventures.Common.Exceptions.InputValidationException(new Dictionary<string, string[]> { ["Role"] = ["Role is required."] });
+        Assert.IsType<BadRequestObjectResult>(await controller.AddRelationChild(BillId, "TenantRoles", request, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task RemoveRelationChild_Returns204_404_OrConflictForTheLastAdministrator()
+    {
+        var writer = new FakeRelationWriter();
+        var controller = BuildController(new FakeUserPresenter(), "BillKrat", writer);
+
+        Assert.IsType<NoContentResult>(await controller.RemoveRelationChild(BillId, "TenantRoles", "c1", CancellationToken.None));
+        Assert.Equal((BillId, "TenantRoles", "c1"), writer.LastRemove);
+
+        writer.RemoveResult = false;
+        Assert.IsType<NotFoundResult>(await controller.RemoveRelationChild(BillId, "TenantRoles", "c1", CancellationToken.None));
+
+        writer.Throw = new Adventures.Common.Exceptions.BusinessRuleException("A tenant must keep at least one administrator.");
+        Assert.IsType<ConflictObjectResult>(await controller.RemoveRelationChild(BillId, "TenantRoles", "c1", CancellationToken.None));
+    }
+
+    private static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null)
     {
         var identity = callerUserName is null
             ? new ClaimsIdentity()
             : new ClaimsIdentity([new Claim(ClaimTypes.Name, callerUserName)], authenticationType: "Test");
 
-        return new UsersController(presenter)
+        return new UsersController(presenter, writer ?? new FakeRelationWriter(), new EntitySchemaOf<User>(UserSchemaWithRelation))
         {
             ControllerContext = new ControllerContext
             {

@@ -2,7 +2,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { EntityFormModel, EntityGridModel } from '../models/entity-form.model';
+import { EntityDataModel, EntityFormModel, EntityGridModel } from '../models/entity-form.model';
+
+/** One choice of a pointer field: the id to store and the text to show. */
+export interface LookupOption {
+  id: string;
+  text: string;
+}
 
 /** What a grid asks of the server: sort and page size travel as query parameters on the collection URL. */
 export interface GridQuery {
@@ -46,5 +52,20 @@ export class EntityApiService {
   /** Saves the values of one entity form at its own endpoint. */
   update(link: string, entityId: string, values: Record<string, string | null>): Observable<EntityFormModel> {
     return this.http.put<EntityFormModel>(`${environment.apiUrl}${link}`, { entityId, values });
+  }
+
+  /** The choices for a pointer field, from a lookup link the server supplied. */
+  lookup(link: string): Observable<LookupOption[]> {
+    return this.http.get<LookupOption[]>(`${environment.apiUrl}${link}`);
+  }
+
+  /** Adds a child to a relation (POST to the create link the server supplied); the child own endpoint validates it. */
+  addChild(createLink: string, child: EntityDataModel): Observable<EntityDataModel> {
+    return this.http.post<EntityDataModel>(`${environment.apiUrl}${createLink}`, child);
+  }
+
+  /** Removes a child by the row link the server supplied. */
+  removeChild(rowLink: string): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}${rowLink}`);
   }
 }

@@ -1,0 +1,34 @@
+<div class="relation-grid">
+  @for (message of errors(); track message) {
+    <p class="relation-grid__error" role="alert">{{ message }}</p>
+  }
+
+  @if (relation.grid.rows.length === 0) {
+    <p class="relation-grid__hint">None.</p>
+  } @else {
+    <app-entity-grid [model]="relation.grid" [rowTools]="canRemove ? rowTools : undefined" />
+  }
+
+  @if (canAdd) {
+    <form class="relation-grid__add" (submit)="$event.preventDefault(); add()">
+      @for (field of pointerFields; track field.name) {
+        <label>
+          {{ labelOf(field) }}
+          <select [attr.aria-label]="labelOf(field)" (change)="pick(field.name, $any($event.target).value)">
+            <option value="">Choose...</option>
+            @for (option of options()[field.name] ?? []; track option.id) {
+              <option [value]="option.id" [selected]="choice()[field.name] === option.id">{{ option.text }}</option>
+            }
+          </select>
+        </label>
+      }
+      <button mat-flat-button type="submit" [disabled]="!canSubmit">{{ busy() ? 'Working...' : 'Add' }}</button>
+    </form>
+  }
+</div>
+
+<ng-template #rowTools let-row>
+  @if (removeLink(row.entityId)) {
+    <button mat-stroked-button color="warn" type="button" (click)="remove(row.entityId)" [disabled]="busy()">Remove</button>
+  }
+</ng-template>

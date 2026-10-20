@@ -158,6 +158,8 @@ try
     // The tenant and role model already in the baseline: seed 004 only describes it (schemas, and the User role-assignment relations).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-004-identity.nq"), EntityConstants.Identity.SeedName);
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-005-identity-required.nq"), EntityConstants.Identity.RequiredSeedName);
     Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
@@ -227,6 +229,7 @@ try
     AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.TenantRoleSchemaIri, EntityConstants.Identity.TenantRoleBaseIri, EntityConstants.Identity.TenantRoleTypeIri, s => new TenantRoleAssignment(s));
     AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.OrganizationRoleSchemaIri, EntityConstants.Identity.OrganizationRoleBaseIri, EntityConstants.Identity.OrganizationRoleTypeIri, s => new OrganizationRoleAssignment(s));
     builder.Services.AddNQuadRelations();
+    builder.Services.AddNQuadRelationWriter();
     builder.Services.AddScoped<IEntityBll<Role>>(provider => new EntityBll<Role>(provider.GetRequiredService<IEntityRepository<Role>>()));
     builder.Services.AddScoped<IEntityPresenter<Role>>(provider => new RolePresenter(
         provider.GetRequiredService<IEntityBll<Role>>(), provider.GetRequiredService<EntitySchemaOf<Role>>(), provider.GetService<IEntityRelationProvider>()));

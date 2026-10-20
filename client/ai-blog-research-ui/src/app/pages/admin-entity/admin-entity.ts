@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EntityForm } from '../../components/entity-form/entity-form';
-import { EntityGrid } from '../../components/entity-grid/entity-grid';
+import { RelationGrid } from '../../components/relation-grid/relation-grid';
 import { describeApiError } from '../../models/api-error';
 import { EntityFormModel } from '../../models/entity-form.model';
 import { EntityApiService } from '../../services/entity-api.service';
@@ -17,7 +17,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  */
 @Component({
   selector: 'app-admin-entity',
-  imports: [MatButtonModule, EntityForm, EntityGrid],
+  imports: [MatButtonModule, EntityForm, RelationGrid],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',
 })
@@ -51,6 +51,14 @@ export class AdminEntity implements OnInit {
         this.isLoading.set(false);
         this.loadErrors.set(describeApiError(error, 'Could not load this entry.'));
       },
+    });
+  }
+
+  /** A child was added or removed: read the parent again so every grid shows what the server now holds. */
+  protected reload(): void {
+    this.api.form(this.link).subscribe({
+      next: (form) => this.model.set(form),
+      error: (error) => this.loadErrors.set(describeApiError(error, 'Could not refresh this entry.')),
     });
   }
 

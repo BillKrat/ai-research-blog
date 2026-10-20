@@ -64,6 +64,8 @@ export interface EntityGridLinks {
   previous?: string | null;
   /** The form URL of each row, by entity id. */
   rows?: Record<string, string> | null;
+  /** The lookup URL of each pointer field, by field name (the choices for a select). */
+  lookups?: Record<string, string> | null;
 }
 
 export interface EntityGridModel {
