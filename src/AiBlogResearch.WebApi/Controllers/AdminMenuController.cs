@@ -18,11 +18,11 @@ public static class AdminMenuDefinitions
     public static readonly IReadOnlyList<AdminMenuItemDefinition> All =
     [
         new("Dashboard", "dashboard", "Dashboard", "/admin/dashboard", "dashboard", Admin, Available: false, Order: 1),
-        new("Content", "posts", "Posts", "/admin/posts", "article", Admin, Available: false, Order: 1),
+        new("Content", "posts", "Posts", "/admin/posts", "article", Admin, Order: 1),
         new("Content", "comments", "Comments", "/admin/comments", "comment", Admin, Available: false, Order: 2),
         new("Content", "pages", "Pages", "/admin/pages", "description", Admin, Order: 3),
-        new("Content", "categories", "Categories", "/admin/categories", "folder", Admin, Available: false, Order: 4),
-        new("Content", "tags", "Tags", "/admin/tags", "sell", Admin, Available: false, Order: 5),
+        new("Content", "categories", "Categories", "/admin/categories", "folder", Admin, Order: 4),
+        new("Content", "tags", "Tags", "/admin/tags", "sell", Admin, Order: 5),
         new("Content", "blogs", "Blogs", "/admin/blogs", "library_books", Admin, Available: false, Order: 6),
         new("Users", "users", "Users", "/admin/users", "group", Admin, Order: 1),
         new("Users", "roles", "Roles", "/admin/roles", "admin_panel_settings", Admin, Order: 2),

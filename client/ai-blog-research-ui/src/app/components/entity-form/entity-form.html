@@ -23,6 +23,24 @@
             }
           </label>
         }
+        @case ('refs') {
+          <fieldset class="entity-form__choices">
+            <legend>{{ labelOf(field) }}</legend>
+            @for (option of options()[field.name] ?? []; track option.id) {
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="isChosen(field.name, option.id)"
+                  [disabled]="field.isReadOnly === true"
+                  (change)="toggleChoice(field.name, option.id)"
+                />
+                {{ option.text }}
+              </label>
+            } @empty {
+              <span class="entity-form__hint">None to choose from yet.</span>
+            }
+          </fieldset>
+        }
         @case ('markdown') {
           <div class="entity-form__rich">
             <div class="entity-form__rich-head">

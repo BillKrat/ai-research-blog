@@ -78,4 +78,9 @@ export class EntityApiService {
   remove(link: string): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}${link}`);
   }
+
+  /** Runs a server-offered action on an entity (publish, unpublish): a POST to the link the server supplied. */
+  runAction(link: string): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}${link}`, {});
+  }
 }

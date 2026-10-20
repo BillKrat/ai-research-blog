@@ -8,7 +8,7 @@ import { EntityFieldSchema, EntityFormModel, SUPPORTED_CONTRACT_VERSION } from '
 import { EntityApiService, LookupOption } from '../../services/entity-api.service';
 
 /** How a field is drawn; decided from the server-supplied type name, never from the entity. */
-export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'markdown' | 'html';
+export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'refs' | 'markdown' | 'html';
 
 /**
  * Renders one control per schema field, from the matching entity value. Generic: works for any EntityFormModel - a page hosts
@@ -58,7 +58,7 @@ export class EntityForm implements OnChanges {
 
   kindOf(field: EntityFieldSchema): ControlKind {
     if (field.refSchema) {
-      return 'ref';
+      return field.type.toLowerCase().startsWith('refs:') ? 'refs' : 'ref';
     }
 
     switch (field.type.toLowerCase()) {
@@ -84,6 +84,25 @@ export class EntityForm implements OnChanges {
 
   labelOf(field: EntityFieldSchema): string {
     return field.label?.trim() ? field.label : field.name;
+  }
+
+  /** A multi-valued pointer field holds a comma-separated list of ids; the checkboxes add and remove ids from it. */
+  protected chosen(name: string): string[] {
+    return String(this.form.controls[name]?.value ?? '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0);
+  }
+
+  protected isChosen(name: string, id: string): boolean {
+    return this.chosen(name).includes(id);
+  }
+
+  protected toggleChoice(name: string, id: string): void {
+    const ids = this.chosen(name);
+    const next = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
+    this.form.controls[name].setValue(next.join(','));
+    this.form.controls[name].markAsDirty();
   }
 
   protected togglePreview(name: string): void {

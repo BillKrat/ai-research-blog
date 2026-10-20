@@ -87,6 +87,15 @@ export interface EntityFormModel {
   relations?: EntityRelationModel[] | null;
   /** The lookup URL of each pointer field, by field name (the choices for a select). */
   lookups?: Record<string, string> | null;
+  /** Extra actions the server offers on this entity in its current state (publish, unpublish): a button each. */
+  actions?: EntityAction[] | null;
+}
+
+export interface EntityAction {
+  name: string;
+  label: string;
+  link: string;
+  confirm?: string | null;
 }
 
 export interface EntityRelationModel {

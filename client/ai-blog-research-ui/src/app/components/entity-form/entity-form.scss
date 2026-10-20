@@ -45,3 +45,19 @@
   border-radius: 0.4rem;
   overflow: auto;
 }
+
+.entity-form__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.4rem;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+}

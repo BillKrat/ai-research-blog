@@ -163,6 +163,8 @@ try
     // The content model (pages, posts, categories, tags): new schemas under the schema host, modelled on the BlogEngine admin.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-006-content.nq"), EntityConstants.Content.SeedName);
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-007-post-taxonomy.nq"), EntityConstants.Content.TaxonomySeedName);
     Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
@@ -241,6 +243,14 @@ try
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.CategorySchemaIri, EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, s => new Category(s));
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.TagSchemaIri, EntityConstants.Content.TagBaseIri, EntityConstants.Content.TagTypeIri, s => new Tag(s));
     builder.Services.AddScoped<IPageBll, PageBll>();
+    builder.Services.AddScoped<IPostBll, PostBll>();
+    builder.Services.AddScoped<IEntityPresenter<Post>, PostPresenter>();
+    builder.Services.AddScoped<IEntityBll<Category>>(provider => new EntityBll<Category>(provider.GetRequiredService<IEntityRepository<Category>>()));
+    builder.Services.AddScoped<IEntityBll<Tag>>(provider => new EntityBll<Tag>(provider.GetRequiredService<IEntityRepository<Tag>>()));
+    builder.Services.AddScoped<IEntityPresenter<Category>>(provider => new EntityPresenter<Category>(
+        provider.GetRequiredService<IEntityBll<Category>>(), provider.GetRequiredService<EntitySchemaOf<Category>>().Schema, s => new Category(s), provider.GetService<IEntityRelationProvider>()));
+    builder.Services.AddScoped<IEntityPresenter<Tag>>(provider => new EntityPresenter<Tag>(
+        provider.GetRequiredService<IEntityBll<Tag>>(), provider.GetRequiredService<EntitySchemaOf<Tag>>().Schema, s => new Tag(s), provider.GetService<IEntityRelationProvider>()));
     builder.Services.AddScoped<IEntityPresenter<Page>>(provider => new EntityPresenter<Page>(
         provider.GetRequiredService<IPageBll>(), provider.GetRequiredService<EntitySchemaOf<Page>>().Schema, s => new Page(s), provider.GetService<IEntityRelationProvider>()));
     builder.Services.AddNQuadRelations();

@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EntityForm } from '../../components/entity-form/entity-form';
 import { RelationGrid } from '../../components/relation-grid/relation-grid';
 import { describeApiError } from '../../models/api-error';
-import { EntityFormModel } from '../../models/entity-form.model';
+import { EntityAction, EntityFormModel } from '../../models/entity-form.model';
 import { EntityApiService } from '../../services/entity-api.service';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
@@ -98,6 +98,19 @@ export class AdminEntity implements OnInit {
         this.saveErrors.set(describeApiError(error, 'Could not save.'));
         this.saveState.set('error');
       },
+    });
+  }
+
+  /** Runs an action the server offered (publish, unpublish), after its confirmation, then reads the entity again. */
+  protected runAction(action: EntityAction): void {
+    if (action.confirm && !window.confirm(action.confirm)) {
+      return;
+    }
+
+    this.saveErrors.set([]);
+    this.api.runAction(action.link).subscribe({
+      next: () => this.reload(),
+      error: (error) => this.saveErrors.set(describeApiError(error, 'Could not do that.')),
     });
   }
 

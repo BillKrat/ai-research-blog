@@ -179,4 +179,36 @@ describe('EntityForm', () => {
     expect(root.querySelector('.entity-form__preview strong')?.textContent).toBe('bold');
     expect(root.querySelector('textarea')).toBeNull();
   });
+
+  it('draws a multi-valued pointer as checkboxes over the lookup and posts the chosen ids as a comma-separated list', () => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    const fixture = TestBed.createComponent(EntityForm);
+    applyModel(fixture, {
+      contractVersion: 1,
+      schema: {
+        schemaIri: 'urn:post',
+        fields: [
+          { name: 'Title', type: 'String', isRequired: true, label: 'Title', order: 1 },
+          { name: 'Categories', type: 'refs:urn:category', isRequired: false, label: 'Categories', order: 2, refSchema: 'urn:category' },
+        ],
+      },
+      entity: { entityId: 'p1', values: { Title: 'Post', Categories: 'c1' }, display: { Categories: 'Angular' } },
+      lookups: { Categories: '/api/lookups?schema=urn%3Acategory' },
+    });
+    fixture.detectChanges();
+    TestBed.inject(HttpTestingController)
+      .expectOne((r) => r.url.includes('/api/lookups'))
+      .flush([{ id: 'c1', text: 'Angular' }, { id: 'c2', text: 'CLI' }]);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const boxes = Array.from(root.querySelectorAll('.entity-form__choices input')) as HTMLInputElement[];
+    let emitted: Record<string, string | null> | undefined;
+    fixture.componentInstance.save.subscribe((values) => (emitted = values));
+
+    expect(boxes.map((b) => b.checked)).toEqual([true, false]);
+    boxes[1].click();
+    fixture.componentInstance.submit();
+
+    expect(emitted?.['Categories']).toBe('c1,c2');
+  });
 });
