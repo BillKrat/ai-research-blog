@@ -96,6 +96,11 @@ export class AdminExceptionsService implements OnDestroy {
     );
   }
 
+  /** Sets the triage status of one kind of failure (Acknowledged, Fixed, or back to New). */
+  setSignatureStatus(signatureId: string, status: string): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/signatures/${encodeURIComponent(signatureId)}/status`, { status });
+  }
+
   purge(): Observable<{ purged: number }> {
     return this.http.delete<{ purged: number }>(this.baseUrl).pipe(tap(() => this._activeCount.set(0)));
   }

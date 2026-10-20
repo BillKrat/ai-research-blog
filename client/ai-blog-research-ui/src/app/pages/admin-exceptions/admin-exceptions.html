@@ -27,7 +27,19 @@
             <td>{{ kind.messagePattern }}</td>
             <td>{{ kind.topFrame }}</td>
             <td>{{ kind.lastSeen }}</td>
-            <td>{{ kind.status }}</td>
+            <td>
+              @if (kind.status === 'Regressed') {
+                <strong class="admin-exceptions__regressed" title="Was marked fixed and happened again">Regressed</strong>
+              }
+              <select [attr.aria-label]="'Status of ' + kind.exceptionType" (change)="setStatus(kind, $any($event.target).value)">
+                @if (kind.status === 'Regressed') {
+                  <option value="Regressed" selected disabled>Regressed</option>
+                }
+                @for (choice of statusChoices; track choice) {
+                  <option [value]="choice" [selected]="choice === kind.status">{{ choice }}</option>
+                }
+              </select>
+            </td>
           </tr>
         }
       </tbody>

@@ -11,6 +11,8 @@ public sealed record ExceptionCount(int Count, int Total);
 
 public sealed record PurgeResult(int Purged);
 
+public sealed record SignatureStatusChange(string? Status);
+
 /// <summary>
 /// The administrator's view of the exception log (see <see cref="UnhandledExceptionHandler"/>): the active count that
 /// drives the warning icon, the grid, and purge. Purge soft-deletes every entry, like any other delete, so the history
@@ -26,6 +28,7 @@ public sealed class AdminExceptionsController(IExceptionLogPresenter presenter, 
     public async Task<ActionResult<IReadOnlyList<ExceptionSignatureSummary>>> Signatures(CancellationToken cancellationToken) =>
         Ok(await signatures.ListSummariesAsync(cancellationToken));
 
+/// <summary>An administrator's triage of one kind of failure: Acknowledged (being handled), Fixed, or back to New. A Fixed kind that recurs becomes Regressed by itself.</summary>    [HttpPut("signatures/{signatureId}/status")]    public async Task<IActionResult> SetStatus(string signatureId, [FromBody] SignatureStatusChange change, CancellationToken cancellationToken)    {        if (!ExceptionSignatureStatus.Settable.Contains(change.Status ?? string.Empty, StringComparer.Ordinal))        {            return BadRequest(new { title = $"Status must be one of: {string.Join(", ", ExceptionSignatureStatus.Settable)}." });        }        return await signatures.SetStatusAsync(signatureId, change.Status!, cancellationToken) ? NoContent() : NotFound();    }
     /// <summary>The active exceptions, newest first; <c>?includePurged=true</c> adds the purged ones (soft deleted, each marked in its State column).</summary>
     [HttpGet]
     public async Task<ActionResult<EntityGridModel>> Grid([FromQuery] bool includePurged = false, CancellationToken cancellationToken = default) =>

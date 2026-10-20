@@ -83,6 +83,15 @@ export class AdminExceptions implements OnInit {
     }
   }
   protected readonly signatures = signal<ExceptionSignatureSummary[]>([]);
+  protected readonly statusChoices = ['New', 'Acknowledged', 'Fixed'];
+
+  /** Saves the status an administrator picked for a kind of failure, then shows what the server now holds. */
+  setStatus(kind: ExceptionSignatureSummary, status: string): void {
+    this.service.setSignatureStatus(kind.id, status).subscribe({
+      next: () => this.signatures.update((kinds) => kinds.map((k) => (k.id === kind.id ? { ...k, status } : k))),
+      error: (error) => this.errors.set(describeApiError(error, "Couldn't change the status.")),
+    });
+  }
 
   ngOnInit(): void {
     this.load();

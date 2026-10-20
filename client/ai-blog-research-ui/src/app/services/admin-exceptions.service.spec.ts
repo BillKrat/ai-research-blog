@@ -40,6 +40,7 @@ describe('AdminExceptionsService', () => {
     expect(controller.expectOne((r) => r.url.endsWith('/api/admin/exceptions')).request.params.get('includePurged')).toBe('true');
   });
 
+it('sets the status of a kind of failure with a PUT', () => {    service.setSignatureStatus('sig 1', 'Fixed').subscribe();    const request = controller.expectOne((r) => r.url.endsWith('/api/admin/exceptions/signatures/sig%201/status'));    expect(request.request.method).toBe('PUT');    expect(request.request.body).toEqual({ status: 'Fixed' });    request.flush(null);  });
   it('asks the server to triage one request by its correlation id', () => {
     service.triage('abc-123').subscribe((result) => expect(result.verdict).toBe('Recovered'));
 

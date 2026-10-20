@@ -117,3 +117,8 @@
   border-left: 3px solid var(--mat-sys-primary);
   background: var(--mat-sys-surface-container);
 }
+
+.admin-exceptions__regressed {
+  color: var(--mat-sys-error, #b3261e);
+  margin-right: 0.5rem;
+}
