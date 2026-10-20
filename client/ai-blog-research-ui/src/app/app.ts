@@ -1,10 +1,11 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { AdminExceptionsService } from './services/admin-exceptions.service';
+import { AdminMenuService } from './services/admin-menu.service';
 import { AuthService } from './services/auth.service';
 import { HealthResponse, HealthService, describeFailures } from './services/health.service';
 
@@ -20,6 +21,7 @@ export class App implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly adminExceptions = inject(AdminExceptionsService);
+  private readonly adminMenu = inject(AdminMenuService);
 
   protected readonly title = signal('AI Research Blog');
   protected readonly isDark = signal(true);
@@ -36,19 +38,18 @@ export class App implements OnInit, OnDestroy {
   /** Active exceptions in the exception log; only ever above zero for an administrator (the server refuses everyone else). */
   protected readonly activeExceptionCount = this.adminExceptions.activeCount;
 
-  /** An administrator can always open the exception log while it holds anything, purged entries included. */
-  protected readonly showExceptionsLink = computed(() => this.adminExceptions.isAdministrator() && this.adminExceptions.totalCount() > 0);
-
-  /** The Users list is for administrators (the server refuses everyone else); the count endpoint is what tells us who is one. */
-  protected readonly showUsersLink = computed(() => this.adminExceptions.isAdministrator());
+  /** The Admin link appears only when the server sent this caller an admin menu (administrators only). */
+  protected readonly showAdminLink = this.adminMenu.hasMenu;
 
   constructor(private readonly healthService: HealthService) {
     // Watch the exception count while signed in; the first refusal (not an administrator) ends the polling.
     effect(() => {
       if (this.isAuthenticated()) {
         this.adminExceptions.start();
+        this.adminMenu.load();
       } else {
         this.adminExceptions.stop();
+        this.adminMenu.clear();
       }
     });
 

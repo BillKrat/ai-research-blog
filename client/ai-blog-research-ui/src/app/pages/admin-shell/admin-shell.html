@@ -1,0 +1,40 @@
+<div class="admin-shell">
+  <nav class="admin-shell__nav" aria-label="Admin">
+    @for (section of menu().sections; track section.id) {
+      <section class="admin-shell__section">
+        <h2 class="admin-shell__heading">{{ section.label }}</h2>
+        <ul>
+          @for (item of section.items; track item.id) {
+            <li>
+              @if (item.available && item.route) {
+                <a class="admin-shell__item" [routerLink]="item.route" routerLinkActive="admin-shell__item--active">
+                  @if (item.icon) {
+                    <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+                  }
+                  <span>{{ item.label }}</span>
+                  @if (item.badge) {
+                    <span class="admin-shell__badge" [attr.aria-label]="item.badge + ' waiting'">{{ item.badge }}</span>
+                  }
+                </a>
+              } @else {
+                <span class="admin-shell__item admin-shell__item--soon" title="Not built yet">
+                  @if (item.icon) {
+                    <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+                  }
+                  <span>{{ item.label }}</span>
+                  <span class="admin-shell__soon">soon</span>
+                </span>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    } @empty {
+      <p class="admin-shell__none">You do not have access to the admin area.</p>
+    }
+  </nav>
+
+  <main class="admin-shell__content">
+    <router-outlet />
+  </main>
+</div>

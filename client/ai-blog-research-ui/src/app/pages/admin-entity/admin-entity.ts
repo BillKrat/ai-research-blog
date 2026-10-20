@@ -34,9 +34,11 @@ export class AdminEntity implements OnInit {
   protected readonly saveErrors = signal<string[]>([]);
 
   private link = '';
+  private listSegment = '';
 
   ngOnInit(): void {
     const collection = this.route.snapshot.data['collection'] as string;
+    this.listSegment = collection.split('/').pop() ?? '';
     this.title.set(this.route.snapshot.data['title'] as string);
     const id = this.route.snapshot.paramMap.get('id') ?? '';
     const handedOver = (this.router.getCurrentNavigation()?.extras.state ?? history.state) as { link?: string } | undefined;
@@ -63,7 +65,7 @@ export class AdminEntity implements OnInit {
   }
 
   protected back(): void {
-    void this.router.navigate(['..'], { relativeTo: this.route });
+    void this.router.navigate(['/admin', this.listSegment]);
   }
 
   protected onSave(values: Record<string, string | null>): void {
