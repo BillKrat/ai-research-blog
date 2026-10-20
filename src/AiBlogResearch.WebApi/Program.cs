@@ -73,7 +73,7 @@ try
         .Bind(builder.Configuration.GetSection(M2MClientsOptions.SectionName));
     builder.Services.AddSingleton<IClientSecretHasher, ClientSecretHasher>();
     builder.Services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
-    builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search", AiBlogResearch.WebApi.Controllers.McpDiagnosticsController.RequiredScope);
+    builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search", AiBlogResearch.WebApi.Controllers.McpDiagnosticsController.RequiredScope, AiBlogResearch.WebApi.Controllers.AuthoringController.RequiredScope);
     builder.Services.AddRoleAuthorization(WellKnownClaims.TenantAdminRole);
 
     // McpServer:BaseUrl -> mcp.global-webnet.com. HealthController calls this over M2M auth (minting
@@ -244,6 +244,7 @@ try
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.TagSchemaIri, EntityConstants.Content.TagBaseIri, EntityConstants.Content.TagTypeIri, s => new Tag(s));
     builder.Services.AddScoped<IPageBll, PageBll>();
     builder.Services.AddScoped<IPostBll, PostBll>();
+    builder.Services.AddScoped<IContentAuthoring, ContentAuthoring>();
     builder.Services.AddScoped<IEntityPresenter<Post>, PostPresenter>();
     builder.Services.AddScoped<IEntityBll<Category>>(provider => new EntityBll<Category>(provider.GetRequiredService<IEntityRepository<Category>>()));
     builder.Services.AddScoped<IEntityBll<Tag>>(provider => new EntityBll<Tag>(provider.GetRequiredService<IEntityRepository<Tag>>()));

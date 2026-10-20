@@ -6,42 +6,94 @@ using Microsoft.AspNetCore.Mvc;
 namespace McpServer.WebApi.Controllers;
 
 /// <summary>
-/// The diagnostics tool over the Model Context Protocol (JSON-RPC 2.0 on one POST endpoint, the "streamable HTTP" transport
-/// answering with plain JSON): <c>initialize</c>, <c>tools/list</c> and <c>tools/call</c>, so an MCP client discovers the tools
-/// by itself instead of being told the REST routes. Same scope as the REST controller (<c>mcp.diagnostics.read</c>), same
-/// read-only questions, same forwarding: a tool call is a GET to the API with the caller's own token, and the API's answer
-/// text is returned as the tool result (an API refusal or outage is a tool error, so the model sees the reason).
+/// This app's tools over the Model Context Protocol (JSON-RPC 2.0 on one POST endpoint, the "streamable HTTP" transport answering with
+/// plain JSON): <c>initialize</c>, <c>tools/list</c> and <c>tools/call</c>, so an MCP client discovers the tools by itself.
+/// Two groups, each behind its own scope on the caller token: the read-only diagnostics tools (<c>mcp.diagnostics.read</c>) and the
+/// drafts-only authoring tools (<c>content.draft</c>). <c>tools/list</c> shows a caller only the tools its scopes allow, and
+/// <c>tools/call</c> checks the scope again for the tool being called. A tool call is a forwarded request to the API with the
+/// caller own token; the API stays the single place that decides what is allowed (authoring cannot publish, whatever is asked), and
+/// its answer text comes back as the tool result (a refusal or an outage is a tool error, so the model sees the reason).
 /// </summary>
 [ApiController]
 [Route("mcp")]
-[Authorize(Policy = "Scope:" + DiagnosticsController.RequiredScope)]
-public sealed class McpController(DiagnosticsApiClient api) : ControllerBase
+[Authorize]
+public sealed class McpController(DiagnosticsApiClient api, IAuthorizationService authorization) : ControllerBase
 {
     public const string ProtocolVersion = "2025-03-26";
+    public const string DiagnosticsScope = DiagnosticsController.RequiredScope;
+    public const string AuthoringScope = "content.draft";
 
-    public static readonly JsonArray Tools = JsonNode.Parse("""
-        [
-          {
-            "name": "diagnose_request",
-            "description": "Everything recorded for one request: its exceptions, the kinds of failure they belong to, and its log lines, found by the CorrelationId (the id shown in an error message or the X-Correlation-Id response header).",
-            "inputSchema": { "type": "object", "properties": { "correlationId": { "type": "string", "description": "The request's correlation id." } }, "required": ["correlationId"] }
-          },
-          {
-            "name": "recent_exceptions",
-            "description": "The most recent active exceptions, newest first.",
-            "inputSchema": { "type": "object", "properties": { "max": { "type": "integer", "description": "How many (1-500, default 50)." } } }
-          },
-          {
-            "name": "exception_signatures",
-            "description": "Every known kind of failure with how often and when it was seen and its triage status.",
-            "inputSchema": { "type": "object", "properties": {} }
-          }
-        ]
-        """)!.AsArray();
+    /// <summary>Every tool this server offers, with the scope that unlocks it.</summary>
+    public static readonly IReadOnlyList<(string Scope, JsonObject Definition)> Tools =
+    [
+        (DiagnosticsScope, Tool(
+            "diagnose_request",
+            "Everything recorded for one request: its exceptions, the kinds of failure they belong to, and its log lines, found by the CorrelationId (the id shown in an error message or the X-Correlation-Id response header).",
+            """{ "type": "object", "properties": { "correlationId": { "type": "string", "description": "The request's correlation id." } }, "required": ["correlationId"] }""")),
+        (DiagnosticsScope, Tool(
+            "recent_exceptions",
+            "The most recent active exceptions, newest first.",
+            """{ "type": "object", "properties": { "max": { "type": "integer", "description": "How many (1-500, default 50)." } } }""")),
+        (DiagnosticsScope, Tool(
+            "exception_signatures",
+            "Every known kind of failure with how often and when it was seen and its triage status.",
+            """{ "type": "object", "properties": {} }""")),
+        (AuthoringScope, Tool(
+            "list_my_posts",
+            "The posts the authoring account has written (id, title, slug, whether published, categories, tags), newest first.",
+            """{ "type": "object", "properties": {} }""")),
+        (AuthoringScope, Tool(
+            "create_draft_post",
+            "Creates a blog post as a DRAFT under the authoring account. It can never publish: an administrator reviews and publishes in the admin. Content is Markdown. Categories and tags are given by name and are created when they do not exist.",
+            """
+            { "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "content": { "type": "string", "description": "The post body in Markdown." },
+                "description": { "type": "string", "description": "One-sentence summary." },
+                "slug": { "type": "string", "description": "Optional URL slug; made from the title when omitted." },
+                "categories": { "type": "array", "items": { "type": "string" }, "description": "For example Help, Development log, MCP." },
+                "tags": { "type": "array", "items": { "type": "string" }, "description": "By feature, for example Pages, Posts, Roles, MCP." },
+                "enableComments": { "type": "boolean" } },
+              "required": ["title"] }
+            """)),
+        (AuthoringScope, Tool(
+            "update_draft_post",
+            "Revises one of the authoring account's own posts while it is still a draft; only the fields given change. A published post, or someone else's, is refused.",
+            """
+            { "type": "object",
+              "properties": {
+                "id": { "type": "string", "description": "The post id from list_my_posts or create_draft_post." },
+                "title": { "type": "string" }, "content": { "type": "string" }, "description": { "type": "string" }, "slug": { "type": "string" },
+                "categories": { "type": "array", "items": { "type": "string" } }, "tags": { "type": "array", "items": { "type": "string" } },
+                "enableComments": { "type": "boolean" } },
+              "required": ["id", "title"] }
+            """)),
+        (AuthoringScope, Tool("list_categories", "Every category (id and name).", """{ "type": "object", "properties": {} }""")),
+        (AuthoringScope, Tool("list_tags", "Every tag (id and name).", """{ "type": "object", "properties": {} }""")),
+        (AuthoringScope, Tool(
+            "create_category",
+            "Finds the category with this name (any case) or creates it.",
+            """{ "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] }""")),
+        (AuthoringScope, Tool(
+            "create_tag",
+            "Finds the tag with this name (any case) or creates it.",
+            """{ "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] }""")),
+    ];
+
+    private static JsonObject Tool(string name, string description, string inputSchema) =>
+        new() { ["name"] = name, ["description"] = description, ["inputSchema"] = JsonNode.Parse(inputSchema) };
 
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] JsonElement body, CancellationToken cancellationToken)
     {
+        // At least one of the two scopes is needed to use this endpoint at all; each tool then needs its own.
+        var scopes = await GrantedScopesAsync();
+        if (scopes.Count == 0)
+        {
+            return Forbid();
+        }
+
         if (body.ValueKind != JsonValueKind.Object || !body.TryGetProperty("method", out var methodElement) || methodElement.GetString() is not { } method)
         {
             return Ok(Error(null, -32600, "Invalid request."));
@@ -63,54 +115,121 @@ public sealed class McpController(DiagnosticsApiClient api) : ControllerBase
                 {
                     ["protocolVersion"] = ProtocolVersion,
                     ["capabilities"] = new JsonObject { ["tools"] = new JsonObject { ["listChanged"] = false } },
-                    ["serverInfo"] = new JsonObject { ["name"] = "adventures-diagnostics", ["version"] = "1.0.0" },
-                    ["instructions"] = "Read-only eyes into the running system. Start with recent_exceptions or exception_signatures, then diagnose_request with a correlation id.",
+                    ["serverInfo"] = new JsonObject { ["name"] = "adventures-mcp", ["version"] = "1.1.0" },
+                    ["instructions"] = "Diagnostics (read-only): start with recent_exceptions or exception_signatures, then diagnose_request with a correlation id. Authoring (drafts only): create_draft_post and update_draft_post write Markdown drafts that an administrator publishes.",
                 }));
             case "ping":
                 return Ok(Result(id, new JsonObject()));
             case "tools/list":
-                return Ok(Result(id, new JsonObject { ["tools"] = JsonNode.Parse(Tools.ToJsonString()) }));
+                return Ok(Result(id, new JsonObject
+                {
+                    ["tools"] = new JsonArray(Tools.Where(t => scopes.Contains(t.Scope)).Select(t => JsonNode.Parse(t.Definition.ToJsonString())).ToArray()),
+                }));
             case "tools/call":
-                return Ok(await CallToolAsync(id, body, cancellationToken));
+                return Ok(await CallToolAsync(id, body, scopes, cancellationToken));
             default:
                 return Ok(Error(id, -32601, $"Method not found: {method}"));
         }
     }
 
-    private async Task<JsonObject> CallToolAsync(JsonNode? id, JsonElement body, CancellationToken cancellationToken)
+    /// <summary>Which of this server scopes the caller token holds (checked through the same scope policies the REST routes use).</summary>
+    private async Task<HashSet<string>> GrantedScopesAsync()
+    {
+        var granted = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var scope in new[] { DiagnosticsScope, AuthoringScope })
+        {
+            if ((await authorization.AuthorizeAsync(User, null, "Scope:" + scope)).Succeeded)
+            {
+                granted.Add(scope);
+            }
+        }
+
+        return granted;
+    }
+
+    private async Task<JsonObject> CallToolAsync(JsonNode? id, JsonElement body, HashSet<string> scopes, CancellationToken cancellationToken)
     {
         if (!body.TryGetProperty("params", out var parameters) || !parameters.TryGetProperty("name", out var nameElement) || nameElement.GetString() is not { } name)
         {
             return Error(id, -32602, "tools/call needs params.name.");
         }
 
-        JsonElement arguments = default;
-        var hasArguments = parameters.TryGetProperty("arguments", out arguments) && arguments.ValueKind == JsonValueKind.Object;
+        var tool = Tools.FirstOrDefault(t => t.Definition["name"]!.GetValue<string>() == name);
+        if (tool.Definition is null)
+        {
+            return Error(id, -32602, $"Unknown tool: {name}");
+        }
 
+        if (!scopes.Contains(tool.Scope))
+        {
+            return ToolResult(id, $"This token does not carry the '{tool.Scope}' scope that '{name}' needs.", isError: true);
+        }
+
+        var arguments = parameters.TryGetProperty("arguments", out var a) && a.ValueKind == JsonValueKind.Object ? a : default;
+        string? Text(string key) => arguments.ValueKind == JsonValueKind.Object && arguments.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        JsonNode? Args() => arguments.ValueKind == JsonValueKind.Object ? JsonNode.Parse(arguments.GetRawText()) : new JsonObject();
+
+        HttpMethod method;
         string path;
+        JsonNode? payload = null;
         switch (name)
         {
             case "diagnose_request":
-                var correlationId = hasArguments && arguments.TryGetProperty("correlationId", out var c) ? c.GetString() : null;
-                if (string.IsNullOrWhiteSpace(correlationId))
+                if (string.IsNullOrWhiteSpace(Text("correlationId")))
                 {
                     return ToolResult(id, "correlationId is required.", isError: true);
                 }
 
-                path = $"api/diagnostics/{Uri.EscapeDataString(correlationId)}";
+                (method, path) = (HttpMethod.Get, $"api/diagnostics/{Uri.EscapeDataString(Text("correlationId")!)}");
                 break;
             case "recent_exceptions":
-                var max = hasArguments && arguments.TryGetProperty("max", out var m) && m.TryGetInt32(out var number) ? number : 50;
-                path = $"api/diagnostics/recent?max={max}";
+                var max = arguments.ValueKind == JsonValueKind.Object && arguments.TryGetProperty("max", out var m) && m.TryGetInt32(out var number) ? number : 50;
+                (method, path) = (HttpMethod.Get, $"api/diagnostics/recent?max={max}");
                 break;
             case "exception_signatures":
-                path = "api/diagnostics/signatures";
+                (method, path) = (HttpMethod.Get, "api/diagnostics/signatures");
+                break;
+            case "list_my_posts":
+                (method, path) = (HttpMethod.Get, "api/author/posts");
+                break;
+            case "create_draft_post":
+                if (string.IsNullOrWhiteSpace(Text("title")))
+                {
+                    return ToolResult(id, "title is required.", isError: true);
+                }
+
+                (method, path, payload) = (HttpMethod.Post, "api/author/posts", Args());
+                break;
+            case "update_draft_post":
+                if (string.IsNullOrWhiteSpace(Text("id")) || string.IsNullOrWhiteSpace(Text("title")))
+                {
+                    return ToolResult(id, "id and title are required.", isError: true);
+                }
+
+                var update = Args()!.AsObject();
+                update.Remove("id");
+                (method, path, payload) = (HttpMethod.Put, $"api/author/posts/{Uri.EscapeDataString(Text("id")!)}", update);
+                break;
+            case "list_categories":
+                (method, path) = (HttpMethod.Get, "api/author/categories");
+                break;
+            case "list_tags":
+                (method, path) = (HttpMethod.Get, "api/author/tags");
+                break;
+            case "create_category":
+            case "create_tag":
+                if (string.IsNullOrWhiteSpace(Text("name")))
+                {
+                    return ToolResult(id, "name is required.", isError: true);
+                }
+
+                (method, path, payload) = (HttpMethod.Post, name == "create_tag" ? "api/author/tags" : "api/author/categories", Args());
                 break;
             default:
                 return Error(id, -32602, $"Unknown tool: {name}");
         }
 
-        var answer = await api.GetAsync(path, Request.Headers.Authorization.ToString(), cancellationToken);
+        var answer = await api.SendAsync(method, path, payload, Request.Headers.Authorization.ToString(), cancellationToken);
         if (answer.Unreachable)
         {
             return ToolResult(id, "The API could not be reached.", isError: true);

@@ -8,7 +8,7 @@ builder.AddServiceDefaults();
 builder.Services.AddControllers();
 
 builder.Services.AddSharedJwtAuthentication(builder.Configuration);
-builder.Services.AddScopeAuthorization("mcp.hello", McpServer.WebApi.Controllers.DiagnosticsController.RequiredScope);
+builder.Services.AddScopeAuthorization("mcp.hello", McpServer.WebApi.Controllers.DiagnosticsController.RequiredScope, McpServer.WebApi.Controllers.McpController.AuthoringScope);
 
 // The API owns the exception store and the log files; the diagnostics tool asks it (Api:BaseUrl), carrying the request id.
 builder.Services.AddHttpClient(McpServer.WebApi.Controllers.DiagnosticsController.ApiClientName, (services, client) =>

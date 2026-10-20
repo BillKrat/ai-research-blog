@@ -119,4 +119,90 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
         Assert.Equal(HttpStatusCode.Forbidden, (await ClientWith("mcp.hello").PostAsJsonAsync("/mcp", message)).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await _app.CreateClient().PostAsJsonAsync("/mcp", message)).StatusCode);
     }
+
+    [Fact]
+    public async Task ToolsList_ShowsACallerOnlyTheToolsItsScopesAllow()
+    {
+        var diagnostics = await RpcAsync(ClientWith("mcp.diagnostics.read"), new { jsonrpc = "2.0", id = 1, method = "tools/list" });
+        var authoring = await RpcAsync(ClientWith("content.draft"), new { jsonrpc = "2.0", id = 2, method = "tools/list" });
+        var both = await RpcAsync(ClientWith("mcp.diagnostics.read", "content.draft"), new { jsonrpc = "2.0", id = 3, method = "tools/list" });
+
+        string[] Names(JsonElement answer) => answer.GetProperty("result").GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()!).ToArray();
+        Assert.Equal(["diagnose_request", "recent_exceptions", "exception_signatures"], Names(diagnostics));
+        Assert.Equal(["list_my_posts", "create_draft_post", "update_draft_post", "list_categories", "list_tags", "create_category", "create_tag"], Names(authoring));
+        Assert.Equal(10, Names(both).Length);
+    }
+
+    [Fact]
+    public async Task CreateDraftPost_ForwardsTheArgumentsAsAPostToTheAuthoringApi_WithTheCallersToken()
+    {
+        _app.Api.Respond = _ => new HttpResponseMessage(HttpStatusCode.Created) { Content = new StringContent("""{"id":"p1","title":"How Pages Work","isPublished":false}""") };
+        var client = ClientWith("content.draft");
+
+        var answer = await RpcAsync(client, new
+        {
+            jsonrpc = "2.0",
+            id = 4,
+            method = "tools/call",
+            @params = new
+            {
+                name = "create_draft_post",
+                arguments = new { title = "How Pages Work", content = "# Pages", categories = new[] { "Help" }, tags = new[] { "Pages" } },
+            },
+        });
+
+        var result = answer.GetProperty("result");
+        Assert.False(result.GetProperty("isError").GetBoolean());
+        Assert.Contains("\"isPublished\":false", result.GetProperty("content")[0].GetProperty("text").GetString());
+        Assert.Equal("POST", _app.Api.LastRequest!.Method.Method);
+        Assert.Equal("/api/author/posts", _app.Api.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal(client.DefaultRequestHeaders.Authorization!.Parameter, _app.Api.LastRequest.Headers.Authorization?.Parameter);
+        using var sent = JsonDocument.Parse(_app.Api.LastBody!);
+        Assert.Equal("How Pages Work", sent.RootElement.GetProperty("title").GetString());
+        Assert.Equal("Help", sent.RootElement.GetProperty("categories")[0].GetString());
+    }
+
+    [Fact]
+    public async Task UpdateDraftPost_PutsToThePostId_WithoutTheIdInTheBody_AndSurfacesTheApisRefusal()
+    {
+        _app.Api.Respond = _ => new HttpResponseMessage(HttpStatusCode.Conflict) { Content = new StringContent("This post is published.") };
+
+        var answer = await RpcAsync(ClientWith("content.draft"), new
+        {
+            jsonrpc = "2.0",
+            id = 5,
+            method = "tools/call",
+            @params = new { name = "update_draft_post", arguments = new { id = "p9", title = "Edited" } },
+        });
+
+        Assert.Equal("PUT", _app.Api.LastRequest!.Method.Method);
+        Assert.Equal("/api/author/posts/p9", _app.Api.LastRequest.RequestUri!.AbsolutePath);
+        using var sent = JsonDocument.Parse(_app.Api.LastBody!);
+        Assert.False(sent.RootElement.TryGetProperty("id", out _));
+        var result = answer.GetProperty("result");
+        Assert.True(result.GetProperty("isError").GetBoolean());
+        Assert.Contains("409", result.GetProperty("content")[0].GetProperty("text").GetString());
+    }
+
+    [Fact]
+    public async Task AToolOfAnotherScope_IsRefusedAsAToolError_AndNothingIsForwarded()
+    {
+        _app.Api.Respond = _ => new HttpResponseMessage(HttpStatusCode.OK);
+        _app.Api.ResetForTests();
+
+        var authoringOnly = await RpcAsync(ClientWith("content.draft"), new
+        {
+            jsonrpc = "2.0", id = 6, method = "tools/call", @params = new { name = "recent_exceptions" },
+        });
+        var diagnosticsOnly = await RpcAsync(ClientWith("mcp.diagnostics.read"), new
+        {
+            jsonrpc = "2.0", id = 7, method = "tools/call", @params = new { name = "create_draft_post", arguments = new { title = "x" } },
+        });
+
+        Assert.True(authoringOnly.GetProperty("result").GetProperty("isError").GetBoolean());
+        Assert.Contains("mcp.diagnostics.read", authoringOnly.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString());
+        Assert.True(diagnosticsOnly.GetProperty("result").GetProperty("isError").GetBoolean());
+        Assert.Contains("content.draft", diagnosticsOnly.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString());
+        Assert.Null(_app.Api.LastRequest);
+    }
 }

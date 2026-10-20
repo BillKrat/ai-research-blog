@@ -83,9 +83,18 @@ public sealed class DiagnosticsControllerTests : IClassFixture<DiagnosticsContro
 
         public HttpRequestMessage? LastRequest { get; private set; }
 
+        public string? LastBody { get; private set; }
+
+        public void ResetForTests()
+        {
+            LastRequest = null;
+            LastBody = null;
+        }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             LastRequest = request;
+            LastBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
             return Task.FromResult(Respond(request));
         }
     }
