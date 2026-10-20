@@ -1,7 +1,7 @@
-import { provideHttpClient } from '@angular/common/http';
+﻿import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { MarkdownContent } from '../../components/markdown-content/markdown-content';
 import { SiteNav } from '../../components/site-nav/site-nav';
@@ -103,5 +103,21 @@ describe('Public site', () => {
       ['Article', '/page/article'],
       ['Angular', '/page/angular'],
     ]);
+  });
+
+  it('SiteNav reads the menu again after every navigation, so a page published a moment ago appears without a browser refresh', async () => {
+    const http = configure(routeStub({}));
+    const router = TestBed.inject(Router);
+    const fixture = TestBed.createComponent(SiteNav);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/public/menu')).flush([]);
+
+    await router.navigateByUrl('/', { skipLocationChange: true }).catch(() => undefined);
+    const again = http.match((r) => r.url.endsWith('/api/public/menu'));
+    expect(again.length).toBeGreaterThan(0);
+    again[0].flush([{ title: 'New page', slug: 'new-page', children: [] }]);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('New page');
   });
 });
