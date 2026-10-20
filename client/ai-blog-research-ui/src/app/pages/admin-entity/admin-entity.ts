@@ -42,7 +42,17 @@ export class AdminEntity implements OnInit {
     this.collection = this.route.snapshot.data['collection'] as string;
     this.title.set(this.route.snapshot.data['title'] as string);
     this.listSegment = this.collection.split('/').pop() ?? '';
-    const id = this.route.snapshot.paramMap.get('id') ?? '';
+    // Angular keeps this component alive when only the id changes (new -> the created entity), so load on every id, not once:
+    // otherwise the screen stays on the blank "new" form and a second Save creates a duplicate.
+    this.route.paramMap.subscribe((params) => this.load(params.get('id') ?? ''));
+  }
+
+  private load(id: string): void {
+    this.isLoading.set(true);
+    this.model.set(null);
+    this.loadErrors.set([]);
+    this.saveErrors.set([]);
+    this.saveState.set('idle');
     this.isNew.set(id === 'new');
     const handedOver = (this.router.getCurrentNavigation()?.extras.state ?? history.state) as { link?: string } | undefined;
     this.link = this.isNew() ? `${this.collection}/new` : (handedOver?.link ?? `${this.collection}/${encodeURIComponent(id)}`);
