@@ -15,14 +15,14 @@ namespace AiBlogResearch.WebApi.Controllers;
 public sealed class LookupsController(IEntityRelationProvider provider) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<RelationOption>>> Options([FromQuery] string schema, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<RelationOption>>> Options([FromQuery] string schema, [FromQuery] string? exclude, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(schema))
         {
             return BadRequest("A schema is required.");
         }
 
-        var options = await provider.GetOptionsAsync(schema, cancellationToken);
-        return options.Count == 0 ? NotFound() : Ok(options);
+        var options = await provider.GetOptionsAsync(schema, exclude, cancellationToken);
+        return Ok(options);
     }
 }

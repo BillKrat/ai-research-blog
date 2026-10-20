@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { EntityForm } from './entity-form';
@@ -126,5 +128,55 @@ describe('EntityForm', () => {
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('form')).toBeNull();
     expect(root.querySelector('[role="alert"]')?.textContent).toContain('older version');
+  });
+
+  function pageModel(): EntityFormModel {
+    return {
+      contractVersion: 1,
+      schema: {
+        schemaIri: 'urn:page',
+        fields: [
+          { name: 'Title', type: 'String', isRequired: true, label: 'Title', order: 1 },
+          { name: 'Parent', type: 'ref:urn:page', isRequired: false, label: 'Parent', order: 2, refSchema: 'urn:page' },
+          { name: 'Content', type: 'Markdown', isRequired: false, label: 'Content', order: 3 },
+        ],
+      },
+      entity: { entityId: 'p1', values: { Title: 'Angular', Parent: 'p0', Content: '# Hello\n\nsome **bold** text' }, display: { Parent: 'Article' } },
+      lookups: { Parent: '/api/lookups?schema=urn%3Apage&exclude=p1' },
+    };
+  }
+
+  it('fills a pointer field select from the server lookup link and selects the current value', () => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    const fixture = TestBed.createComponent(EntityForm);
+    applyModel(fixture, pageModel());
+    fixture.detectChanges();
+
+    TestBed.inject(HttpTestingController)
+      .expectOne((r) => r.url.includes('/api/lookups') && r.url.includes('exclude=p1'))
+      .flush([{ id: 'p0', text: 'Article' }, { id: 'p2', text: 'Other' }]);
+    fixture.detectChanges();
+    const select = (fixture.nativeElement as HTMLElement).querySelector('select[aria-label="Parent"]') as HTMLSelectElement;
+
+    expect(Array.from(select.options).map((o) => o.textContent?.trim())).toEqual(['None', 'Article', 'Other']);
+    expect(select.value).toBe('p0');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Currently: Article');
+  });
+
+  it('edits Markdown in a text area and previews it rendered, without sending the preview anywhere', () => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    const fixture = TestBed.createComponent(EntityForm);
+    applyModel(fixture, pageModel());
+    fixture.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne((r) => r.url.includes('/api/lookups')).flush([]);
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
+    (Array.from(root.querySelectorAll('.entity-form__rich-head button'))[0] as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(root.querySelector('.entity-form__preview h1')?.textContent).toBe('Hello');
+    expect(root.querySelector('.entity-form__preview strong')?.textContent).toBe('bold');
+    expect(root.querySelector('textarea')).toBeNull();
   });
 });

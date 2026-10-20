@@ -85,6 +85,8 @@ export interface EntityFormModel {
   contractVersion?: number;
   /** The child collections the schema declares, each a grid (read from the server, never assembled here). */
   relations?: EntityRelationModel[] | null;
+  /** The lookup URL of each pointer field, by field name (the choices for a select). */
+  lookups?: Record<string, string> | null;
 }
 
 export interface EntityRelationModel {

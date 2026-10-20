@@ -31,6 +31,8 @@ internal sealed class FakeUserPresenter : IUserPresenter
     public Task<EntityFormModel?> GetFormByUserNameAsync(string userName, CancellationToken cancellationToken = default) =>
         Task.FromResult(FormByUserName);
 
+    public Task<EntityFormModel?> GetNewFormAsync(CancellationToken cancellationToken = default) => Task.FromResult<EntityFormModel?>(null);
+
     public Task<IReadOnlyList<EntityDataModel>> ListAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult(Summaries);
 

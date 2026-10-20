@@ -1,5 +1,5 @@
 <section class="admin-entity">
-  <h2>{{ title() }}</h2>
+  <h2>{{ title() }}{{ isNew() ? ': new' : '' }}</h2>
 
   @for (message of loadErrors(); track message) {
     <p class="admin-entity__error" role="alert">{{ message }}</p>
@@ -31,6 +31,9 @@
         </button>
       }
       <button mat-button type="button" (click)="back()">Back to the list</button>
+      @if (canDelete) {
+        <button mat-stroked-button color="warn" type="button" (click)="remove()">Delete</button>
+      }
     </app-entity-form>
 
     @for (relation of form.relations ?? []; track relation.name) {

@@ -160,6 +160,9 @@ try
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-004-identity.nq"), EntityConstants.Identity.SeedName);
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-005-identity-required.nq"), EntityConstants.Identity.RequiredSeedName);
+    // The content model (pages, posts, categories, tags): new schemas under the schema host, modelled on the BlogEngine admin.
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-006-content.nq"), EntityConstants.Content.SeedName);
     Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
@@ -228,6 +231,18 @@ try
     AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.OrganizationSchemaIri, EntityConstants.Identity.OrganizationBaseIri, EntityConstants.Identity.OrganizationTypeIri, s => new Organization(s));
     AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.TenantRoleSchemaIri, EntityConstants.Identity.TenantRoleBaseIri, EntityConstants.Identity.TenantRoleTypeIri, s => new TenantRoleAssignment(s));
     AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.OrganizationRoleSchemaIri, EntityConstants.Identity.OrganizationRoleBaseIri, EntityConstants.Identity.OrganizationRoleTypeIri, s => new OrganizationRoleAssignment(s));
+    static void AddContentEntity<TEntity>(
+        IServiceCollection services, IReadOnlyList<NQuad> quads, string schemaIri, string baseIri, string typeIri, Func<EntitySchema, TEntity> factory)
+        where TEntity : DynamicEntity =>
+        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, EntityConstants.Content.DefaultGraph, factory, CurrentActor);
+
+    AddContentEntity(builder.Services, userQuads, EntityConstants.Content.PageSchemaIri, EntityConstants.Content.PageBaseIri, EntityConstants.Content.PageTypeIri, s => new Page(s));
+    AddContentEntity(builder.Services, userQuads, EntityConstants.Content.PostSchemaIri, EntityConstants.Content.PostBaseIri, EntityConstants.Content.PostTypeIri, s => new Post(s));
+    AddContentEntity(builder.Services, userQuads, EntityConstants.Content.CategorySchemaIri, EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, s => new Category(s));
+    AddContentEntity(builder.Services, userQuads, EntityConstants.Content.TagSchemaIri, EntityConstants.Content.TagBaseIri, EntityConstants.Content.TagTypeIri, s => new Tag(s));
+    builder.Services.AddScoped<IPageBll, PageBll>();
+    builder.Services.AddScoped<IEntityPresenter<Page>>(provider => new EntityPresenter<Page>(
+        provider.GetRequiredService<IPageBll>(), provider.GetRequiredService<EntitySchemaOf<Page>>().Schema, s => new Page(s), provider.GetService<IEntityRelationProvider>()));
     builder.Services.AddNQuadRelations();
     builder.Services.AddNQuadRelationWriter();
     builder.Services.AddScoped<IEntityBll<Role>>(provider => new EntityBll<Role>(provider.GetRequiredService<IEntityRepository<Role>>()));

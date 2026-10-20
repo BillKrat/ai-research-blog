@@ -1,5 +1,10 @@
 <section class="admin-grid">
-  <h2>{{ title() }}</h2>
+  <div class="admin-grid__head">
+    <h2>{{ title() }}</h2>
+    @if (canCreate) {
+      <button type="button" class="admin-grid__new" (click)="create()">New</button>
+    }
+  </div>
 
   @for (message of errors(); track message) {
     <p class="admin-grid__error" role="alert">{{ message }}</p>

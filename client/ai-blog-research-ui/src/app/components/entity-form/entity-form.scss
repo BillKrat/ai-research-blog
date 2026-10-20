@@ -3,3 +3,45 @@
   flex-direction: column;
   gap: 0.25rem;
 }
+
+.entity-form__select {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.entity-form__hint {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.entity-form__rich {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+
+  textarea {
+    width: 100%;
+    min-height: 14rem;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    box-sizing: border-box;
+  }
+}
+
+.entity-form__rich-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.entity-form__preview {
+  min-height: 14rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.4rem;
+  overflow: auto;
+}

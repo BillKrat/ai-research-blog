@@ -35,6 +35,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'users' },
       ...adminCollection('users', '/api/users', 'Users'),
       ...adminCollection('roles', '/api/roles', 'Roles'),
+      ...adminCollection('pages', '/api/pages', 'Pages'),
       { path: 'exceptions', loadComponent: () => import('./pages/admin-exceptions/admin-exceptions').then((m) => m.AdminExceptions) },
     ],
   },

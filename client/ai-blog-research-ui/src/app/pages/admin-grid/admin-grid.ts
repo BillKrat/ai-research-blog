@@ -35,6 +35,16 @@ export class AdminGrid implements OnInit {
     this.load(this.api.grid(this.collection));
   }
 
+  /** New: the empty form of this collection (only offered when the server says the caller may create and gave a create link). */
+  protected get canCreate(): boolean {
+    const grid = this.model();
+    return grid?.canCreate === true && !!grid.links?.create;
+  }
+
+  protected create(): void {
+    void this.router.navigate(['new'], { relativeTo: this.route });
+  }
+
   protected onRequest(request: GridRequest): void {
     const current = this.model();
     if (!current) {

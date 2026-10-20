@@ -10,10 +10,10 @@ import { EntityApiService } from '../../services/entity-api.service';
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 /**
- * One admin screen for any single entity: its form (typed controls, read-only fields and the Save button decided by the
- * server) and under it one read-only grid per child collection the schema declares (a user role assignments). The form
- * link comes from the grid row the user opened; opened directly (a reload, a bookmark) it falls back to the collection path
- * plus the id, the one URL shape the screen knows.
+ * One admin screen for any single entity: its form (typed controls, read-only fields and the Save and Delete buttons decided
+ * by the server) and under it one grid per child collection the schema declares. The route id "new" opens the empty form of
+ * the collection; saving it creates the entity and moves to its own screen. The form link comes from the grid row the user
+ * opened; opened directly (a reload, a bookmark) it falls back to the collection path plus the id.
  */
 @Component({
   selector: 'app-admin-entity',
@@ -29,20 +29,23 @@ export class AdminEntity implements OnInit {
   protected readonly title = signal('');
   protected readonly model = signal<EntityFormModel | null>(null);
   protected readonly isLoading = signal(true);
+  protected readonly isNew = signal(false);
   protected readonly loadErrors = signal<string[]>([]);
   protected readonly saveState = signal<SaveState>('idle');
   protected readonly saveErrors = signal<string[]>([]);
 
   private link = '';
+  private collection = '';
   private listSegment = '';
 
   ngOnInit(): void {
-    const collection = this.route.snapshot.data['collection'] as string;
-    this.listSegment = collection.split('/').pop() ?? '';
+    this.collection = this.route.snapshot.data['collection'] as string;
     this.title.set(this.route.snapshot.data['title'] as string);
+    this.listSegment = this.collection.split('/').pop() ?? '';
     const id = this.route.snapshot.paramMap.get('id') ?? '';
+    this.isNew.set(id === 'new');
     const handedOver = (this.router.getCurrentNavigation()?.extras.state ?? history.state) as { link?: string } | undefined;
-    this.link = handedOver?.link ?? `${collection}/${encodeURIComponent(id)}`;
+    this.link = this.isNew() ? `${this.collection}/new` : (handedOver?.link ?? `${this.collection}/${encodeURIComponent(id)}`);
 
     this.api.form(this.link).subscribe({
       next: (form) => {
@@ -68,6 +71,10 @@ export class AdminEntity implements OnInit {
     void this.router.navigate(['/admin', this.listSegment]);
   }
 
+  protected get canDelete(): boolean {
+    return !this.isNew() && this.model()?.permissions?.canDelete !== false;
+  }
+
   protected onSave(values: Record<string, string | null>): void {
     const current = this.model();
     if (!current || this.saveState() === 'saving') {
@@ -76,15 +83,32 @@ export class AdminEntity implements OnInit {
 
     this.saveState.set('saving');
     this.saveErrors.set([]);
-    this.api.update(this.link, current.entity.entityId, values).subscribe({
+    const call = this.isNew() ? this.api.create(this.collection, values) : this.api.update(this.link, current.entity.entityId, values);
+    call.subscribe({
       next: (form) => {
-        this.model.set(form);
         this.saveState.set('saved');
+        if (this.isNew()) {
+          // the entity exists now: continue on its own screen (relations, delete) with the server-supplied form
+          void this.router.navigate(['/admin', this.listSegment, form.entity.entityId], { replaceUrl: true });
+        } else {
+          this.model.set(form);
+        }
       },
       error: (error) => {
         this.saveErrors.set(describeApiError(error, 'Could not save.'));
         this.saveState.set('error');
       },
+    });
+  }
+
+  protected remove(): void {
+    if (!this.canDelete || !window.confirm('Delete this entry?')) {
+      return;
+    }
+
+    this.api.remove(this.link).subscribe({
+      next: () => this.back(),
+      error: (error) => this.saveErrors.set(describeApiError(error, 'Could not delete.')),
     });
   }
 }

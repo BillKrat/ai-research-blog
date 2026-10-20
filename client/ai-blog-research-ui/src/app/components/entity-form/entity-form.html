@@ -9,6 +9,46 @@
         @case ('checkbox') {
           <mat-checkbox [formControlName]="field.name">{{ labelOf(field) }}</mat-checkbox>
         }
+        @case ('ref') {
+          <label class="entity-form__select">
+            <span>{{ labelOf(field) }}</span>
+            <select [formControlName]="field.name" [attr.aria-label]="labelOf(field)">
+              <option value="">None</option>
+              @for (option of options()[field.name] ?? []; track option.id) {
+                <option [value]="option.id">{{ option.text }}</option>
+              }
+            </select>
+            @if (model.entity.display?.[field.name]; as shown) {
+              <span class="entity-form__hint">Currently: {{ shown }}</span>
+            }
+          </label>
+        }
+        @case ('markdown') {
+          <div class="entity-form__rich">
+            <div class="entity-form__rich-head">
+              <span>{{ labelOf(field) }} (Markdown)</span>
+              <button type="button" (click)="togglePreview(field.name)">{{ previewing()[field.name] ? 'Edit' : 'Preview' }}</button>
+            </div>
+            @if (previewing()[field.name]) {
+              <div class="entity-form__preview" [innerHTML]="previewOf(field)"></div>
+            } @else {
+              <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)"></textarea>
+            }
+          </div>
+        }
+        @case ('html') {
+          <div class="entity-form__rich">
+            <div class="entity-form__rich-head">
+              <span>{{ labelOf(field) }} (HTML)</span>
+              <button type="button" (click)="togglePreview(field.name)">{{ previewing()[field.name] ? 'Edit' : 'Preview' }}</button>
+            </div>
+            @if (previewing()[field.name]) {
+              <div class="entity-form__preview" [innerHTML]="previewOf(field)"></div>
+            } @else {
+              <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)"></textarea>
+            }
+          </div>
+        }
         @default {
           <mat-form-field appearance="outline">
             <mat-label>{{ labelOf(field) }}</mat-label>

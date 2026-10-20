@@ -68,4 +68,14 @@ export class EntityApiService {
   removeChild(rowLink: string): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}${rowLink}`);
   }
+
+  /** Creates an entity (POST to the create link the server supplied); the server answers with the created form. */
+  create(createLink: string, values: Record<string, string | null>): Observable<EntityFormModel> {
+    return this.http.post<EntityFormModel>(`${environment.apiUrl}${createLink}`, { entityId: '', values });
+  }
+
+  /** Deletes an entity by its own link (the server tombstones it). */
+  remove(link: string): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}${link}`);
+  }
 }
