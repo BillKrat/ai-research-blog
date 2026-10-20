@@ -1,10 +1,23 @@
-<form class="entity-form" [formGroup]="form" (ngSubmit)="submit()">
-  @for (field of model.schema.fields; track field.name) {
-    <mat-form-field appearance="outline">
-      <mat-label>{{ field.name }}</mat-label>
-      <input matInput type="text" [formControlName]="field.name" [required]="field.isRequired" />
-    </mat-form-field>
-  }
+@if (unsupported) {
+  <p class="entity-form__unsupported" role="alert">
+    This page was built for an older version of the application than the server now speaks. Reload the page to get the latest.
+  </p>
+} @else {
+  <form class="entity-form" [formGroup]="form" (ngSubmit)="submit()">
+    @for (field of fields; track field.name) {
+      @switch (kindOf(field)) {
+        @case ('checkbox') {
+          <mat-checkbox [formControlName]="field.name">{{ labelOf(field) }}</mat-checkbox>
+        }
+        @default {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ labelOf(field) }}</mat-label>
+            <input matInput [type]="kindOf(field)" [formControlName]="field.name" [required]="field.isRequired" />
+          </mat-form-field>
+        }
+      }
+    }
 
-  <ng-content></ng-content>
-</form>
+    <ng-content></ng-content>
+  </form>
+}

@@ -72,4 +72,59 @@ describe('EntityForm', () => {
 
     expect(emitted).toEqual({ UserName: 'BillKrat', Email: 'new@example.com' });
   });
+
+  function typedModel(): EntityFormModel {
+    return {
+      contractVersion: 1,
+      permissions: { canUpdate: true, canDelete: false },
+      schema: {
+        schemaIri: 'x',
+        fields: [
+          { name: 'DOB', type: 'DATE', isRequired: false, label: 'Born', order: 20 },
+          { name: 'Id', type: 'Guid', isRequired: false, label: 'Id', isReadOnly: true, order: 0 },
+          { name: 'Active', type: 'Bool', isRequired: false, label: 'Is active', order: 30 },
+          { name: 'Age', type: 'Int', isRequired: false, label: 'Age', order: 10 },
+        ],
+      },
+      entity: { entityId: 'u1', values: { DOB: '1961-11-19', Id: 'u1', Active: 'true', Age: '64' } },
+    };
+  }
+
+  it('uses the server label and order, and picks the control from the type', () => {
+    const fixture = TestBed.createComponent(EntityForm);
+    applyModel(fixture, typedModel());
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(fixture.componentInstance.fields.map((f) => f.name)).toEqual(['Id', 'Age', 'DOB', 'Active']);
+    expect(root.querySelector('input[type="date"]')).not.toBeNull();
+    expect(root.querySelector('input[type="number"]')).not.toBeNull();
+    expect(root.querySelector('mat-checkbox')).not.toBeNull();
+    expect(root.textContent).toContain('Born');
+    expect(root.textContent).toContain('Is active');
+  });
+
+  it('disables a read-only field but still sends its value back unchanged, with booleans as true/false text', () => {
+    const fixture = TestBed.createComponent(EntityForm);
+    applyModel(fixture, typedModel());
+    fixture.detectChanges();
+    let emitted: Record<string, string | null> | undefined;
+    fixture.componentInstance.save.subscribe((values) => (emitted = values));
+
+    expect(fixture.componentInstance.form.controls['Id'].disabled).toBe(true);
+    fixture.componentInstance.form.controls['Active'].setValue(false);
+    fixture.componentInstance.submit();
+
+    expect(emitted).toEqual({ DOB: '1961-11-19', Id: 'u1', Active: 'false', Age: '64' });
+  });
+
+  it('refuses a model of a newer contract version instead of guessing', () => {
+    const fixture = TestBed.createComponent(EntityForm);
+    applyModel(fixture, { ...typedModel(), contractVersion: 2 });
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('form')).toBeNull();
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('older version');
+  });
 });
