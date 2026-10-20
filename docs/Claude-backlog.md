@@ -23,5 +23,6 @@ Guiding aim: keep eyes on the running system at every level (logs, exceptions, h
 
 ## Infrastructure
 
+- **Deploy trigger misses Foundation-only changes (found 2026-10-20).** `deploy-webapi.yml` runs on changes under `src/AiBlogResearch.WebApi/**` (and ServiceDefaults); a change only in `Adventures.Foundation` (the API compiles it in) does not trigger it, so the API stays on the old code until someone runs the workflow by hand (`gh workflow run`, as done for the stage 1 deploy). Options: add a scheduled or repository-dispatch trigger from Foundation's main, or a cheap marker file in this repo that a Foundation merge bumps.
 - Move schema IRIs to `https://schema.global-webnet.com/<area>/<name>` (deliberate migration; see `AGENTS.md`).
 - Check TLS on `schema.global-webnet.com` before 2026-11-15; calendar the 2027-01-09 free-cert expiry.

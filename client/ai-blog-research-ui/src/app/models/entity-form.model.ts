@@ -42,9 +42,32 @@ export interface EntityDataModel {
  * Mirrors Adventures.Entities.EntityGridModel: the columns (a schema) and one data model per row. The grid-contract stage
  * adds paging, sorting and per-row permissions; this is its first, minimal form.
  */
+/** Where a grid page sits in the whole list (the server counts; the client only draws the pager). */
+export interface GridPaging {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  sort: string | null;
+  descending: boolean;
+}
+
+/** Server-supplied URLs (relative to the API root); the client follows them and holds no URL templates. */
+export interface EntityGridLinks {
+  self: string | null;
+  create?: string | null;
+  next?: string | null;
+  previous?: string | null;
+}
+
 export interface EntityGridModel {
   schema: EntitySchemaModel;
   rows: EntityDataModel[];
+  paging?: GridPaging | null;
+  canCreate?: boolean;
+  rowPermissions?: EntityPermissions | null;
+  links?: EntityGridLinks | null;
+  contractVersion?: number;
 }
 
 export interface EntityFormModel {

@@ -21,7 +21,7 @@ public class UsersControllerTests
             new EntityDataModel(id, new Dictionary<string, string?> { ["UserName"] = userName }));
 
     [Fact]
-    public async Task List_ReturnsSummariesFromThePresenter()
+    public async Task List_ReturnsASortedPagedGrid_WithServerBuiltLinks()
     {
         var presenter = new FakeUserPresenter
         {
@@ -32,12 +32,17 @@ public class UsersControllerTests
             ],
         };
         var controller = BuildController(presenter, callerUserName: "BillKrat");
+        controller.ControllerContext.HttpContext.Request.Path = "/api/users";
 
-        var result = await controller.List(CancellationToken.None);
+        var result = await controller.List(new EntityGridQuery(Page: 2, PageSize: 1, Sort: "UserName", Descending: true), CancellationToken.None);
 
-        var ok = Assert.IsType<OkObjectResult>(result.Result);
-        var summaries = Assert.IsAssignableFrom<IReadOnlyList<EntityDataModel>>(ok.Value);
-        Assert.Equal(2, summaries.Count);
+        var grid = Assert.IsType<EntityGridModel>(Assert.IsType<OkObjectResult>(result.Result).Value);
+        Assert.Equal(2, grid.Rows.Count);
+        Assert.Equal(new EntityGridQuery(2, 1, "UserName", true), presenter.LastQuery);
+        Assert.Equal("/api/users?page=2&pageSize=1&sort=UserName&descending=true", grid.Links!.Self);
+        Assert.Equal("/api/users", grid.Links.Create);
+        Assert.Null(grid.Links.Next);
+        Assert.Equal("/api/users?page=1&pageSize=1&sort=UserName&descending=true", grid.Links.Previous);
     }
 
     [Fact]

@@ -34,6 +34,15 @@ internal sealed class FakeUserPresenter : IUserPresenter
     public Task<IReadOnlyList<EntityDataModel>> ListAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult(Summaries);
 
+    public EntityGridQuery? LastQuery { get; private set; }
+
+    public Task<EntityGridModel> GetGridAsync(EntityGridQuery query, CancellationToken cancellationToken = default)
+    {
+        LastQuery = query;
+        return Task.FromResult(new EntityGridModel(
+            new EntitySchemaModel("urn:test", []), Summaries, new GridPaging(query.Page, query.PageSize, Summaries.Count, query.Sort, query.Descending), CanCreate: true));
+    }
+
     public Task<EntityGridModel> GetGridAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult(new EntityGridModel(new EntitySchemaModel("urn:test", []), Summaries));
 

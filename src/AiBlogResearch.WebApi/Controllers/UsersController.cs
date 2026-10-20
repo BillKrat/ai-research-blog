@@ -20,8 +20,8 @@ namespace AiBlogResearch.WebApi.Controllers;
 public sealed class UsersController(IUserPresenter presenter) : EntityControllerBase<User>
 {
     [HttpGet]
-    public Task<ActionResult<IReadOnlyList<EntityDataModel>>> List(CancellationToken cancellationToken) =>
-        ListAsync(presenter, cancellationToken);
+    public Task<ActionResult<EntityGridModel>> List([FromQuery] EntityGridQuery query, CancellationToken cancellationToken) =>
+        GridAsync(presenter, query, cancellationToken);
 
     [HttpGet("{id}")]
     public Task<ActionResult<EntityFormModel>> Get(string id, CancellationToken cancellationToken) =>

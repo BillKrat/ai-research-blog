@@ -1,0 +1,17 @@
+<section class="admin-users">
+  <h2>Users</h2>
+
+  @for (message of errors(); track message) {
+    <p class="admin-users__error" role="alert">{{ message }}</p>
+  }
+
+  @if (isLoading() && !model()) {
+    <p>Loading users...</p>
+  } @else if (model(); as grid) {
+    @if (grid.rows.length === 0) {
+      <p>No users.</p>
+    } @else {
+      <app-entity-grid [model]="grid" (request)="onRequest($event)" />
+    }
+  }
+</section>

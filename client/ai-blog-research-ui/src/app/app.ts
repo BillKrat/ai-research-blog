@@ -39,6 +39,9 @@ export class App implements OnInit, OnDestroy {
   /** An administrator can always open the exception log while it holds anything, purged entries included. */
   protected readonly showExceptionsLink = computed(() => this.adminExceptions.isAdministrator() && this.adminExceptions.totalCount() > 0);
 
+  /** The Users list is for administrators (the server refuses everyone else); the count endpoint is what tells us who is one. */
+  protected readonly showUsersLink = computed(() => this.adminExceptions.isAdministrator());
+
   constructor(private readonly healthService: HealthService) {
     // Watch the exception count while signed in; the first refusal (not an administrator) ends the polling.
     effect(() => {

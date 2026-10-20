@@ -1,8 +1,50 @@
+@if (model.schema.fields.length > 0) {
+  <div class="entity-grid__toolbar">
+    <button
+      type="button"
+      class="entity-grid__gear"
+      aria-label="Choose columns"
+      [attr.aria-expanded]="gearOpen"
+      (click)="gearOpen = !gearOpen"
+    >
+      Columns
+    </button>
+    @if (gearOpen) {
+      <ul class="entity-grid__columns" aria-label="Columns">
+        @for (field of fields; track field.name) {
+          <li>
+            <label>
+              <input type="checkbox" [checked]="isVisible(field)" (change)="toggleColumn(field)" />
+              {{ labelOf(field) }} <span class="entity-grid__type">({{ field.type }})</span>
+            </label>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}
+
 <table class="entity-grid">
   <thead>
     <tr>
-      @for (column of columns; track column) {
-        <th scope="col">{{ column }}</th>
+      @for (column of columns; track column.name) {
+        <th scope="col" [attr.aria-sort]="sortable ? ariaSort(column) : null">
+          @if (sortable) {
+            <button type="button" class="entity-grid__sort" (click)="sortBy(column)">
+              {{ labelOf(column) }}
+              @switch (ariaSort(column)) {
+                @case ('ascending') {
+                  <span aria-hidden="true"> &#9650;</span>
+                }
+                @case ('descending') {
+                  <span aria-hidden="true"> &#9660;</span>
+                }
+              }
+            </button>
+          } @else {
+            {{ labelOf(column) }}
+          }
+        </th>
       }
       @if (hasMessage) {
         <th scope="col">Message</th>
@@ -18,8 +60,8 @@
         (click)="toggle(row.entityId)"
         (keydown.enter)="toggle(row.entityId)"
       >
-        @for (column of columns; track column) {
-          <td>{{ cell(row, column) }}</td>
+        @for (column of columns; track column.name) {
+          <td>{{ cell(row, column.name) }}</td>
         }
         @if (hasMessage) {
           <td class="entity-grid__message">{{ cell(row, 'Message') }}</td>
@@ -29,8 +71,8 @@
         <tr class="entity-grid__details">
           <td [attr.colspan]="columns.length + (hasMessage ? 1 : 0)">
             <dl>
-              @for (field of model.schema.fields; track field.name) {
-                <dt>{{ field.name }}</dt>
+              @for (field of fields; track field.name) {
+                <dt>{{ labelOf(field) }}</dt>
                 <dd>{{ cell(row, field.name) }}</dd>
               }
             </dl>
@@ -43,3 +85,11 @@
     }
   </tbody>
 </table>
+
+@if (model.paging; as paging) {
+  <nav class="entity-grid__pager" aria-label="Pages">
+    <button type="button" (click)="previous()" [disabled]="!model.links?.previous">Previous</button>
+    <span>Page {{ paging.page }} of {{ paging.totalPages }} ({{ paging.totalCount }} in all)</span>
+    <button type="button" (click)="next()" [disabled]="!model.links?.next">Next</button>
+  </nav>
+}

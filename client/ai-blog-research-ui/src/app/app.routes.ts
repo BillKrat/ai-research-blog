@@ -10,6 +10,12 @@ export const routes: Routes = [
   },
   {
     // Administrators only on the server (403 otherwise); the guard just keeps anonymous visitors on the sign-in page.
+    path: 'admin/users',
+    loadComponent: () => import('./pages/admin-users/admin-users').then((m) => m.AdminUsers),
+    canActivate: [authGuard],
+  },
+  {
+    // Administrators only on the server (403 otherwise); the guard just keeps anonymous visitors on the sign-in page.
     path: 'admin/exceptions',
     loadComponent: () => import('./pages/admin-exceptions/admin-exceptions').then((m) => m.AdminExceptions),
     canActivate: [authGuard],
