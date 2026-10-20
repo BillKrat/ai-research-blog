@@ -1,5 +1,7 @@
+using Adventures.Common.Diagnostics;
 using Adventures.Entities;
 using Adventures.Security;
+using Adventures.WebApi;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -149,7 +149,7 @@ public class HealthControllerTests
     [Fact]
     public async Task Get_RecordsAnUnreachableMcpInTheExceptionLog_ThrottledToOncePerHour()
     {
-        var log = new UnhandledExceptionHandlerTests.RecordingExceptionLog("id-1");
+        var log = new RecordingExceptionLog("id-1");
         var handler = new FakeHttpMessageHandler(_ => throw new HttpRequestException("simulated network failure"));
         var controller = new HealthController(BuildTokenService(), new FakeHttpClientFactory(handler), NullLogger<HealthController>.Instance, log);
 
@@ -163,7 +163,7 @@ public class HealthControllerTests
     [Fact]
     public async Task Get_RecordsAnMcpErrorStatus_ButNotASuccess()
     {
-        var log = new UnhandledExceptionHandlerTests.RecordingExceptionLog("id-1");
+        var log = new RecordingExceptionLog("id-1");
         var failing = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
         await new HealthController(BuildTokenService(), new FakeHttpClientFactory(failing), NullLogger<HealthController>.Instance, log)
             .Get(CancellationToken.None);

@@ -1,3 +1,4 @@
+using Adventures.Common.Diagnostics;
 using Adventures.Data;
 using Adventures.Data.NQuad;
 using Adventures.Entities;
