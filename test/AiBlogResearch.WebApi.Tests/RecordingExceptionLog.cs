@@ -7,9 +7,12 @@ internal sealed class RecordingExceptionLog(string? idToReturn) : IExceptionLogB
 {
     public List<(Exception Exception, string? Request, string? CorrelationId, TimeSpan Window)> Throttled { get; } = [];
 
+    public string? LastUserName { get; private set; }
+
     public Task<string?> RecordThrottledAsync(
         Exception exception, string? request, string? userName, string? correlationId, TimeSpan window, CancellationToken cancellationToken = default)
     {
+        LastUserName = userName;
         Throttled.Add((exception, request, correlationId, window));
         return Task.FromResult(idToReturn);
     }

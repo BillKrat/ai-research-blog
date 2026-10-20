@@ -5,8 +5,8 @@ import { environment } from '../../environments/environment';
 /**
  * Angular's last-resort handler for an error nobody caught. It still writes to the console (what the default does), and
  * now also reports the error to the server so it reaches the exception log - no silent errors. A failure to report is
- * only written to the console: reporting must never raise another error, and the server refuses (401) when nobody is
- * signed in, which is fine.
+ * only written to the console: reporting must never raise another error. The server accepts reports from anonymous callers too
+ * (the login page can fail before anyone is signed in), within its own caps.
  */
 @Injectable()
 export class ClientErrorHandler implements ErrorHandler {

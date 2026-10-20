@@ -18,6 +18,7 @@ using Serilog;
 // with no diagnostic anywhere, because nothing was ever logged.
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
+    .WriteTo.File(Path.Combine(AppContext.BaseDirectory, "logs", "startup-.log"), rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)
     .CreateBootstrapLogger();
 
 try
@@ -93,6 +94,7 @@ try
     .AddCorrelationIdHandler();
 #pragma warning restore EXTEXP0001
     builder.Services.AddCorrelationId();
+    builder.Services.AddFailureReporting();
     builder.Services.AddScoped<IDependencyProbes>(sp => new DependencyProbes(
         sp.GetRequiredService<IJwtTokenService>(),
         sp.GetRequiredService<IHttpClientFactory>(),
@@ -266,6 +268,7 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "AiBlogResearch.WebApi terminated unexpectedly during startup");
+    FailureJournal.Write(FailureJournal.DefaultDirectory, "startup", ex);
     throw;
 }
 finally

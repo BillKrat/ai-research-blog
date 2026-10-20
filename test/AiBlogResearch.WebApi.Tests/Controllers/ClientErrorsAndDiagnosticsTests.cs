@@ -11,12 +11,17 @@ namespace AiBlogResearch.WebApi.Tests.Controllers;
 
 public sealed class ClientErrorsAndDiagnosticsTests
 {
-    private static ClientErrorsController NewController(RecordingExceptionLog log)
+    private static ClientErrorsController NewController(RecordingExceptionLog log, bool signedIn = true, bool reset = true)
     {
+        if (reset)
+        {
+            ClientErrorsController.ResetForTests();
+        }
+
         var controller = new ClientErrorsController(log, NullLogger<ClientErrorsController>.Instance);
         var context = new DefaultHttpContext
         {
-            User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, "Admin")], "Bearer")),
+            User = signedIn ? new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, "Admin")], "Bearer")) : new ClaimsPrincipal(new ClaimsIdentity()),
         };
         context.Items[Adventures.WebApi.CorrelationIdMiddleware.ItemsKey] = "browser-1";
         controller.ControllerContext = new ControllerContext { HttpContext = context };
@@ -50,9 +55,38 @@ public sealed class ClientErrorsAndDiagnosticsTests
     }
 
     [Fact]
-    public void ClientErrors_RequiresSignIn_AndDiagnostics_RequiresAnAdministrator()
+    public async Task Report_FromAnAnonymousCaller_IsRecordedWithoutAUserName()
     {
-        Assert.NotEmpty(typeof(ClientErrorsController).GetCustomAttributes(typeof(AuthorizeAttribute), true));
+        var log = new RecordingExceptionLog("e-1");
+
+        var result = await NewController(log, signedIn: false).Report(new ClientErrorReport("TypeError: login", null, "/login"), CancellationToken.None);
+
+        Assert.IsType<AcceptedResult>(result);
+        Assert.Single(log.Throttled);
+        Assert.Null(log.LastUserName);
+    }
+
+    [Fact]
+    public async Task Report_AnonymousCallers_AreCappedPerMinute_SignedInOnesHaveTheirOwnCap()
+    {
+        var log = new RecordingExceptionLog("e-1");
+        var controller = NewController(log, signedIn: false);
+        for (var i = 0; i < ClientErrorsController.MaxPerMinuteAnonymous; i++)
+        {
+            Assert.IsType<AcceptedResult>(await controller.Report(new ClientErrorReport($"e{i}", null, "/login"), CancellationToken.None));
+        }
+
+        var refused = Assert.IsType<StatusCodeResult>(await controller.Report(new ClientErrorReport("one too many", null, "/login"), CancellationToken.None));
+        Assert.Equal(429, refused.StatusCode);
+
+        var signedIn = NewController(log, signedIn: true, reset: false);
+        Assert.IsType<AcceptedResult>(await signedIn.Report(new ClientErrorReport("still fine", null, "/profile"), CancellationToken.None));
+    }
+
+    [Fact]
+    public void ClientErrors_AreOpenToAnonymous_AndDiagnostics_RequireAnAdministrator()
+    {
+        Assert.NotEmpty(typeof(ClientErrorsController).GetCustomAttributes(typeof(AllowAnonymousAttribute), true));
         var admin = Assert.Single(typeof(AdminDiagnosticsController).GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>());
         Assert.Equal(Adventures.Security.WellKnownClaims.TenantAdminPolicy, admin.Policy);
         var machine = Assert.Single(typeof(McpDiagnosticsController).GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>());
