@@ -27,17 +27,16 @@ public sealed class AiKeyHealthTests
     {
         var log = new RecordingExceptionLog("e-1");
         var controller = new HealthController(
-            new Adventures.Security.JwtTokenService(Options.Create(new Adventures.Security.JwtTokenOptions
-            {
-                Issuer = "i",
-                Audience = "a",
-                SigningKey = "0123456789abcdef0123456789abcdef",
-                AccessTokenLifetime = TimeSpan.FromMinutes(5),
-            })),
-            new HealthFactory(),
-            NullLogger<HealthController>.Instance,
+            new DependencyProbes(
+                new Adventures.Security.JwtTokenService(Options.Create(new Adventures.Security.JwtTokenOptions
+                {
+                    Issuer = "i",
+                    Audience = "a",
+                    SigningKey = "0123456789abcdef0123456789abcdef",
+                    AccessTokenLifetime = TimeSpan.FromMinutes(5),
+                })),
+                new HealthFactory()),
             log,
-            null,
             Options.Create(new AnthropicOptions { ApiKey = key, KeyExpiresOn = expires }),
             new FixedClock(new DateTimeOffset(today.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero)));
 

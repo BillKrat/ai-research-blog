@@ -93,7 +93,11 @@ try
     .AddCorrelationIdHandler();
 #pragma warning restore EXTEXP0001
     builder.Services.AddCorrelationId();
-    builder.Services.AddScoped<IDependencyProbes, DependencyProbes>();
+    builder.Services.AddScoped<IDependencyProbes>(sp => new DependencyProbes(
+        sp.GetRequiredService<IJwtTokenService>(),
+        sp.GetRequiredService<IHttpClientFactory>(),
+        sp.GetService<INQuadStore>(),
+        sp.GetRequiredService<ILoggerFactory>().CreateLogger<DependencyProbes>()));
 
     // The AI triage (an administrator's button): Anthropic:ApiKey is a secret (user-secrets locally, the host's environment
     // secret Anthropic__ApiKey in production); without it the button answers "not set up". One call can take many seconds

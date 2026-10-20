@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Adventures.Common.Diagnostics;
 using Adventures.Security;
 using AiBlogResearch.WebApi.Controllers;
 using Microsoft.AspNetCore.Mvc;
@@ -38,8 +39,11 @@ public class HealthControllerTests
             new(handler, disposeHandler: false) { BaseAddress = new Uri("https://mcp.example.test/") };
     }
 
+    private static IDependencyProbes Probes(FakeHttpMessageHandler handler, Adventures.Data.NQuad.INQuadStore? store = null) =>
+        new Adventures.WebApi.DependencyProbes(BuildTokenService(), new FakeHttpClientFactory(handler), store);
+
     private static HealthController BuildController(FakeHttpMessageHandler handler) =>
-        new(BuildTokenService(), new FakeHttpClientFactory(handler), NullLogger<HealthController>.Instance);
+        new(Probes(handler));
 
     [Fact]
     public async Task Get_IncludesMcpMessage_WhenMcpServerRespondsSuccessfully()
@@ -114,7 +118,7 @@ public class HealthControllerTests
     }
 
     private static HealthController BuildController(FakeHttpMessageHandler handler, Adventures.Data.NQuad.INQuadStore store) =>
-        new(BuildTokenService(), new FakeHttpClientFactory(handler), NullLogger<HealthController>.Instance, null, store);
+        new(Probes(handler, store));
 
     private static FakeHttpMessageHandler HealthyMcp() =>
         new(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { message = "hi" }) });
@@ -151,7 +155,7 @@ public class HealthControllerTests
     {
         var log = new RecordingExceptionLog("id-1");
         var handler = new FakeHttpMessageHandler(_ => throw new HttpRequestException("simulated network failure"));
-        var controller = new HealthController(BuildTokenService(), new FakeHttpClientFactory(handler), NullLogger<HealthController>.Instance, log);
+        var controller = new HealthController(Probes(handler), log);
 
         await controller.Get(CancellationToken.None);
 
@@ -165,12 +169,12 @@ public class HealthControllerTests
     {
         var log = new RecordingExceptionLog("id-1");
         var failing = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
-        await new HealthController(BuildTokenService(), new FakeHttpClientFactory(failing), NullLogger<HealthController>.Instance, log)
+        await new HealthController(Probes(failing), log)
             .Get(CancellationToken.None);
         Assert.Single(log.Throttled);
 
         var healthy = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { message = "hi" }) });
-        await new HealthController(BuildTokenService(), new FakeHttpClientFactory(healthy), NullLogger<HealthController>.Instance, log)
+        await new HealthController(Probes(healthy), log)
             .Get(CancellationToken.None);
         Assert.Single(log.Throttled);
     }

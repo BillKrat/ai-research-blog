@@ -1,7 +1,5 @@
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
+using Adventures.Common.Diagnostics;
 using Adventures.Entities;
-using Adventures.Security;
 using Adventures.WebApi;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,17 +8,11 @@ namespace AiBlogResearch.WebApi.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class HealthController(
-    IJwtTokenService tokenService,
-    IHttpClientFactory httpClientFactory,
-    ILogger<HealthController> logger,
+    IDependencyProbes probes,
     IExceptionLogBll? exceptionLog = null,
-    Adventures.Data.NQuad.INQuadStore? store = null,
     Microsoft.Extensions.Options.IOptions<AnthropicOptions>? anthropic = null,
     TimeProvider? clock = null) : ControllerBase
 {
-    /// <summary>How long the database check may take before it counts as failed.</summary>
-    internal static readonly TimeSpan DatabaseCheckTimeout = TimeSpan.FromSeconds(5);
-
     /// <summary>A failing dependency reaches the exception log (and the admin icon) at most once per signature per hour.</summary>
     internal static readonly TimeSpan ProbeFailureWindow = TimeSpan.FromHours(1);
 
@@ -33,7 +25,7 @@ public class HealthController(
 
         await exceptionLog.RecordThrottledAsync(
             failure, "health probe: mcp", null,
-            HttpContext is null ? null : Adventures.WebApi.CorrelationIdMiddleware.Get(HttpContext), ProbeFailureWindow, cancellationToken);
+            HttpContext is null ? null : CorrelationIdMiddleware.Get(HttpContext), ProbeFailureWindow, cancellationToken);
     }
 
     [HttpGet]
@@ -64,7 +56,7 @@ public class HealthController(
             : "Healthy";
         var response = new HealthResponse(
             status, DateTimeOffset.UtcNow, mcpMessage, mcpStatus, dependencies,
-            HttpContext is null ? null : Adventures.WebApi.CorrelationIdMiddleware.Get(HttpContext));
+            HttpContext is null ? null : CorrelationIdMiddleware.Get(HttpContext));
 
         return status == "Unhealthy" ? StatusCode(StatusCodes.Status503ServiceUnavailable, response) : Ok(response);
     }
@@ -98,90 +90,48 @@ public class HealthController(
             await exceptionLog.RecordThrottledAsync(
                 new InvalidOperationException($"The Anthropic API key {(days < 0 ? "has expired" : $"expires in {days} day(s)")} ({expires:yyyy-MM-dd}); rotate it."),
                 "health probe: ai key", null,
-                HttpContext is null ? null : Adventures.WebApi.CorrelationIdMiddleware.Get(HttpContext), TimeSpan.FromHours(24), CancellationToken.None);
+                HttpContext is null ? null : CorrelationIdMiddleware.Get(HttpContext), TimeSpan.FromHours(24), CancellationToken.None);
         }
 
         return new DependencyHealth("ai-key", "failed", 0, detail);
     }
 
-    /// <summary>Asks the N-Quad store (the database) for a count, which proves connection, credentials and the table. Null when no store is registered.</summary>
+    /// <summary>The database check (shared with the triage through <see cref="DependencyProbes"/>); a failure reaches the exception log. Null when no store is registered.</summary>
     private async Task<DependencyHealth?> CheckDatabaseAsync(CancellationToken cancellationToken)
     {
-        if (store is null)
+        var probe = await probes.ProbeDatabaseAsync(cancellationToken);
+        if (probe.Skipped)
         {
             return null;
         }
 
-        var watch = System.Diagnostics.Stopwatch.StartNew();
-        try
+        if (!probe.Ok && exceptionLog is not null && probe.Failure is not null)
         {
-            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeout.CancelAfter(DatabaseCheckTimeout);
-            await store.CountAsync(timeout.Token);
-            return new DependencyHealth("database", "ok", watch.ElapsedMilliseconds, "ok");
+            await exceptionLog.RecordThrottledAsync(
+                probe.Failure, "health probe: database", null,
+                HttpContext is null ? null : CorrelationIdMiddleware.Get(HttpContext), ProbeFailureWindow, CancellationToken.None);
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "The health check could not reach the database.");
-            if (exceptionLog is not null)
-            {
-                await exceptionLog.RecordThrottledAsync(
-                    ex, "health probe: database", null,
-                    HttpContext is null ? null : Adventures.WebApi.CorrelationIdMiddleware.Get(HttpContext), ProbeFailureWindow, CancellationToken.None);
-            }
 
-            return new DependencyHealth("database", "failed", watch.ElapsedMilliseconds, ex is OperationCanceledException ? "timeout" : $"exception_{ex.GetType().Name}");
-        }
+        return new DependencyHealth("database", probe.Ok ? "ok" : "failed", probe.DurationMs, probe.Detail);
     }
 
     /// <summary>
-    /// Calls mcp.global-webnet.com's M2M-protected /api/hello over a token this app mints for itself
-    /// (it's the same JWT issuer mcp validates against, via the shared Adventures.Security signing
-    /// key - see docs/artifacts/2026-09-23-mcp-m2m-hello-world.md for the full pipeline). Fails soft:
-    /// a down/misconfigured mcp site degrades this one field instead of making /api/health itself
-    /// unavailable, since this is a downstream dependency check, not the health of this app itself.
-    /// McpStatus is deliberately non-sensitive (a short reason code, never a token/secret/exception
-    /// message) - added after this pipeline's first real deploy silently returned a null message
-    /// with nothing to diagnose it by (see docs/artifacts/2026-09-23-mcp-m2m-hello-world.md).
+    /// Calls mcp's M2M-protected /api/hello over a token this app mints for itself (the same JWT issuer mcp validates against,
+    /// via the shared Adventures.Security signing key - see docs/artifacts/2026-09-23-mcp-m2m-hello-world.md). Fails soft:
+    /// a down or misconfigured mcp site degrades this one field instead of making /api/health unavailable, since this is a
+    /// downstream dependency check, not the health of this app. The status is deliberately non-sensitive (a short reason
+    /// code, never a token, secret or exception message).
     /// </summary>
     private async Task<(string? Message, string Status)> TryGetMcpHelloMessageAsync(CancellationToken cancellationToken)
     {
-        try
+        var probe = await probes.ProbeMcpAsync(cancellationToken);
+        if (!probe.Ok && probe.Failure is not null)
         {
-            var token = tokenService.IssueClientToken("mcp-host", ["mcp.hello"]).AccessToken;
-
-            using var client = httpClientFactory.CreateClient("McpServer");
-            using var request = new HttpRequestMessage(HttpMethod.Get, "api/hello");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            using var response = await client.SendAsync(request, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(cancellationToken);
-                logger.LogWarning(
-                    "mcp.global-webnet.com/api/hello returned {StatusCode} {ReasonPhrase}. Body: {Body}",
-                    (int)response.StatusCode,
-                    response.ReasonPhrase,
-                    body);
-                await RecordProbeFailureAsync(
-                    new HttpRequestException($"mcp /api/hello returned {(int)response.StatusCode} {response.ReasonPhrase}"), cancellationToken);
-                return (null, $"http_{(int)response.StatusCode}");
-            }
-
-            var parsed = await response.Content.ReadFromJsonAsync<McpHelloResponse>(cancellationToken);
-            return (parsed?.Message, "ok");
+            await RecordProbeFailureAsync(probe.Failure, CancellationToken.None);
         }
-        catch (Exception ex)
-        {
-            // Broad catch deliberately: this is a downstream health probe, not core request
-            // handling - no exception type here should ever turn /api/health itself into a 500.
-            logger.LogWarning(ex, "Failed to reach mcp.global-webnet.com for the health check's mcp message.");
-            await RecordProbeFailureAsync(ex, CancellationToken.None);
-            return (null, ex is OperationCanceledException ? "timeout" : $"exception_{ex.GetType().Name}");
-        }
+
+        return (probe.Message, probe.Detail);
     }
-
-    private sealed record McpHelloResponse(string Message);
 }
 
 /// <summary>One thing the API depends on: ok or failed, how long the check took, and a short non-sensitive code.</summary>
