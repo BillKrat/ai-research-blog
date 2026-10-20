@@ -57,30 +57,33 @@
 
   <app-site-nav />
 
-  <section class="page__status">
-    <span>WebApi health:</span>
-    @switch (healthState()) {
-      @case ('checking') {
-        <span class="badge badge--info">checking...</span>
+  <!-- The health line is for administrators until the Dashboard exists (backlog: show it there). -->
+  @if (showAdminLink()) {
+    <section class="page__status">
+      <span>WebApi health:</span>
+      @switch (healthState()) {
+        @case ('checking') {
+          <span class="badge badge--info">checking...</span>
+        }
+        @case ('healthy') {
+          <span class="badge badge--success">healthy as of {{ healthCheckedAt() }}</span>
+        }
+        @case ('degraded') {
+          <span class="badge badge--warning" [attr.title]="healthTrace() ? 'Trace: ' + healthTrace() : null">
+            degraded: {{ healthProblem() }} as of {{ healthCheckedAt() }}
+          </span>
+        }
+        @case ('unhealthy') {
+          <span class="badge badge--danger" [attr.title]="healthTrace() ? 'Trace: ' + healthTrace() : null">
+            unhealthy: {{ healthProblem() }} as of {{ healthCheckedAt() }}
+          </span>
+        }
+        @case ('unreachable') {
+          <span class="badge badge--danger">unreachable</span>
+        }
       }
-      @case ('healthy') {
-        <span class="badge badge--success">healthy as of {{ healthCheckedAt() }}</span>
-      }
-      @case ('degraded') {
-        <span class="badge badge--warning" [attr.title]="healthTrace() ? 'Trace: ' + healthTrace() : null">
-          degraded: {{ healthProblem() }} as of {{ healthCheckedAt() }}
-        </span>
-      }
-      @case ('unhealthy') {
-        <span class="badge badge--danger" [attr.title]="healthTrace() ? 'Trace: ' + healthTrace() : null">
-          unhealthy: {{ healthProblem() }} as of {{ healthCheckedAt() }}
-        </span>
-      }
-      @case ('unreachable') {
-        <span class="badge badge--danger">unreachable</span>
-      }
-    }
-  </section>
+    </section>
+  }
 
   <router-outlet />
 </div>
