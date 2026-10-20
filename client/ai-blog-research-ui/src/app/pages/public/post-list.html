@@ -1,0 +1,45 @@
+<section class="public">
+  <h2>{{ heading() }}</h2>
+
+  @if (failed()) {
+    <p role="alert">The posts could not be loaded. Try again in a moment.</p>
+  } @else if (isLoading() && !list()) {
+    <p>Loading...</p>
+  } @else if (list(); as result) {
+    @if (result.posts.length === 0) {
+      <p>No posts yet.</p>
+    }
+    @for (post of result.posts; track post.slug) {
+      <article class="public__card">
+        <h3><a [routerLink]="['/post', post.slug]">{{ post.title }}</a></h3>
+        <p class="public__meta">
+          @if (post.datePublished) {
+            {{ post.datePublished | date: 'mediumDate' }}
+          }
+          @if (post.author) {
+            by {{ post.author }}
+          }
+        </p>
+        @if (post.description) {
+          <p>{{ post.description }}</p>
+        }
+        <p class="public__chips">
+          @for (category of post.categories; track category) {
+            <a [routerLink]="['/category', category]">{{ category }}</a>
+          }
+          @for (tag of post.tags; track tag) {
+            <a [routerLink]="['/tag', tag]">#{{ tag }}</a>
+          }
+        </p>
+      </article>
+    }
+
+    @if (totalPages > 1) {
+      <nav class="public__pager" aria-label="Pages">
+        <button type="button" (click)="go(result.page - 1)" [disabled]="result.page <= 1">Newer</button>
+        <span>Page {{ result.page }} of {{ totalPages }}</span>
+        <button type="button" (click)="go(result.page + 1)" [disabled]="result.page >= totalPages">Older</button>
+      </nav>
+    }
+  }
+</section>

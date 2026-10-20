@@ -1,0 +1,16 @@
+<nav class="site-nav" aria-label="Site">
+  <a routerLink="/" routerLinkActive="site-nav__active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+  <a routerLink="/posts" routerLinkActive="site-nav__active">Posts</a>
+  @for (item of items(); track item.slug) {
+    <span class="site-nav__group">
+      <a [routerLink]="['/page', item.slug]" routerLinkActive="site-nav__active">{{ item.title }}</a>
+      @if (item.children.length > 0) {
+        <span class="site-nav__children">
+          @for (child of item.children; track child.slug) {
+            <a [routerLink]="['/page', child.slug]">{{ child.title }}</a>
+          }
+        </span>
+      }
+    </span>
+  }
+</nav>

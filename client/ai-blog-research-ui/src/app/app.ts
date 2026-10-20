@@ -1,9 +1,10 @@
-import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
+﻿import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
+import { SiteNav } from './components/site-nav/site-nav';
 import { AdminExceptionsService } from './services/admin-exceptions.service';
 import { AdminMenuService } from './services/admin-menu.service';
 import { AuthService } from './services/auth.service';
@@ -13,7 +14,7 @@ type HealthState = 'checking' | 'healthy' | 'degraded' | 'unhealthy' | 'unreacha
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule],
+  imports: [RouterOutlet, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule, SiteNav],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

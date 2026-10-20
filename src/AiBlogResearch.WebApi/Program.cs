@@ -245,6 +245,7 @@ try
     builder.Services.AddScoped<IPageBll, PageBll>();
     builder.Services.AddScoped<IPostBll, PostBll>();
     builder.Services.AddScoped<IContentAuthoring, ContentAuthoring>();
+    builder.Services.AddScoped<IPublicContent, PublicContent>();
     builder.Services.AddScoped<IEntityPresenter<Post>, PostPresenter>();
     builder.Services.AddScoped<IEntityBll<Category>>(provider => new EntityBll<Category>(provider.GetRequiredService<IEntityRepository<Category>>()));
     builder.Services.AddScoped<IEntityBll<Tag>>(provider => new EntityBll<Tag>(provider.GetRequiredService<IEntityRepository<Tag>>()));

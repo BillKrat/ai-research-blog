@@ -1,0 +1,19 @@
+<article class="public">
+  @if (isLoading()) {
+    <p>Loading...</p>
+  } @else if (notFound()) {
+    @if (isFront) {
+      <h2>Welcome</h2>
+      <p>This site has no home page set yet. <a routerLink="/posts">Read the latest posts</a>.</p>
+    } @else {
+      <h2>Not found</h2>
+      <p>This page does not exist or is not published. <a routerLink="/">Back to the home page</a>.</p>
+    }
+  } @else if (page(); as result) {
+    @if (result.parentSlug) {
+      <p class="public__crumb"><a [routerLink]="['/page', result.parentSlug]">{{ result.parentTitle }}</a> &rsaquo;</p>
+    }
+    <h2>{{ result.title }}</h2>
+    <app-markdown-content [markdown]="result.content" />
+  }
+</article>
