@@ -10,7 +10,7 @@ Why: the shared dev Postgres at `pg8001.site4now.net:6432` only accepts connecti
 
 ## Using it
 
-- **First time, once:** the API creates and seeds the N-Quad store by itself, but login reads the older JSONB identity tables, which it does not create. Run `powershell -File docsClaude-local-db-init.ps1` from the workspace root (schema plus the Admin and Claude dev accounts; it refuses any non-local host). Without it, signing in fails with `42P01: relation "entities" does not exist`. After a reset (below), run it again.
+- **First time, once:** the API creates and seeds the N-Quad store by itself, but login reads the older JSONB identity tables, which it does not create. Run `powershell -File docs\Claude-local-db-init.ps1` from the workspace root (schema plus the Admin and Claude dev accounts; it refuses any non-local host). Without it, signing in fails with `42P01: relation "entities" does not exist`. After a reset (below), run it again.
 
 - Run Aspire or the API as before: startup creates `app_n_quads` and applies the seed files once (baseline, 002 to 007). `/api/health` shows the database as ok.
 - **Reset to a clean state:** `psql -h localhost -U aiblog_dev -d aiblog_dev -c "drop table app_n_quads cascade"` (the password is in the user-secrets entry; use the vault tool rather than typing it), or drop and recreate the database as `postgres`. The next start recreates and reseeds it.
