@@ -76,6 +76,14 @@ public sealed class BlogAiToolsTests : IClassFixture<DiagnosticsControllerTests.
             (LastQuery, LastArguments) = (query.Name, arguments);
             return Task.FromResult(answer);
         }
+
+        public (string Table, int Offset, int Limit)? LastRows { get; private set; }
+
+        public Task<string> ReadRowsAsync(BlogAiTable table, int offset, int limit, CancellationToken cancellationToken)
+        {
+            LastRows = (table.Name, offset, limit);
+            return Task.FromResult(answer);
+        }
     }
 
     private HttpClient ClientWith(params string[] scopes) => ClientWith(new FakeReader(isConfigured: false), scopes);
@@ -111,7 +119,7 @@ public sealed class BlogAiToolsTests : IClassFixture<DiagnosticsControllerTests.
         var without = await RpcAsync(ClientWith("mcp.diagnostics.read"), new { jsonrpc = "2.0", id = 2, method = "tools/list" });
 
         var names = with.GetProperty("result").GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()).ToList();
-        Assert.Equal(BlogAiCatalog.Queries.Select(q => q.Name), names);
+        Assert.Equal(BlogAiCatalog.Queries.Select(q => q.Name).Append("blogai_rows"), names);
         Assert.DoesNotContain(without.GetProperty("result").GetProperty("tools").EnumerateArray(), t => t.GetProperty("name").GetString()!.StartsWith("blogai_"));
     }
 
@@ -144,5 +152,40 @@ public sealed class BlogAiToolsTests : IClassFixture<DiagnosticsControllerTests.
         Assert.Equal("""[{"title":"demo"}]""", answer.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString());
         Assert.Equal("blogai_posts", reader.LastQuery);
         Assert.Equal("5", reader.LastArguments!["limit"]);
+    }
+
+    [Fact]
+    public async Task BlogaiRows_PassesTheTableAndPaging_ToTheReader()
+    {
+        var reader = new FakeReader(isConfigured: true, answer: "{\"rows\":[]}");
+
+        var answer = await RpcAsync(ClientWith(reader, "blogai.read"), new { jsonrpc = "2.0", id = 6, method = "tools/call", @params = new { name = "blogai_rows", arguments = new { table = "be_Posts", offset = 100, limit = 50 } } });
+
+        Assert.False(answer.GetProperty("result").GetProperty("isError").GetBoolean());
+        Assert.Equal(("be_Posts", 100, 50), reader.LastRows);
+    }
+
+    [Theory]
+    [InlineData("be_Posts; DROP TABLE be_Posts")]
+    [InlineData("AspNetUsers")]
+    [InlineData("be_Contact")]
+    [InlineData("")]
+    public async Task BlogaiRows_RefusesAnyTableThatIsNotOnTheList(string table)
+    {
+        var reader = new FakeReader(isConfigured: true);
+
+        var answer = await RpcAsync(ClientWith(reader, "blogai.read"), new { jsonrpc = "2.0", id = 7, method = "tools/call", @params = new { name = "blogai_rows", arguments = new { table } } });
+
+        Assert.True(answer.GetProperty("result").GetProperty("isError").GetBoolean());
+        Assert.Null(reader.LastRows);
+    }
+
+    [Fact]
+    public async Task BlogaiRows_NeedsTheScope()
+    {
+        var answer = await RpcAsync(ClientWith(new FakeReader(true), "mcp.diagnostics.read"), new { jsonrpc = "2.0", id = 8, method = "tools/call", @params = new { name = "blogai_rows", arguments = new { table = "be_Posts" } } });
+
+        Assert.True(answer.GetProperty("result").GetProperty("isError").GetBoolean());
+        Assert.Contains("blogai.read", answer.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString());
     }
 }

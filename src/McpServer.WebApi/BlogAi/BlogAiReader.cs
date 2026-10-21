@@ -12,6 +12,9 @@ public interface IBlogAiReader
     bool IsConfigured { get; }
 
     Task<string> RunAsync(BlogAiQuery query, IReadOnlyDictionary<string, string?> arguments, CancellationToken cancellationToken);
+
+    /// <summary>One page of one wave table (<see cref="BlogAiTables"/>), ordered by its identity column: <c>{"table","offset","limit","rows":[...]}</c>.</summary>
+    Task<string> ReadRowsAsync(BlogAiTable table, int offset, int limit, CancellationToken cancellationToken);
 }
 
 /// <summary>Thrown for a bad argument; the message is safe to show the caller.</summary>
@@ -31,18 +34,31 @@ public sealed partial class BlogAiReader(IConfiguration configuration) : IBlogAi
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(configuration.GetConnectionString("BlogAi"));
 
-    public async Task<string> RunAsync(BlogAiQuery query, IReadOnlyDictionary<string, string?> arguments, CancellationToken cancellationToken)
+    public Task<string> RunAsync(BlogAiQuery query, IReadOnlyDictionary<string, string?> arguments, CancellationToken cancellationToken) =>
+        ExecuteAsync(query.Sql, query.Parameters.Select(p => Bind(p, arguments.GetValueOrDefault(p.Name))), cancellationToken);
+
+    public async Task<string> ReadRowsAsync(BlogAiTable table, int offset, int limit, CancellationToken cancellationToken)
+    {
+        var size = Math.Clamp(limit, 1, BlogAiTables.MaxPageSize);
+        var rows = await ExecuteAsync(
+            BlogAiTables.PageSql(table),
+            [new SqlParameter("@offset", Math.Max(0, offset)), new SqlParameter("@limit", size)],
+            cancellationToken);
+        return $$"""{"table":"{{table.Name}}","offset":{{Math.Max(0, offset)}},"limit":{{size}},"rows":{{rows}}}""";
+    }
+
+    private async Task<string> ExecuteAsync(string sql, IEnumerable<SqlParameter> parameters, CancellationToken cancellationToken)
     {
         await using var connection = new SqlConnection(configuration.GetConnectionString("BlogAi")
             ?? throw new InvalidOperationException("ConnectionStrings:BlogAi is not configured."));
         await connection.OpenAsync(cancellationToken);
 
         await using var command = connection.CreateCommand();
-        command.CommandText = query.Sql;
-        command.CommandTimeout = 20;
-        foreach (var parameter in query.Parameters)
+        command.CommandText = sql;
+        command.CommandTimeout = 30;
+        foreach (var parameter in parameters)
         {
-            command.Parameters.Add(Bind(parameter, arguments.GetValueOrDefault(parameter.Name)));
+            command.Parameters.Add(parameter);
         }
 
         var rows = new List<Dictionary<string, object?>>();
