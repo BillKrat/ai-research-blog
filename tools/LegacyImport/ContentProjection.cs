@@ -43,15 +43,46 @@ public sealed class NodeMarkdownConverter(string converterPath) : IMarkdownConve
 public sealed record ProjectionResult(int Categories, int Tags, int Pages, int Posts, int AlreadyThere, IReadOnlyList<string> Skipped);
 
 /// <summary>
-/// The live layer, projected from the mirror rows: categories (merged by name), tags, pages and posts as Markdown drafts. Rules: only rows
-/// that were published and not deleted are projected; posts and pages arrive unpublished (the human publishes after review); an entity
-/// that already exists is never touched, so edits made in the admin survive a re-run; the live id of a post, page or category is its legacy GUID
-/// (a name-derived id for tags and merged categories), so a later run finds the same entity.
+/// The live layer, projected from the mirror rows: categories, tags, pages and posts as Markdown drafts. Rules:
+/// only rows that were published and not deleted are projected; posts and pages arrive unpublished (the human publishes after review);
+/// nothing that already exists is touched, so edits made in the admin survive a re-run. "Already exists" means the same id, or, for
+/// posts and pages, the same slug (a draft made earlier through the authoring surface has a random id), and for categories and tags the
+/// same name. The live id of a post, page or category is its legacy GUID (a name-derived id for categories and tags), so a later run finds the same entity.
+/// Categories follow the rules used for the first drafts: the legacy "General" and "AI Systems Author" are dropped, "MCP Bridge" becomes "MCP",
+/// a post of the BlogAI design blog gets "BlogAI design", and a post left with no category gets "AI".
 /// </summary>
 public static class ContentProjection
 {
     public static readonly IReadOnlyList<string> DefaultSkippedPostSlugs = ["Welcome-to-BlogHelps-blog"];
     public static readonly IReadOnlyList<string> DefaultPageSlugs = ["disclaimer"];
+
+    private static readonly Dictionary<string, string?> CategoryMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["General"] = null,
+        ["AI Systems Author"] = null,
+        ["MCP Bridge"] = "MCP",
+    };
+
+    /// <summary>The live category names of one legacy post (see the class remarks).</summary>
+    public static IReadOnlyList<string> MapCategories(string blogName, IEnumerable<string> legacyNames)
+    {
+        var names = legacyNames.Select(n => n.Trim()).Where(n => n.Length > 0)
+            .Select(n => CategoryMap.TryGetValue(n, out var mapped) ? mapped : n)
+            .Where(n => !string.IsNullOrEmpty(n))
+            .Select(n => n!)
+            .ToList();
+        if (string.Equals(blogName, "BlogAI", StringComparison.OrdinalIgnoreCase))
+        {
+            names.Add("BlogAI design");
+        }
+
+        if (names.Count == 0)
+        {
+            names.Add("AI");
+        }
+
+        return names.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
 
     public static async Task<ProjectionResult> ProjectAsync(
         IReadOnlyDictionary<string, IReadOnlyList<LegacyRowData>> tables,
@@ -72,12 +103,28 @@ public static class ContentProjection
         int categoryCount = 0, tagCount = 0, pageCount = 0, postCount = 0, existing = 0;
         var skipped = new List<string>();
 
-        // categories merged by name (the legacy table has one row per blog: "General" appears twice)
-        var categoryNameById = tables["be_Categories"].ToDictionary(r => (Guid)r["CategoryID"]!, r => ((string?)r["CategoryName"])?.Trim() ?? string.Empty);
-        foreach (var name in categoryNameById.Values.Where(n => n.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase))
+        var blogNames = tables["be_Blogs"].ToDictionary(r => (Guid)r["BlogId"]!, r => (string?)r["BlogName"] ?? string.Empty);
+        var legacyCategoryNames = tables["be_Categories"].ToDictionary(r => (Guid)r["CategoryID"]!, r => ((string?)r["CategoryName"])?.Trim() ?? string.Empty);
+        var categoryDescriptions = tables["be_Categories"].Where(r => !string.IsNullOrWhiteSpace((string?)r["Description"]))
+            .GroupBy(r => ((string?)r["CategoryName"])!.Trim(), StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => (string)g.First()["Description"]!, StringComparer.OrdinalIgnoreCase);
+        var postCategories = tables["be_PostCategory"].GroupBy(r => (Guid)r["PostID"]!).ToDictionary(g => g.Key, g => g.Select(r => legacyCategoryNames.GetValueOrDefault((Guid)r["CategoryID"]!) ?? string.Empty).ToList());
+        var postTags = tables["be_PostTag"].GroupBy(r => (Guid)r["PostID"]!).ToDictionary(g => g.Key, g => g.Select(r => ((string?)r["Tag"])?.Trim() ?? string.Empty).Where(t => t.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList());
+
+        // what the target already holds, by name and by slug
+        var existingCategoryIds = (await categories.ListAsync(includeDeleted: true, cancellationToken)).ToDictionary(c => ((string?)c.GetValue("Name") ?? string.Empty).Trim(), c => c.EntityId!.Value, StringComparer.OrdinalIgnoreCase);
+        var existingTagIds = (await tags.ListAsync(includeDeleted: true, cancellationToken)).ToDictionary(t => ((string?)t.GetValue("Name") ?? string.Empty).Trim(), t => t.EntityId!.Value, StringComparer.OrdinalIgnoreCase);
+        var existingPostSlugs = (await posts.ListAsync(includeDeleted: true, cancellationToken)).Select(p => ((string?)p.GetValue("Slug") ?? string.Empty).ToLowerInvariant()).ToHashSet();
+        var existingPageSlugs = (await pages.ListAsync(includeDeleted: true, cancellationToken)).Select(p => ((string?)p.GetValue("Slug") ?? string.Empty).ToLowerInvariant()).ToHashSet();
+
+        var projectedPosts = tables["be_Posts"].Where(IsLive).Where(r => !skipPostSlugs.Contains((string?)r["Slug"] ?? string.Empty, StringComparer.OrdinalIgnoreCase)).ToList();
+        var categoryNamesByPost = projectedPosts.ToDictionary(r => (Guid)r["PostID"]!, r => MapCategories(blogNames.GetValueOrDefault((Guid)r["BlogID"]!) ?? string.Empty, postCategories.GetValueOrDefault((Guid)r["PostID"]!) ?? []));
+
+        string CategoryId(string name) => existingCategoryIds.TryGetValue(name, out var id) ? id : LegacyIds.ForCategoryName(name).ToString();
+        string TagId(string name) => existingTagIds.TryGetValue(name, out var id) ? id : LegacyIds.ForTagName(name).ToString();
+
+        foreach (var name in categoryNamesByPost.Values.SelectMany(n => n).Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            var id = LegacyIds.ForCategoryName(name);
-            if (await categories.GetAsync(id.ToString(), includeDeleted: true, cancellationToken) is not null)
+            if (existingCategoryIds.ContainsKey(name))
             {
                 existing++;
                 continue;
@@ -87,25 +134,22 @@ public static class ContentProjection
             if (apply)
             {
                 var entity = new Category(categorySchema);
+                var id = LegacyIds.ForCategoryName(name);
                 entity.Set("Id", Guid.NewGuid().ToString(), id);
                 entity.Set("Name", Guid.NewGuid().ToString(), name);
-                var description = tables["be_Categories"].FirstOrDefault(r => string.Equals(((string?)r["CategoryName"])?.Trim(), name, StringComparison.OrdinalIgnoreCase))?["Description"] as string;
-                if (!string.IsNullOrWhiteSpace(description))
+                if (categoryDescriptions.TryGetValue(name, out var description))
                 {
                     entity.Set("Description", Guid.NewGuid().ToString(), description);
                 }
 
                 await categories.CreateAsync(entity, cancellationToken);
+                existingCategoryIds[name] = id.ToString();
             }
         }
 
-        var postCategories = tables["be_PostCategory"].GroupBy(r => (Guid)r["PostID"]!).ToDictionary(g => g.Key, g => g.Select(r => (Guid)r["CategoryID"]!).ToList());
-        var postTags = tables["be_PostTag"].GroupBy(r => (Guid)r["PostID"]!).ToDictionary(g => g.Key, g => g.Select(r => ((string?)r["Tag"])?.Trim() ?? string.Empty).Where(t => t.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList());
-
-        foreach (var tag in postTags.Values.SelectMany(t => t).Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var tag in projectedPosts.SelectMany(r => postTags.GetValueOrDefault((Guid)r["PostID"]!) ?? []).Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            var id = LegacyIds.ForTagName(tag);
-            if (await tags.GetAsync(id.ToString(), includeDeleted: true, cancellationToken) is not null)
+            if (existingTagIds.ContainsKey(tag))
             {
                 existing++;
                 continue;
@@ -115,14 +159,16 @@ public static class ContentProjection
             if (apply)
             {
                 var entity = new Tag(tagSchema);
+                var id = LegacyIds.ForTagName(tag);
                 entity.Set("Id", Guid.NewGuid().ToString(), id);
                 entity.Set("Name", Guid.NewGuid().ToString(), tag);
                 await tags.CreateAsync(entity, cancellationToken);
+                existingTagIds[tag] = id.ToString();
             }
         }
 
         // pages: only the listed slugs (the rest of the legacy page tree is stubs or the human's design notes)
-        var livePages = tables["be_Pages"].Where(r => IsLive(r)).ToList();
+        var livePages = tables["be_Pages"].Where(IsLive).ToList();
         foreach (var row in livePages)
         {
             var slug = (string?)row["Slug"] ?? string.Empty;
@@ -133,9 +179,10 @@ public static class ContentProjection
             }
 
             var id = (Guid)row["PageID"]!;
-            if (await pages.GetAsync(id.ToString(), includeDeleted: true, cancellationToken) is not null)
+            if (existingPageSlugs.Contains(slug.ToLowerInvariant()) || await pages.GetAsync(id.ToString(), includeDeleted: true, cancellationToken) is not null)
             {
                 existing++;
+                skipped.Add($"page '{slug}' already exists (same slug or id); left untouched");
                 continue;
             }
 
@@ -162,7 +209,7 @@ public static class ContentProjection
             }
         }
 
-        foreach (var row in tables["be_Posts"].Where(r => IsLive(r)))
+        foreach (var row in tables["be_Posts"].Where(IsLive))
         {
             var slug = (string?)row["Slug"] ?? string.Empty;
             if (skipPostSlugs.Contains(slug, StringComparer.OrdinalIgnoreCase))
@@ -172,9 +219,10 @@ public static class ContentProjection
             }
 
             var id = (Guid)row["PostID"]!;
-            if (await posts.GetAsync(id.ToString(), includeDeleted: true, cancellationToken) is not null)
+            if (existingPostSlugs.Contains(slug.ToLowerInvariant()) || await posts.GetAsync(id.ToString(), includeDeleted: true, cancellationToken) is not null)
             {
                 existing++;
+                skipped.Add($"post '{slug}' already exists (same slug or id); left untouched");
                 continue;
             }
 
@@ -189,14 +237,14 @@ public static class ContentProjection
                 Put(entity, "Content", converter.Convert((string?)row["PostContent"] ?? string.Empty, slug));
                 Put(entity, "EnableComments", row["IsCommentEnabled"]);
                 Put(entity, "IsPublished", false);
-                foreach (var categoryId in (postCategories.GetValueOrDefault(id) ?? []).Select(c => categoryNameById.GetValueOrDefault(c)).Where(n => !string.IsNullOrEmpty(n)).Distinct(StringComparer.OrdinalIgnoreCase))
+                foreach (var name in categoryNamesByPost[id])
                 {
-                    entity.Add("Categories", Guid.NewGuid().ToString(), LegacyIds.ForCategoryName(categoryId!).ToString());
+                    entity.Add("Categories", Guid.NewGuid().ToString(), CategoryId(name));
                 }
 
                 foreach (var tag in postTags.GetValueOrDefault(id) ?? [])
                 {
-                    entity.Add("Tags", Guid.NewGuid().ToString(), LegacyIds.ForTagName(tag).ToString());
+                    entity.Add("Tags", Guid.NewGuid().ToString(), TagId(tag));
                 }
 
                 await posts.CreateAsync(entity, cancellationToken);
