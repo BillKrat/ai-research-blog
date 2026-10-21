@@ -54,3 +54,26 @@ Keep as small drop-in modules, later: syntax highlighting (the posts are code-he
 2. One site or three orgs (Primary, BlogAI design, BlogHelp)?
 3. Do any of the `Role`-restricted pages still matter?
 4. The two 80 to 135 KB design posts: import the images as files, or leave those two out?
+
+## Recommendations (the human re-opened the decision; his concern: the editor is Markdown only)
+
+**Decision: import as Markdown, reviewed, no WYSIWYG needed.** The concern is answered by the data: the content is simple enough to convert to editable Markdown without loss that matters.
+
+- **Why it converts well:** the 30 posts contain only headings, paragraphs, lists, links, code (`<pre>`/`<code>`), 34 images and 2 tables; no iframes, scripts or widgets. Markdown (GFM, which the reader's `marked` renders, including tables and fenced code) covers all of it. The result is plain Markdown the existing editor can edit and re-save, so there is nothing a WYSIWYG would be needed for.
+- **Images:** converted to `![alt](url)`. The 24 local images and the two inline base64 images (82 KB and 135 KB) are written out as files and referenced by URL. That needs a home for the files: a folder on the www site (`/media/legacy/<slug>/...`, uploaded with `Claude-ftp.ps1`) is enough for now, because the reader only needs a URL. A real media library (upload from the editor) stays the later feature it already is. The 10 external images keep their URLs.
+- **What is lost, knowingly:** inline `style=` attributes (6 in total; Angular's sanitiser strips them anyway), the syntax-highlighter CSS classes (fenced code with a language hint replaces them), and the old theme. Raw HTML for anything unusual may be left inside the Markdown; the reader sanitises it.
+- **Editing afterwards:** the Markdown is the source of truth from then on, so later edits never touch HTML again.
+
+Answers to the four open questions:
+1. **Re-open: yes**, for the 19 published posts plus the page tree. The 11 unpublished posts stay behind unless the human names any.
+2. **One site, with a category per origin** (for example "BlogAI design" for the design posts), not three orgs: the three blogs share one author and one audience, and orgs would split the public menu.
+3. **Role-restricted pages:** drop the `Role` fields, but **do not publish** any item that carried one until the human has looked at it: they look like leftovers from retired articles (Contact Manager, CodeMagazine); import those as drafts.
+4. **The two large design posts:** import them as drafts with their images extracted as files; they are the best test of the image path. If the result is unwieldy, split or trim by hand.
+
+Staged plan (each stage ends in a review, as usual):
+1. **Convert one**: a short post ("How to publish your own blog") end to end: HTML to Markdown, image to file, draft created; the human compares it with the live post.
+2. **Convert the code-heavy series**: the MCP bridge posts, checking fenced code and language hints.
+3. **Page tree and the rest**: pages with `parent`, the design posts with their large images, categories and tags merged.
+4. **Redirects and links**: map old paths to new ones, fix internal links between migrated posts.
+5. **Human publishes** each draft after a side-by-side check.
+Tooling: a `docs/Claude-migrate-post.ps1` in the workspace root using `blogai_post` to read and `Claude-author.ps1`'s create-draft path to write, with the converter kept small and tested on the real HTML.
