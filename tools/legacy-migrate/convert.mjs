@@ -75,11 +75,24 @@ export function convert(html, { slug, mediaBase = `/media/legacy/${slug}`, outDi
     },
   });
 
+  // The fork's wiki extension wrote commands such as [Page:NamedPipeListener] or [Page:Display text|PageName] into the body; the new
+  // site has no wiki, so a paragraph that is only a command is dropped and an inline one keeps its display text. Reported, never silent.
+  const wikiCommands = [];
+  const withoutWiki = html
+    .replace(/<p>\s*\[([A-Za-z]+):([^\]]+)\]\s*<\/p>/g, (_all, command, argument) => {
+      wikiCommands.push(`[${command}:${argument}] (paragraph removed)`);
+      return '';
+    })
+    .replace(/\[([A-Za-z]+):([^\]|]+)(?:\|([^\]]+))?\]/g, (_all, command, shown, target) => {
+      wikiCommands.push(`[${command}:${shown}${target ? `|${target}` : ''}] (kept as text)`);
+      return shown;
+    });
+
   const markdown = turndown
-    .turndown(html.replace(/&nbsp;/g, ' '))
+    .turndown(withoutWiki.replace(/&nbsp;/g, ' '))
     .replace(/\n{3,}/g, '\n\n')
     .trim();
-  return { markdown, images };
+  return { markdown, images, wikiCommands };
 }
 
 if (import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}` || process.argv[1]?.endsWith('convert.mjs')) {

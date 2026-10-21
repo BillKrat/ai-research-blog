@@ -48,3 +48,9 @@ test('alt text from file names', () => {
   assert.equal(altFromFile('/a/b/004-PublishDialog.png'), 'PublishDialog');
   assert.equal(altFromFile('Mindmap.jpg'), 'Mindmap');
 });
+
+test('wiki commands: a command-only paragraph is dropped, an inline one keeps its text, both are reported', () => {
+  const { markdown, wikiCommands } = convert('<p>[Page:NamedPipeListener]</p><p>See [Page:the guide|GuidePage] now.</p>', { slug: 's' });
+  assert.equal(markdown, 'See the guide now.');
+  assert.deepEqual(wikiCommands, ['[Page:NamedPipeListener] (paragraph removed)', '[Page:the guide|GuidePage] (kept as text)']);
+});
