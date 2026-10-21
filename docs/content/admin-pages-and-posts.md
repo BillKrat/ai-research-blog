@@ -1,4 +1,4 @@
----
+﻿---
 title: Getting around the admin - pages, posts, categories and tags
 description: A short guide to the admin area - the menu, writing and publishing a post, building a page tree, and what you cannot change by accident.
 categories: Help
@@ -25,6 +25,10 @@ Publishing is deliberate. A saved post shows a **Publish** button (and **Unpubli
 ## Categories and tags
 
 Both are simple lists with a name. A post can have several of each. Use categories for the kind of post (Help, Development log) and tags for what it is about (Pages, Roles, MCP).
+
+## Revisions: keeping a published post current
+
+Published posts are not edited by tools. When Claude (or another author tool) wants to change a published post it proposes a **revision**: a hidden draft copy with the changes. In **Admin > Posts** a revision shows its original in the **Revision of** column. Open it and use **Apply revision** to copy its title, content, description, categories and tags onto the published post (the address and date stay the same, and the revision disappears), or **Discard revision** to throw it away. A revision cannot be published on its own.
 
 ## Users and roles
 

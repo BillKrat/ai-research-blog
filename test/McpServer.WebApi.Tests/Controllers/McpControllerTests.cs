@@ -129,8 +129,8 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
 
         string[] Names(JsonElement answer) => answer.GetProperty("result").GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()!).ToArray();
         Assert.Equal(["diagnose_request", "recent_exceptions", "exception_signatures"], Names(diagnostics));
-        Assert.Equal(["list_my_posts", "create_draft_post", "update_draft_post", "list_categories", "list_tags", "create_category", "create_tag"], Names(authoring));
-        Assert.Equal(10, Names(both).Length);
+        Assert.Equal(["list_my_posts", "create_draft_post", "update_draft_post", "propose_revision", "list_categories", "list_tags", "create_category", "create_tag"], Names(authoring));
+        Assert.Equal(11, Names(both).Length);
     }
 
     [Fact]
@@ -204,5 +204,26 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
         Assert.True(diagnosticsOnly.GetProperty("result").GetProperty("isError").GetBoolean());
         Assert.Contains("content.draft", diagnosticsOnly.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString());
         Assert.Null(_app.Api.LastRequest);
+    }
+
+    [Fact]
+    public async Task ProposeRevision_PostsTheChangesToTheRevisionRoute_WithoutTheIdInTheBody()
+    {
+        _app.Api.Respond = _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"id":"r1","isPublished":false,"revisionOf":"p1"}""") };
+
+        var answer = await RpcAsync(ClientWith("content.draft"), new
+        {
+            jsonrpc = "2.0",
+            id = 8,
+            method = "tools/call",
+            @params = new { name = "propose_revision", arguments = new { id = "p1", content = "new body" } },
+        });
+
+        Assert.False(answer.GetProperty("result").GetProperty("isError").GetBoolean());
+        Assert.Equal("POST", _app.Api.LastRequest!.Method.Method);
+        Assert.Equal("/api/author/posts/p1/revision", _app.Api.LastRequest.RequestUri!.AbsolutePath);
+        using var sent = JsonDocument.Parse(_app.Api.LastBody!);
+        Assert.False(sent.RootElement.TryGetProperty("id", out _));
+        Assert.Equal("new body", sent.RootElement.GetProperty("content").GetString());
     }
 }

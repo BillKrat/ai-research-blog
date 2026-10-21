@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+﻿import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EntityForm } from '../../components/entity-form/entity-form';
@@ -73,7 +73,14 @@ export class AdminEntity implements OnInit {
   protected reload(): void {
     this.api.form(this.link).subscribe({
       next: (form) => this.model.set(form),
-      error: (error) => this.loadErrors.set(describeApiError(error, 'Could not refresh this entry.')),
+      error: (error) => {
+        // an action such as Apply revision or Discard revision removes this entry: there is nothing left to show, go back to the list
+        if ((error as { status?: number })?.status === 404) {
+          this.back();
+          return;
+        }
+        this.loadErrors.set(describeApiError(error, 'Could not refresh this entry.'));
+      },
     });
   }
 

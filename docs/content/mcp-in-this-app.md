@@ -1,4 +1,4 @@
----
+﻿---
 title: The MCP server in this app, end to end
 description: How the Model Context Protocol server works here - the wire protocol, how a tool is declared and forwarded, how scopes protect it, and what to reuse in your own organisation.
 categories: MCP, Development log
@@ -48,9 +48,13 @@ In `McpServer.WebApi/Controllers/McpController.cs` each tool is a name, a descri
 | Scope | Tools | What they can do |
 |---|---|---|
 | `mcp.diagnostics.read` | `diagnose_request`, `recent_exceptions`, `exception_signatures` | Read-only: find what went wrong for a request by its correlation id |
-| `content.draft` | `list_my_posts`, `create_draft_post`, `update_draft_post`, `list_categories`, `list_tags`, `create_category`, `create_tag` | Write **drafts** only, under one fixed author account |
+| `content.draft` | `list_my_posts`, `create_draft_post`, `update_draft_post`, `propose_revision`, `list_categories`, `list_tags`, `create_category`, `create_tag` | Write **drafts** only, under one fixed author account |
 
 `tools/list` shows a caller only the tools its scopes allow, and `tools/call` checks the scope again for the tool being called (a token without the scope gets a tool error and nothing is forwarded). There is deliberately **no publish tool**: an administrator reviews a draft and publishes it in the admin, and the API itself refuses to publish through the authoring surface, whatever a client asks for. Defence in depth: the tool list, the call check, the API scope policy, and the business rule all say the same thing.
+
+### Changing a published post: a revision, not an edit
+
+The authoring tools cannot touch a published post, so how does an assistant keep a Help post current? `propose_revision` creates a **hidden draft copy** of the published post that carries only the changes (everything else carries over, and the published address never changes), marked as a revision of it. Readers keep seeing the published text; asking again updates the same revision; an administrator opens it in the admin and presses **Apply revision** (or **Discard revision**). The assistant proposes, a human approves: the same drafts-only rule, applied to updates.
 
 ## The machine identity
 

@@ -29,6 +29,9 @@ public sealed class AuthoringControllerTests
         public Task<DraftSummary?> UpdateDraftAsync(string authorUserName, string postId, DraftPost draft, CancellationToken cancellationToken = default) =>
             Throw is null ? Task.FromResult<DraftSummary?>(Missing ? null : Summary(postId)) : throw Throw;
 
+        public Task<DraftSummary?> ProposeRevisionAsync(string authorUserName, string publishedPostId, DraftPost changes, CancellationToken cancellationToken = default) =>
+            Throw is null ? Task.FromResult<DraftSummary?>(Missing ? null : Summary(publishedPostId)) : throw Throw;
+
         public Task<IReadOnlyList<DraftSummary>> ListMineAsync(string authorUserName, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<DraftSummary>>([Summary()]);
 
@@ -77,6 +80,20 @@ public sealed class AuthoringControllerTests
 
         authoring.Throw = new InputValidationException(new Dictionary<string, string[]> { ["Title"] = ["Title is required."] });
         Assert.IsType<BadRequestObjectResult>(await controller.Update("x", new DraftPost("T"), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ProposeRevision_Maps200_404_And409()
+    {
+        var authoring = new FakeAuthoring();
+        var controller = Build(authoring);
+        Assert.IsType<OkObjectResult>(await controller.ProposeRevision("p1", new DraftPost(string.Empty), CancellationToken.None));
+
+        authoring.Missing = true;
+        Assert.IsType<NotFoundResult>(await controller.ProposeRevision("p1", new DraftPost(string.Empty), CancellationToken.None));
+
+        authoring.Throw = new BusinessRuleException("This post is still a draft.");
+        Assert.IsType<ConflictObjectResult>(await controller.ProposeRevision("p1", new DraftPost(string.Empty), CancellationToken.None));
     }
 
     [Fact]

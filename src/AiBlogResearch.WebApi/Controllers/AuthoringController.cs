@@ -39,6 +39,15 @@ public sealed class AuthoringController(IContentAuthoring authoring, IConfigurat
             return updated is null ? NotFound() : Ok(updated);
         });
 
+    /// <summary>Proposes changes to one of the author own published posts as a hidden revision draft; an administrator applies or discards it.</summary>
+    [HttpPost("posts/{id}/revision")]
+    public Task<IActionResult> ProposeRevision(string id, [FromBody] DraftPost changes, CancellationToken cancellationToken) =>
+        GuardedAsync(async () =>
+        {
+            var revision = await authoring.ProposeRevisionAsync(Author, id, changes, cancellationToken);
+            return revision is null ? NotFound() : Ok(revision);
+        });
+
     [HttpGet("categories")]
     public async Task<ActionResult<IReadOnlyList<TaxonomyTerm>>> Categories(CancellationToken cancellationToken) =>
         Ok(await authoring.ListCategoriesAsync(cancellationToken));

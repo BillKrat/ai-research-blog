@@ -56,6 +56,19 @@ public sealed class PostsController(IEntityPresenter<Post> presenter, IPostBll p
 
         var link = $"{collectionPath}/{Uri.EscapeDataString(form.Entity.EntityId)}";
         var published = form.Entity.Values.TryGetValue("IsPublished", out var state) && string.Equals(state, "true", StringComparison.OrdinalIgnoreCase);
+        if (form.Entity.Values.TryGetValue("RevisionOf", out var revises) && !string.IsNullOrEmpty(revises))
+        {
+            // a proposed revision of a published post: the actions are to apply it to the original or throw it away, never to publish it
+            return decorated with
+            {
+                Actions =
+                [
+                    new EntityAction("apply-revision", "Apply revision", $"{link}/apply-revision", "Replace the published post with this revision? The published address and date stay the same."),
+                    new EntityAction("discard-revision", "Discard revision", $"{link}/discard-revision", "Throw this revision away?"),
+                ],
+            };
+        }
+
         return decorated with
         {
             Actions = published
@@ -63,6 +76,14 @@ public sealed class PostsController(IEntityPresenter<Post> presenter, IPostBll p
                 : [new EntityAction("publish", "Publish", $"{link}/publish", "Make this post public?")],
         };
     }
+
+    [HttpPost("{id}/apply-revision")]
+    public Task<IActionResult> ApplyRevision(string id, CancellationToken cancellationToken) =>
+        GuardedAsync(async () => await posts.ApplyRevisionAsync(id, cancellationToken) ? (IActionResult)NoContent() : NotFound());
+
+    [HttpPost("{id}/discard-revision")]
+    public Task<IActionResult> DiscardRevision(string id, CancellationToken cancellationToken) =>
+        GuardedAsync(async () => await posts.DiscardRevisionAsync(id, cancellationToken) ? (IActionResult)NoContent() : NotFound());
 
     [HttpPost("{id}/publish")]
     public async Task<IActionResult> Publish(string id, CancellationToken cancellationToken) =>

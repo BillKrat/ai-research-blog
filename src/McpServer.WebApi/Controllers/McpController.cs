@@ -69,6 +69,18 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
                 "enableComments": { "type": "boolean" } },
               "required": ["id", "title"] }
             """)),
+        (AuthoringScope, Tool(
+            "propose_revision",
+            "Proposes changes to one of the authoring account's own PUBLISHED posts without changing what readers see: it creates a hidden draft copy carrying the changes, marked as a revision of the post (asking again updates the same revision). An administrator applies or discards it in the admin. Name only what changes; everything else carries over from the published post, and the published address never changes.",
+            """
+            { "type": "object",
+              "properties": {
+                "id": { "type": "string", "description": "The published post id from list_my_posts." },
+                "title": { "type": "string" }, "content": { "type": "string", "description": "The new Markdown body." }, "description": { "type": "string" },
+                "categories": { "type": "array", "items": { "type": "string" } }, "tags": { "type": "array", "items": { "type": "string" } },
+                "enableComments": { "type": "boolean" } },
+              "required": ["id"] }
+            """)),
         (AuthoringScope, Tool("list_categories", "Every category (id and name).", """{ "type": "object", "properties": {} }""")),
         (AuthoringScope, Tool("list_tags", "Every tag (id and name).", """{ "type": "object", "properties": {} }""")),
         (AuthoringScope, Tool(
@@ -209,6 +221,16 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
                 var update = Args()!.AsObject();
                 update.Remove("id");
                 (method, path, payload) = (HttpMethod.Put, $"api/author/posts/{Uri.EscapeDataString(Text("id")!)}", update);
+                break;
+            case "propose_revision":
+                if (string.IsNullOrWhiteSpace(Text("id")))
+                {
+                    return ToolResult(id, "id is required.", isError: true);
+                }
+
+                var revision = Args()!.AsObject();
+                revision.Remove("id");
+                (method, path, payload) = (HttpMethod.Post, $"api/author/posts/{Uri.EscapeDataString(Text("id")!)}/revision", revision);
                 break;
             case "list_categories":
                 (method, path) = (HttpMethod.Get, "api/author/categories");

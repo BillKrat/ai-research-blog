@@ -54,4 +54,14 @@ describe('AdminEntity', () => {
     put.flush(saved);
     http.expectNone((r) => r.method === 'POST');
   });
+
+  it('goes back to the list when an action such as Apply revision removes the entry (the refresh answers 404)', () => {
+    const { http, component } = setup();
+    http.expectOne((r) => r.url.endsWith('/api/pages/new')).flush(blank);
+    const navigate = TestBed.inject(Router).navigate as ReturnType<typeof vi.fn>;
+    (component as unknown as { reload(): void }).reload();
+    http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/pages/new')).flush('gone', { status: 404, statusText: 'Not Found' });
+
+    expect(navigate).toHaveBeenCalledWith(['/admin', 'pages']);
+  });
 });
