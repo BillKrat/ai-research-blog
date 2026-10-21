@@ -32,3 +32,6 @@ artifacts/*.epub
 
 # macOS
 .DS_Store
+
+# legacy import converter
+tools/**/node_modules/

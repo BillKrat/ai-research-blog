@@ -167,6 +167,9 @@ try
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-007-post-taxonomy.nq"), EntityConstants.Content.TaxonomySeedName);
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-008-post-revision.nq"), EntityConstants.Content.RevisionSeedName);
+    // The legacy mirror layer: one schema per ported BlogEngine.NET table (generated; see the legacy table migration plan). Schemas only, no data.
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-009-legacy-schemas.nq"), EntityConstants.Legacy.SchemaSeedName);
     Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);

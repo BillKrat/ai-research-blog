@@ -96,7 +96,25 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
             "Finds the tag with this name (any case) or creates it.",
             """{ "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] }""")),
         .. BlogAiCatalog.Queries.Select(q => (BlogAiScope, BlogAiTool(q))),
+        (BlogAiScope, new JsonObject
+        {
+            ["name"] = RowsToolName,
+            ["description"] = "One page of rows of a legacy table, every column except secrets, ordered by the table's identity column. For the schema-faithful migration. Only the wave tables are readable (see the table enum). Read-only.",
+            ["inputSchema"] = new JsonObject
+            {
+                ["type"] = "object",
+                ["properties"] = new JsonObject
+                {
+                    ["table"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(BlogAiTables.All.Select(t => (JsonNode)t.Name).ToArray()), ["description"] = "The legacy table." },
+                    ["offset"] = new JsonObject { ["type"] = "integer", ["description"] = "Rows to skip (default 0)." },
+                    ["limit"] = new JsonObject { ["type"] = "integer", ["description"] = $"Rows per page (1-{BlogAiTables.MaxPageSize}, default {BlogAiTables.DefaultPageSize})." },
+                },
+                ["required"] = new JsonArray("table"),
+            },
+        }),
     ];
+
+    public const string RowsToolName = "blogai_rows";
 
     private static JsonObject BlogAiTool(BlogAiQuery query)
     {
@@ -211,6 +229,11 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
         string? Text(string key) => arguments.ValueKind == JsonValueKind.Object && arguments.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
         JsonNode? Args() => arguments.ValueKind == JsonValueKind.Object ? JsonNode.Parse(arguments.GetRawText()) : new JsonObject();
 
+        if (name == RowsToolName)
+        {
+            return await CallBlogAiRowsAsync(id, arguments, cancellationToken);
+        }
+
         if (BlogAiCatalog.Find(name) is { } blogAiQuery)
         {
             return await CallBlogAiAsync(id, blogAiQuery, arguments, cancellationToken);
@@ -295,6 +318,32 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
         return answer.StatusCode is >= 200 and < 300
             ? ToolResult(id, answer.Body, isError: false)
             : ToolResult(id, $"The API answered HTTP {answer.StatusCode}. {answer.Body}".Trim(), isError: true);
+    }
+
+    /// <summary>One page of one allowlisted legacy table. An unknown table, or a bad number, is reported as such.</summary>
+    private async Task<JsonObject> CallBlogAiRowsAsync(JsonNode? id, JsonElement arguments, CancellationToken cancellationToken)
+    {
+        if (!blogAi.IsConfigured)
+        {
+            return ToolResult(id, "The legacy database is not configured on this server (ConnectionStrings:BlogAi).", isError: true);
+        }
+
+        string? Text(string key) => arguments.ValueKind == JsonValueKind.Object && arguments.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        int Number(string key, int fallback) => arguments.ValueKind == JsonValueKind.Object && arguments.TryGetProperty(key, out var v) && v.TryGetInt32(out var n) ? n : fallback;
+
+        if (BlogAiTables.Find(Text("table") ?? string.Empty) is not { } table)
+        {
+            return ToolResult(id, $"table must be one of: {string.Join(", ", BlogAiTables.All.Select(t => t.Name))}.", isError: true);
+        }
+
+        try
+        {
+            return ToolResult(id, await blogAi.ReadRowsAsync(table, Number("offset", 0), Number("limit", BlogAiTables.DefaultPageSize), cancellationToken), isError: false);
+        }
+        catch (Microsoft.Data.SqlClient.SqlException e)
+        {
+            return ToolResult(id, $"The legacy database refused the query (SQL error {e.Number}); the read-only login may be missing a grant on {table.Name}.", isError: true);
+        }
     }
 
     /// <summary>Runs one legacy-data query. A bad argument is reported as such; anything else is logged by the exception handler and answered without detail.</summary>
