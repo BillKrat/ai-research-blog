@@ -16,6 +16,31 @@ public static class LegacySchemaSeed
     public const string SchemaVocabulary = "https://global-webnet.com/ontology/schema#";
     public const string Graph = "https://global-webnet.com/graph/legacy";
 
+    /// <summary>
+    /// Seed 010: the <c>Id</c> field every entity schema needs (the entity repository keeps an entity's id in its subject, not in a quad,
+    /// and a schema without an <c>Id</c> field cannot hold one). Seed 009 was already applied when this was found, and a named seed
+    /// applies once, so the field ships as its own seed; a fresh database gets both and ends in the same state.
+    /// </summary>
+    public static string GenerateIdFields(IEnumerable<BlogAiTable> tables)
+    {
+        var text = new StringBuilder();
+        void Quad(string subject, string predicate, string objectIri) => text.Append('<').Append(subject).Append("> <").Append(predicate).Append("> <").Append(objectIri).Append("> <").Append(Graph).Append("> .\n");
+        void Literal(string subject, string predicate, string value) => text.Append('<').Append(subject).Append("> <").Append(predicate).Append("> \"").Append(value).Append("\" <").Append(Graph).Append("> .\n");
+
+        foreach (var table in tables)
+        {
+            var schema = SchemaBase + table.Name;
+            var field = $"{schema}/Id";
+            Quad(schema, SchemaVocabulary + "field", field);
+            Literal(field, SchemaVocabulary + "name", "Id");
+            Literal(field, SchemaVocabulary + "fieldType", "Guid");
+            Quad(field, SchemaVocabulary + "predicate", $"{OntologyBase}{table.Name}#Id");
+            Literal(field, SchemaVocabulary + "order", "-1");
+        }
+
+        return text.ToString();
+    }
+
     public static string Generate(IEnumerable<BlogAiTable> tables)
     {
         var text = new StringBuilder();

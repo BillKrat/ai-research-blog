@@ -8,44 +8,53 @@ namespace McpServer.WebApi.Tests.Controllers;
 /// <summary>The legacy table list: the single source for the paged row tool and the generated mirror schemas, kept honest by tests.</summary>
 public sealed class LegacySchemaSeedTests
 {
-    private static string SeedPath
+    private static string SeedPath(string file)
     {
-        get
+        // test assembly folder -> repo root -> sibling Adventures.Foundation
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, "Adventures.Foundation")) && !File.Exists(Path.Combine(directory.FullName, "AiBlogResearch.slnx")))
         {
-            // test assembly folder -> repo root -> sibling Adventures.Foundation
-            var directory = new DirectoryInfo(AppContext.BaseDirectory);
-            while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, "Adventures.Foundation")) && !File.Exists(Path.Combine(directory.FullName, "AiBlogResearch.slnx")))
-            {
-                directory = directory.Parent;
-            }
-
-            var workspace = directory?.Parent?.FullName ?? throw new InvalidOperationException("Workspace root not found.");
-            return Path.Combine(workspace, "Adventures.Foundation", "src", "Adventures.Data.NQuad", "Sql", "seed", "seed-009-legacy-schemas.nq");
+            directory = directory.Parent;
         }
+
+        var workspace = directory?.Parent?.FullName ?? throw new InvalidOperationException("Workspace root not found.");
+        return Path.Combine(workspace, "Adventures.Foundation", "src", "Adventures.Data.NQuad", "Sql", "seed", file);
     }
 
-    [Fact]
-    public void TheCheckedInSeed_IsExactlyWhatTheGeneratorProduces()
+    private const string ColumnsSeed = "seed-009-legacy-schemas.nq";
+    private const string IdFieldsSeed = "seed-010-legacy-ids.nq";
+
+    private static void AssertSeedMatches(string file, string generated)
     {
-        var generated = LegacySchemaSeed.Generate(BlogAiTables.All);
         if (Environment.GetEnvironmentVariable("REGENERATE_LEGACY_SEED") == "1")
         {
-            File.WriteAllText(SeedPath, generated, new System.Text.UTF8Encoding(false));
+            File.WriteAllText(SeedPath(file), generated, new System.Text.UTF8Encoding(false));
         }
 
-        Assert.Equal(generated.Replace("\r\n", "\n"), File.ReadAllText(SeedPath).Replace("\r\n", "\n"));
+        Assert.Equal(generated.Replace("\r\n", "\n"), File.ReadAllText(SeedPath(file)).Replace("\r\n", "\n"));
     }
 
     [Fact]
-    public void EverySchema_LoadsThroughTheRealSchemaLoader_WithAllItsColumns()
+    public void TheCheckedInSeeds_AreExactlyWhatTheGeneratorProduces() =>
+        AssertSeedMatches(ColumnsSeed, LegacySchemaSeed.Generate(BlogAiTables.All));
+
+    [Fact]
+    public void TheIdFieldsSeed_IsExactlyWhatTheGeneratorProduces() =>
+        AssertSeedMatches(IdFieldsSeed, LegacySchemaSeed.GenerateIdFields(BlogAiTables.All));
+
+    [Fact]
+    public void EverySchema_LoadsThroughTheRealSchemaLoader_WithAnIdAndAllItsColumns()
     {
-        var quads = new NQuadFileParser().Parse(File.ReadAllText(SeedPath));
+        // both seeds, in the order the app applies them
+        var quads = new NQuadFileParser().Parse(File.ReadAllText(SeedPath(ColumnsSeed)) + File.ReadAllText(SeedPath(IdFieldsSeed)));
 
         foreach (var table in BlogAiTables.All)
         {
             var schema = SchemaDal.Load(quads, LegacySchemaSeed.SchemaBase + table.Name);
-            Assert.Equal(table.Columns.Select(c => c.Name), schema.Fields.Values.OrderBy(f => f.Order).Select(f => f.Name));
-            Assert.Equal(table.Columns.Select(c => c.Required), schema.Fields.Values.OrderBy(f => f.Order).Select(f => f.IsRequired));
+            var fields = schema.Fields.Values.OrderBy(f => f.Order).ToList();
+            Assert.Equal(["Id", .. table.Columns.Select(c => c.Name)], fields.Select(f => f.Name));
+            Assert.Equal(table.Columns.Select(c => c.Required), fields.Skip(1).Select(f => f.IsRequired));
+            Assert.Equal("Guid", fields[0].Type);
         }
     }
 
