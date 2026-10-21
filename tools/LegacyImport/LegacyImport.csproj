@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>legacyimport-4f2b6c1e-7a39-4d8e-b0a5-3c9e1d2f6a58</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\McpServer.WebApi\McpServer.WebApi.csproj" />
+    <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Data.NQuad\Adventures.Data.NQuad.csproj" />
+    <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Entities\Adventures.Entities.csproj" />
+  </ItemGroup>
+
+</Project>
