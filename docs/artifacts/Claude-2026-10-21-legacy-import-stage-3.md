@@ -4,7 +4,7 @@
 
 ## Result
 
-All 19 published legacy posts are now drafts (stage 1: 1, stage 2: 4, stage 3: 13; the legacy BlogHelp "Welcome" post, 149 characters of stock text, was left out on purpose, so 18 + stage 1's 1 = the 19 minus that one: **18 imported, 1 skipped**).
+Of the 19 published legacy posts, **18 are now drafts** (stage 1: 1, stage 2: 4, stage 3: 13). The 19th, the stock BlogHelp "Welcome" post (149 characters), was left out on purpose.
 
 | Group | Drafts | Notes |
 |---|---|---|
