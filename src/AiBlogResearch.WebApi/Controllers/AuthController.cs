@@ -6,6 +6,8 @@ namespace AiBlogResearch.WebApi.Controllers;
 
 public sealed record TokenRequest(string? UserName, string? Password);
 
+public sealed record ChangePasswordRequest(string? CurrentPassword, string? NewPassword);
+
 public sealed record TokenResponse(string AccessToken, DateTimeOffset ExpiresAtUtc, bool MustChangePassword);
 
 /// <summary>
@@ -63,6 +65,52 @@ public sealed class AuthController(IUserAccountService accountService, IConfigur
 
         return errors;
     }
+
+    /// <summary>
+    /// The signed-in user changes their own password. The user is the token's subject (never a client-supplied id), the
+    /// current password must be right (and counts toward the login lockout when it is not), and the new one must meet
+    /// <see cref="PasswordPolicy"/>. A success clears the "must change password" flag, so the next login no longer asks.
+    /// </summary>
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(request?.CurrentPassword))
+        {
+            errors[nameof(ChangePasswordRequest.CurrentPassword)] = ["Your current password is required."];
+        }
+
+        if (string.IsNullOrWhiteSpace(request?.NewPassword))
+        {
+            errors[nameof(ChangePasswordRequest.NewPassword)] = ["A new password is required."];
+        }
+
+        if (errors.Count > 0)
+        {
+            return BadRequest(new ValidationProblemDetails(errors) { Status = StatusCodes.Status400BadRequest });
+        }
+
+        var subject = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        if (!Guid.TryParse(subject, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await accountService.ChangePasswordAsync(userId, request!.CurrentPassword!, request.NewPassword!, cancellationToken);
+        return result switch
+        {
+            ChangePasswordResult.Succeeded => NoContent(),
+            ChangePasswordResult.InvalidCurrentPassword => Rejected(nameof(ChangePasswordRequest.CurrentPassword), "Your current password is not right."),
+            ChangePasswordResult.NewPasswordRejected => Rejected(nameof(ChangePasswordRequest.NewPassword), PasswordPolicy.Description),
+            ChangePasswordResult.AccountLocked => Rejected(nameof(ChangePasswordRequest.CurrentPassword), "Too many wrong attempts. Try again in a few minutes."),
+            _ => Unauthorized(),
+        };
+    }
+
+    /// <summary>The 400 shape the client already turns into sentences (a field name and its messages).</summary>
+    private BadRequestObjectResult Rejected(string field, string message) =>
+        BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]> { [field] = [message] }) { Status = StatusCodes.Status400BadRequest });
 
     /// <summary>Sample protected endpoint to prove JWT validation works end to end.</summary>
     [HttpGet("whoami")]
