@@ -3,7 +3,33 @@
     <h1><a routerLink="/" class="page__title-link">{{ title() }}</a></h1>
 
     <div class="page__header-actions">
-      <button
+      @if (showAdminLink()) {
+        <!-- Interim home of the health line (backlog: the Dashboard carries it): top right, administrators only, out of the menu's way. -->
+        <span class="page__health" aria-live="polite">
+          @switch (healthState()) {
+            @case ('checking') {
+              <span class="badge badge--info">API: checking...</span>
+            }
+            @case ('healthy') {
+              <span class="badge badge--success" [attr.title]="'WebApi healthy as of ' + healthCheckedAt()">API: healthy</span>
+            }
+            @case ('degraded') {
+              <span class="badge badge--warning" [attr.title]="(healthTrace() ? 'Trace: ' + healthTrace() + '. ' : '') + 'As of ' + healthCheckedAt()">
+                API: degraded ({{ healthProblem() }})
+              </span>
+            }
+            @case ('unhealthy') {
+              <span class="badge badge--danger" [attr.title]="(healthTrace() ? 'Trace: ' + healthTrace() + '. ' : '') + 'As of ' + healthCheckedAt()">
+                API: unhealthy ({{ healthProblem() }})
+              </span>
+            }
+            @case ('unreachable') {
+              <span class="badge badge--danger">API: unreachable</span>
+            }
+          }
+        </span>
+      }
+     <button
         mat-icon-button
         (click)="toggleTheme()"
         [attr.aria-label]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
@@ -56,34 +82,6 @@
   </header>
 
   <app-site-nav />
-
-  <!-- The health line is for administrators until the Dashboard exists (backlog: show it there). -->
-  @if (showAdminLink()) {
-    <section class="page__status">
-      <span>WebApi health:</span>
-      @switch (healthState()) {
-        @case ('checking') {
-          <span class="badge badge--info">checking...</span>
-        }
-        @case ('healthy') {
-          <span class="badge badge--success">healthy as of {{ healthCheckedAt() }}</span>
-        }
-        @case ('degraded') {
-          <span class="badge badge--warning" [attr.title]="healthTrace() ? 'Trace: ' + healthTrace() : null">
-            degraded: {{ healthProblem() }} as of {{ healthCheckedAt() }}
-          </span>
-        }
-        @case ('unhealthy') {
-          <span class="badge badge--danger" [attr.title]="healthTrace() ? 'Trace: ' + healthTrace() : null">
-            unhealthy: {{ healthProblem() }} as of {{ healthCheckedAt() }}
-          </span>
-        }
-        @case ('unreachable') {
-          <span class="badge badge--danger">unreachable</span>
-        }
-      }
-    </section>
-  }
 
   <router-outlet />
 </div>
