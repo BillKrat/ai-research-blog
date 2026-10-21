@@ -38,6 +38,29 @@
     font-weight: 600;
   }
 
+  &__password {
+    display: flex;
+    flex-direction: column;
+    margin-top: 2rem;
+
+    h3 {
+      margin-bottom: 0.75rem;
+    }
+
+    button {
+      align-self: flex-start;
+    }
+  }
+
+  &__notice {
+    margin: 0 0 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-left: 4px solid var(--mat-sys-primary);
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+    font-size: 0.9rem;
+  }
+
   &__danger-zone {
     margin-top: 1.5rem;
   }

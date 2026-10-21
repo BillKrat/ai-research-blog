@@ -93,8 +93,88 @@ public class AuthControllerTests
         Assert.Equal("unknown", okResult.Value);
     }
 
+    private static AuthController ControllerSignedInAs(FakeUserAccountService accountService, string? subject)
+    {
+        var claims = subject is null ? [] : new[] { new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, subject) };
+        return new AuthController(accountService, BuildConfiguration())
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
+                {
+                    User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(claims, "test")),
+                },
+            },
+        };
+    }
+
+    [Fact]
+    public async Task ChangePassword_ReturnsNoContent_AndPassesTheTokenSubject()
+    {
+        var userId = Guid.NewGuid();
+        var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.None)) { ChangeResult = ChangePasswordResult.Succeeded };
+
+        var result = await ControllerSignedInAs(accountService, userId.ToString())
+            .ChangePassword(new ChangePasswordRequest("old-password", "a-much-longer-passphrase"), CancellationToken.None);
+
+        Assert.IsType<NoContentResult>(result);
+        Assert.Equal((userId, "old-password", "a-much-longer-passphrase"), accountService.LastChange);
+    }
+
+    [Theory]
+    [InlineData(ChangePasswordResult.InvalidCurrentPassword, "CurrentPassword")]
+    [InlineData(ChangePasswordResult.NewPasswordRejected, "NewPassword")]
+    [InlineData(ChangePasswordResult.AccountLocked, "CurrentPassword")]
+    public async Task ChangePassword_ReturnsAFieldedBadRequest_WhenTheServiceRefuses(ChangePasswordResult outcome, string field)
+    {
+        var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.None)) { ChangeResult = outcome };
+
+        var result = await ControllerSignedInAs(accountService, Guid.NewGuid().ToString())
+            .ChangePassword(new ChangePasswordRequest("old-password", "a-much-longer-passphrase"), CancellationToken.None);
+
+        var problem = Assert.IsType<ValidationProblemDetails>(Assert.IsType<BadRequestObjectResult>(result).Value);
+        Assert.Contains(field, problem.Errors.Keys);
+    }
+
+    [Theory]
+    [InlineData(null, "new-password-long")]
+    [InlineData("old", "")]
+    [InlineData("  ", "  ")]
+    public async Task ChangePassword_ReturnsBadRequest_WhenAFieldIsBlank(string? current, string? replacement)
+    {
+        var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.None));
+
+        var result = await ControllerSignedInAs(accountService, Guid.NewGuid().ToString())
+            .ChangePassword(new ChangePasswordRequest(current, replacement), CancellationToken.None);
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Null(accountService.LastChange);
+    }
+
+    [Fact]
+    public async Task ChangePassword_ReturnsUnauthorized_WhenTheTokenHasNoUserId()
+    {
+        var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.None));
+
+        var result = await ControllerSignedInAs(accountService, "not-a-guid")
+            .ChangePassword(new ChangePasswordRequest("old-password", "a-much-longer-passphrase"), CancellationToken.None);
+
+        Assert.IsType<UnauthorizedResult>(result);
+        Assert.Null(accountService.LastChange);
+    }
+
     private sealed class FakeUserAccountService(LoginResult result) : IUserAccountService
     {
+        public ChangePasswordResult ChangeResult { get; set; } = ChangePasswordResult.NotFound;
+
+        public (Guid UserId, string Current, string New)? LastChange { get; private set; }
+
+        public Task<ChangePasswordResult> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default)
+        {
+            LastChange = (userId, currentPassword, newPassword);
+            return Task.FromResult(ChangeResult);
+        }
+
         public string? LastTenant { get; private set; }
 
         public string? LastUsername { get; private set; }

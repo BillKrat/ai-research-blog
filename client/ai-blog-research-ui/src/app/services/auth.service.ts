@@ -58,6 +58,13 @@ export class AuthService {
       );
   }
 
+  /** Changes the signed-in user's own password; on success the "must change" reminder goes away. The current password is re-checked by the server. */
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http
+      .post<void>(`${environment.apiUrl}/api/auth/change-password`, { currentPassword, newPassword })
+      .pipe(tap(() => this._mustChangePassword.set(false)));
+  }
+
   logout(): void {
     this._accessToken.set(null);
     this._username.set(null);

@@ -1,5 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { AuthService } from '../../services/auth.service';
 import { EntityForm } from '../../components/entity-form/entity-form';
 import { describeApiError } from '../../models/api-error';
 import { EntityDataModel, EntityFormModel } from '../../models/entity-form.model';
@@ -17,12 +21,24 @@ type DeleteState = 'idle' | 'deleting' | 'error';
  */
 @Component({
   selector: 'app-profile',
-  imports: [MatButtonModule, EntityForm],
+  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, EntityForm],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
 export class Profile implements OnInit {
   private readonly profileService = inject(ProfileService);
+  private readonly authService = inject(AuthService);
+
+  /** True right after signing in with a seeded or reset password: the caption above the password form says so. */
+  protected readonly mustChangePassword = this.authService.mustChangePassword;
+
+  protected readonly passwordForm = new FormGroup({
+    current: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    next: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(12)] }),
+    confirm: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+  });
+  protected readonly passwordState = signal<SaveState>('idle');
+  protected readonly passwordErrors = signal<string[]>([]);
 
   protected readonly model = signal<EntityFormModel | null>(null);
   protected readonly isLoading = signal(true);
@@ -60,6 +76,32 @@ export class Profile implements OnInit {
       error: (error) => {
         this.saveErrors.set(describeApiError(error, "Couldn't save your profile. Try again."));
         this.saveState.set('error');
+      },
+    });
+  }
+
+  changePassword(): void {
+    if (this.passwordForm.invalid || this.passwordState() === 'saving') {
+      return;
+    }
+
+    const { current, next, confirm } = this.passwordForm.getRawValue();
+    if (next !== confirm) {
+      this.passwordErrors.set(['The new password and its confirmation are not the same.']);
+      this.passwordState.set('error');
+      return;
+    }
+
+    this.passwordState.set('saving');
+    this.passwordErrors.set([]);
+    this.authService.changePassword(current, next).subscribe({
+      next: () => {
+        this.passwordForm.reset();
+        this.passwordState.set('saved');
+      },
+      error: (error) => {
+        this.passwordErrors.set(describeApiError(error, "Couldn't change your password. Try again."));
+        this.passwordState.set('error');
       },
     });
   }
