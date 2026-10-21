@@ -40,6 +40,12 @@ export function convert(html, { slug, mediaBase = `/media/legacy/${slug}`, outDi
     replacement: (_content, node) => {
       const original = node.getAttribute('src') ?? '';
       let alt = (node.getAttribute('alt') ?? '').trim();
+      if (!original.trim()) {
+        // an <img> with no source (the editor left it behind when the picture was removed) shows nothing on the legacy site either
+        images.push({ original: '', kind: 'empty', file: null, url: null });
+        return '';
+      }
+
       const axd = /image\.axd\?picture=([^&"]+)/i.exec(original);
       const data = /^data:(image\/[a-z0-9.+-]+);base64,(.*)$/is.exec(original);
       if (axd) {
@@ -75,16 +81,22 @@ export function convert(html, { slug, mediaBase = `/media/legacy/${slug}`, outDi
     },
   });
 
-  // The fork's wiki extension wrote commands such as [Page:NamedPipeListener] or [Page:Display text|PageName] into the body; the new
-  // site has no wiki, so a paragraph that is only a command is dropped and an inline one keeps its display text. Reported, never silent.
+  // The fork's wiki extension wrote commands into the body, for example [Page:NamedPipeListener], [Page:Show|PageName] or navigation
+  // bars such as "[Page:A|PageA] * [PageB]". The new site has no wiki, so: a command that opens a paragraph is removed (a navigation
+  // marker), a paragraph made only of such tokens and separators is removed, and a command inside running text keeps its display
+  // text. Every one is reported, never silent.
   const wikiCommands = [];
   const withoutWiki = html
-    .replace(/<p>\s*\[([A-Za-z]+):([^\]]+)\]\s*<\/p>/g, (_all, command, argument) => {
-      wikiCommands.push(`[${command}:${argument}] (paragraph removed)`);
+    .replace(/(<p>\s*(?:<img[^>]*>)?\s*)\[Page:([^\]]+)\](?:\s|&nbsp;|<br\s*\/?>)*/g, (_all, open, argument) => {
+      wikiCommands.push(`[Page:${argument}] (opening marker removed)`);
+      return open;
+    })
+    .replace(/<p>\s*(?:(?:\[[^\]\[]*\]|\*|\||&nbsp;|\s)+)<\/p>/g, (all) => {
+      wikiCommands.push(`${all.replace(/<\/?p>/g, '').trim()} (navigation paragraph removed)`);
       return '';
     })
-    .replace(/\[([A-Za-z]+):([^\]|]+)(?:\|([^\]]+))?\]/g, (_all, command, shown, target) => {
-      wikiCommands.push(`[${command}:${shown}${target ? `|${target}` : ''}] (kept as text)`);
+    .replace(/\[Page:([^\]|]+)(?:\|([^\]]+))?\]/g, (_all, shown, target) => {
+      wikiCommands.push(`[Page:${shown}${target ? `|${target}` : ''}] (kept as text)`);
       return shown;
     });
 

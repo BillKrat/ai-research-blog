@@ -49,8 +49,24 @@ test('alt text from file names', () => {
   assert.equal(altFromFile('Mindmap.jpg'), 'Mindmap');
 });
 
-test('wiki commands: a command-only paragraph is dropped, an inline one keeps its text, both are reported', () => {
-  const { markdown, wikiCommands } = convert('<p>[Page:NamedPipeListener]</p><p>See [Page:the guide|GuidePage] now.</p>', { slug: 's' });
-  assert.equal(markdown, 'See the guide now.');
-  assert.deepEqual(wikiCommands, ['[Page:NamedPipeListener] (paragraph removed)', '[Page:the guide|GuidePage] (kept as text)']);
+test('wiki commands: opening markers and navigation paragraphs are removed, inline ones keep their text, all are reported', () => {
+  const { markdown, wikiCommands } = convert(
+    '<p>[Page:NamedPipeListener]</p><p>[Page:DCI Abstract|DciAbstract] * [DciIntroduction]</p><p>[Page:Guide]<br /><em>Intro text</em></p><p>See [Page:the guide|GuidePage] now.</p>',
+    { slug: 's' });
+  assert.equal(markdown, '*Intro text*\n\nSee the guide now.');
+  assert.equal(wikiCommands.length, 5);
+  assert.ok(wikiCommands.some((c) => c.includes('NamedPipeListener') && c.includes('opening marker removed')));
+  assert.ok(wikiCommands.some((c) => c.includes('(kept as text)')));
+});
+
+test('an image with no source is dropped and listed as empty', () => {
+  const { markdown, images } = convert('<p>Before <img alt="" /> after</p>', { slug: 's' });
+  assert.equal(markdown, 'Before  after');
+  assert.deepEqual(images.map((i) => i.kind), ['empty']);
+});
+
+test('a pipe-separated bar of bracketed names (the legacy wiki navigation) is removed', () => {
+  const { markdown, wikiCommands } = convert('<p>[Admin] | [Dashboard] | [Content]</p><p>Body</p>', { slug: 's' });
+  assert.equal(markdown, 'Body');
+  assert.equal(wikiCommands.length, 1);
 });
