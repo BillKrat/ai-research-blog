@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authorization;
+using McpServer.WebApi.BlogAi;
 using Microsoft.AspNetCore.Mvc;
 
 namespace McpServer.WebApi.Controllers;
@@ -17,11 +18,14 @@ namespace McpServer.WebApi.Controllers;
 [ApiController]
 [Route("mcp")]
 [Authorize]
-public sealed class McpController(DiagnosticsApiClient api, IAuthorizationService authorization) : ControllerBase
+public sealed class McpController(DiagnosticsApiClient api, IAuthorizationService authorization, IBlogAiReader blogAi) : ControllerBase
 {
     public const string ProtocolVersion = "2025-03-26";
     public const string DiagnosticsScope = DiagnosticsController.RequiredScope;
     public const string AuthoringScope = "content.draft";
+
+    /// <summary>Read-only access to the legacy BlogEngine.NET (BlogAI) database, as the named queries of <see cref="BlogAiCatalog"/>.</summary>
+    public const string BlogAiScope = "blogai.read";
 
     /// <summary>Every tool this server offers, with the scope that unlocks it.</summary>
     public static readonly IReadOnlyList<(string Scope, JsonObject Definition)> Tools =
@@ -91,7 +95,33 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
             "create_tag",
             "Finds the tag with this name (any case) or creates it.",
             """{ "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] }""")),
+        .. BlogAiCatalog.Queries.Select(q => (BlogAiScope, BlogAiTool(q))),
     ];
+
+    private static JsonObject BlogAiTool(BlogAiQuery query)
+    {
+        var properties = new JsonObject();
+        foreach (var parameter in query.Parameters)
+        {
+            properties[parameter.Name] = new JsonObject
+            {
+                ["type"] = parameter.Kind == "int" ? "integer" : "string",
+                ["description"] = parameter.Description,
+            };
+        }
+
+        return new JsonObject
+        {
+            ["name"] = query.Name,
+            ["description"] = query.Description + " Read-only.",
+            ["inputSchema"] = new JsonObject
+            {
+                ["type"] = "object",
+                ["properties"] = properties,
+                ["required"] = new JsonArray(query.Parameters.Where(p => p.Required).Select(p => (JsonNode)p.Name).ToArray()),
+            },
+        };
+    }
 
     private static JsonObject Tool(string name, string description, string inputSchema) =>
         new() { ["name"] = name, ["description"] = description, ["inputSchema"] = JsonNode.Parse(inputSchema) };
@@ -148,7 +178,7 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
     private async Task<HashSet<string>> GrantedScopesAsync()
     {
         var granted = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var scope in new[] { DiagnosticsScope, AuthoringScope })
+        foreach (var scope in new[] { DiagnosticsScope, AuthoringScope, BlogAiScope })
         {
             if ((await authorization.AuthorizeAsync(User, null, "Scope:" + scope)).Succeeded)
             {
@@ -180,6 +210,11 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
         var arguments = parameters.TryGetProperty("arguments", out var a) && a.ValueKind == JsonValueKind.Object ? a : default;
         string? Text(string key) => arguments.ValueKind == JsonValueKind.Object && arguments.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
         JsonNode? Args() => arguments.ValueKind == JsonValueKind.Object ? JsonNode.Parse(arguments.GetRawText()) : new JsonObject();
+
+        if (BlogAiCatalog.Find(name) is { } blogAiQuery)
+        {
+            return await CallBlogAiAsync(id, blogAiQuery, arguments, cancellationToken);
+        }
 
         HttpMethod method;
         string path;
@@ -260,6 +295,37 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
         return answer.StatusCode is >= 200 and < 300
             ? ToolResult(id, answer.Body, isError: false)
             : ToolResult(id, $"The API answered HTTP {answer.StatusCode}. {answer.Body}".Trim(), isError: true);
+    }
+
+    /// <summary>Runs one legacy-data query. A bad argument is reported as such; anything else is logged by the exception handler and answered without detail.</summary>
+    private async Task<JsonObject> CallBlogAiAsync(JsonNode? id, BlogAiQuery query, JsonElement arguments, CancellationToken cancellationToken)
+    {
+        if (!blogAi.IsConfigured)
+        {
+            return ToolResult(id, "The legacy database is not configured on this server (ConnectionStrings:BlogAi).", isError: true);
+        }
+
+        var supplied = new Dictionary<string, string?>(StringComparer.Ordinal);
+        if (arguments.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in arguments.EnumerateObject())
+            {
+                supplied[property.Name] = property.Value.ValueKind == JsonValueKind.String ? property.Value.GetString() : property.Value.GetRawText();
+            }
+        }
+
+        try
+        {
+            return ToolResult(id, await blogAi.RunAsync(query, supplied, cancellationToken), isError: false);
+        }
+        catch (BlogAiArgumentException e)
+        {
+            return ToolResult(id, e.Message, isError: true);
+        }
+        catch (Microsoft.Data.SqlClient.SqlException e)
+        {
+            return ToolResult(id, $"The legacy database refused the query (SQL error {e.Number}).", isError: true);
+        }
     }
 
     private static JsonObject ToolResult(JsonNode? id, string text, bool isError) =>
