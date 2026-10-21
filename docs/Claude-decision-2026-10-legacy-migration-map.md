@@ -77,3 +77,5 @@ Staged plan (each stage ends in a review, as usual):
 4. **Redirects and links**: map old paths to new ones, fix internal links between migrated posts.
 5. **Human publishes** each draft after a side-by-side check.
 Tooling: a `docs/Claude-migrate-post.ps1` in the workspace root using `blogai_post` to read and `Claude-author.ps1`'s create-draft path to write, with the converter kept small and tested on the real HTML.
+
+> **Update 2026-10-21:** the human confirmed the goal is a schema-faithful table-level migration; see [Claude-decision-2026-10-legacy-table-migration-plan.md](Claude-decision-2026-10-legacy-table-migration-plan.md). This map remains the record of the content import.
