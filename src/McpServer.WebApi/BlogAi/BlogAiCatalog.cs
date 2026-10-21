@@ -28,7 +28,7 @@ public static class BlogAiCatalog
         new("blogai_tables",
             "Every table in the legacy database with its row count (includes tables of other applications sharing the database).",
             """
-            SELECT t.name AS tableName, SUM(p.rows) AS rowCount
+            SELECT t.name AS tableName, SUM(p.rows) AS rowTotal
             FROM sys.tables t JOIN sys.partitions p ON p.object_id = t.object_id AND p.index_id IN (0, 1)
             GROUP BY t.name ORDER BY t.name
             """,
@@ -178,7 +178,7 @@ public static class BlogAiCatalog
 
         new("blogai_count",
             "The row count of one table.",
-            "SELECT SUM(p.rows) AS rowCount FROM sys.tables t JOIN sys.partitions p ON p.object_id = t.object_id AND p.index_id IN (0, 1) WHERE t.name = @table",
+            "SELECT SUM(p.rows) AS rowTotal FROM sys.tables t JOIN sys.partitions p ON p.object_id = t.object_id AND p.index_id IN (0, 1) WHERE t.name = @table",
             [Table]),
     ];
 

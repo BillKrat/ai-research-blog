@@ -1,6 +1,6 @@
 # Stage review: read-only eyes into the legacy BlogAI database (MCP `blogai_*` tools)
 
-*2026-10-21. Branch `claude-blogai-eyes` here and in the workspace root. Built and tested offline; nothing deployed and nothing run against production yet (the SQL login does not exist).*
+*2026-10-21. Branch `claude-blogai-eyes` here and in the workspace root. Verified 2026-10-21 end to end locally against the real database (token, scope, login, 17 tables visible, content queries); not deployed. Local run found and fixed: `rowCount` is a reserved word in T-SQL (error 156), and SqlClient pulled a vulnerable Pkcs (pinned to 10.0.13).*
 
 ## Why and what
 

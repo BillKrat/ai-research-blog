@@ -4,6 +4,9 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Adventures.Security;
 using McpServer.WebApi.BlogAi;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
 
@@ -59,7 +62,25 @@ public sealed class BlogAiToolsTests : IClassFixture<DiagnosticsControllerTests.
         Assert.All(BlogAiCatalog.Queries, q => Assert.StartsWith("blogai_", q.Name));
     }
 
-    private HttpClient ClientWith(params string[] scopes)
+    /// <summary>Stands in for the real reader: these tests must never reach the legacy database, even when its connection string is in user-secrets.</summary>
+    private sealed class FakeReader(bool isConfigured, string answer = "[]") : IBlogAiReader
+    {
+        public bool IsConfigured => isConfigured;
+
+        public string? LastQuery { get; private set; }
+
+        public IReadOnlyDictionary<string, string?>? LastArguments { get; private set; }
+
+        public Task<string> RunAsync(BlogAiQuery query, IReadOnlyDictionary<string, string?> arguments, CancellationToken cancellationToken)
+        {
+            (LastQuery, LastArguments) = (query.Name, arguments);
+            return Task.FromResult(answer);
+        }
+    }
+
+    private HttpClient ClientWith(params string[] scopes) => ClientWith(new FakeReader(isConfigured: false), scopes);
+
+    private HttpClient ClientWith(IBlogAiReader reader, params string[] scopes)
     {
         var token = new JwtTokenService(Options.Create(new JwtTokenOptions
         {
@@ -68,7 +89,11 @@ public sealed class BlogAiToolsTests : IClassFixture<DiagnosticsControllerTests.
             SigningKey = SigningKey,
             AccessTokenLifetime = TimeSpan.FromMinutes(5),
         })).IssueClientToken("claude-research", scopes).AccessToken;
-        var client = _app.CreateClient();
+        var client = _app.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+        {
+            services.AddSingleton(reader);
+            services.AddHttpClient("Api");
+        })).CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
     }
@@ -106,5 +131,18 @@ public sealed class BlogAiToolsTests : IClassFixture<DiagnosticsControllerTests.
 
         Assert.True(answer.GetProperty("result").GetProperty("isError").GetBoolean());
         Assert.Contains("not configured", answer.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString());
+    }
+
+    [Fact]
+    public async Task ToolsCall_RunsTheNamedQuery_WithTheArgumentsGiven_AndReturnsTheRows()
+    {
+        var reader = new FakeReader(isConfigured: true, answer: """[{"title":"demo"}]""");
+
+        var answer = await RpcAsync(ClientWith(reader, "blogai.read"), new { jsonrpc = "2.0", id = 5, method = "tools/call", @params = new { name = "blogai_posts", arguments = new { limit = 5 } } });
+
+        Assert.False(answer.GetProperty("result").GetProperty("isError").GetBoolean());
+        Assert.Equal("""[{"title":"demo"}]""", answer.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString());
+        Assert.Equal("blogai_posts", reader.LastQuery);
+        Assert.Equal("5", reader.LastArguments!["limit"]);
     }
 }
