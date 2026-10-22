@@ -27,11 +27,13 @@ export const LABELS = {
   new: 'New',
   ok: 'OK',
   open: 'Open',
+  publish: 'Publish',
   purge: 'Purge',
   purging: 'Purging...',
   remove: 'Remove',
   revisionLocked: 'This is a proposed revision, not a post. Open it to apply or discard it; only the original is published.',
   save: 'Save',
+  unpublish: 'Unpublish',
   saving: 'Saving...',
   working: 'Working...',
 } as const;

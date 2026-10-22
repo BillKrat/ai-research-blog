@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject, signal } from '@angular/core';
+﻿import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -36,6 +36,8 @@ export class AdminEntity implements OnInit {
   protected readonly loadErrors = signal<string[]>([]);
   protected readonly saveState = signal<SaveState>('idle');
   protected readonly saveErrors = signal<string[]>([]);
+
+  private readonly entityForm = viewChild(EntityForm);
 
   private link = '';
   private collection = '';
@@ -105,6 +107,31 @@ export class AdminEntity implements OnInit {
       default:
         return 'play_arrow';
     }
+  }
+
+  /**
+   * Pages (and any entity whose published flag is an ordinary field) have no server publish action, so the editor offers the same
+   * eye button itself: it flips the flag in the form and saves. An entity with a server action (posts) keeps that action instead.
+   */
+  protected get canTogglePublish(): boolean {
+    const form = this.model();
+    const field = form?.schema.fields.find((f) => f.name === 'IsPublished');
+    const hasAction = (form?.actions ?? []).some((a) => a.name === 'publish' || a.name === 'unpublish');
+    return !!field && field.isReadOnly !== true && !hasAction && !this.isNew() && form?.permissions?.canUpdate !== false;
+  }
+
+  protected get isPublished(): boolean {
+    return this.model()?.entity.values['IsPublished']?.toLowerCase() === 'true';
+  }
+
+  protected togglePublish(): void {
+    const editor = this.entityForm();
+    if (!editor) {
+      return;
+    }
+
+    editor.setFlag('IsPublished', !this.isPublished);
+    editor.submit();
   }
 
   protected get canDelete(): boolean {
