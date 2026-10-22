@@ -1,5 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '../../i18n/labels';
 import { Observable } from 'rxjs';
 import { describeApiError } from '../../models/api-error';
 import { EntityDataModel, EntityFieldSchema, EntityRelationModel } from '../../models/entity-form.model';
@@ -14,7 +17,7 @@ import { EntityGrid } from '../entity-grid/entity-grid';
  */
 @Component({
   selector: 'app-relation-grid',
-  imports: [MatButtonModule, EntityGrid],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, EntityGrid],
   templateUrl: './relation-grid.html',
   styleUrl: './relation-grid.scss',
 })

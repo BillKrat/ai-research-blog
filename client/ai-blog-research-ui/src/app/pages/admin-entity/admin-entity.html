@@ -9,34 +9,51 @@
     <p>Loading...</p>
   } @else if (model(); as form) {
     <app-entity-form [model]="form" (save)="onSave($event)">
-      @switch (saveState()) {
-        @case ('saved') {
-          <p class="admin-entity__status" role="status">Saved.</p>
-        }
-        @case ('error') {
-          <div class="admin-entity__error" role="alert">
-            <p>Not saved.</p>
-            <ul>
-              @for (message of saveErrors(); track message) {
-                <li>{{ message }}</li>
-              }
-            </ul>
-          </div>
-        }
-      }
-
-      @if (form.permissions?.canUpdate !== false) {
-        <button mat-flat-button type="submit" [disabled]="saveState() === 'saving'">
-          {{ saveState() === 'saving' ? 'Saving...' : 'Save' }}
+      <div formToolbar class="admin-entity__top">
+      <div class="admin-entity__toolbar" role="toolbar" aria-label="Actions">
+        <button mat-icon-button type="button" (click)="back()" [matTooltip]="'back' | label" [attr.aria-label]="'back' | label">
+          <mat-icon>arrow_back</mat-icon>
         </button>
+        @if (form.permissions?.canUpdate !== false) {
+          <button
+            mat-icon-button
+            color="primary"
+            type="submit"
+            [disabled]="saveState() === 'saving'"
+            [matTooltip]="(saveState() === 'saving' ? 'saving' : 'save') | label"
+            [attr.aria-label]="'save' | label"
+          >
+            <mat-icon>save</mat-icon>
+          </button>
+        }
+        @for (action of form.actions ?? []; track action.name) {
+          <button mat-icon-button type="button" (click)="runAction(action)" [matTooltip]="action.label" [attr.aria-label]="action.label">
+            <mat-icon>{{ iconOf(action) }}</mat-icon>
+          </button>
+        }
+        @if (canDelete) {
+          <button mat-icon-button color="warn" type="button" (click)="remove()" [matTooltip]="'delete' | label" [attr.aria-label]="'delete' | label">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+        @switch (saveState()) {
+          @case ('saved') {
+            <span class="admin-entity__status" role="status">Saved.</span>
+          }
+        }
+      </div>
+
+      @if (saveState() === 'error') {
+        <div class="admin-entity__error" role="alert">
+          <p>Not saved.</p>
+          <ul>
+            @for (message of saveErrors(); track message) {
+              <li>{{ message }}</li>
+            }
+          </ul>
+        </div>
       }
-      <button mat-button type="button" (click)="back()">Back to the list</button>
-      @for (action of form.actions ?? []; track action.name) {
-        <button mat-stroked-button type="button" (click)="runAction(action)">{{ action.label }}</button>
-      }
-      @if (canDelete) {
-        <button mat-stroked-button color="warn" type="button" (click)="remove()">Delete</button>
-      }
+      </div>
     </app-entity-form>
 
     @for (relation of form.relations ?? []; track relation.name) {

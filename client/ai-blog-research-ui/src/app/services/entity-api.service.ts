@@ -79,6 +79,11 @@ export class EntityApiService {
     return this.http.delete<void>(`${environment.apiUrl}${link}`);
   }
 
+  /** The id of the entry with this slug in a collection that has one (posts, pages): lets the public reader link to the admin screens. */
+  idBySlug(collectionPath: string, slug: string): Observable<{ id: string }> {
+    return this.http.get<{ id: string }>(`${environment.apiUrl}${collectionPath}/by-slug/${encodeURIComponent(slug)}`);
+  }
+
   /** Runs a server-offered action on an entity (publish, unpublish): a POST to the link the server supplied. */
   runAction(link: string): Observable<void> {
     return this.http.post<void>(`${environment.apiUrl}${link}`, {});

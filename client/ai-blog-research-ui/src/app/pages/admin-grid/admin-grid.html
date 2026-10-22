@@ -2,7 +2,9 @@
   <div class="admin-grid__head">
     <h2>{{ title() }}</h2>
     @if (canCreate) {
-      <button type="button" class="admin-grid__new" (click)="create()">New</button>
+      <button mat-icon-button type="button" class="admin-grid__new" (click)="create()" [matTooltip]="'new' | label" [attr.aria-label]="'new' | label">
+        <mat-icon>add</mat-icon>
+      </button>
     }
   </div>
 
@@ -16,7 +18,7 @@
     @if (grid.rows.length === 0) {
       <p>Nothing here yet.</p>
     } @else {
-      <app-entity-grid [model]="grid" (request)="onRequest($event)" />
+      <app-entity-grid [model]="grid" [toggleFields]="['IsPublished']" (request)="onRequest($event)" />
     }
   }
 </section>

@@ -110,6 +110,38 @@ describe('EntityGrid', () => {
     expect(root.querySelector('tbody td')?.textContent).toBe('Administrators');
   });
 
+  it('turns a listed boolean into a switch only when the host asks for it, and emits the flip with the row link', () => {
+    const grid = model({
+      schema: {
+        schemaIri: 'urn:pages',
+        fields: [
+          { name: 'Title', type: 'String', isRequired: true, label: 'Title', order: 1 },
+          { name: 'IsPublished', type: 'bool', isRequired: false, label: 'Published', order: 2 },
+        ],
+      },
+      rows: [{ entityId: 'p1', values: { Title: 'Disclaimer', IsPublished: 'false' } }],
+      paging: null,
+      links: { self: '/api/pages', rows: { p1: '/api/pages/p1' } },
+    });
+
+    const plain = render(grid);
+    expect((plain.nativeElement as HTMLElement).querySelector('mat-slide-toggle')).toBeNull();
+
+    const fixture = TestBed.createComponent(EntityGrid);
+    fixture.componentInstance.model = grid;
+    fixture.componentInstance.toggleFields = ['IsPublished'];
+    fixture.componentInstance.ngOnChanges({ model: new SimpleChange(undefined, grid, true) });
+    fixture.detectChanges();
+    const requests: GridRequest[] = [];
+    fixture.componentInstance.request.subscribe((r) => requests.push(r));
+
+    const input = (fixture.nativeElement as HTMLElement).querySelector('mat-slide-toggle button') as HTMLButtonElement;
+    expect(input.getAttribute('aria-checked')).toBe('false');
+    input.click();
+
+    expect(requests).toEqual([{ kind: 'toggle', entityId: 'p1', link: '/api/pages/p1', field: 'IsPublished', value: true }]);
+  });
+
   it('offers Open on a row only when the server gave a row link, and emits that link', () => {
     const withLinks = model({ links: { self: '/api/users', rows: { u1: '/api/users/u1' } } });
     const fixture = render(withLinks);

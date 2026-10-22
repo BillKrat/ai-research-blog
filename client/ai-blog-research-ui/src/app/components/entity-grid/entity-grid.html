@@ -61,7 +61,18 @@
         (keydown.enter)="toggle(row.entityId)"
       >
         @for (column of columns; track column.name) {
-          <td>{{ cell(row, column.name) }}</td>
+          @if (isToggle(column) && rowLink(row)) {
+            <td>
+              <mat-slide-toggle
+                [checked]="cell(row, column.name).toLowerCase() === 'true'"
+                [attr.aria-label]="labelOf(column) + ': ' + row.entityId"
+                (click)="$event.stopPropagation()"
+                (change)="flip(row, column, $event.checked)"
+              />
+            </td>
+          } @else {
+            <td>{{ cell(row, column.name) }}</td>
+          }
         }
         @if (hasMessage) {
           <td class="entity-grid__message">{{ cell(row, 'Message') }}</td>
@@ -70,15 +81,17 @@
       @if (expandedId === row.entityId) {
         <tr class="entity-grid__details">
           <td [attr.colspan]="columns.length + (hasMessage ? 1 : 0)">
+            @if (rowLink(row)) {
+              <button mat-icon-button type="button" class="entity-grid__open" (click)="open(row)" [matTooltip]="'open' | label" [attr.aria-label]="'open' | label">
+                <mat-icon>open_in_new</mat-icon>
+              </button>
+            }
             <dl>
               @for (field of fields; track field.name) {
                 <dt>{{ labelOf(field) }}</dt>
                 <dd>{{ cell(row, field.name) }}</dd>
               }
             </dl>
-            @if (rowLink(row)) {
-              <button type="button" class="entity-grid__open" (click)="open(row)">Open</button>
-            }
             @if (rowTools) {
               <ng-container [ngTemplateOutlet]="rowTools" [ngTemplateOutletContext]="{ $implicit: row }" />
             }

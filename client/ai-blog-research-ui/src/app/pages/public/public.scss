@@ -5,6 +5,15 @@
     opacity: 0.75;
     font-size: 0.9rem;
     margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 2.5rem;
+
+    &--tools {
+      justify-content: flex-end;
+      min-height: 0;
+    }
   }
 
   &__chips a {

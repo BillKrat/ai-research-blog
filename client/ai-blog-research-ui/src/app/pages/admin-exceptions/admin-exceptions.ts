@@ -1,6 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '../../i18n/labels';
 import { EntityGrid } from '../../components/entity-grid/entity-grid';
 import { describeApiError } from '../../models/api-error';
 import { EntityGridModel } from '../../models/entity-form.model';
@@ -12,7 +15,7 @@ import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, Tria
  */
 @Component({
   selector: 'app-admin-exceptions',
-  imports: [MatButtonModule, EntityGrid],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, EntityGrid],
   templateUrl: './admin-exceptions.html',
   styleUrl: './admin-exceptions.scss',
 })

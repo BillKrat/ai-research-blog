@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ContentTools } from '../../components/content-tools/content-tools';
 import { MarkdownContent } from '../../components/markdown-content/markdown-content';
 import { PublicContentService, PublicPage } from '../../services/public-content.service';
 
@@ -9,7 +10,7 @@ import { PublicContentService, PublicPage } from '../../services/public-content.
  */
 @Component({
   selector: 'app-page-view',
-  imports: [RouterLink, MarkdownContent],
+  imports: [RouterLink, MarkdownContent, ContentTools],
   templateUrl: './page-view.html',
   styleUrl: './public.scss',
 })
