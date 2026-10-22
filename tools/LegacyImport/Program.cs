@@ -70,6 +70,10 @@ else
 }
 
 var host = new NpgsqlConnectionStringBuilder(connection).Host ?? string.Empty;
+if (production)
+{
+    Console.WriteLine($"WARNING: the target is the hosted database {new NpgsqlConnectionStringBuilder(connection).Database} on {host}, the live site's data. {(apply ? "--apply is set: this run WRITES." : "No --apply: nothing is written.")}");
+}
 
 var secret = Environment.GetEnvironmentVariable("CLAUDE_RESEARCH_SECRET");
 if (string.IsNullOrEmpty(secret))
