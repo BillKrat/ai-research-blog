@@ -1,3 +1,4 @@
+import { provideMarkdown } from 'ngx-markdown';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -163,8 +164,8 @@ describe('EntityForm', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Currently: Article');
   });
 
-  it('edits Markdown in a text area and previews it rendered, without sending the preview anywhere', () => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+  it('edits Markdown in a text area and previews it rendered, without sending the preview anywhere', async () => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
     const fixture = TestBed.createComponent(EntityForm);
     applyModel(fixture, pageModel());
     fixture.detectChanges();
@@ -173,6 +174,8 @@ describe('EntityForm', () => {
 
     expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
     (Array.from(root.querySelectorAll('.entity-form__rich-head button'))[0] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(root.querySelector('.entity-form__preview h1')?.textContent).toBe('Hello');

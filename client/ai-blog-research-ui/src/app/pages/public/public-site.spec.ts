@@ -2,6 +2,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { provideMarkdown } from 'ngx-markdown';
 import { BehaviorSubject } from 'rxjs';
 import { MarkdownContent } from '../../components/markdown-content/markdown-content';
 import { SiteNav } from '../../components/site-nav/site-nav';
@@ -14,17 +15,40 @@ function routeStub(params: Record<string, string>, data: Record<string, unknown>
   return { provide: ActivatedRoute, useValue: { snapshot: { data }, paramMap: subject.asObservable() } };
 }
 
+// Mermaid draws with real layout measurements, which jsdom cannot give; the test checks that the library is loaded lazily, not the drawing.
+vi.mock('mermaid', () => ({ default: { initialize: vi.fn(), run: vi.fn().mockResolvedValue(undefined) } }));
+
 describe('Public site', () => {
   function configure(route: ReturnType<typeof routeStub>): HttpTestingController {
-    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), route] });
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), provideMarkdown(), route] });
     return TestBed.inject(HttpTestingController);
   }
 
-  it('MarkdownContent renders Markdown and strips scripts and event handlers', () => {
-    TestBed.configureTestingModule({});
+  it('MarkdownContent loads Mermaid only for a post that has a diagram', async () => {
+    TestBed.configureTestingModule({ providers: [provideMarkdown()] });
+    delete (globalThis as { mermaid?: unknown }).mermaid;
+    const plain = TestBed.createComponent(MarkdownContent);
+    plain.componentRef.setInput('markdown', '# No diagram\n\n```ts\nconst a = 1;\n```');
+    plain.detectChanges();
+    await plain.whenStable();
+    expect((globalThis as { mermaid?: unknown }).mermaid).toBeUndefined();
+    expect((plain.nativeElement as HTMLElement).querySelector('h1')?.textContent).toBe('No diagram');
+
+    const diagram = TestBed.createComponent(MarkdownContent);
+    diagram.componentRef.setInput('markdown', '# With diagram\n\n```mermaid\nflowchart LR\n  A --> B\n```');
+    diagram.detectChanges();
+    await vi.waitFor(() => expect((globalThis as { mermaid?: unknown }).mermaid).toBeDefined(), { timeout: 10000 });
+    diagram.detectChanges();
+    await diagram.whenStable();
+    expect((diagram.nativeElement as HTMLElement).querySelector('h1')?.textContent).toBe('With diagram');
+  });
+
+  it('MarkdownContent renders Markdown and strips scripts and event handlers', async () => {
+    TestBed.configureTestingModule({ providers: [provideMarkdown()] });
     const fixture = TestBed.createComponent(MarkdownContent);
     fixture.componentRef.setInput('markdown', '# Title\n\n**bold** <script>alert(1)</script> <img src=x onerror="alert(2)">');
     fixture.detectChanges();
+    await fixture.whenStable();
     const root = fixture.nativeElement as HTMLElement;
 
     expect(root.querySelector('h1')?.textContent).toBe('Title');
@@ -55,7 +79,7 @@ describe('Public site', () => {
     expect(root.querySelector('.public__pager')).toBeNull();
   });
 
-  it('PostView renders the Markdown body, and says not found for a draft or unknown slug', () => {
+  it('PostView renders the Markdown body, and says not found for a draft or unknown slug', async () => {
     const http = configure(routeStub({ slug: 'how-it-works' }));
     const fixture = TestBed.createComponent(PostView);
     fixture.detectChanges();
@@ -65,6 +89,7 @@ describe('Public site', () => {
       enableComments: true,
     });
     fixture.detectChanges();
+    await fixture.whenStable();
     expect((fixture.nativeElement as HTMLElement).querySelector('h2:nth-of-type(1)')?.textContent).toBe('How it works');
     expect((fixture.nativeElement as HTMLElement).querySelector('.markdown h2')?.textContent).toBe('Steps');
     TestBed.resetTestingModule();

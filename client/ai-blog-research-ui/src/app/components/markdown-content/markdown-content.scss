@@ -41,6 +41,18 @@
       max-width: 100%;
     }
 
+    // a Mermaid diagram scales down to the column and scrolls sideways rather than overflowing the page
+    .mermaid {
+      margin: 1rem 0;
+      overflow-x: auto;
+      text-align: center;
+
+      svg {
+        max-width: 100%;
+        height: auto;
+      }
+    }
+
     blockquote {
       margin: 1rem 0;
       padding-left: 1rem;

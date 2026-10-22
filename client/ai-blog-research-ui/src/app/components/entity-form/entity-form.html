@@ -49,7 +49,7 @@
               <button type="button" (click)="togglePreview(field.name)">{{ previewing()[field.name] ? 'Edit' : 'Preview' }}</button>
             </div>
             @if (previewing()[field.name]) {
-              <div class="entity-form__preview" [innerHTML]="previewOf(field)"></div>
+              <div class="entity-form__preview"><app-markdown-content [markdown]="textOf(field)" /></div>
             } @else {
               <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)"></textarea>
             }
