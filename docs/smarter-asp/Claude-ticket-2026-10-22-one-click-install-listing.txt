@@ -1,0 +1,50 @@
+Support ticket - SENT 2026-10-22 as SmarterASP ticket #3716417 (text below as sent, plus one line saying the account holder approved it)
+
+Subject: Getting an open-source blog engine ready to be offered as a one-click application on SmarterASP.NET
+
+Department: Sales / Technical (whichever handles application-installer listings)
+Account: a2cb58 (hosting account of Bill Kratochvil)
+Written by: Claude (AI coding assistant), on behalf of the account holder, who reviews and sends it
+Date: 2026-10-22
+
+Hello,
+
+I am Claude, the AI assistant that helps the account holder build and deploy an open-source blog engine on this account. They asked me to write to you early, while the design can still change, to learn what we should do now so the project could one day be offered as an installable application in your control panel.
+
+What the project is
+
+- AI Research Blog (https://github.com/BillKrat/ai-research-blog, MIT licence): a replacement for a BlogEngine.NET site, built as an ASP.NET Core API (.NET 10), an Angular single-page client, and an MCP server for AI-assisted authoring and diagnostics. Shared libraries live in a second repository, Adventures.Foundation.
+- It is already live on your platform and in daily use: www, api and mcp sites, free Let's Encrypt certificates, a PostgreSQL database, deployment from GitHub Actions over FTP, and your MCP server for provisioning.
+- It has a public reader, an admin (posts, pages, categories, tags, users, roles), exception tracking and a first-run seed of its data.
+
+What a new user would need installed (so you can tell us what your installer can do)
+
+1. Two or three sites on one account (the client, the API, the MCP server) with their own host names or sub-sites, each on its own application pool (in-process hosting, .NET 10).
+2. One PostgreSQL database and its connection string, supplied as a secret, not as text inside Web.Config.
+3. Two or three generated secrets (a JWT signing key and machine-client secrets) that nobody should have to type.
+4. DNS records for the host names, and a free SSL certificate for each.
+5. A first-run step that creates the schema and seed data, and an initial administrator who must change the default password on first sign-in.
+6. Updates later, ideally from the same installer, without losing the data.
+
+Questions
+
+1. Is there a programme or process for adding a third-party open-source application to your one-click installer or application gallery? Who is the right contact, and what are the criteria (licence, maintenance, security review, a support commitment)?
+2. What package format and metadata does the installer expect (for example a Web Deploy package with a parameters file, a zip with an install script, or a container)? Can you share a specification or a sample listing we can follow now?
+3. Does the installer support PostgreSQL, or only SQL Server and MySQL? Can it create the database and the user and pass the connection string to the application as an environment secret?
+4. Can an installer create several linked sites (client, API, MCP) and their application pools, attach domains, and request the free certificate, or is it one site per application? Your MCP server already exposes these actions: could the installer use the same calls?
+5. Does the installer support .NET 10 with in-process hosting, and how are runtime upgrades handled for installed applications?
+6. How should secrets be generated and stored by an installer (environment secrets on the site, as we use today), and can it prompt the installing user for the few values that must be chosen (domain, administrator e-mail)?
+7. How are application updates delivered to people who installed it, and can an update run a database migration safely?
+8. What would you like in the documentation and support model: a guide, a test account for your staff, a named maintainer contact, a security contact?
+9. Is it useful to you if we first prove a manual, documented install on a clean account with your help? We are writing that guide (hosting plan, sites and DNS, certificates, database and secrets, FTP user, GitHub Actions, first deploy, seeding) and would like your staff to try it so the steps are proven before any packaging.
+
+What we can do now, if you tell us what helps
+
+- Keep the installation scripted and parameterised (no hand-edited secrets, one config surface), and add a first-run bootstrap that fits your installer's parameter model.
+- Produce a package or manifest in the format you specify.
+- Provide a clean demonstration account walkthrough, release notes, a security statement (the project has an observability and diagnostics design, and we have already shared a risk review of your MCP integration, ticket PD-3710717), and a maintainer contact.
+
+There is no deadline. The project is early-stage, and the account holder would rather learn your requirements now than rework the design later. A reply with the right contact, a specification, or a short call would be very welcome.
+
+Thank you,
+Claude, for the account holder (reply to the account holder's e-mail on file)
