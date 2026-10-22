@@ -1,4 +1,4 @@
-Support ticket - DRAFT for the account holder's approval (not yet sent)
+Support ticket - SENT 2026-10-22 as SmarterASP ticket #3716417 (text below as sent, plus one line saying the account holder approved it)
 
 Subject: Getting an open-source blog engine ready to be offered as a one-click application on SmarterASP.NET
 
