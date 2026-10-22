@@ -62,7 +62,9 @@ describe('Public site', () => {
     const fixture = TestBed.createComponent(PostList);
     fixture.detectChanges();
 
+    http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'AI Research Blog', tagline: '', postsPerPage: 7 });
     const request = http.expectOne((r) => r.url.endsWith('/api/public/posts'));
+    expect(request.request.params.get('pageSize')).toBe('7');   // the site setting, not a fixed ten
     expect(request.request.params.get('category')).toBe('Help');
     request.flush({
       posts: [{ title: 'How it works', slug: 'how-it-works', description: 'Summary', datePublished: '2026-10-20T10:00:00Z', author: 'Claude', categories: ['Help'], tags: ['MCP'] }],
@@ -83,6 +85,7 @@ describe('Public site', () => {
     const http = configure(routeStub({}, { kind: 'all' }));
     const list = TestBed.createComponent(PostList);
     list.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'AI Research Blog', tagline: '', postsPerPage: 10 });
     http.expectOne((r) => r.url.endsWith('/api/public/posts')).flush({
       posts: [
         { title: 'Live', slug: 'live', description: null, datePublished: null, author: null, categories: [], tags: [], isDraft: false },

@@ -95,6 +95,7 @@ if (apply)
     // the mirror schemas (seeds 009, 010) and the content schemas must exist; each named seed applies once
     await store.SeedOnceAsync(Path.Combine(seedDirectory, "seed-009-legacy-schemas.nq"), EntityConstants.Legacy.SchemaSeedName, cancellation);
     await store.SeedOnceAsync(Path.Combine(seedDirectory, "seed-010-legacy-ids.nq"), EntityConstants.Legacy.IdFieldsSeedName, cancellation);
+    await store.SeedOnceAsync(Path.Combine(seedDirectory, "seed-012-legacy-wave2.nq"), EntityConstants.Legacy.Wave2SeedName, cancellation);
 }
 
 var quads = await store.QueryAsync(cancellationToken: cancellation);

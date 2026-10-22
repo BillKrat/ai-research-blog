@@ -37,10 +37,10 @@ public static class MirrorImporter
 
         foreach (var row in rows)
         {
-            var id = LegacyIds.ForRow(table.Name, row, table.OrderBy);
+            var id = LegacyIds.ForRow(table.Name, row, table.IdentityOf(row));
             if (!seen.Add(id))
             {
-                notes.Add($"duplicate id {id} ({table.OrderBy}={row[table.OrderBy]}); second row skipped");
+                notes.Add($"duplicate id {id} ({string.Join(",", table.Key)}={table.IdentityOf(row)}); second row skipped");
                 continue;
             }
 
@@ -104,7 +104,7 @@ public static class MirrorImporter
         var mismatches = 0;
         foreach (var row in rows)
         {
-            var id = LegacyIds.ForRow(table.Name, row, table.OrderBy);
+            var id = LegacyIds.ForRow(table.Name, row, table.IdentityOf(row));
             var stored = await repository.GetAsync(id.ToString(), includeDeleted: false, cancellationToken);
             if (stored is null)
             {

@@ -3,6 +3,8 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PublicContentService, PublicPostList } from '../../services/public-content.service';
+import { SiteService } from '../../services/site.service';
+import { switchMap } from 'rxjs';
 
 /**
  * The list of published posts, newest first, with paging; also serves a category (/category/:name) or a tag (/tag/:name), the
@@ -17,6 +19,7 @@ import { PublicContentService, PublicPostList } from '../../services/public-cont
 export class PostList implements OnInit {
   private readonly content = inject(PublicContentService);
   private readonly route = inject(ActivatedRoute);
+  private readonly site = inject(SiteService);
 
   protected readonly list = signal<PublicPostList | null>(null);
   protected readonly heading = signal('Posts');
@@ -43,7 +46,11 @@ export class PostList implements OnInit {
   private load(page: number): void {
     this.isLoading.set(true);
     this.failed.set(false);
-    this.content.posts(page, 10, this.category, this.tag).subscribe({
+    // the page size is the site setting (read once, then served from memory)
+    this.site
+      .get()
+      .pipe(switchMap((settings) => this.content.posts(page, settings.postsPerPage, this.category, this.tag)))
+      .subscribe({
       next: (list) => {
         this.list.set(list);
         this.isLoading.set(false);
