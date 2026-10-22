@@ -16,11 +16,14 @@ health monitoring, JWT-based user authentication, and machine-to-machine client-
 support. Reusable identity, security, and PostgreSQL data-access capabilities live in the
 separate `Adventures.Foundation` packages.
 
-A second site, `mcp.global-webnet.com`, now exists as well — as of 2026-09-23 it's a deliberate,
-scoped-down pipeline shakedown (a single M2M-authenticated "hello world" endpoint that
-`api.global-webnet.com`'s health check calls and reports back), not yet the real MCP Server
-described below. It exists to prove the provisioning, deployment, and cross-site authentication
-mechanics actually work before any real MCP tooling gets built on top of them.
+A second site, `mcp.global-webnet.com`, is the MCP server. It began on 2026-09-23 as a scoped-down
+pipeline shakedown (a single M2M-authenticated "hello world" endpoint) that proved the
+provisioning, deployment, and cross-site authentication mechanics. Since then it has become a real
+server: diagnostics tools that let an AI trace a production request, drafts-only authoring tools
+(an AI can write a post draft or propose a revision of a published post, and a human publishes),
+and read-only tools over the legacy BlogEngine database for the migration. The site itself is a
+working blog today: a public reader, an admin for posts, pages, categories, tags, users and roles,
+and built-in exception tracking.
 
 ## Vision
 
@@ -74,6 +77,17 @@ Windows hosting plan (around $38/qtr in this project's own case) that supports
 deploys straight from GitHub Actions to that same hosting account, alongside a Claude
 subscription doing the actual engineering work. That's a full multi-site .NET hosting environment
 with real CI/CD, for less than the cost of a lot of single-purpose SaaS tools combined.
+
+### Installing this on your own SmarterASP.NET account
+
+If you would like to download this project and run it on your own SmarterASP.NET hosting, the aim is
+to give you comprehensive documentation for the whole path: the hosting plan and sites, DNS and the
+free SSL certificates, the database and its secrets, the FTP user, the GitHub Actions secrets, the
+first deploy, and seeding. That documentation is not finished yet. The plan is to prove each step
+in collaboration with SmarterASP.NET, so that every later installation is repeatable and the
+guide reflects what actually works rather than what we assume. The starting point is
+[docs/Claude-developer-setup-guide.md](docs/Claude-developer-setup-guide.md) (Aspire locally to
+automated CI/CD deploy on inexpensive hosting).
 
 If you're evaluating SmarterASP.NET,
 [this link](https://www.smarterasp.net/index?r=billkrat) supports this project.
