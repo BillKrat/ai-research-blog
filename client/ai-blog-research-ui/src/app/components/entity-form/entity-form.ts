@@ -119,6 +119,15 @@ export class EntityForm implements OnChanges {
     return this.textOf(field);
   }
 
+  /** Sets a boolean field from outside (a toolbar button such as Publish) and marks the form changed; the caller then submits. */
+  setFlag(name: string, value: boolean): void {
+    const control = this.form.controls[name];
+    if (control) {
+      control.setValue(value);
+      control.markAsDirty();
+    }
+  }
+
   submit(): void {
     if (this.form.invalid) {
       return;

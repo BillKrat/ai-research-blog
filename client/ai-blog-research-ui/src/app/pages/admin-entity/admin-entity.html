@@ -26,6 +26,17 @@
             <mat-icon>save</mat-icon>
           </button>
         }
+        @if (canTogglePublish) {
+          <button
+            mat-icon-button
+            type="button"
+            (click)="togglePublish()"
+            [matTooltip]="(isPublished ? 'unpublish' : 'publish') | label"
+            [attr.aria-label]="(isPublished ? 'unpublish' : 'publish') | label"
+          >
+            <mat-icon>{{ isPublished ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        }
         @for (action of form.actions ?? []; track action.name) {
           <button mat-icon-button type="button" (click)="runAction(action)" [matTooltip]="action.label" [attr.aria-label]="action.label">
             <mat-icon>{{ iconOf(action) }}</mat-icon>
