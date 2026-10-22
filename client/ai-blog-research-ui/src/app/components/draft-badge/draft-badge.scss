@@ -1,0 +1,14 @@
+.draft-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--mat-sys-tertiary, currentColor);
+  border-radius: 0.75rem;
+  color: var(--mat-sys-tertiary, inherit);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}

@@ -11,6 +11,8 @@ export interface PublicPostSummary {
   author: string | null;
   categories: string[];
   tags: string[];
+  /** True only in an administrator's view: the post is not published. */
+  isDraft?: boolean;
 }
 
 export interface PublicPost {
@@ -27,12 +29,14 @@ export interface PublicPage {
   datePublished: string | null;
   parentTitle: string | null;
   parentSlug: string | null;
+  isDraft?: boolean;
 }
 
 export interface PublicMenuItem {
   title: string;
   slug: string;
   children: PublicMenuItem[];
+  isDraft?: boolean;
 }
 
 export interface PublicPostList {

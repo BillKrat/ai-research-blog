@@ -1,3 +1,4 @@
+import { DraftBadge } from '../draft-badge/draft-badge';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -12,7 +13,7 @@ import { PublicContentService, PublicMenuItem } from '../../services/public-cont
  */
 @Component({
   selector: 'app-site-nav',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, DraftBadge],
   templateUrl: './site-nav.html',
   styleUrl: './site-nav.scss',
 })
