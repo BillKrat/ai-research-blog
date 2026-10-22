@@ -7,12 +7,15 @@
   } @else if (post(); as result) {
     <h2>{{ result.summary.title }}</h2>
     <p class="public__meta">
-      @if (result.summary.datePublished) {
-        {{ result.summary.datePublished | date: 'mediumDate' }}
-      }
-      @if (result.summary.author) {
-        by {{ result.summary.author }}
-      }
+      <span>
+        @if (result.summary.datePublished) {
+          {{ result.summary.datePublished | date: 'mediumDate' }}
+        }
+        @if (result.summary.author) {
+          by {{ result.summary.author }}
+        }
+      </span>
+      <app-content-tools kind="posts" [slug]="result.summary.slug" />
     </p>
     <app-markdown-content [markdown]="result.content" />
     <p class="public__chips">

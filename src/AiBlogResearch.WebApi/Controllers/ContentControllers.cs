@@ -10,7 +10,13 @@ namespace AiBlogResearch.WebApi.Controllers;
 [ApiController]
 [Route("api/pages")]
 [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
-public sealed class PagesController(IEntityPresenter<Page> presenter) : AdminEntityControllerBase<Page>(presenter);
+public sealed class PagesController(IEntityPresenter<Page> presenter) : AdminEntityControllerBase<Page>(presenter)
+{
+    /// <summary>The id of the page with this slug, so the public reader can offer Edit and Delete to a signed-in administrator (the public API carries no ids).</summary>
+    [HttpGet("by-slug/{slug}")]
+    public async Task<IActionResult> BySlug(string slug, CancellationToken cancellationToken) =>
+        await SlugLookup.IdOfAsync(presenter, slug, cancellationToken) is { } id ? Ok(new { id }) : NotFound();
+}
 
 /// <summary>Categories for administrators.</summary>
 [ApiController]
@@ -77,6 +83,11 @@ public sealed class PostsController(IEntityPresenter<Post> presenter, IPostBll p
         };
     }
 
+    /// <summary>The id of the post with this slug (see <see cref="PagesController.BySlug"/>).</summary>
+    [HttpGet("by-slug/{slug}")]
+    public async Task<IActionResult> BySlug(string slug, CancellationToken cancellationToken) =>
+        await SlugLookup.IdOfAsync(presenter, slug, cancellationToken) is { } id ? Ok(new { id }) : NotFound();
+
     [HttpPost("{id}/apply-revision")]
     public Task<IActionResult> ApplyRevision(string id, CancellationToken cancellationToken) =>
         GuardedAsync(async () => await posts.ApplyRevisionAsync(id, cancellationToken) ? (IActionResult)NoContent() : NotFound());
@@ -92,4 +103,13 @@ public sealed class PostsController(IEntityPresenter<Post> presenter, IPostBll p
     [HttpPost("{id}/unpublish")]
     public async Task<IActionResult> Unpublish(string id, CancellationToken cancellationToken) =>
         await posts.UnpublishAsync(id, cancellationToken) ? NoContent() : NotFound();
+}
+
+/// <summary>Finds an entity id by its Slug field (case-insensitive) in an admin collection.</summary>
+internal static class SlugLookup
+{
+    public static async Task<string?> IdOfAsync<TEntity>(IEntityPresenter<TEntity> presenter, string slug, CancellationToken cancellationToken)
+        where TEntity : DynamicEntity =>
+        (await presenter.ListAsync(cancellationToken)).FirstOrDefault(entity =>
+            entity.Values.TryGetValue("Slug", out var value) && string.Equals(value, slug, StringComparison.OrdinalIgnoreCase))?.EntityId;
 }

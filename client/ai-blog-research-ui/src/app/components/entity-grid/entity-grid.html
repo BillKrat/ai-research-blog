@@ -61,7 +61,18 @@
         (keydown.enter)="toggle(row.entityId)"
       >
         @for (column of columns; track column.name) {
-          <td>{{ cell(row, column.name) }}</td>
+          @if (isToggle(column) && rowLink(row)) {
+            <td>
+              <mat-slide-toggle
+                [checked]="cell(row, column.name).toLowerCase() === 'true'"
+                [attr.aria-label]="labelOf(column) + ': ' + row.entityId"
+                (click)="$event.stopPropagation()"
+                (change)="flip(row, column, $event.checked)"
+              />
+            </td>
+          } @else {
+            <td>{{ cell(row, column.name) }}</td>
+          }
         }
         @if (hasMessage) {
           <td class="entity-grid__message">{{ cell(row, 'Message') }}</td>

@@ -1,5 +1,7 @@
 ﻿import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EntityForm } from '../../components/entity-form/entity-form';
 import { RelationGrid } from '../../components/relation-grid/relation-grid';
@@ -17,7 +19,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  */
 @Component({
   selector: 'app-admin-entity',
-  imports: [MatButtonModule, EntityForm, RelationGrid],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, EntityForm, RelationGrid],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',
 })
@@ -86,6 +88,22 @@ export class AdminEntity implements OnInit {
 
   protected back(): void {
     void this.router.navigate(['/admin', this.listSegment]);
+  }
+
+  /** The Material icon of a server-offered action; an action this client does not know gets a neutral one. */
+  protected iconOf(action: EntityAction): string {
+    switch (action.name) {
+      case 'publish':
+        return 'visibility';
+      case 'unpublish':
+        return 'visibility_off';
+      case 'apply-revision':
+        return 'check_circle';
+      case 'discard-revision':
+        return 'cancel';
+      default:
+        return 'play_arrow';
+    }
   }
 
   protected get canDelete(): boolean {

@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, TemplateRef } from '@angular/core';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { EntityFieldSchema, EntityGridModel } from '../../models/entity-form.model';
 
 /** What the user asked of the grid; the host turns it into a request (the grid never fetches anything). */
@@ -7,7 +8,8 @@ export type GridRequest =
   | { kind: 'next' }
   | { kind: 'previous' }
   | { kind: 'sort'; field: string; descending: boolean }
-  | { kind: 'open'; entityId: string; link: string };
+  | { kind: 'open'; entityId: string; link: string }
+  | { kind: 'toggle'; entityId: string; link: string; field: string; value: boolean };
 
 /**
  * Renders any EntityGridModel: one column per list-visible schema field (the server flags the defaults; the gear lets the
@@ -18,7 +20,7 @@ export type GridRequest =
  */
 @Component({
   selector: 'app-entity-grid',
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, MatSlideToggleModule],
   templateUrl: './entity-grid.html',
   styleUrl: './entity-grid.scss',
 })
@@ -27,6 +29,9 @@ export class EntityGrid implements OnChanges {
 
   /** Optional extra content under a row's details (an action button, a result panel); gets the row as its context. */
   @Input() rowTools?: TemplateRef<{ $implicit: EntityGridModel['rows'][number] }>;
+
+  /** Boolean fields (by name) the host lets the user flip right in the list; each flip is emitted as a 'toggle' request. */
+  @Input() toggleFields: string[] = [];
 
   /** The user asked for another page or another sort order. */
   @Output() request = new EventEmitter<GridRequest>();
@@ -104,6 +109,17 @@ export class EntityGrid implements OnChanges {
   }
 
 /** The server-supplied form link of a row, when it gave one. */  protected rowLink(row: EntityGridModel['rows'][number]): string | null {    return this.model.links?.rows?.[row.entityId] ?? null;  }  protected open(row: EntityGridModel['rows'][number]): void {    const link = this.rowLink(row);    if (link) {      this.request.emit({ kind: 'open', entityId: row.entityId, link });    }  }
+  protected isToggle(field: EntityFieldSchema): boolean {
+    return this.toggleFields.includes(field.name);
+  }
+
+  protected flip(row: EntityGridModel['rows'][number], field: EntityFieldSchema, value: boolean): void {
+    const link = this.rowLink(row);
+    if (link) {
+      this.request.emit({ kind: 'toggle', entityId: row.entityId, link, field: field.name, value });
+    }
+  }
+
   protected next(): void {
     this.request.emit({ kind: 'next' });
   }
