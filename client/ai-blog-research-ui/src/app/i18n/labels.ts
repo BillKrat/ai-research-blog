@@ -20,6 +20,8 @@ export const LABELS = {
   delete: 'Delete',
   deleteAccount: 'Delete my account',
   deleting: 'Deleting...',
+  draft: 'Draft',
+  draftNote: 'Not published: only administrators can see this.',
   diagnose: 'Diagnose',
   diagnosing: 'Diagnosing...',
   new: 'New',

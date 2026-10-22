@@ -79,6 +79,38 @@ describe('Public site', () => {
     expect(root.querySelector('.public__pager')).toBeNull();
   });
 
+  it('marks a draft in the list and in the menu (the server sends drafts only to an administrator), and nothing else', () => {
+    const http = configure(routeStub({}, { kind: 'all' }));
+    const list = TestBed.createComponent(PostList);
+    list.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/public/posts')).flush({
+      posts: [
+        { title: 'Live', slug: 'live', description: null, datePublished: null, author: null, categories: [], tags: [], isDraft: false },
+        { title: 'Collab draft', slug: 'collab-draft', description: null, datePublished: null, author: null, categories: ['Collaboration'], tags: [], isDraft: true },
+      ],
+      page: 1,
+      pageSize: 10,
+      total: 2,
+    });
+    list.detectChanges();
+    const cards = Array.from((list.nativeElement as HTMLElement).querySelectorAll('article'));
+
+    expect(cards.map((c) => c.querySelector('.draft-badge') !== null)).toEqual([false, true]);
+    expect(cards[1].querySelector('.draft-badge')?.textContent?.trim()).toBe('Draft');
+
+    const nav = TestBed.createComponent(SiteNav);
+    nav.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/public/menu')).flush([
+      { title: 'Live page', slug: 'live-page', children: [], isDraft: false },
+      { title: 'Draft page', slug: 'draft-page', children: [], isDraft: true },
+    ]);
+    http.expectOne((r) => r.url.endsWith('/api/public/home')).flush('none', { status: 404, statusText: 'Not Found' });
+    nav.detectChanges();
+    const links = Array.from((nav.nativeElement as HTMLElement).querySelectorAll('a')).map((a) => [a.textContent?.replace(/\s+/g, ' ').trim(), a.querySelector('.draft-badge') !== null]);
+
+    expect(links).toEqual([['Posts', false], ['Live page', false], ['Draft pageDraft', true]]);
+  });
+
   it('PostView renders the Markdown body, and says not found for a draft or unknown slug', async () => {
     const http = configure(routeStub({ slug: 'how-it-works' }));
     const fixture = TestBed.createComponent(PostView);

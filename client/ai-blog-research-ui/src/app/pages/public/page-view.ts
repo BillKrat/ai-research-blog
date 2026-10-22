@@ -1,3 +1,4 @@
+import { DraftBadge } from '../../components/draft-badge/draft-badge';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContentTools } from '../../components/content-tools/content-tools';
@@ -10,7 +11,7 @@ import { PublicContentService, PublicPage } from '../../services/public-content.
  */
 @Component({
   selector: 'app-page-view',
-  imports: [RouterLink, MarkdownContent, ContentTools],
+  imports: [RouterLink, MarkdownContent, ContentTools, DraftBadge],
   templateUrl: './page-view.html',
   styleUrl: './public.scss',
 })
