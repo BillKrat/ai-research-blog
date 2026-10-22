@@ -193,7 +193,7 @@ public static class ContentProjection
                 entity.Set("Id", Guid.NewGuid().ToString(), id);
                 Put(entity, "Title", row["Title"]);
                 Put(entity, "Slug", slug);
-                Put(entity, "Description", row["Description"]);
+                Put(entity, "Description", DescriptionText.Clean(row["Description"] as string));
                 Put(entity, "Keywords", row["Keywords"]);
                 Put(entity, "Content", converter.Convert((string?)row["PageContent"] ?? string.Empty, slug));
                 Put(entity, "SortOrder", row["SortOrder"]);
@@ -233,7 +233,7 @@ public static class ContentProjection
                 entity.Set("Id", Guid.NewGuid().ToString(), id);
                 Put(entity, "Title", row["Title"]);
                 Put(entity, "Slug", slug);
-                Put(entity, "Description", row["Description"]);
+                Put(entity, "Description", DescriptionText.Clean(row["Description"] as string));
                 Put(entity, "Content", converter.Convert((string?)row["PostContent"] ?? string.Empty, slug));
                 Put(entity, "EnableComments", row["IsCommentEnabled"]);
                 Put(entity, "IsPublished", false);

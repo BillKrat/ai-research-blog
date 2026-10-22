@@ -34,6 +34,15 @@
     }
   }
 
+  // a long description shows its first two lines and ends in an ellipsis at the edge, never cut mid-line
+  &__excerpt {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   &__pager {
     display: flex;
     gap: 1rem;

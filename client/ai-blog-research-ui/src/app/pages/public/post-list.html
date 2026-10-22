@@ -21,7 +21,7 @@
           }
         </p>
         @if (post.description) {
-          <p>{{ post.description }}</p>
+          <p class="public__excerpt">{{ post.description }}</p>
         }
         <p class="public__chips">
           @for (category of post.categories; track category) {
