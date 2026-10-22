@@ -28,7 +28,7 @@ public sealed class ImportTests
     private static async Task<InMemoryNQuadStore> SeededStoreAsync()
     {
         var store = new InMemoryNQuadStore();
-        foreach (var seed in new[] { "seed.nq", "seed-006-content.nq", "seed-007-post-taxonomy.nq", "seed-008-post-revision.nq", "seed-009-legacy-schemas.nq", "seed-010-legacy-ids.nq" })
+        foreach (var seed in new[] { "seed.nq", "seed-006-content.nq", "seed-007-post-taxonomy.nq", "seed-008-post-revision.nq", "seed-009-legacy-schemas.nq", "seed-010-legacy-ids.nq", "seed-012-legacy-wave2.nq" })
         {
             await store.SeedFromFileAsync(Path.Combine(SeedDirectory, seed));
         }
@@ -110,6 +110,28 @@ public sealed class ImportTests
         await MirrorImporter.ImportAsync(table, rows, schema, repository, apply: true, CancellationToken.None);
 
         Assert.NotNull(await repository.GetAsync(LegacyIds.Derive("be_Roles:7").ToString()));
+    }
+
+    [Fact]
+    public async Task Mirror_CustomFields_HaveNoIdentityColumn_SoTheKeyColumnsMakeTheIdAndARerunIsIdempotent()
+    {
+        var store = await SeededStoreAsync();
+        var table = BlogAiTables.Find("be_CustomFields")!;
+        var schema = SchemaDal.Load(await store.QueryAsync(), LegacySchemaSeed.SchemaBase + "be_CustomFields");
+        var repository = MirrorImporter.Repository(store, schema, "be_CustomFields");
+        var rows = new[]
+        {
+            Row(("CustomType", "POST"), ("ObjectId", "p1"), ("BlogId", Blog), ("Key", "Role"), ("Value", "Admin"), ("Attribute", null)),
+            Row(("CustomType", "POST"), ("ObjectId", "p1"), ("BlogId", Blog), ("Key", "Other"), ("Value", "x"), ("Attribute", "a")),
+            Row(("CustomType", "PAGE"), ("ObjectId", "p1"), ("BlogId", Blog), ("Key", "Role"), ("Value", "Editors"), ("Attribute", null)),
+        };
+
+        var first = await MirrorImporter.ImportAsync(table, rows, schema, repository, apply: true, CancellationToken.None);
+        var second = await MirrorImporter.ImportAsync(table, rows, schema, repository, apply: true, CancellationToken.None);
+
+        Assert.Equal((3, 0, 0), (first.Created, first.Updated, first.Mismatches));   // three distinct rows, none taken for a duplicate
+        Assert.Equal((0, 0, 3), (second.Created, second.Updated, second.Unchanged));
+        Assert.NotNull(await repository.GetAsync(LegacyIds.Derive($"be_CustomFields:POST|p1|{Blog}|Role").ToString()));
     }
 
     private sealed class FakeConverter : IMarkdownConverter

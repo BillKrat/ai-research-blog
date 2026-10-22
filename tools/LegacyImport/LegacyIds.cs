@@ -33,8 +33,8 @@ public static class LegacyIds
         return new Guid(bytes);
     }
 
-    /// <summary>The id a mirror row gets: its own GUID column when the table has one, else a derived id from the table and the identity column.</summary>
-    public static Guid ForRow(string table, IReadOnlyDictionary<string, object?> row, string identityColumn)
+    /// <summary>The id a mirror row gets: its own GUID column when the table has one, else a derived id from the table and the row identity (<c>BlogAiTable.IdentityOf</c>: the key values).</summary>
+    public static Guid ForRow(string table, IReadOnlyDictionary<string, object?> row, string identity)
     {
         var own = table switch
         {
@@ -50,7 +50,7 @@ public static class LegacyIds
             return guid;
         }
 
-        return Derive($"{table}:{row[identityColumn]}");
+        return Derive($"{table}:{identity}");
     }
 
     public static Guid ForCategoryName(string name) => Derive("live-category:" + name.Trim().ToLowerInvariant());

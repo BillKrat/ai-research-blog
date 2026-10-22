@@ -6,10 +6,18 @@ public sealed record BlogAiColumn(string Name, string Type, bool Required);
 
 /// <summary>A legacy table that may be read row by row and that gets a schema in the legacy mirror layer.</summary>
 /// <param name="Wave">The migration wave (see docs/Claude-decision-2026-10-legacy-table-migration-plan.md).</param>
-/// <param name="OrderBy">The column rows are paged by (the legacy identity column: stable and unique).</param>
-public sealed record BlogAiTable(string Name, int Wave, IReadOnlyList<BlogAiColumn> Columns)
+/// <param name="KeyColumns">The columns rows are paged by and identified by: the legacy identity column, or the columns that together are unique when the table has none. Default: the first column.</param>
+/// <param name="MaskNameColumn">With <paramref name="MaskValueColumn"/>: a row whose name column looks like a secret (password, key, token...) is returned with its value masked, by the server, before it leaves the database.</param>
+public sealed record BlogAiTable(
+    string Name, int Wave, IReadOnlyList<BlogAiColumn> Columns, IReadOnlyList<string>? KeyColumns = null, string? MaskNameColumn = null, string? MaskValueColumn = null)
 {
-    public string OrderBy => Columns[0].Name;
+    public IReadOnlyList<string> Key => KeyColumns ?? [Columns[0].Name];
+
+    /// <summary>The first key column (the legacy identity column for the tables that have one).</summary>
+    public string OrderBy => Key[0];
+
+    /// <summary>The identity of one row: its key values joined, the input for a stable derived id.</summary>
+    public string IdentityOf(IReadOnlyDictionary<string, object?> row) => string.Join("|", Key.Select(column => row[column]));
 }
 
 /// <summary>
@@ -36,7 +44,8 @@ public static class BlogAiTables
             return new BlogAiColumn(parts[0], parts[1], required);
         }).ToList());
 
-    public static readonly IReadOnlyList<BlogAiTable> All =
+    /// <summary>Wave 1: users, posts, pages and their taxonomy. Its mirror schemas are seeds 009 and 010 (applied; never regenerated from a longer list).</summary>
+    public static readonly IReadOnlyList<BlogAiTable> Wave1 =
     [
         T("be_Blogs", 1, "BlogRowId:int!", "BlogId:Guid!", "BlogName:String!", "Hostname:String!", "IsAnyTextBeforeHostnameAccepted:bool!",
             "StorageContainerName:String!", "VirtualPath:String!", "IsPrimary:bool!", "IsActive:bool!", "IsSiteAggregation:bool!"),
@@ -55,6 +64,22 @@ public static class BlogAiTables
         T("be_PostTag", 1, "PostTagID:int!", "BlogID:Guid!", "PostID:Guid!", "Tag:String"),
     ];
 
+    /// <summary>
+    /// Wave 2: the blog settings and the custom fields. A setting whose name looks like a secret is returned masked (see <see cref="SecretNamePatterns"/>);
+    /// be_CustomFields has no identity column, so its four key columns page it. Mirror schemas: seed 012.
+    /// </summary>
+    public static readonly IReadOnlyList<BlogAiTable> Wave2 =
+    [
+        T("be_Settings", 2, "SettingRowId:int!", "BlogId:Guid!", "SettingName:String!", "SettingValue:Text") with { MaskNameColumn = "SettingName", MaskValueColumn = "SettingValue" },
+        T("be_CustomFields", 2, "CustomType:String!", "ObjectId:String!", "BlogId:Guid!", "Key:String!", "Value:Text!", "Attribute:String") with { KeyColumns = ["CustomType", "ObjectId", "BlogId", "Key"] },
+    ];
+
+    /// <summary>Every table the row tool may read.</summary>
+    public static readonly IReadOnlyList<BlogAiTable> All = [.. Wave1, .. Wave2];
+
+    /// <summary>A setting name containing one of these (any case) has its value masked by the server.</summary>
+    public static readonly IReadOnlyList<string> SecretNamePatterns = ["password", "pwd", "secret", "token", "key", "connectionstring"];
+
     public static BlogAiTable? Find(string name) => All.FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.Ordinal));
 
     /// <summary>
@@ -62,5 +87,17 @@ public static class BlogAiTables
     /// to inject; the page position is passed as parameters.
     /// </summary>
     public static string PageSql(BlogAiTable table) =>
-        $"SELECT {string.Join(", ", table.Columns.Select(c => $"[{c.Name}]"))} FROM dbo.[{table.Name}] ORDER BY [{table.OrderBy}] OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY";
+        $"SELECT {string.Join(", ", table.Columns.Select(c => SelectExpression(table, c)))} FROM dbo.[{table.Name}] ORDER BY {string.Join(", ", table.Key.Select(k => $"[{k}]"))} OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY";
+
+    // the value column of a table with a secret-name rule is masked in SQL, so a secret never leaves the database
+    private static string SelectExpression(BlogAiTable table, BlogAiColumn column)
+    {
+        if (table.MaskValueColumn is null || table.MaskNameColumn is null || column.Name != table.MaskValueColumn)
+        {
+            return $"[{column.Name}]";
+        }
+
+        var secret = string.Join(" OR ", SecretNamePatterns.Select(p => $"[{table.MaskNameColumn}] LIKE N'%{p}%'"));
+        return $"CASE WHEN {secret} THEN N'[masked]' ELSE [{column.Name}] END AS [{column.Name}]";
+    }
 }
