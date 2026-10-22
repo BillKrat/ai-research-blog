@@ -7,7 +7,7 @@ using Npgsql;
 
 // Legacy BlogAI -> N-Quad import (stage B of the schema-faithful migration; docs/Claude-decision-2026-10-legacy-table-migration-plan.md).
 //
-//   LegacyImport [--apply] [--mirror-only | --content-only] [--tables be_Posts,be_Pages] [--skip-post <slug>] [--page <slug>]
+//   LegacyImport [--identity] [--apply] [--mirror-only | --content-only] [--tables be_Posts,be_Pages] [--skip-post <slug>] [--page <slug>]
 //
 // Dry run unless --apply: reads the legacy rows, compares them with the store and prints what would change. The target is the LOCAL
 // Postgres by default (host must be localhost): the connection string is the WebApi's own ConnectionStrings:Postgres user-secret.
@@ -105,10 +105,25 @@ var source = new McpRowsSource(
     Environment.GetEnvironmentVariable("CLAUDE_RESEARCH_MCP") ?? "https://mcp.global-webnet.com/mcp",
     secret);
 
+var identityOnly = Flag("--identity");
 var data = new Dictionary<string, IReadOnlyList<LegacyRowData>>(StringComparer.Ordinal);
-foreach (var table in BlogAiTables.All.Where(t => tables.Any(w => w.Name == t.Name) || t.Name is "be_Categories" or "be_PostCategory" or "be_PostTag" or "be_Posts" or "be_Pages"))
+foreach (var table in BlogAiTables.All.Where(t => tables.Any(w => w.Name == t.Name) || (identityOnly && t.Name is "be_Roles" or "be_UserRoles" or "be_Users" or "be_Rights" or "be_RightRoles") || t.Name is "be_Categories" or "be_PostCategory" or "be_PostTag" or "be_Posts" or "be_Pages"))
 {
     data[table.Name] = await source.ReadAllAsync(table.Name, table.Columns.Select(c => (c.Name, c.Type)).ToList(), cancellation);
+}
+
+if (identityOnly)
+{
+    // stage C report: nothing is written, whatever --apply says
+    var plan = IdentityProjection.Plan(data, LiveIdentity.Assignments(quads));
+    Console.WriteLine();
+    Console.WriteLine("IDENTITY PLAN (stage C, report only: nothing is written)");
+    foreach (var line in IdentityProjection.Describe(plan))
+    {
+        Console.WriteLine(line);
+    }
+
+    return 0;
 }
 
 var failed = false;
