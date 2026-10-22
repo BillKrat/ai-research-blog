@@ -41,3 +41,12 @@ flowchart LR
 2. Change PostsPerPage to 3; the post list shows three per page.
 3. Open a Page in the admin: the eye publishes it; the eye again unpublishes it.
 4. Create a draft in the category Collaboration: the count on Posts goes up.
+
+## After the merge (2026-10-22, evening): deployed and checked
+
+- Merged to `main` in both repos; the API, client and MCP deploys all succeeded; `/api/health` is Healthy; `/api/public/site` answers the defaults; `/api/settings` answers 401 to an anonymous caller.
+- **Wave 2 dry run, read-only, through the deployed MCP tool** (nothing was written anywhere; values were never printed):
+  - `be_Settings`: 315 rows, 105 per blog, no duplicate (blog, name) pair. **9 names look secret** (`enablepasswordreset`, `securityvalidationkey`, `smtppassword`, per blog); **all 9 came back masked, none leaked**.
+  - `be_CustomFields`: 690 rows (THEME 678, PAGE 6, POST 5, PROFILE 1); the four key columns are unique across all 690 rows, so the derived ids cannot collide; the keys in use outside themes are AllUsers, HeadBanger, Role and Test; 9 rows are `Role` restrictions on posts and pages (matches the migration map).
+  - The import tool's own dry run reads without error but reports "schema not in the store yet" for both tables: the first `--apply` seeds 012. It was not applied anywhere (local or production).
+- **Next, your decision:** apply wave 2 to production (`LegacyImport --production ... --tables be_Settings,be_CustomFields --apply`), which seeds the schemas and writes 1,005 mirror rows into the live store. Nothing reads them yet, so it is safe but also not urgent.
