@@ -72,3 +72,14 @@
   text-decoration: none;
 }
 
+
+.page__brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.page__tagline {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}

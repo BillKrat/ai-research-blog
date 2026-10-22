@@ -172,6 +172,9 @@ try
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-009-legacy-schemas.nq"), EntityConstants.Legacy.SchemaSeedName);
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-010-legacy-ids.nq"), EntityConstants.Legacy.IdFieldsSeedName);
+    // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), EntityConstants.Site.SeedName);
     Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
@@ -249,6 +252,13 @@ try
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.PostSchemaIri, EntityConstants.Content.PostBaseIri, EntityConstants.Content.PostTypeIri, s => new Post(s));
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.CategorySchemaIri, EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, s => new Category(s));
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.TagSchemaIri, EntityConstants.Content.TagBaseIri, EntityConstants.Content.TagTypeIri, s => new Tag(s));
+    builder.Services.AddNQuadEntityRepository(
+        SchemaDal.Load(userQuads, EntityConstants.Site.SettingSchemaIri), EntityConstants.Site.SettingBaseIri, EntityConstants.Site.SettingTypeIri,
+        EntityConstants.Site.DefaultGraph, s => new SiteSetting(s), CurrentActor);
+    builder.Services.AddScoped<IEntityBll<SiteSetting>>(provider => new EntityBll<SiteSetting>(provider.GetRequiredService<IEntityRepository<SiteSetting>>()));
+    builder.Services.AddScoped<IEntityPresenter<SiteSetting>>(provider => new EntityPresenter<SiteSetting>(
+        provider.GetRequiredService<IEntityBll<SiteSetting>>(), provider.GetRequiredService<EntitySchemaOf<SiteSetting>>().Schema, s => new SiteSetting(s), provider.GetService<IEntityRelationProvider>()));
+    builder.Services.AddScoped<ISiteSettings, SiteSettings>();
     builder.Services.AddScoped<IPageBll, PageBll>();
     builder.Services.AddScoped<IPostBll, PostBll>();
     builder.Services.AddScoped<IContentAuthoring, ContentAuthoring>();

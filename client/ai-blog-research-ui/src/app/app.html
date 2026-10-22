@@ -1,6 +1,11 @@
 ﻿<div class="page">
   <header class="page__header">
-    <h1><a routerLink="/" class="page__title-link">{{ title() }}</a></h1>
+    <div class="page__brand">
+      <h1><a routerLink="/" class="page__title-link">{{ title() }}</a></h1>
+      @if (tagline()) {
+        <p class="page__tagline">{{ tagline() }}</p>
+      }
+    </div>
 
     <div class="page__header-actions">
       @if (showAdminLink()) {

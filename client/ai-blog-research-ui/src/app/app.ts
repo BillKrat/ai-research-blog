@@ -1,5 +1,7 @@
-﻿import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+﻿import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -8,6 +10,7 @@ import { SiteNav } from './components/site-nav/site-nav';
 import { AdminExceptionsService } from './services/admin-exceptions.service';
 import { AdminMenuService } from './services/admin-menu.service';
 import { AuthService } from './services/auth.service';
+import { SiteService } from './services/site.service';
 import { HealthResponse, HealthService, describeFailures } from './services/health.service';
 
 type HealthState = 'checking' | 'healthy' | 'degraded' | 'unhealthy' | 'unreachable';
@@ -24,7 +27,12 @@ export class App implements OnInit, OnDestroy {
   private readonly adminExceptions = inject(AdminExceptionsService);
   private readonly adminMenu = inject(AdminMenuService);
 
-  protected readonly title = signal('AI Research Blog');
+  private readonly site = inject(SiteService);
+  private readonly documentTitle = inject(Title);
+
+  /** The site title, from the settings an administrator edits (the default until they are read). */
+  protected readonly title = computed(() => this.site.settings().title);
+  protected readonly tagline = computed(() => this.site.settings().tagline);
   protected readonly isDark = signal(true);
   protected readonly healthState = signal<HealthState>('checking');
   protected readonly healthCheckedAt = signal<string | null>(null);
@@ -43,6 +51,7 @@ export class App implements OnInit, OnDestroy {
   protected readonly showAdminLink = this.adminMenu.hasMenu;
 
   constructor(private readonly healthService: HealthService) {
+    effect(() => this.documentTitle.setTitle(this.title()));
     // Watch the exception count while signed in; the first refusal (not an administrator) ends the polling.
     effect(() => {
       if (this.isAuthenticated()) {
@@ -63,6 +72,15 @@ export class App implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.site.get().subscribe();
+    // leaving the settings screen: read them again, so a title just saved shows without a browser refresh
+    let lastUrl = this.router.url;
+    this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event) => {
+      if (lastUrl.startsWith('/admin/settings') && !event.urlAfterRedirects.startsWith('/admin/settings')) {
+        this.site.refresh();
+      }
+      lastUrl = event.urlAfterRedirects;
+    });
     this.checkHealth();
     // A dependency can fail (or recover) while the page is open, so look again every two minutes.
     this.healthTimer = setInterval(() => this.checkHealth(), 120_000);

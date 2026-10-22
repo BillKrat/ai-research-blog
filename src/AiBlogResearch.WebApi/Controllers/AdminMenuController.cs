@@ -28,6 +28,7 @@ public static class AdminMenuDefinitions
         new("Users", "roles", "Roles", "/admin/roles", "admin_panel_settings", Admin, Order: 2),
         new("Users", "contacts", "Contacts", "/admin/contacts", "contacts", Admin, Available: false, Order: 3),
         new("System", "exceptions", "Exceptions", "/admin/exceptions", "warning", Admin, Order: 1),
+        new("System", "settings", "Settings", "/admin/settings", "settings", Admin, Order: 2),
     ];
 }
 
