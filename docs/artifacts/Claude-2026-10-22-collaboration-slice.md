@@ -50,3 +50,9 @@ flowchart LR
   - `be_CustomFields`: 690 rows (THEME 678, PAGE 6, POST 5, PROFILE 1); the four key columns are unique across all 690 rows, so the derived ids cannot collide; the keys in use outside themes are AllUsers, HeadBanger, Role and Test; 9 rows are `Role` restrictions on posts and pages (matches the migration map).
   - The import tool's own dry run reads without error but reports "schema not in the store yet" for both tables: the first `--apply` seeds 012. It was not applied anywhere (local or production).
 - **Next, your decision:** apply wave 2 to production (`LegacyImport --production ... --tables be_Settings,be_CustomFields --apply`), which seeds the schemas and writes 1,005 mirror rows into the live store. Nothing reads them yet, so it is safe but also not urgent.
+
+## Wave 2 applied to production (2026-10-22, evening)
+
+Run on the human's explicit go: `LegacyImport --production ... --mirror-only --apply --tables be_Settings,be_CustomFields` (the recipe in `AGENTS.md`, password only through the vault). It seeded the 012 schemas and mirrored **315 `be_Settings` rows and 690 `be_CustomFields` rows: 315 and 690 new, 0 changed, 0 mismatches.** A second, read-only run over every mirrored table then showed wave 2 as 315 and 690 **same, 0 new**, i.e. a re-run changes nothing; the live API stayed Healthy and `/api/public/site` kept answering. Secret-named settings are in the mirror as `[masked]` only (the masking happens in the legacy database query, so the real values never reached the store).
+
+For the record, that run still lists `be_Users` (6) and `be_Profiles` (62) as "new": they are deliberately not mirrored in production (the human's earlier decision, the importer's `--tables` skips them), so those two lines are expected.
