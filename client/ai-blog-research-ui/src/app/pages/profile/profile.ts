@@ -1,6 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '../../i18n/labels';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../services/auth.service';
@@ -21,7 +24,7 @@ type DeleteState = 'idle' | 'deleting' | 'error';
  */
 @Component({
   selector: 'app-profile',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, EntityForm],
+  imports: [ReactiveFormsModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MatFormFieldModule, MatInputModule, EntityForm],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })

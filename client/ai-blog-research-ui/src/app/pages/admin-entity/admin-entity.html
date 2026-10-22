@@ -11,23 +11,28 @@
     <app-entity-form [model]="form" (save)="onSave($event)">
       <div formToolbar class="admin-entity__top">
       <div class="admin-entity__toolbar" role="toolbar" aria-label="Actions">
-        <button mat-icon-button type="button" (click)="back()" matTooltip="Back to the list" aria-label="Back to the list">
+        <button mat-icon-button type="button" (click)="back()" [matTooltip]="'back' | label" [attr.aria-label]="'back' | label">
           <mat-icon>arrow_back</mat-icon>
         </button>
         @if (form.permissions?.canUpdate !== false) {
-          <button mat-flat-button type="submit" [disabled]="saveState() === 'saving'">
+          <button
+            mat-icon-button
+            color="primary"
+            type="submit"
+            [disabled]="saveState() === 'saving'"
+            [matTooltip]="(saveState() === 'saving' ? 'saving' : 'save') | label"
+            [attr.aria-label]="'save' | label"
+          >
             <mat-icon>save</mat-icon>
-            {{ saveState() === 'saving' ? 'Saving...' : 'Save' }}
           </button>
         }
         @for (action of form.actions ?? []; track action.name) {
-          <button mat-stroked-button type="button" (click)="runAction(action)">
+          <button mat-icon-button type="button" (click)="runAction(action)" [matTooltip]="action.label" [attr.aria-label]="action.label">
             <mat-icon>{{ iconOf(action) }}</mat-icon>
-            {{ action.label }}
           </button>
         }
         @if (canDelete) {
-          <button mat-icon-button color="warn" type="button" (click)="remove()" matTooltip="Delete" aria-label="Delete">
+          <button mat-icon-button color="warn" type="button" (click)="remove()" [matTooltip]="'delete' | label" [attr.aria-label]="'delete' | label">
             <mat-icon>delete</mat-icon>
           </button>
         }

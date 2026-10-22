@@ -22,8 +22,8 @@
       }
 
       @if (model()!.permissions?.canUpdate !== false) {
-        <button mat-flat-button type="submit" [disabled]="saveState() === 'saving'">
-          {{ saveState() === 'saving' ? 'Saving...' : 'Save' }}
+        <button mat-icon-button color="primary" type="submit" [disabled]="saveState() === 'saving'" [matTooltip]="(saveState() === 'saving' ? 'saving' : 'save') | label" [attr.aria-label]="'save' | label">
+          <mat-icon>save</mat-icon>
         </button>
       }
     </app-entity-form>
@@ -65,8 +65,8 @@
         }
       }
 
-      <button mat-flat-button type="submit" [disabled]="passwordForm.invalid || passwordState() === 'saving'">
-        {{ passwordState() === 'saving' ? 'Changing...' : 'Change password' }}
+      <button mat-icon-button color="primary" type="submit" [disabled]="passwordForm.invalid || passwordState() === 'saving'" [matTooltip]="(passwordState() === 'saving' ? 'changing' : 'changePassword') | label" [attr.aria-label]="'changePassword' | label">
+        <mat-icon>key</mat-icon>
       </button>
     </form>
 
@@ -78,9 +78,9 @@
         }
       }
 
-      <button mat-stroked-button color="warn" type="button" (click)="deleteMyAccount()" [disabled]="deleteState() === 'deleting'">
-        {{ deleteState() === 'deleting' ? 'Deleting...' : 'Delete my account' }}
-      </button>
+      <button mat-icon-button color="warn" type="button" (click)="deleteMyAccount()" [disabled]="deleteState() === 'deleting'" [matTooltip]="(deleteState() === 'deleting' ? 'deleting' : 'deleteAccount') | label" [attr.aria-label]="'deleteAccount' | label">
+          <mat-icon>person_remove</mat-icon>
+        </button>
       </div>
     }
   }

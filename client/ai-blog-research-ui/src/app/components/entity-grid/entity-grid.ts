@@ -1,6 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, TemplateRef } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '../../i18n/labels';
 import { EntityFieldSchema, EntityGridModel } from '../../models/entity-form.model';
 
 /** What the user asked of the grid; the host turns it into a request (the grid never fetches anything). */
@@ -20,7 +24,7 @@ export type GridRequest =
  */
 @Component({
   selector: 'app-entity-grid',
-  imports: [NgTemplateOutlet, MatSlideToggleModule],
+  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './entity-grid.html',
   styleUrl: './entity-grid.scss',
 })

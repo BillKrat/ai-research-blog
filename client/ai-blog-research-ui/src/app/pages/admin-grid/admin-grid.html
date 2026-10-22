@@ -2,9 +2,8 @@
   <div class="admin-grid__head">
     <h2>{{ title() }}</h2>
     @if (canCreate) {
-      <button mat-stroked-button type="button" class="admin-grid__new" (click)="create()">
+      <button mat-icon-button type="button" class="admin-grid__new" (click)="create()" [matTooltip]="'new' | label" [attr.aria-label]="'new' | label">
         <mat-icon>add</mat-icon>
-        New
       </button>
     }
   </div>

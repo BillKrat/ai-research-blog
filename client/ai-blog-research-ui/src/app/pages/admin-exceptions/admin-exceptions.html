@@ -5,9 +5,42 @@
     <p class="admin-exceptions__error" role="alert">{{ message }}</p>
   }
 
+  <h3>Occurrences</h3>
+
+  <div class="admin-exceptions__actions">
+    <button mat-icon-button color="primary" type="button" (click)="ok()" [matTooltip]="'ok' | label" [attr.aria-label]="'ok' | label">
+      <mat-icon>check</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      color="warn"
+      type="button"
+      (click)="purge()"
+      [disabled]="isPurging() || !model() || model()!.rows.length === 0"
+      [matTooltip]="(isPurging() ? 'purging' : 'purge') | label"
+      [attr.aria-label]="'purge' | label"
+    >
+      <mat-icon>delete_sweep</mat-icon>
+    </button>
+  </div>
+
+  <label class="admin-exceptions__toggle">
+    <input type="checkbox" [checked]="includePurged()" (change)="togglePurged($any($event.target).checked)" />
+    Show purged (history)
+  </label>
+
+  @if (isLoading()) {
+    <p>Loading exceptions...</p>
+  } @else if (model(); as grid) {
+    @if (grid.rows.length === 0) {
+      <p>{{ includePurged() ? 'No exceptions recorded.' : 'No active exceptions.' }}</p>
+    } @else {
+      <app-entity-grid [model]="grid" [rowTools]="rowTools" />
+    }
+  }
   @if (signatures().length > 0) {
     <h3>Kinds of failure</h3>
-    <p class="admin-exceptions__hint">Repeats of the same exception are grouped. Match a row below to a kind by its SignatureId.</p>
+    <p class="admin-exceptions__hint">Repeats of the same exception are grouped. Match a row above to a kind by its SignatureId.</p>
     <table class="admin-exceptions__kinds">
       <thead>
         <tr>
@@ -44,44 +77,15 @@
         }
       </tbody>
     </table>
-    <h3>Occurrences</h3>
   }
-
-  <label class="admin-exceptions__toggle">
-    <input type="checkbox" [checked]="includePurged()" (change)="togglePurged($any($event.target).checked)" />
-    Show purged (history)
-  </label>
-
-  @if (isLoading()) {
-    <p>Loading exceptions...</p>
-  } @else if (model(); as grid) {
-    @if (grid.rows.length === 0) {
-      <p>{{ includePurged() ? 'No exceptions recorded.' : 'No active exceptions.' }}</p>
-    } @else {
-      <app-entity-grid [model]="grid" [rowTools]="rowTools" />
-    }
-  }
-
-  <div class="admin-exceptions__actions">
-    <button mat-flat-button type="button" (click)="ok()">OK</button>
-    <button
-      mat-stroked-button
-      color="warn"
-      type="button"
-      (click)="purge()"
-      [disabled]="isPurging() || !model() || model()!.rows.length === 0"
-    >
-      {{ isPurging() ? 'Purging...' : 'Purge' }}
-    </button>
-  </div>
 </section>
 
 <ng-template #rowTools let-row>
   @let id = row.values['CorrelationId'] ?? '';
   <div class="admin-exceptions__diagnose">
     @if (id) {
-      <button mat-stroked-button type="button" (click)="diagnose(id)" [disabled]="triaging()[id]">
-        {{ triaging()[id] ? 'Diagnosing...' : 'Diagnose' }}
+      <button mat-icon-button type="button" (click)="diagnose(id)" [disabled]="triaging()[id]" [matTooltip]="(triaging()[id] ? 'diagnosing' : 'diagnose') | label" [attr.aria-label]="'diagnose' | label">
+        <mat-icon>troubleshoot</mat-icon>
       </button>
     } @else {
       <span class="admin-exceptions__hint">No correlation id on this entry (recorded before ids existed).</span>
@@ -113,8 +117,8 @@
           Sends a scrubbed report of this request (no keys, tokens, passwords, e-mail or IP addresses) to Anthropic's Claude
           for an assessment. It costs a little each time; the answer is kept for an hour.
         </p>
-        <button mat-flat-button type="button" (click)="askClaude(id)" [disabled]="asking()[id]">
-          {{ asking()[id] ? 'Asking Claude...' : ai()[id] ? 'Ask again' : 'Ask Claude' }}
+        <button mat-icon-button color="primary" type="button" (click)="askClaude(id)" [disabled]="asking()[id]" [matTooltip]="(asking()[id] ? 'asking' : ai()[id] ? 'askAgain' : 'askClaude') | label" [attr.aria-label]="'askClaude' | label">
+          <mat-icon>psychology</mat-icon>
         </button>
         @if (ai()[id]; as answer) {
           @if (answer.available) {
@@ -149,7 +153,9 @@
         <h4>Hand to Claude</h4>
         <p class="admin-exceptions__hint">Run this from the workspace root; Claude then reads the same evidence through the MCP diagnostics tool.</p>
         <code class="triage__command">{{ result.handOffCommand }}</code>
-        <button mat-button type="button" (click)="copyHandOff(result)">{{ copied() === result.correlationId ? 'Copied' : 'Copy command' }}</button>
+        <button mat-icon-button type="button" (click)="copyHandOff(result)" [matTooltip]="(copied() === result.correlationId ? 'copied' : 'copyCommand') | label" [attr.aria-label]="'copyCommand' | label">
+          <mat-icon>{{ copied() === result.correlationId ? 'check' : 'content_copy' }}</mat-icon>
+        </button>
       </section>
     }
   </div>

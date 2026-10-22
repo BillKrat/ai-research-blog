@@ -5,6 +5,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EntityForm } from '../../components/entity-form/entity-form';
 import { RelationGrid } from '../../components/relation-grid/relation-grid';
+import { LabelPipe } from '../../i18n/labels';
 import { describeApiError } from '../../models/api-error';
 import { EntityAction, EntityFormModel } from '../../models/entity-form.model';
 import { EntityApiService } from '../../services/entity-api.service';
@@ -19,7 +20,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  */
 @Component({
   selector: 'app-admin-entity',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, EntityForm, RelationGrid],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, EntityForm, RelationGrid],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',
 })

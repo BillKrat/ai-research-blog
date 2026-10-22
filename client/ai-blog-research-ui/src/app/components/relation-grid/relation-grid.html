@@ -22,13 +22,17 @@
           </select>
         </label>
       }
-      <button mat-flat-button type="submit" [disabled]="!canSubmit">{{ busy() ? 'Working...' : 'Add' }}</button>
+      <button mat-icon-button color="primary" type="submit" [disabled]="!canSubmit" [matTooltip]="(busy() ? 'working' : 'add') | label" [attr.aria-label]="'add' | label">
+        <mat-icon>add</mat-icon>
+      </button>
     </form>
   }
 </div>
 
 <ng-template #rowTools let-row>
   @if (removeLink(row.entityId)) {
-    <button mat-stroked-button color="warn" type="button" (click)="remove(row.entityId)" [disabled]="busy()">Remove</button>
+    <button mat-icon-button color="warn" type="button" (click)="remove(row.entityId)" [disabled]="busy()" [matTooltip]="'remove' | label" [attr.aria-label]="'remove' | label">
+      <mat-icon>link_off</mat-icon>
+    </button>
   }
 </ng-template>

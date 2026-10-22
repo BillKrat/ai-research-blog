@@ -30,3 +30,9 @@ flowchart LR
 - The public page itself returns 404 for a draft, so the tools appear only on published content; edit a draft from the admin list.
 - The slug lookup lists the whole collection (the store has no query by slug yet); fine at this size.
 - No server unit test for `by-slug` yet; the client switch and build are covered by the grid spec.
+
+## Follow-up tweaks (same day)
+
+- Exceptions: Occurrences first (with OK and Purge at its top), "Kinds of failure" below.
+- All admin and profile buttons are icon-only with hover text and an aria-label (editor, New, Open, relations, exceptions, profile). Their text comes from one key table (`i18n/labels.ts`, `label` pipe), the seam for localization (backlog item added). The login screen keeps its text button.
+- In a grid row's details, the Open icon sits above the Id field.

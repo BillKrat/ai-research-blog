@@ -1,9 +1,11 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap, throwError } from 'rxjs';
 import { EntityGrid, GridRequest } from '../../components/entity-grid/entity-grid';
+import { LabelPipe } from '../../i18n/labels';
 import { describeApiError } from '../../models/api-error';
 import { EntityGridModel } from '../../models/entity-form.model';
 import { EntityApiService } from '../../services/entity-api.service';
@@ -16,7 +18,7 @@ import { EntityApiService } from '../../services/entity-api.service';
  */
 @Component({
   selector: 'app-admin-grid',
-  imports: [EntityGrid, MatButtonModule, MatIconModule],
+  imports: [EntityGrid, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './admin-grid.html',
   styleUrl: './admin-grid.scss',
 })
