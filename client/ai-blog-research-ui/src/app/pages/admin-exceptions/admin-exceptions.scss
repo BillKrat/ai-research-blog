@@ -10,10 +10,12 @@
     margin: 0 0 0.5rem;
   }
 
+  // action icons sit at the right on every screen, like the sign-in icons in the header
   &__actions {
     display: flex;
+    justify-content: flex-end;
     gap: 0.75rem;
-    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
   }
 }
 

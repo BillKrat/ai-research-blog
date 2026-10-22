@@ -13,6 +13,11 @@
 
 .admin-grid__head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 1rem;
+
+  // action icons sit at the right on every screen
+  .admin-grid__new {
+    margin-left: auto;
+  }
 }

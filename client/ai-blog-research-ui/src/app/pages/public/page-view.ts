@@ -1,12 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContentTools } from '../../components/content-tools/content-tools';
 import { MarkdownContent } from '../../components/markdown-content/markdown-content';
 import { PublicContentService, PublicPage } from '../../services/public-content.service';
 
 /**
  * One published page by slug (/page/:slug), or, with route data front = true, the front page at the home address: when the site has
- * no front page yet it shows a welcome with a link to the posts, so the home address is never empty.
+ * no front page pinned it redirects to the posts, so the home address is never empty.
  */
 @Component({
   selector: 'app-page-view',
@@ -17,6 +17,7 @@ import { PublicContentService, PublicPage } from '../../services/public-content.
 export class PageView implements OnInit {
   private readonly content = inject(PublicContentService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly page = signal<PublicPage | null>(null);
   protected readonly notFound = signal(false);
@@ -38,6 +39,11 @@ export class PageView implements OnInit {
         },
         error: () => {
           this.page.set(null);
+          if (this.isFront) {
+            // no front page is pinned: the site opens on the posts, as BlogEngine.NET does
+            void this.router.navigateByUrl('/posts', { replaceUrl: true });
+            return;
+          }
           this.notFound.set(true);
           this.isLoading.set(false);
         },

@@ -77,14 +77,26 @@ describe('Public site', () => {
     expect((other.nativeElement as HTMLElement).textContent).toContain('does not exist or is not published');
   });
 
-  it('PageView at the home address shows the front page, or a welcome when the site has none', () => {
+  it('PageView at the home address redirects to the posts when the site has no front page', () => {
     const http = configure(routeStub({}, { front: true }));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     const fixture = TestBed.createComponent(PageView);
     fixture.detectChanges();
     http.expectOne((r) => r.url.endsWith('/api/public/home')).flush('none', { status: 404, statusText: 'Not Found' });
-    fixture.detectChanges();
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('no home page set yet');
+    expect(navigate).toHaveBeenCalledWith('/posts', { replaceUrl: true });
+  });
+
+  it('SiteNav has no Home link when no front page is pinned', () => {
+    const http = configure(routeStub({}));
+    const fixture = TestBed.createComponent(SiteNav);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/public/menu')).flush([]);
+    http.expectOne((r) => r.url.endsWith('/api/public/home')).flush('none', { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+    const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('a')).map((a) => a.textContent?.trim());
+
+    expect(links).toEqual(['Posts']);
   });
 
   it('SiteNav lists Home, Posts and the published listed pages with their sub-pages', () => {
@@ -94,6 +106,7 @@ describe('Public site', () => {
     http.expectOne((r) => r.url.endsWith('/api/public/menu')).flush([
       { title: 'Article', slug: 'article', children: [{ title: 'Angular', slug: 'angular', children: [] }] },
     ]);
+    http.expectOne((r) => r.url.endsWith('/api/public/home')).flush({ title: 'Home', slug: 'home', content: '' });
     fixture.detectChanges();
     const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('a')).map((a) => [a.textContent?.trim(), a.getAttribute('href')]);
 
@@ -111,11 +124,13 @@ describe('Public site', () => {
     const fixture = TestBed.createComponent(SiteNav);
     fixture.detectChanges();
     http.expectOne((r) => r.url.endsWith('/api/public/menu')).flush([]);
+    http.expectOne((r) => r.url.endsWith('/api/public/home')).flush('none', { status: 404, statusText: 'Not Found' });
 
     await router.navigateByUrl('/', { skipLocationChange: true }).catch(() => undefined);
     const again = http.match((r) => r.url.endsWith('/api/public/menu'));
     expect(again.length).toBeGreaterThan(0);
     again[0].flush([{ title: 'New page', slug: 'new-page', children: [] }]);
+    http.match((r) => r.url.endsWith('/api/public/home')).forEach((r) => r.flush('none', { status: 404, statusText: 'Not Found' }));
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('New page');
