@@ -37,6 +37,9 @@ export class EntityGrid implements OnChanges {
   /** Boolean fields (by name) the host lets the user flip right in the list; each flip is emitted as a 'toggle' request. */
   @Input() toggleFields: string[] = [];
 
+  /** A field that, when a row has a value in it, locks that row's switches (a post's RevisionOf: a revision is applied or discarded, never published). */
+  @Input() toggleLockedField: string | null = null;
+
   /** The user asked for another page or another sort order. */
   @Output() request = new EventEmitter<GridRequest>();
 
@@ -115,6 +118,10 @@ export class EntityGrid implements OnChanges {
 /** The server-supplied form link of a row, when it gave one. */  protected rowLink(row: EntityGridModel['rows'][number]): string | null {    return this.model.links?.rows?.[row.entityId] ?? null;  }  protected open(row: EntityGridModel['rows'][number]): void {    const link = this.rowLink(row);    if (link) {      this.request.emit({ kind: 'open', entityId: row.entityId, link });    }  }
   protected isToggle(field: EntityFieldSchema): boolean {
     return this.toggleFields.includes(field.name);
+  }
+
+  protected isLocked(row: EntityGridModel['rows'][number]): boolean {
+    return !!this.toggleLockedField && !!row.values[this.toggleLockedField];
   }
 
   protected flip(row: EntityGridModel['rows'][number], field: EntityFieldSchema, value: boolean): void {

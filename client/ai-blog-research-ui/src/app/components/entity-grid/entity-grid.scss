@@ -23,6 +23,12 @@
     &--open {
       background: var(--mat-sys-surface-container-high);
     }
+
+    // a proposed revision is not a post: set it apart so it is not mistaken for its original
+    &--revision td:first-child {
+      font-style: italic;
+      opacity: 0.8;
+    }
   }
 
   &__message {

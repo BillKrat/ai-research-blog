@@ -142,6 +142,39 @@ describe('EntityGrid', () => {
     expect(requests).toEqual([{ kind: 'toggle', entityId: 'p1', link: '/api/pages/p1', field: 'IsPublished', value: true }]);
   });
 
+  it('locks the switch of a row that has a value in the lock field (a revision), with no flip emitted', () => {
+    const grid = model({
+      schema: {
+        schemaIri: 'urn:posts',
+        fields: [
+          { name: 'Title', type: 'String', isRequired: true, label: 'Title', order: 1 },
+          { name: 'IsPublished', type: 'bool', isRequired: false, label: 'Published', order: 2 },
+          { name: 'RevisionOf', type: 'ref:urn:posts', isRequired: false, label: 'Revision of', order: 3, isListVisible: false },
+        ],
+      },
+      rows: [
+        { entityId: 'p1', values: { Title: 'Help', IsPublished: 'true', RevisionOf: '' } },
+        { entityId: 'r1', values: { Title: 'Help', IsPublished: 'false', RevisionOf: 'p1' } },
+      ],
+      paging: null,
+      links: { self: '/api/posts', rows: { p1: '/api/posts/p1', r1: '/api/posts/r1' } },
+    });
+    const fixture = TestBed.createComponent(EntityGrid);
+    fixture.componentInstance.model = grid;
+    fixture.componentInstance.toggleFields = ['IsPublished'];
+    fixture.componentInstance.toggleLockedField = 'RevisionOf';
+    fixture.componentInstance.ngOnChanges({ model: new SimpleChange(undefined, grid, true) });
+    fixture.detectChanges();
+    const requests: GridRequest[] = [];
+    fixture.componentInstance.request.subscribe((r) => requests.push(r));
+
+    const switches = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('mat-slide-toggle button')) as HTMLButtonElement[];
+    expect(switches.map((s) => s.disabled)).toEqual([false, true]);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('.entity-grid__row--revision').length).toBe(1);
+    switches[1].click();
+    expect(requests).toEqual([]);
+  });
+
   it('offers Open on a row only when the server gave a row link, and emits that link', () => {
     const withLinks = model({ links: { self: '/api/users', rows: { u1: '/api/users/u1' } } });
     const fixture = render(withLinks);
