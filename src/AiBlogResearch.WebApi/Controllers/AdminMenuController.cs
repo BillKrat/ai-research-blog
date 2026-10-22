@@ -31,11 +31,11 @@ public static class AdminMenuDefinitions
     ];
 }
 
-/// <summary>The admin navigation for the caller (empty for anyone who is not an administrator), with the exceptions count as a badge.</summary>
+/// <summary>The admin navigation for the caller (empty for anyone who is not an administrator), with the exceptions count as a badge and, on Posts, the number of Collaboration drafts waiting for review.</summary>
 [ApiController]
 [Route("api/admin/menu")]
 [Authorize]
-public sealed class AdminMenuController(IExceptionLogPresenter exceptions) : ControllerBase
+public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPublicContent content) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<AdminMenuModel>> Get(CancellationToken cancellationToken)
@@ -43,7 +43,12 @@ public sealed class AdminMenuController(IExceptionLogPresenter exceptions) : Con
         var isAdmin = User.IsInRole(AdminMenuDefinitions.Admin)
             || User.FindAll(claim => claim.Type is WellKnownClaims.Roles).Any(claim => claim.Value.Split(' ').Contains(AdminMenuDefinitions.Admin));
         var badges = isAdmin
-            ? new Dictionary<string, int> { ["exceptions"] = await exceptions.CountActiveAsync(cancellationToken) }
+            ? new Dictionary<string, int>
+            {
+                ["exceptions"] = await exceptions.CountActiveAsync(cancellationToken),
+                // drafts in the Collaboration category: what waits for the human's review
+                ["posts"] = await ReviewQueue.CountAsync(content, cancellationToken),
+            }
             : null;
         return Ok(AdminMenuBuilder.Build(AdminMenuDefinitions.All, User, badges));
     }
