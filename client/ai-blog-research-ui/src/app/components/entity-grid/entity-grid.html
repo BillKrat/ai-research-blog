@@ -56,6 +56,7 @@
       <tr
         class="entity-grid__row"
         [class.entity-grid__row--open]="expandedId === row.entityId"
+        [class.entity-grid__row--revision]="isLocked(row)"
         tabindex="0"
         (click)="toggle(row.entityId)"
         (keydown.enter)="toggle(row.entityId)"
@@ -63,12 +64,19 @@
         @for (column of columns; track column.name) {
           @if (isToggle(column) && rowLink(row)) {
             <td>
-              <mat-slide-toggle
-                [checked]="cell(row, column.name).toLowerCase() === 'true'"
-                [attr.aria-label]="labelOf(column) + ': ' + row.entityId"
+              <span
+                class="entity-grid__switch"
+                [matTooltip]="isLocked(row) ? ('revisionLocked' | label) : ''"
+                [matTooltipDisabled]="!isLocked(row)"
                 (click)="$event.stopPropagation()"
-                (change)="flip(row, column, $event.checked)"
-              />
+              >
+                <mat-slide-toggle
+                  [checked]="cell(row, column.name).toLowerCase() === 'true'"
+                  [disabled]="isLocked(row)"
+                  [attr.aria-label]="labelOf(column) + ': ' + row.entityId"
+                  (change)="flip(row, column, $event.checked)"
+                />
+              </span>
             </td>
           } @else {
             <td>{{ cell(row, column.name) }}</td>

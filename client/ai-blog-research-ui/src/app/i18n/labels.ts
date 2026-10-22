@@ -28,6 +28,7 @@ export const LABELS = {
   purge: 'Purge',
   purging: 'Purging...',
   remove: 'Remove',
+  revisionLocked: 'This is a proposed revision, not a post. Open it to apply or discard it; only the original is published.',
   save: 'Save',
   saving: 'Saving...',
   working: 'Working...',
