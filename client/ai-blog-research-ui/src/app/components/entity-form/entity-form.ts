@@ -3,7 +3,7 @@ import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angu
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { marked } from 'marked';
+import { MarkdownContent } from '../markdown-content/markdown-content';
 import { EntityFieldSchema, EntityFormModel, SUPPORTED_CONTRACT_VERSION } from '../../models/entity-form.model';
 import { EntityApiService, LookupOption } from '../../services/entity-api.service';
 
@@ -20,7 +20,7 @@ export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'ref
  */
 @Component({
   selector: 'app-entity-form',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MarkdownContent],
   templateUrl: './entity-form.html',
   styleUrl: './entity-form.scss',
 })
@@ -109,10 +109,14 @@ export class EntityForm implements OnChanges {
     this.previewing.update((current) => ({ ...current, [name]: !current[name] }));
   }
 
-  /** The preview of a Markdown or HTML field: Markdown rendered by marked; Angular sanitises it again when it is bound as HTML. */
+  /** The text of a field as typed, for the preview. */
+  protected textOf(field: EntityFieldSchema): string {
+    return String(this.form.controls[field.name]?.value ?? '');
+  }
+
+  /** The preview of an HTML field; Angular sanitises it when it is bound as HTML. (Markdown is previewed by app-markdown-content.) */
   protected previewOf(field: EntityFieldSchema): string {
-    const text = String(this.form.controls[field.name]?.value ?? '');
-    return this.kindOf(field) === 'markdown' ? (marked.parse(text, { async: false }) as string) : text;
+    return this.textOf(field);
   }
 
   submit(): void {

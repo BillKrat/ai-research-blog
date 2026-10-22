@@ -2,6 +2,7 @@ import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } f
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { provideMarkdown } from 'ngx-markdown';
 import { routes } from './app.routes';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { ClientErrorHandler } from './services/client-error-handler';
@@ -15,5 +16,6 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([correlationInterceptor, authInterceptor, serverErrorInterceptor])),
     provideAnimationsAsync(),
     { provide: ErrorHandler, useClass: ClientErrorHandler },
+    provideMarkdown(),
   ]
 };
