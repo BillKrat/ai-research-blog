@@ -43,3 +43,13 @@ Live projection created 8 categories, 14 tags, 1 page, 18 posts. A second `--app
 ## What to check
 
 Nothing in the admin yet: the local database is the development one. If you run the local API against it you will see 18 drafts, 8 categories, 14 tags and the Disclaimer page; they match the drafts on the live site. Decide the production approach (point 2) and whether the mirror of users and profiles goes to production (point 1).
+
+## Production run (2026-10-21, after the human published the drafts)
+
+Decisions: option (a) for the existing drafts (the human published all 18, so no authoring drafts were left to delete), skip `be_Users` and `be_Profiles` (no other users until beta). Target: `db_a2cb58_aiblogdv`, the only PostgreSQL database of the account, i.e. the live site's store (reached on port 6432 from the development machine; no allow-list was needed).
+
+- **Dry run, then apply.** The dry run wrote nothing. The apply wrote the 10 mirror tables (3, 12, 11, 120, 240, 30, 8, 9, 17 and 34 rows) with zero mismatches on the read-back, and created the Disclaimer page as an unpublished draft. The 18 posts were recognised by slug and left untouched; no category or tag was duplicated.
+- **Second apply:** every row "same", nothing created, result ok.
+- **What changed for visitors:** nothing (the mirror is not read by the site; the Disclaimer is unpublished).
+- **Not in production:** the mirror of users and profiles; roles, rights and role assignments are mirrored but not yet projected into the live identity model (stage C).
+- **Tooling:** `--production` mode and its warning line were merged afterwards; the importer now adopts existing posts and pages by slug and categories and tags by name.

@@ -10,8 +10,9 @@ using Npgsql;
 //   LegacyImport [--apply] [--mirror-only | --content-only] [--tables be_Posts,be_Pages] [--skip-post <slug>] [--page <slug>]
 //
 // Dry run unless --apply: reads the legacy rows, compares them with the store and prints what would change. The target is the LOCAL
-// Postgres only (host must be localhost): the connection string is the WebApi's own ConnectionStrings:Postgres user-secret. The legacy
-// rows come from the MCP blogai_rows tool; run it through the vault so the research client secret exists only in this process:
+// Postgres by default (host must be localhost): the connection string is the WebApi's own ConnectionStrings:Postgres user-secret.
+// --production --pg-host H --pg-port P --pg-database D --pg-user U (password in PG_PASSWORD) targets a hosted database instead.
+// The legacy rows come from the MCP blogai_rows tool; run it through the vault so the research client secret exists only in this process:
 //   .\docs\Claude-secret.ps1 run m2m/claude-research/claude-research -EnvVar CLAUDE_RESEARCH_SECRET -Exec dotnet -ExecArgs 'run','--project','ai-research-blog\tools\LegacyImport','--','--apply'
 
 var arguments = args.ToList();
@@ -25,18 +26,53 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-var connection = configuration.GetConnectionString("Postgres");
-if (string.IsNullOrWhiteSpace(connection))
+// Target: the local development database by default (the WebApi user-secret, host must be localhost). With --production the target is the
+// hosted database named on the command line (host, port, database, user are not secrets) and the password comes from PG_PASSWORD in the
+// environment (the vault run); --apply is then still needed to write, and the banner says PRODUCTION.
+var production = Flag("--production");
+string? connection;
+if (production)
 {
-    Console.Error.WriteLine("ConnectionStrings:Postgres is not set (the WebApi user-secret).");
-    return 2;
+    var password = Environment.GetEnvironmentVariable("PG_PASSWORD");
+    if (Option("--pg-host") is not { } pgHost || Option("--pg-database") is not { } pgDatabase || Option("--pg-user") is not { } pgUser || string.IsNullOrEmpty(password))
+    {
+        Console.Error.WriteLine("--production needs --pg-host, --pg-database, --pg-user (and --pg-port, default 5432) on the command line and PG_PASSWORD in the environment.");
+        return 2;
+    }
+
+    connection = new NpgsqlConnectionStringBuilder
+    {
+        Host = pgHost,
+        Port = int.TryParse(Option("--pg-port"), out var pgPort) ? pgPort : 5432,
+        Database = pgDatabase,
+        Username = pgUser,
+        Password = password,
+        SslMode = SslMode.Require,
+        TrustServerCertificate = true,
+        Timeout = 30,
+    }.ConnectionString;
+}
+else
+{
+    connection = configuration.GetConnectionString("Postgres");
+    if (string.IsNullOrWhiteSpace(connection))
+    {
+        Console.Error.WriteLine("ConnectionStrings:Postgres is not set (the WebApi user-secret).");
+        return 2;
+    }
+
+    var localHost = new NpgsqlConnectionStringBuilder(connection).Host ?? string.Empty;
+    if (localHost is not ("localhost" or "127.0.0.1" or "::1"))
+    {
+        Console.Error.WriteLine($"Refusing: the target database host is not local ('{localHost}'). Use --production with explicit --pg-* options to write to a hosted database.");
+        return 2;
+    }
 }
 
 var host = new NpgsqlConnectionStringBuilder(connection).Host ?? string.Empty;
-if (host is not ("localhost" or "127.0.0.1" or "::1"))
+if (production)
 {
-    Console.Error.WriteLine($"Refusing: the target database host is not local ('{host}'). This tool writes only to the local development database.");
-    return 2;
+    Console.WriteLine($"WARNING: the target is the hosted database {new NpgsqlConnectionStringBuilder(connection).Database} on {host}, the live site's data. {(apply ? "--apply is set: this run WRITES." : "No --apply: nothing is written.")}");
 }
 
 var secret = Environment.GetEnvironmentVariable("CLAUDE_RESEARCH_SECRET");

@@ -139,6 +139,7 @@ public sealed class ImportTests
     private static IReadOnlyDictionary<string, IReadOnlyList<LegacyRowData>> Tables(Guid published, Guid draft, Guid deleted, Guid skipped, Guid general1, Guid general2, Guid mcp, Guid disclaimer, Guid stub) =>
         new Dictionary<string, IReadOnlyList<LegacyRowData>>
         {
+            ["be_Blogs"] = [Row(("BlogRowId", 1), ("BlogId", Blog), ("BlogName", "Primary"), ("Hostname", ""), ("IsAnyTextBeforeHostnameAccepted", false), ("StorageContainerName", ""), ("VirtualPath", "~/"), ("IsPrimary", true), ("IsActive", true), ("IsSiteAggregation", false))],
             ["be_Posts"] = [Post(published, "published-post", html: "<p>x</p>"), Post(draft, "legacy-draft", published: false), Post(deleted, "gone", deleted: true), Post(skipped, "skipped-post")],
             ["be_Categories"] =
             [
@@ -164,16 +165,16 @@ public sealed class ImportTests
 
         var (_, result, posts, categories, tags, pages) = await ProjectAsync(store, tables, apply: true);
 
-        Assert.Equal((2, 1, 1, 1), (result.Categories, result.Tags, result.Pages, result.Posts));
+        Assert.Equal((1, 1, 1, 1), (result.Categories, result.Tags, result.Pages, result.Posts));
         var post = await posts.GetAsync(published.ToString());
         Assert.Equal("MD[published-post]:<p>x</p>", post!.GetValue("Content"));
         Assert.Equal(false, post.GetValue("IsPublished"));
-        Assert.Equal(2, post.GetValues("Categories").Count);
+        Assert.Single(post.GetValues("Categories"));
         Assert.Single(post.GetValues("Tags"));
         Assert.Null(await posts.GetAsync(draft.ToString()));
         Assert.Null(await posts.GetAsync(deleted.ToString()));
         Assert.Null(await posts.GetAsync(skipped.ToString()));
-        Assert.Equal(2, await categories.CountAsync());
+        Assert.Equal(1, await categories.CountAsync());
         Assert.Equal(1, await tags.CountAsync());
         Assert.Equal(1, await pages.CountAsync());
         Assert.Contains(result.Skipped, s => s.Contains("skipped-post"));
@@ -199,7 +200,47 @@ public sealed class ImportTests
         var (_, again, _, _, _, _) = await ProjectAsync(store, tables, apply: true);
 
         Assert.Equal((0, 0, 0, 0), (again.Categories, again.Tags, again.Pages, again.Posts));
-        Assert.True(again.AlreadyThere >= 5);
+        Assert.True(again.AlreadyThere >= 4);
         Assert.Equal("Edited in the admin", (await posts.GetAsync(published.ToString()))!.GetValue("Title"));
     }
+
+    [Fact]
+    public async Task Projection_AdoptsAnExistingDraftBySlug_AndAnExistingCategoryByName_WithoutDuplicates()
+    {
+        var store = await SeededStoreAsync();
+        var (published, draft, deleted, skipped, disclaimer) = (Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+        var tables = Tables(published, draft, deleted, skipped, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), disclaimer, Guid.NewGuid());
+
+        // what the authoring surface left earlier: a category named MCP and a draft with the same slug, both under random ids
+        var quads = await store.QueryAsync();
+        var categoryRepository = new NQuadEntityRepository<Category>(store, SchemaDal.Load(quads, EntityConstants.Content.CategorySchemaIri), EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, EntityConstants.Content.DefaultGraph, s => new Category(s));
+        var authored = new Category(SchemaDal.Load(quads, EntityConstants.Content.CategorySchemaIri));
+        var authoredId = Guid.NewGuid();
+        authored.Set("Id", Guid.NewGuid().ToString(), authoredId);
+        authored.Set("Name", Guid.NewGuid().ToString(), "MCP");
+        await categoryRepository.CreateAsync(authored);
+        var postRepository = new NQuadEntityRepository<Post>(store, SchemaDal.Load(quads, EntityConstants.Content.PostSchemaIri), EntityConstants.Content.PostBaseIri, EntityConstants.Content.PostTypeIri, EntityConstants.Content.DefaultGraph, s => new Post(s));
+        var authoredPost = new Post(SchemaDal.Load(quads, EntityConstants.Content.PostSchemaIri));
+        authoredPost.Set("Id", Guid.NewGuid().ToString(), Guid.NewGuid());
+        authoredPost.Set("Title", Guid.NewGuid().ToString(), "Authored copy");
+        authoredPost.Set("Slug", Guid.NewGuid().ToString(), "Published-Post");
+        await postRepository.CreateAsync(authoredPost);
+
+        var (_, result, posts, categories, _, _) = await ProjectAsync(store, tables, apply: true);
+
+        Assert.Equal(0, result.Posts);
+        Assert.Equal(0, result.Categories);
+        Assert.Equal(1, await posts.CountAsync());
+        Assert.Equal(1, await categories.CountAsync());
+        Assert.Contains(result.Skipped, s => s.Contains("published-post") && s.Contains("already exists"));
+    }
+
+    [Theory]
+    [InlineData("Primary", new[] { "General", "MCP Bridge" }, new[] { "MCP" })]
+    [InlineData("Primary", new string[0], new[] { "AI" })]
+    [InlineData("Primary", new[] { "AI Systems Author" }, new[] { "AI" })]
+    [InlineData("BlogAI", new[] { "Admin Module" }, new[] { "Admin Module", "BlogAI design" })]
+    [InlineData("BlogAI", new string[0], new[] { "BlogAI design" })]
+    public void CategoriesFollowTheRulesUsedForTheFirstDrafts(string blog, string[] legacy, string[] expected) =>
+        Assert.Equal(expected, ContentProjection.MapCategories(blog, legacy));
 }
