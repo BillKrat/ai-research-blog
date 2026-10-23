@@ -173,7 +173,7 @@ describe('EntityForm', () => {
     const root = fixture.nativeElement as HTMLElement;
 
     expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
-    (Array.from(root.querySelectorAll('.entity-form__rich-head button'))[0] as HTMLButtonElement).click();
+    (Array.from(root.querySelectorAll('.entity-form__rich-head button')).find((b) => b.textContent?.includes('Preview')) as HTMLButtonElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -181,6 +181,36 @@ describe('EntityForm', () => {
     expect(root.querySelector('.entity-form__preview h1')?.textContent).toBe('Hello');
     expect(root.querySelector('.entity-form__preview strong')?.textContent).toBe('bold');
     expect(root.querySelector('textarea')).toBeNull();
+  });
+
+  it('uploads a chosen image and inserts the Markdown that shows it at the cursor, then shows a refusal in the server own words', () => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
+    const fixture = TestBed.createComponent(EntityForm);
+    applyModel(fixture, pageModel());
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.url.includes('/api/lookups')).flush([]);
+    const root = fixture.nativeElement as HTMLElement;
+    const area = root.querySelector('textarea[aria-label="Content"]') as HTMLTextAreaElement;
+    area.setSelectionRange(8, 8);   // after "# Hello\n"
+    const input = root.querySelector('input[type="file"]') as HTMLInputElement;
+
+    Object.defineProperty(input, 'files', { value: [new File([new Uint8Array([0x89, 0x50])], 'My Photo.png', { type: 'image/png' })], configurable: true });
+    input.dispatchEvent(new Event('change'));
+    const upload = http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/media'));
+    expect(upload.request.body instanceof FormData).toBe(true);
+    upload.flush({ id: 'm1', name: 'my-photo.png', url: 'https://api.test/api/media/m1/my-photo.png', markdown: '![my-photo](https://api.test/api/media/m1/my-photo.png)' });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.form.controls['Content'].value).toBe('# Hello\n![my-photo](https://api.test/api/media/m1/my-photo.png)\n\nsome **bold** text');
+
+    Object.defineProperty(input, 'files', { value: [new File(['<html>'], 'evil.png', { type: 'image/png' })], configurable: true });
+    input.dispatchEvent(new Event('change'));
+    http.expectOne((r) => r.url.endsWith('/api/media')).flush({ title: 'Only PNG, JPEG, GIF and WebP images are accepted.' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+
+    expect(root.querySelector('.entity-form__error')?.textContent).toContain('Only PNG, JPEG, GIF and WebP');
+    expect(fixture.componentInstance.form.controls['Content'].value).toContain('my-photo');   // the refused file changed nothing
   });
 
   it('draws a multi-valued pointer as checkboxes over the lookup and posts the chosen ids as a comma-separated list', () => {

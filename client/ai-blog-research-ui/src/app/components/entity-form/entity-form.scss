@@ -38,6 +38,17 @@
   align-items: center;
 }
 
+.entity-form__rich-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.entity-form__error {
+  color: var(--mat-sys-error);
+  margin: 0.25rem 0;
+}
+
 .entity-form__preview {
   min-height: 14rem;
   padding: 0.5rem 0.75rem;

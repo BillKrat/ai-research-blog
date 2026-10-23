@@ -46,12 +46,29 @@
           <div class="entity-form__rich">
             <div class="entity-form__rich-head">
               <span>{{ labelOf(field) }} (Markdown)</span>
-              <button type="button" (click)="togglePreview(field.name)">{{ previewing()[field.name] ? 'Edit' : 'Preview' }}</button>
+              <span class="entity-form__rich-tools">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="entity-form__image"
+                  [disabled]="uploading()[field.name]"
+                  (click)="imageInput.click()"
+                  [matTooltip]="'insertImage' | label"
+                  [attr.aria-label]="'insertImage' | label"
+                >
+                  <mat-icon>add_photo_alternate</mat-icon>
+                </button>
+                <input #imageInput type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden (change)="insertImage(field, $event)" />
+                <button type="button" (click)="togglePreview(field.name)">{{ previewing()[field.name] ? 'Edit' : 'Preview' }}</button>
+              </span>
             </div>
+            @for (message of uploadErrors()[field.name] ?? []; track message) {
+              <p class="entity-form__error" role="alert">{{ message }}</p>
+            }
             @if (previewing()[field.name]) {
               <div class="entity-form__preview"><app-markdown-content [markdown]="textOf(field)" /></div>
             } @else {
-              <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)"></textarea>
+              <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)" [attr.data-field]="field.name"></textarea>
             }
           </div>
         }

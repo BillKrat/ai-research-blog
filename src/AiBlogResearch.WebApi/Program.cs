@@ -186,6 +186,8 @@ try
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
 
     builder.Services.AddSingleton<INQuadStore>(nquadStore);
+    // Uploaded images: in the same PostgreSQL database as the content (survives a redeploy, travels with the backup); memory for the in-memory development store.
+    builder.Services.AddSingleton<IMediaStore>(useMemoryStore ? new InMemoryMediaStore() : new NpgsqlMediaStore(postgresConnection!, builder.Configuration["Media:Table"] ?? "app_media"));
     // The audit trail records who made each change: the signed-in user for a request, "system" otherwise.
     builder.Services.AddHttpContextAccessor();
     static string? CurrentActor(IServiceProvider services) =>

@@ -20,6 +20,7 @@ export const LABELS = {
   delete: 'Delete',
   deleteAccount: 'Delete my account',
   deleting: 'Deleting...',
+  insertImage: 'Insert an image (PNG, JPEG, GIF or WebP, up to 5 MB)',
   draft: 'Draft',
   draftNote: 'Not published: only administrators can see this.',
   diagnose: 'Diagnose',

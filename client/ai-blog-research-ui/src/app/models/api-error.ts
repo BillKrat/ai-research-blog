@@ -23,7 +23,13 @@ export function describeApiError(error: unknown, fallback = 'Something went wron
     case 400: {
       const fieldErrors = body && typeof body === 'object' ? (body as { errors?: Record<string, string[]> }).errors : undefined;
       const messages = fieldErrors ? Object.values(fieldErrors).flat().filter(Boolean) : [];
-      return messages.length > 0 ? messages : [fallback];
+      if (messages.length > 0) {
+        return messages;
+      }
+
+      // a problem the server worded itself (for example a refused upload) carries its sentence in the title
+      const title = body && typeof body === 'object' ? (body as { title?: unknown }).title : undefined;
+      return [typeof title === 'string' && title.length > 0 ? title : fallback];
     }
 
     case 401:

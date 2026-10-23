@@ -1,11 +1,17 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MarkdownContent } from '../markdown-content/markdown-content';
 import { EntityFieldSchema, EntityFormModel, SUPPORTED_CONTRACT_VERSION } from '../../models/entity-form.model';
+import { LabelPipe } from '../../i18n/labels';
+import { describeApiError } from '../../models/api-error';
 import { EntityApiService, LookupOption } from '../../services/entity-api.service';
+import { MediaService } from '../../services/media.service';
 
 /** How a field is drawn; decided from the server-supplied type name, never from the entity. */
 export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'refs' | 'markdown' | 'html';
@@ -20,12 +26,14 @@ export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'ref
  */
 @Component({
   selector: 'app-entity-form',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MarkdownContent],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MarkdownContent],
   templateUrl: './entity-form.html',
   styleUrl: './entity-form.scss',
 })
 export class EntityForm implements OnChanges {
   private readonly api = inject(EntityApiService);
+  private readonly media = inject(MediaService);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   @Input({ required: true }) model!: EntityFormModel;
 
@@ -38,6 +46,48 @@ export class EntityForm implements OnChanges {
 
   /** Which Markdown or HTML fields show their preview instead of the editor. */
   protected readonly previewing = signal<Record<string, boolean>>({});
+
+  /** Which Markdown fields are uploading an image now, and what the server said when it refused one. */
+  protected readonly uploading = signal<Record<string, boolean>>({});
+  protected readonly uploadErrors = signal<Record<string, string[]>>({});
+
+  /**
+   * Uploads the chosen image and inserts the Markdown that shows it where the cursor is in that field (at the end when the field is not
+   * being edited). The server decides what is an image; a refusal is shown above the field in its own words.
+   */
+  protected insertImage(field: EntityFieldSchema, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+
+    this.uploading.update((current) => ({ ...current, [field.name]: true }));
+    this.uploadErrors.update((current) => ({ ...current, [field.name]: [] }));
+    this.media.upload(file).subscribe({
+      next: (item) => {
+        this.insertAtCursor(field.name, `${item.markdown}\n`);
+        this.uploading.update((current) => ({ ...current, [field.name]: false }));
+      },
+      error: (error) => {
+        this.uploadErrors.update((current) => ({ ...current, [field.name]: describeApiError(error, 'Could not upload that image.') }));
+        this.uploading.update((current) => ({ ...current, [field.name]: false }));
+      },
+    });
+  }
+
+  private insertAtCursor(name: string, text: string): void {
+    const control = this.form.controls[name];
+    const current = String(control?.value ?? '');
+    const area = (this.host.nativeElement as HTMLElement).querySelector(`textarea[data-field="${name}"]`) as HTMLTextAreaElement | null;
+    const start = area ? area.selectionStart : current.length;
+    const end = area ? area.selectionEnd : current.length;
+    const before = current.slice(0, start);
+    const lead = before.length > 0 && !before.endsWith('\n') ? '\n' : '';
+    control.setValue(`${before}${lead}${text}${current.slice(end)}`);
+    control.markAsDirty();
+  }
 
   /** True when the server speaks a newer contract than this client understands. */
   get unsupported(): boolean {
