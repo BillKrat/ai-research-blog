@@ -20,6 +20,25 @@
     <p class="conversation__none">Nothing said yet.</p>
   }
 
+  <div class="conversation__quick" role="group" aria-label="Quick replies">
+    @if (actionLink('approve')) {
+      <button mat-stroked-button type="button" (click)="approve()" [disabled]="sending()" [matTooltip]="'quickApprove' | label">
+        <mat-icon>thumb_up</mat-icon>
+        Approve
+      </button>
+    }
+    @if (actionLink('request-changes')) {
+      <button mat-stroked-button type="button" (click)="redirect()" [class.conversation__quick--on]="redirecting()" [matTooltip]="'quickRedirect' | label">
+        <mat-icon>rate_review</mat-icon>
+        Redirect
+      </button>
+    }
+    <button mat-stroked-button type="button" (click)="ask()" [matTooltip]="'quickAsk' | label">
+      <mat-icon>help</mat-icon>
+      Ask
+    </button>
+  </div>
+
   <form class="conversation__add" (ngSubmit)="send()">
     <textarea name="text" rows="3" [(ngModel)]="text" aria-label="Add to the conversation" placeholder="Answer, ask, or record a decision (Markdown)"></textarea>
     <div class="conversation__actions">

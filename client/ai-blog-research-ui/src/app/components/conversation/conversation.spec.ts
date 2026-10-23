@@ -70,3 +70,66 @@ describe('Conversation', () => {
     expect(root.querySelector('[role="alert"]')?.textContent).toContain('permission');
   });
 });
+
+describe('Conversation quick replies', () => {
+  const actions = [
+    { name: 'approve', label: 'Approve', link: '/api/posts/p1/approve' },
+    { name: 'request-changes', label: 'Request changes', link: '/api/posts/p1/request-changes' },
+  ];
+
+  function setup(withActions = true) {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
+    const fixture = TestBed.createComponent(Conversation);
+    fixture.componentRef.setInput('postId', 'p1');
+    fixture.componentRef.setInput('actions', withActions ? actions : []);
+    const changed = vi.fn();
+    fixture.componentInstance.changed.subscribe(changed);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/posts/p1/comments')).flush([]);
+    fixture.detectChanges();
+    return { fixture, http, changed, root: fixture.nativeElement as HTMLElement, component: fixture.componentInstance as unknown as { approve(): void; redirect(): void; ask(): void; send(): void; text: string } };
+  }
+
+  it('offers Approve and Redirect only while the server offered those actions, and Ask always', () => {
+    const withActions = setup().root;
+    const labels = Array.from(withActions.querySelectorAll('.conversation__quick button')).map((b) => b.textContent?.trim());
+    expect(labels).toEqual(['thumb_up Approve', 'rate_review Redirect', 'help Ask']);
+
+    TestBed.resetTestingModule();
+    const without = setup(false).root;
+    expect(Array.from(without.querySelectorAll('.conversation__quick button')).map((b) => b.textContent?.trim())).toEqual(['help Ask']);
+  });
+
+  it('Approve runs the server action, notes it in the thread and tells the host to reload', () => {
+    const { http, changed, component } = setup();
+
+    component.approve();
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/approve')).flush(null);
+    const note = http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/comments'));
+    expect(note.request.body).toEqual({ text: 'Approved.', kind: 'Comment' });
+    note.flush({ id: 'c1', author: 'Admin', kind: 'Comment', created: '2026-10-23T15:00:00Z', body: 'Approved.' });
+
+    expect(changed).toHaveBeenCalledTimes(1);
+  });
+
+  it('Redirect sends the reply together with the request for changes; Ask only starts a question', () => {
+    const { http, changed, component } = setup();
+
+    component.redirect();
+    expect(component.text).toBe('Redirect: ');
+    component.text = 'Redirect: split this into two posts';
+    component.send();
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/request-changes')).flush(null);
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/comments')).flush({ id: 'c2', author: 'Admin', kind: 'Comment', created: '2026-10-23T15:05:00Z', body: 'x' });
+    expect(changed).toHaveBeenCalledTimes(1);
+
+    component.ask();
+    expect(component.text).toBe('Question: ');
+    component.text = 'Question: which settings first?';
+    component.send();
+    http.expectNone((r) => r.url.endsWith('/request-changes'));
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/comments')).flush({ id: 'c3', author: 'Admin', kind: 'Comment', created: '2026-10-23T15:10:00Z', body: 'x' });
+    expect(changed).toHaveBeenCalledTimes(1);   // a plain question does not change the review state
+  });
+});
