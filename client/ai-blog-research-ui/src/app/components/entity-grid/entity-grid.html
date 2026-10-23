@@ -91,8 +91,8 @@
           <td [attr.colspan]="columns.length + (hasMessage ? 1 : 0)">
             <div class="entity-grid__tools">
               @if (viewRoute(row); as route) {
-                <a mat-icon-button class="entity-grid__view" [routerLink]="route" target="_blank" [matTooltip]="'view' | label" [attr.aria-label]="'view' | label">
-                  <mat-icon>open_in_new</mat-icon>
+                <a mat-icon-button class="entity-grid__view" [routerLink]="route" [matTooltip]="'view' | label" [attr.aria-label]="'view' | label">
+                  <mat-icon>preview</mat-icon>
                 </a>
               }
               @if (rowLink(row)) {

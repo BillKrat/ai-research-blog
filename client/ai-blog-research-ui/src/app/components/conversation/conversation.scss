@@ -1,0 +1,52 @@
+.conversation {
+  margin: 2rem 0 1rem;
+
+  &__entry {
+    margin: 0.75rem 0;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 0.5rem;
+
+    &--decision {
+      border-color: var(--mat-sys-primary);
+    }
+  }
+
+  &__when {
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+
+  &__decision {
+    margin-left: 0.5rem;
+    padding: 0.05rem 0.45rem;
+    border: 1px solid var(--mat-sys-primary);
+    border-radius: 0.75rem;
+    color: var(--mat-sys-primary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  &__error {
+    color: var(--mat-sys-error);
+  }
+
+  &__none {
+    opacity: 0.7;
+  }
+
+  &__add textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    font: inherit;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

@@ -38,8 +38,8 @@
           </button>
         }
         @if (viewRoute; as route) {
-          <a mat-icon-button [routerLink]="route" target="_blank" [matTooltip]="'view' | label" [attr.aria-label]="'view' | label">
-            <mat-icon>open_in_new</mat-icon>
+          <a mat-icon-button [routerLink]="route" [matTooltip]="'view' | label" [attr.aria-label]="'view' | label">
+            <mat-icon>preview</mat-icon>
           </a>
         }
         @for (action of form.actions ?? []; track action.name) {
@@ -75,6 +75,10 @@
     @for (relation of form.relations ?? []; track relation.name) {
       <h3>{{ relation.label }}</h3>
       <app-relation-grid [relation]="relation" (changed)="reload()" />
+    }
+
+    @if (hasConversation) {
+      <app-conversation [postId]="form.entity.entityId" />
     }
   }
 </section>

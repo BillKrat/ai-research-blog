@@ -3,6 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Conversation } from '../../components/conversation/conversation';
 import { EntityForm } from '../../components/entity-form/entity-form';
 import { RelationGrid } from '../../components/relation-grid/relation-grid';
 import { LabelPipe } from '../../i18n/labels';
@@ -20,7 +21,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  */
 @Component({
   selector: 'app-admin-entity',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',
 })
@@ -91,6 +92,11 @@ export class AdminEntity implements OnInit {
 
   protected back(): void {
     void this.router.navigate(['/admin', this.listSegment]);
+  }
+
+  /** Posts have a conversation (questions, answers, decisions) under the editor, once saved. */
+  protected get hasConversation(): boolean {
+    return this.collection === '/api/posts' && !this.isNew() && !!this.model()?.entity.entityId;
   }
 
   /** The page of this entry on the public site (a saved post or page with a slug), opened in a new tab; null for anything else. */

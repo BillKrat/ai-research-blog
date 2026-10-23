@@ -39,6 +39,16 @@ public sealed class AuthoringController(IContentAuthoring authoring, IConfigurat
             return updated is null ? NotFound() : Ok(updated);
         });
 
+    /// <summary>The conversation under one of the author own posts (oldest first).</summary>
+    [HttpGet("posts/{id}/comments")]
+    public Task<IActionResult> Comments(string id, CancellationToken cancellationToken) =>
+        GuardedAsync(async () => (IActionResult)Ok(await authoring.ListCommentsAsync(Author, id, cancellationToken)));
+
+    /// <summary>Adds a comment to the conversation under one of the author own posts (a decision is recorded by the human, never here).</summary>
+    [HttpPost("posts/{id}/comments")]
+    public Task<IActionResult> AddComment(string id, [FromBody] NewConversationEntry entry, CancellationToken cancellationToken) =>
+        GuardedAsync(async () => (IActionResult)StatusCode(StatusCodes.Status201Created, await authoring.AddCommentAsync(Author, id, entry.Text ?? string.Empty, cancellationToken)));
+
     /// <summary>Proposes changes to one of the author own published posts as a hidden revision draft; an administrator applies or discards it.</summary>
     [HttpPost("posts/{id}/revision")]
     public Task<IActionResult> ProposeRevision(string id, [FromBody] DraftPost changes, CancellationToken cancellationToken) =>

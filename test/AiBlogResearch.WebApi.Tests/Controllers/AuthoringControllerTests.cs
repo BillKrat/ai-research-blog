@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Adventures.Common.Exceptions;
 using Adventures.Entities;
 using AiBlogResearch.WebApi.Controllers;
@@ -35,6 +36,17 @@ public sealed class AuthoringControllerTests
         public Task<IReadOnlyList<DraftSummary>> ListMineAsync(string authorUserName, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<DraftSummary>>([Summary()]);
 
+        public (string Author, string PostId, string Text)? LastComment { get; private set; }
+
+        public Task<IReadOnlyList<ConversationEntry>> ListCommentsAsync(string authorUserName, string postId, CancellationToken cancellationToken = default) =>
+            Throw is null ? Task.FromResult<IReadOnlyList<ConversationEntry>>([new ConversationEntry("c1", "Admin", "Decision", "2026-10-23T10:00:00.0000000+00:00", "go")]) : throw Throw;
+
+        public Task<ConversationEntry> AddCommentAsync(string authorUserName, string postId, string text, CancellationToken cancellationToken = default)
+        {
+            LastComment = (authorUserName, postId, text);
+            return Throw is null ? Task.FromResult(new ConversationEntry("c2", authorUserName, "Comment", "2026-10-23T11:00:00.0000000+00:00", text)) : throw Throw;
+        }
+
         public Task<IReadOnlyList<TaxonomyTerm>> ListCategoriesAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<TaxonomyTerm>>([]);
 
         public Task<IReadOnlyList<TaxonomyTerm>> ListTagsAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<TaxonomyTerm>>([]);
@@ -46,6 +58,20 @@ public sealed class AuthoringControllerTests
 
     private static AuthoringController Build(FakeAuthoring authoring, string? configuredAuthor = null) =>
         new(authoring, new ConfigurationBuilder().AddInMemoryCollection(configuredAuthor is null ? [] : new Dictionary<string, string?> { ["Authoring:AuthorUserName"] = configuredAuthor }).Build());
+
+    [Fact]
+    public async Task Comments_AreReadAndAddedForTheConfiguredAuthor_AsPlainComments()
+    {
+        var authoring = new FakeAuthoring();
+        var controller = Build(authoring, "Claude");
+
+        var read = await controller.Comments("p1", CancellationToken.None);
+        var added = await controller.AddComment("p1", new NewConversationEntry("Answering item 2.", "Decision"), CancellationToken.None);
+
+        Assert.IsType<OkObjectResult>(read);
+        Assert.Equal(StatusCodes.Status201Created, ((ObjectResult)added).StatusCode);
+        Assert.Equal(("Claude", "p1", "Answering item 2."), authoring.LastComment);   // the kind in the body is ignored: the authoring surface never records a decision
+    }
 
     [Fact]
     public void ItIsProtectedByTheDraftScopeOnly_AndHasNoWayToPublish()

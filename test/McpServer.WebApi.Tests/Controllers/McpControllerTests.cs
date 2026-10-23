@@ -129,8 +129,8 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
 
         string[] Names(JsonElement answer) => answer.GetProperty("result").GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()!).ToArray();
         Assert.Equal(["diagnose_request", "recent_exceptions", "exception_signatures"], Names(diagnostics));
-        Assert.Equal(["list_my_posts", "create_draft_post", "update_draft_post", "propose_revision", "list_categories", "list_tags", "create_category", "create_tag"], Names(authoring));
-        Assert.Equal(11, Names(both).Length);
+        Assert.Equal(["list_my_posts", "create_draft_post", "update_draft_post", "propose_revision", "list_post_comments", "add_post_comment", "list_categories", "list_tags", "create_category", "create_tag"], Names(authoring));
+        Assert.Equal(13, Names(both).Length);
     }
 
     [Fact]
@@ -225,5 +225,29 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
         using var sent = JsonDocument.Parse(_app.Api.LastBody!);
         Assert.False(sent.RootElement.TryGetProperty("id", out _));
         Assert.Equal("new body", sent.RootElement.GetProperty("content").GetString());
+    }
+
+    [Fact]
+    public async Task PostComments_AreReadAndAddedThroughTheOwnPostConversationRoutes_WithoutTheIdInTheBody()
+    {
+        _app.Api.Respond = _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("[]") };
+        var read = await RpcAsync(ClientWith("content.draft"), new { jsonrpc = "2.0", id = 9, method = "tools/call", @params = new { name = "list_post_comments", arguments = new { id = "p1" } } });
+
+        Assert.False(read.GetProperty("result").GetProperty("isError").GetBoolean());
+        Assert.Equal("GET", _app.Api.LastRequest!.Method.Method);
+        Assert.Equal("/api/author/posts/p1/comments", _app.Api.LastRequest.RequestUri!.AbsolutePath);
+
+        _app.Api.Respond = _ => new HttpResponseMessage(HttpStatusCode.Created) { Content = new StringContent("{}") };
+        var add = await RpcAsync(ClientWith("content.draft"), new { jsonrpc = "2.0", id = 10, method = "tools/call", @params = new { name = "add_post_comment", arguments = new { id = "p1", text = "Answering item 1." } } });
+
+        Assert.False(add.GetProperty("result").GetProperty("isError").GetBoolean());
+        Assert.Equal("POST", _app.Api.LastRequest!.Method.Method);
+        Assert.Equal("/api/author/posts/p1/comments", _app.Api.LastRequest.RequestUri!.AbsolutePath);
+        using var sent = JsonDocument.Parse(_app.Api.LastBody!);
+        Assert.False(sent.RootElement.TryGetProperty("id", out _));
+        Assert.Equal("Answering item 1.", sent.RootElement.GetProperty("text").GetString());
+
+        var missing = await RpcAsync(ClientWith("content.draft"), new { jsonrpc = "2.0", id = 11, method = "tools/call", @params = new { name = "add_post_comment", arguments = new { id = "p1" } } });
+        Assert.True(missing.GetProperty("result").GetProperty("isError").GetBoolean());
     }
 }
