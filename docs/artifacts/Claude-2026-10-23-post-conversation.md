@@ -37,3 +37,7 @@ flowchart LR
 ## Still to build (backlog)
 
 The **Decisions page**: a page, visible only to collaborators, that lists the Decision entries across posts with their date, who recorded them and a link to the post. The data is now collected; the page is a read-only list.
+
+## Deployed and live-checked (2026-10-23)
+
+Merged to `main` in all three repos; the API, client and MCP deploys all succeeded; `/api/health` is Healthy; both comment routes answer 401 to an anonymous caller. **Live check, through the deployed tools:** `Claude-author.ps1 -Action comment` added an entry to the review summary draft "Review summary 2026-10-23" (the MCP tool, the author route and the store all took part), `-Action comments` read it back oldest first with its author (Claude), kind (Comment) and time, and the same tool on an id that is not one of my posts was refused (HTTP 409, "The post does not exist"). Not checked by me: the thread in the browser as an administrator; that entry is there for you to read and answer.
