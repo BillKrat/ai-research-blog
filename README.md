@@ -7,6 +7,12 @@ ASP.NET Core application, with Aspire providing the local development compositio
 
 - [AGENTS.md](AGENTS.md) — AI context index: repo state, per-AI sections, docs index
 
+## Human and AI collaboration
+
+The feature this project is built around: a **review channel between a person and an AI**, for software development or any research that needs both. The AI writes its work up as a draft post that only the person can see; the person approves it, sends it back, or decides; every question, answer and decision is kept under the post, and the AI reads that record at the start of its next session. The AI can propose but never publish, and it can never record a decision.
+
+The post [Human and AI collaboration - a research and development channel built into the blog](https://www.global-webnet.com/post/human-and-ai-collaboration-a-research-and-development-channel-built-into-the-blog) has an executive summary, a detailed section for the researcher or developer (what works today and where it is going), and a prompt that briefs an AI on the context and the rules. Its source is in the repository: [docs/content/Claude-post-human-ai-collaboration.md](docs/content/Claude-post-human-ai-collaboration.md).
+
 ## Current State
 
 The foundation is running today: an Angular client is deployed at
