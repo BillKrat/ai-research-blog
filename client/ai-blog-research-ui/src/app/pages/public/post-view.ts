@@ -1,3 +1,4 @@
+import { ApprovalBadge } from '../../components/approval-badge/approval-badge';
 import { DraftBadge } from '../../components/draft-badge/draft-badge';
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -9,7 +10,7 @@ import { PublicContentService, PublicPost } from '../../services/public-content.
 /** One published post: title, who and when, its categories and tags as links, and the rendered Markdown. A draft or unknown slug is a 404. */
 @Component({
   selector: 'app-post-view',
-  imports: [RouterLink, DatePipe, MarkdownContent, ContentTools, DraftBadge],
+  imports: [RouterLink, DatePipe, MarkdownContent, ContentTools, DraftBadge, ApprovalBadge],
   templateUrl: './post-view.html',
   styleUrl: './public.scss',
 })

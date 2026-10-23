@@ -2,7 +2,7 @@
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EntityForm } from '../../components/entity-form/entity-form';
 import { RelationGrid } from '../../components/relation-grid/relation-grid';
 import { LabelPipe } from '../../i18n/labels';
@@ -20,7 +20,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  */
 @Component({
   selector: 'app-admin-entity',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, EntityForm, RelationGrid],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',
 })
@@ -93,6 +93,13 @@ export class AdminEntity implements OnInit {
     void this.router.navigate(['/admin', this.listSegment]);
   }
 
+  /** The page of this entry on the public site (a saved post or page with a slug), opened in a new tab; null for anything else. */
+  protected get viewRoute(): string[] | null {
+    const base = this.collection === '/api/posts' ? '/post' : this.collection === '/api/pages' ? '/page' : null;
+    const slug = this.model()?.entity.values['Slug'];
+    return base && slug && !this.isNew() ? [base, slug] : null;
+  }
+
   /** The Material icon of a server-offered action; an action this client does not know gets a neutral one. */
   protected iconOf(action: EntityAction): string {
     switch (action.name) {
@@ -104,6 +111,10 @@ export class AdminEntity implements OnInit {
         return 'check_circle';
       case 'discard-revision':
         return 'cancel';
+      case 'approve':
+        return 'thumb_up';
+      case 'request-changes':
+        return 'rate_review';
       default:
         return 'play_arrow';
     }

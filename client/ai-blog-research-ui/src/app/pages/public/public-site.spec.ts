@@ -89,7 +89,7 @@ describe('Public site', () => {
     http.expectOne((r) => r.url.endsWith('/api/public/posts')).flush({
       posts: [
         { title: 'Live', slug: 'live', description: null, datePublished: null, author: null, categories: [], tags: [], isDraft: false },
-        { title: 'Collab draft', slug: 'collab-draft', description: null, datePublished: null, author: null, categories: ['Collaboration'], tags: [], isDraft: true },
+        { title: 'Collab draft', slug: 'collab-draft', description: null, datePublished: null, author: null, categories: ['Collaboration'], tags: [], isDraft: true, approval: 'Needs review' },
       ],
       page: 1,
       pageSize: 10,
@@ -100,6 +100,8 @@ describe('Public site', () => {
 
     expect(cards.map((c) => c.querySelector('.draft-badge') !== null)).toEqual([false, true]);
     expect(cards[1].querySelector('.draft-badge')?.textContent?.trim()).toBe('Draft');
+    expect(cards[1].querySelector('.approval-badge')?.textContent?.trim()).toBe('Needs review');   // the review state, from the server, administrator view only
+    expect(cards[0].querySelector('.approval-badge')).toBeNull();
 
     const nav = TestBed.createComponent(SiteNav);
     nav.detectChanges();

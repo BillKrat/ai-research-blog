@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, TemplateRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -24,7 +25,7 @@ export type GridRequest =
  */
 @Component({
   selector: 'app-entity-grid',
-  imports: [NgTemplateOutlet, MatSlideToggleModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe],
+  imports: [NgTemplateOutlet, RouterLink, MatSlideToggleModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './entity-grid.html',
   styleUrl: './entity-grid.scss',
 })
@@ -39,6 +40,9 @@ export class EntityGrid implements OnChanges {
 
   /** A field that, when a row has a value in it, locks that row's switches (a post's RevisionOf: a revision is applied or discarded, never published). */
   @Input() toggleLockedField: string | null = null;
+
+  /** A public route prefix (for example '/post'): a row with a Slug then offers a View icon that opens it on the site in a new tab. */
+  @Input() viewBase: string | null = null;
 
   /** The user asked for another page or another sort order. */
   @Output() request = new EventEmitter<GridRequest>();
@@ -118,6 +122,12 @@ export class EntityGrid implements OnChanges {
 /** The server-supplied form link of a row, when it gave one. */  protected rowLink(row: EntityGridModel['rows'][number]): string | null {    return this.model.links?.rows?.[row.entityId] ?? null;  }  protected open(row: EntityGridModel['rows'][number]): void {    const link = this.rowLink(row);    if (link) {      this.request.emit({ kind: 'open', entityId: row.entityId, link });    }  }
   protected isToggle(field: EntityFieldSchema): boolean {
     return this.toggleFields.includes(field.name);
+  }
+
+  /** The public route of a row (prefix and slug), or null when the host named none or the row has no slug. */
+  protected viewRoute(row: EntityGridModel['rows'][number]): string[] | null {
+    const slug = row.values['Slug'];
+    return this.viewBase && slug ? [this.viewBase, slug] : null;
   }
 
   protected isLocked(row: EntityGridModel['rows'][number]): boolean {

@@ -34,12 +34,12 @@ public sealed class ReviewQueueTests
             Task.FromResult<IReadOnlyList<PublicTerm>>([]);
     }
 
-    private static PublicPostSummary Post(string title, bool draft) => new(title, title.ToLowerInvariant(), null, null, null, ["Collaboration"], [], draft);
+    private static PublicPostSummary Post(string title, string? approval) => new(title, title.ToLowerInvariant(), null, null, null, ["Collaboration"], [], IsDraft: true, Approval: approval);
 
     [Fact]
-    public async Task OnlyDraftsOfTheCollaborationCategoryCount()
+    public async Task OnlyPostsThatNeedReviewCount()
     {
-        var content = new FakeContent(Post("A", true), Post("B", false), Post("C", true));
+        var content = new FakeContent(Post("A", PostApproval.NeedsReview), Post("B", PostApproval.Approved), Post("C", PostApproval.NeedsReview), Post("D", PostApproval.ChangesRequested), Post("E", null));
 
         var waiting = await ReviewQueue.CountAsync(content, CancellationToken.None);
 
@@ -51,7 +51,7 @@ public sealed class ReviewQueueTests
     [Fact]
     public async Task ManyPostsArePagedThrough()
     {
-        var many = Enumerable.Range(1, 120).Select(i => Post($"P{i}", draft: i % 2 == 0)).ToArray();
+        var many = Enumerable.Range(1, 120).Select(i => Post($"P{i}", i % 2 == 0 ? PostApproval.NeedsReview : PostApproval.Approved)).ToArray();
 
         Assert.Equal(60, await ReviewQueue.CountAsync(new FakeContent(many), CancellationToken.None));
     }

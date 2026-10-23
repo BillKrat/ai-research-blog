@@ -18,7 +18,7 @@
     @if (grid.rows.length === 0) {
       <p>Nothing here yet.</p>
     } @else {
-      <app-entity-grid [model]="grid" [toggleFields]="['IsPublished']" toggleLockedField="RevisionOf" (request)="onRequest($event)" />
+      <app-entity-grid [model]="grid" [toggleFields]="['IsPublished']" toggleLockedField="RevisionOf" [viewBase]="viewBase" (request)="onRequest($event)" />
     }
   }
 </section>

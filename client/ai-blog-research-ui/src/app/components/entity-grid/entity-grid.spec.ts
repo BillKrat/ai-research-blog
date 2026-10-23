@@ -1,5 +1,6 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { EntityGridModel } from '../../models/entity-form.model';
 import { EntityGrid, GridRequest } from './entity-grid';
 
@@ -34,7 +35,7 @@ function render(grid: EntityGridModel): ComponentFixture<EntityGrid> {
 
 describe('EntityGrid', () => {
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [EntityGrid] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [EntityGrid], providers: [provideRouter([])] }).compileComponents();
   });
 
   it('shows the server-flagged default columns with their labels, and not the hidden ones', () => {
@@ -173,6 +174,46 @@ describe('EntityGrid', () => {
     expect((fixture.nativeElement as HTMLElement).querySelectorAll('.entity-grid__row--revision').length).toBe(1);
     switches[1].click();
     expect(requests).toEqual([]);
+  });
+
+  it('offers a View icon (a new tab on the public page) only for a row with a slug when the host names a public route', () => {
+    const grid = model({
+      schema: {
+        schemaIri: 'urn:posts',
+        fields: [
+          { name: 'Title', type: 'String', isRequired: true, label: 'Title', order: 1 },
+          { name: 'Slug', type: 'String', isRequired: false, label: 'Slug', order: 2, isListVisible: false },
+        ],
+      },
+      rows: [
+        { entityId: 'p1', values: { Title: 'Has slug', Slug: 'has-slug' } },
+        { entityId: 'p2', values: { Title: 'No slug', Slug: '' } },
+      ],
+      paging: null,
+      links: { self: '/api/posts', rows: { p1: '/api/posts/p1', p2: '/api/posts/p2' } },
+    });
+    const withBase = TestBed.createComponent(EntityGrid);
+    withBase.componentInstance.model = grid;
+    withBase.componentInstance.viewBase = '/post';
+    withBase.componentInstance.ngOnChanges({ model: new SimpleChange(undefined, grid, true) });
+    withBase.detectChanges();
+    const root = withBase.nativeElement as HTMLElement;
+    const rows = Array.from(root.querySelectorAll('tbody tr.entity-grid__row')) as HTMLElement[];
+
+    rows[0].click();
+    withBase.detectChanges();
+    const link = root.querySelector('a.entity-grid__view') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/post/has-slug');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(root.querySelector('.entity-grid__open')).not.toBeNull();   // the editor is still one click away
+
+    rows[1].click();
+    withBase.detectChanges();
+    expect(root.querySelector('a.entity-grid__view')).toBeNull();
+
+    const noBase = render(grid).nativeElement as HTMLElement;
+    (noBase.querySelector('tbody tr.entity-grid__row') as HTMLElement).click();
+    expect(noBase.querySelector('a.entity-grid__view')).toBeNull();
   });
 
   it('offers Open on a row only when the server gave a row link, and emits that link', () => {

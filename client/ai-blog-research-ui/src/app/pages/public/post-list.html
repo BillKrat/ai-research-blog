@@ -11,7 +11,7 @@
     }
     @for (post of result.posts; track post.slug) {
       <article class="public__card">
-        <h3><a [routerLink]="['/post', post.slug]">{{ post.title }}</a>@if (post.isDraft) {<app-draft-badge />}</h3>
+        <h3><a [routerLink]="['/post', post.slug]">{{ post.title }}</a>@if (post.isDraft) {<app-draft-badge />}@if (post.approval) {<app-approval-badge [status]="post.approval" />}</h3>
         <p class="public__meta">
           @if (post.datePublished) {
             {{ post.datePublished | date: 'mediumDate' }}
