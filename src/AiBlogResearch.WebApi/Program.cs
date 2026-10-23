@@ -175,6 +175,9 @@ try
     // The review state of a collaboration post (Approval, ApprovedBy, ApprovedAt): changed only by the approve actions.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-013-post-approval.nq"), EntityConstants.Content.ApprovalSeedName);
+    // The conversation under a post (comments and decisions).
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-014-comments.nq"), EntityConstants.Content.CommentsSeedName);
     // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), EntityConstants.Site.SeedName);
@@ -255,6 +258,9 @@ try
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.PostSchemaIri, EntityConstants.Content.PostBaseIri, EntityConstants.Content.PostTypeIri, s => new Post(s));
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.CategorySchemaIri, EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, s => new Category(s));
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.TagSchemaIri, EntityConstants.Content.TagBaseIri, EntityConstants.Content.TagTypeIri, s => new Tag(s));
+    AddContentEntity(builder.Services, userQuads, EntityConstants.Content.CommentSchemaIri, EntityConstants.Content.CommentBaseIri, EntityConstants.Content.CommentTypeIri, s => new Comment(s));
+    builder.Services.AddScoped<IEntityBll<Comment>>(provider => new EntityBll<Comment>(provider.GetRequiredService<IEntityRepository<Comment>>()));
+    builder.Services.AddScoped<IConversation, Conversation>();
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, EntityConstants.Site.SettingSchemaIri), EntityConstants.Site.SettingBaseIri, EntityConstants.Site.SettingTypeIri,
         EntityConstants.Site.DefaultGraph, s => new SiteSetting(s), CurrentActor);

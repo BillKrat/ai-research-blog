@@ -76,5 +76,9 @@
       <h3>{{ relation.label }}</h3>
       <app-relation-grid [relation]="relation" (changed)="reload()" />
     }
+
+    @if (hasConversation) {
+      <app-conversation [postId]="form.entity.entityId" />
+    }
   }
 </section>

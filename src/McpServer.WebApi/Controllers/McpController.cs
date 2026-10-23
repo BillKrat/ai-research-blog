@@ -85,6 +85,14 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
                 "enableComments": { "type": "boolean" } },
               "required": ["id"] }
             """)),
+        (AuthoringScope, Tool(
+            "list_post_comments",
+            "The conversation under one of the authoring account's own posts, oldest first: who wrote each entry, when, whether it is a Comment or a Decision the human recorded, and the text. Read it at the start of a session to see the human's answers and decisions.",
+            """{ "type": "object", "properties": { "id": { "type": "string", "description": "The post id from list_my_posts." } }, "required": ["id"] }""")),
+        (AuthoringScope, Tool(
+            "add_post_comment",
+            "Adds a plain comment (an answer, a question, a note) to the conversation under one of the authoring account's own posts. It can never record a decision: the human does that.",
+            """{ "type": "object", "properties": { "id": { "type": "string", "description": "The post id from list_my_posts." }, "text": { "type": "string", "description": "Markdown, up to 8000 characters." } }, "required": ["id", "text"] }""")),
         (AuthoringScope, Tool("list_categories", "Every category (id and name).", """{ "type": "object", "properties": {} }""")),
         (AuthoringScope, Tool("list_tags", "Every tag (id and name).", """{ "type": "object", "properties": {} }""")),
         (AuthoringScope, Tool(
@@ -289,6 +297,24 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
                 var revision = Args()!.AsObject();
                 revision.Remove("id");
                 (method, path, payload) = (HttpMethod.Post, $"api/author/posts/{Uri.EscapeDataString(Text("id")!)}/revision", revision);
+                break;
+            case "list_post_comments":
+                if (string.IsNullOrWhiteSpace(Text("id")))
+                {
+                    return ToolResult(id, "id is required.", isError: true);
+                }
+
+                (method, path) = (HttpMethod.Get, $"api/author/posts/{Uri.EscapeDataString(Text("id")!)}/comments");
+                break;
+            case "add_post_comment":
+                if (string.IsNullOrWhiteSpace(Text("id")) || string.IsNullOrWhiteSpace(Text("text")))
+                {
+                    return ToolResult(id, "id and text are required.", isError: true);
+                }
+
+                var comment = Args()!.AsObject();
+                comment.Remove("id");
+                (method, path, payload) = (HttpMethod.Post, $"api/author/posts/{Uri.EscapeDataString(Text("id")!)}/comments", comment);
                 break;
             case "list_categories":
                 (method, path) = (HttpMethod.Get, "api/author/categories");
