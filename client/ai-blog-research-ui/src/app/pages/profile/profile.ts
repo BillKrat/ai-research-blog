@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,6 +32,7 @@ type DeleteState = 'idle' | 'deleting' | 'error';
 export class Profile implements OnInit {
   private readonly profileService = inject(ProfileService);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   /** True right after signing in with a seeded or reset password: the caption above the password form says so. */
   protected readonly mustChangePassword = this.authService.mustChangePassword;
@@ -101,6 +103,11 @@ export class Profile implements OnInit {
       next: () => {
         this.passwordForm.reset();
         this.passwordState.set('saved');
+        // A forced change (seeded or reset account) came here from another page: go back to it.
+        const returnTo = this.authService.takeReturnUrl();
+        if (returnTo) {
+          void this.router.navigateByUrl(returnTo);
+        }
       },
       error: (error) => {
         this.passwordErrors.set(describeApiError(error, "Couldn't change your password. Try again."));

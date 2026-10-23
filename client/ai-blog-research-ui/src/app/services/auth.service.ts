@@ -15,6 +15,7 @@ export interface TokenResponse {
 const TOKEN_STORAGE_KEY = 'auth.accessToken';
 const EXPIRY_STORAGE_KEY = 'auth.expiresAtUtc';
 const USERNAME_STORAGE_KEY = 'auth.username';
+const RETURN_STORAGE_KEY = 'auth.returnUrl';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -65,6 +66,18 @@ export class AuthService {
       .pipe(tap(() => this._mustChangePassword.set(false)));
   }
 
+  /** Remembers the page to return to after a forced password change (kept for this browser tab only). */
+  rememberReturnUrl(url: string): void {
+    sessionStorage.setItem(RETURN_STORAGE_KEY, url);
+  }
+
+  /** The remembered page, once: reading it forgets it. */
+  takeReturnUrl(): string | null {
+    const url = sessionStorage.getItem(RETURN_STORAGE_KEY);
+    sessionStorage.removeItem(RETURN_STORAGE_KEY);
+    return url;
+  }
+
   logout(): void {
     this._accessToken.set(null);
     this._username.set(null);
@@ -72,6 +85,7 @@ export class AuthService {
     sessionStorage.removeItem(TOKEN_STORAGE_KEY);
     sessionStorage.removeItem(EXPIRY_STORAGE_KEY);
     sessionStorage.removeItem(USERNAME_STORAGE_KEY);
+    sessionStorage.removeItem(RETURN_STORAGE_KEY);
   }
 
   private isExpired(): boolean {

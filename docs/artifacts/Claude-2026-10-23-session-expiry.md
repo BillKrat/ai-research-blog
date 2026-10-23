@@ -17,3 +17,7 @@ flowchart LR
 
 **Verified:** 4 new interceptor tests (token sent; 401 redirects and clears; sign-in 401 untouched; 403 untouched), client 83 passing, production build.
 **Not verified:** the real expiry in a browser (set `auth.expiresAtUtc`/wait for the token life, then click). Test steps are in the review post.
+
+## Follow-up: back to the page after a forced password change
+
+An account flagged "must change password" (a seeded or reset one) is sent to the profile after signing in, which dropped the page it came from. Now the login remembers that page for this browser tab (`auth.returnUrl` in sessionStorage, cleared on sign-out) and the profile returns to it once the password change succeeds. Verified: 3 new login tests (returns to the page; refuses an address that leaves the app; remembers the page through the forced change), client 89 passing, production build.

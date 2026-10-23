@@ -47,8 +47,15 @@ export class Login {
     this.authService.login(userName, password).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        // A seeded or reset account is sent straight to where the password is changed.
-        this.router.navigateByUrl(this.authService.mustChangePassword() ? '/profile' : (this.returnUrl ?? '/'));
+        // A seeded or reset account is sent straight to where the password is changed; the page it came from is kept for afterwards.
+        if (this.authService.mustChangePassword()) {
+          if (this.returnUrl) {
+            this.authService.rememberReturnUrl(this.returnUrl);
+          }
+          this.router.navigateByUrl('/profile');
+        } else {
+          this.router.navigateByUrl(this.returnUrl ?? '/');
+        }
       },
       error: () => {
         this.isSubmitting.set(false);
