@@ -1,4 +1,7 @@
 ﻿<div class="page">
+  @if (liveData()) {
+    <p class="page__live" role="status">LIVE DATA: this local copy is using the production database. Changes you make here are real.</p>
+  }
   <header class="page__header">
     <div class="page__brand">
       <h1><a routerLink="/" class="page__title-link">{{ title() }}</a></h1>

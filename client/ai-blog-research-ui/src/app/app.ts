@@ -39,6 +39,8 @@ export class App implements OnInit, OnDestroy {
   /** What failed, for the status badge ("mcp (timeout)"), and the request id that finds it in the logs. */
   protected readonly healthProblem = signal<string>('');
   protected readonly healthTrace = signal<string | null>(null);
+  /** A local run on the production store: a banner says so, whoever looks. */
+  protected readonly liveData = signal(false);
   private healthTimer: ReturnType<typeof setInterval> | null = null;
 
   protected readonly isAuthenticated = this.authService.isAuthenticated;
@@ -114,6 +116,7 @@ export class App implements OnInit, OnDestroy {
     this.healthCheckedAt.set(new Date(res.timestampUtc).toLocaleTimeString());
     this.healthProblem.set(describeFailures(res));
     this.healthTrace.set(res.correlationId ?? null);
+    this.liveData.set(res.liveData === true);
   }
 
   toggleTheme(): void {

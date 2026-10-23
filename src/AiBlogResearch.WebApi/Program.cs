@@ -25,6 +25,14 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    // Local development against the live store (opt-in, Development only; see LiveDataMode): the connection is switched here,
+    // before anything reads ConnectionStrings:Postgres, and the startup seeding below is skipped.
+    var liveData = LiveDataMode.Apply(builder.Configuration, builder.Environment.IsDevelopment());
+    if (liveData)
+    {
+        builder.Configuration["LiveData:Active"] = "true";
+    }
+
     // Every line carries the request's CorrelationId (pushed by the middleware below into the LogContext). The text log is
     // for people; the compact JSON sibling (one JSON object per line, "CorrelationId" a top-level field) is for tools - an
     // MCP diagnostics tool filters it by id without parsing text.
@@ -143,13 +151,20 @@ try
     INQuadStore nquadStore = useMemoryStore
         ? new InMemoryNQuadStore()
         : new NpgsqlNQuadStore(postgresConnection!, builder.Configuration["NQuadStore:Table"] ?? "app_n_quads");
+    var seeded = false;
+    if (liveData)
+    {
+        Log.Warning("LIVE DATA mode: this local run uses the production store; startup seeding is skipped");
+    }
+    else
+    {
     if (nquadStore is INQuadStoreInitializer initializer)
     {
         await initializer.InitializeAsync();
     }
 
     var nquadSeedPath = Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed.nq");
-    var seeded = await nquadStore.SeedOnceAsync(nquadSeedPath, "baseline");
+    seeded = await nquadStore.SeedOnceAsync(nquadSeedPath, "baseline");
     // Named, once-only seeds added after the baseline (each ships as its own file, never merged into seed.nq).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-002-exception-log.nq"), EntityConstants.ExceptionLog.SeedName);
@@ -181,6 +196,7 @@ try
     // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), EntityConstants.Site.SeedName);
+    }
     Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);

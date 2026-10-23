@@ -11,7 +11,8 @@ public class HealthController(
     IDependencyProbes probes,
     IExceptionLogBll? exceptionLog = null,
     Microsoft.Extensions.Options.IOptions<AnthropicOptions>? anthropic = null,
-    TimeProvider? clock = null) : ControllerBase
+    TimeProvider? clock = null,
+    IConfiguration? configuration = null) : ControllerBase
 {
     /// <summary>A failing dependency reaches the exception log (and the admin icon) at most once per signature per hour.</summary>
     internal static readonly TimeSpan ProbeFailureWindow = TimeSpan.FromHours(1);
@@ -56,7 +57,8 @@ public class HealthController(
             : "Healthy";
         var response = new HealthResponse(
             status, DateTimeOffset.UtcNow, mcpMessage, mcpStatus, dependencies,
-            HttpContext is null ? null : CorrelationIdMiddleware.Get(HttpContext));
+            HttpContext is null ? null : CorrelationIdMiddleware.Get(HttpContext),
+            configuration?["LiveData:Active"] == "true");
 
         return status == "Unhealthy" ? StatusCode(StatusCodes.Status503ServiceUnavailable, response) : Ok(response);
     }
@@ -144,4 +146,5 @@ public record HealthResponse(
     string? McpMessage = null,
     string? McpStatus = null,
     IReadOnlyList<DependencyHealth>? Dependencies = null,
-    string? CorrelationId = null);
+    string? CorrelationId = null,
+    bool LiveData = false);

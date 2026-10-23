@@ -16,6 +16,8 @@ export interface HealthResponse {
   status: string;
   timestampUtc: string;
   dependencies?: DependencyHealth[] | null;
+  /** True when this API is a local run on the live store (LiveData mode, Development only). */
+  liveData?: boolean;
   correlationId?: string | null;
 }
 

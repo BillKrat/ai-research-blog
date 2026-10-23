@@ -83,3 +83,13 @@
   font-size: 0.9rem;
   opacity: 0.75;
 }
+
+.page__live {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--mat-sys-error);
+  border-radius: 0.5rem;
+  color: var(--mat-sys-error);
+  font-weight: 600;
+  text-align: center;
+}
