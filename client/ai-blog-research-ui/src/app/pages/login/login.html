@@ -1,6 +1,10 @@
 <section class="login">
   <h2>Sign in</h2>
 
+  @if (expired) {
+    <p class="login__notice" role="status">Your session has expired. Sign in again to carry on where you were.</p>
+  }
+
   <form class="login__form" [formGroup]="form" (ngSubmit)="submit()">
     <mat-form-field appearance="outline">
       <mat-label>Username</mat-label>
