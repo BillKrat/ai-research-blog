@@ -265,8 +265,7 @@ try
         SchemaDal.Load(userQuads, EntityConstants.Site.SettingSchemaIri), EntityConstants.Site.SettingBaseIri, EntityConstants.Site.SettingTypeIri,
         EntityConstants.Site.DefaultGraph, s => new SiteSetting(s), CurrentActor);
     builder.Services.AddScoped<IEntityBll<SiteSetting>>(provider => new EntityBll<SiteSetting>(provider.GetRequiredService<IEntityRepository<SiteSetting>>()));
-    builder.Services.AddScoped<IEntityPresenter<SiteSetting>>(provider => new EntityPresenter<SiteSetting>(
-        provider.GetRequiredService<IEntityBll<SiteSetting>>(), provider.GetRequiredService<EntitySchemaOf<SiteSetting>>().Schema, s => new SiteSetting(s), provider.GetService<IEntityRelationProvider>()));
+    builder.Services.AddScoped<IEntityPresenter<SiteSetting>, SiteSettingPresenter>();
     builder.Services.AddScoped<ISiteSettings, SiteSettings>();
     builder.Services.AddScoped<IPageBll, PageBll>();
     builder.Services.AddScoped<IPostBll, PostBll>();

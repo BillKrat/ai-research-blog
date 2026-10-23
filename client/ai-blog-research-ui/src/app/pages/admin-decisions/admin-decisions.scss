@@ -1,0 +1,25 @@
+.admin-decisions {
+  margin: 2rem 0 0;
+
+  &__hint {
+    opacity: 0.75;
+  }
+
+  &__entry {
+    margin: 0.75rem 0;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--mat-sys-primary);
+    border-radius: 0.5rem;
+  }
+
+  &__when,
+  &__post {
+    margin-left: 0.5rem;
+    font-size: 0.85rem;
+    opacity: 0.8;
+  }
+
+  &__error {
+    color: var(--mat-sys-error);
+  }
+}

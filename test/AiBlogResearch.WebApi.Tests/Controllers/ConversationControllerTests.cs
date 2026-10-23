@@ -17,6 +17,9 @@ public sealed class ConversationControllerTests
         public Task<IReadOnlyList<ConversationEntry>> ListAsync(string postId, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<ConversationEntry>>([new ConversationEntry("c1", "Claude", "Comment", "2026-10-23T10:00:00.0000000+00:00", "hi")]);
 
+        public Task<IReadOnlyList<DecisionEntry>> ListDecisionsAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<DecisionEntry>>([new DecisionEntry("c9", "p1", "Review summary", "review-summary", "Admin", "2026-10-23T12:00:00.0000000+00:00", "Go ahead")]);
+
         public Task<ConversationEntry> AddAsync(string postId, string author, string kind, string body, CancellationToken cancellationToken = default)
         {
             Added = (postId, author, kind, body);
@@ -52,6 +55,19 @@ public sealed class ConversationControllerTests
         await controller.Add("p1", new NewConversationEntry("Site settings go ahead", "Decision"), CancellationToken.None);
 
         Assert.Equal("Decision", conversation.Added!.Value.Kind);
+    }
+
+    [Fact]
+    public async Task TheDecisionsPage_ListsDecisionsWithTheirPost_ForAdministratorsOnly()
+    {
+        var (_, conversation) = Build("Admin");
+        var controller = new DecisionsController(conversation);
+
+        var result = Assert.IsType<OkObjectResult>((await controller.List(CancellationToken.None)).Result);
+
+        Assert.Equal("Review summary", Assert.Single((IReadOnlyList<DecisionEntry>)result.Value!).PostTitle);
+        var authorize = Assert.Single(typeof(DecisionsController).GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute), true).Cast<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>());
+        Assert.Equal(Adventures.Security.WellKnownClaims.TenantAdminPolicy, authorize.Policy);
     }
 
     [Fact]

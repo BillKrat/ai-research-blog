@@ -24,6 +24,7 @@ public static class AdminMenuDefinitions
         new("Content", "categories", "Categories", "/admin/categories", "folder", Admin, Order: 4),
         new("Content", "tags", "Tags", "/admin/tags", "sell", Admin, Order: 5),
         new("Content", "blogs", "Blogs", "/admin/blogs", "library_books", Admin, Available: false, Order: 6),
+        new("Content", "decisions", "Decisions", "/admin/decisions", "gavel", Admin, Order: 7),
         new("Users", "users", "Users", "/admin/users", "group", Admin, Order: 1),
         new("Users", "roles", "Roles", "/admin/roles", "admin_panel_settings", Admin, Order: 2),
         new("Users", "contacts", "Contacts", "/admin/contacts", "contacts", Admin, Available: false, Order: 3),

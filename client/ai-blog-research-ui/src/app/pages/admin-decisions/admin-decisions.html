@@ -1,0 +1,29 @@
+<section class="admin-decisions">
+  <h2>Decisions</h2>
+  <p class="admin-decisions__hint">What was decided, by whom and when, newest first. Record one in the Conversation under a post.</p>
+
+  @for (message of errors(); track message) {
+    <p class="admin-decisions__error" role="alert">{{ message }}</p>
+  }
+
+  @if (isLoading()) {
+    <p>Loading...</p>
+  } @else {
+    @for (decision of decisions(); track decision.id) {
+      <article class="admin-decisions__entry">
+        <header>
+          <strong>{{ decision.author }}</strong>
+          <span class="admin-decisions__when">{{ decision.created | date: 'medium' }}</span>
+          <span class="admin-decisions__post">
+            under <a [routerLink]="['/admin/posts', decision.postId]">{{ decision.postTitle }}</a>
+          </span>
+        </header>
+        <app-markdown-content [markdown]="decision.body" />
+      </article>
+    } @empty {
+      @if (errors().length === 0) {
+        <p>No decisions recorded yet.</p>
+      }
+    }
+  }
+</section>

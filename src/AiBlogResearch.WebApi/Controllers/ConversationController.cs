@@ -28,3 +28,14 @@ public sealed class ConversationController(IConversation conversation) : ApiCont
             StatusCodes.Status201Created,
             await conversation.AddAsync(postId, User.Identity?.Name ?? "unknown", string.IsNullOrWhiteSpace(entry.Kind) ? CommentKinds.Comment : entry.Kind, entry.Text ?? string.Empty, cancellationToken)));
 }
+
+/// <summary>The decisions page for administrators: every entry the human recorded as a decision, across all posts, newest first, each with its post.</summary>
+[ApiController]
+[Route("api/decisions")]
+[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+public sealed class DecisionsController(IConversation conversation) : ControllerBase
+{
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<DecisionEntry>>> List(CancellationToken cancellationToken) =>
+        Ok(await conversation.ListDecisionsAsync(cancellationToken));
+}

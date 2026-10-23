@@ -47,6 +47,7 @@ export const routes: Routes = [
       ...adminCollection('categories', '/api/categories', 'Categories'),
       ...adminCollection('tags', '/api/tags', 'Tags'),
       ...adminCollection('settings', '/api/settings', 'Settings'),
+      { path: 'decisions', loadComponent: () => import('./pages/admin-decisions/admin-decisions').then((m) => m.AdminDecisions) },
       { path: 'exceptions', loadComponent: () => import('./pages/admin-exceptions/admin-exceptions').then((m) => m.AdminExceptions) },
     ],
   },
