@@ -40,3 +40,7 @@ My first version cleared the "redirecting" flag before checking it, so after a R
 
 - **An e-mail when a Collaboration draft appears.** It needs a mailbox to send from and its credential kept in the vault (you run the `set` step) and as a site secret. The code is small; the decision is which mailbox and whether you want the e-mail at all.
 - **The Collaborators role.** Worth building when a second person needs to sign in; until then it adds nothing but the ability to test it.
+
+## Deployed (2026-10-23, evening)
+
+Merged to `main`; the client deploy succeeded; `www` answers; the API is Healthy; the quick reply text is in the live bundle. The next Collaboration review summary ("Review summary 2026-10-23 (evening)") was posted as a draft and arrived as Needs review; it carries the e-mail design and four numbered decisions. The earlier summary ("approval field is live") shows as Approved: the human approved it. Not checked by me: the quick reply buttons in the browser as an administrator.
