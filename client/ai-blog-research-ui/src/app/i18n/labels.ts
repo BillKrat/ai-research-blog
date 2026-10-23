@@ -21,6 +21,8 @@ export const LABELS = {
   deleteAccount: 'Delete my account',
   deleting: 'Deleting...',
   insertImage: 'Insert an image (PNG, JPEG, GIF or WebP, up to 5 MB)',
+  previewReply: 'Preview the reply as it will look',
+  editReply: 'Back to editing the reply',
   draft: 'Draft',
   draftNote: 'Not published: only administrators can see this.',
   diagnose: 'Diagnose',

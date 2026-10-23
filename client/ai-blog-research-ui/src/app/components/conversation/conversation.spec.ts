@@ -133,3 +133,64 @@ describe('Conversation quick replies', () => {
     expect(changed).toHaveBeenCalledTimes(1);   // a plain question does not change the review state
   });
 });
+
+describe('Conversation reply box', () => {
+  function setup() {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
+    const fixture = TestBed.createComponent(Conversation);
+    fixture.componentRef.setInput('postId', 'p1');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.method === 'GET').flush([]);
+    fixture.detectChanges();
+    return { fixture, http, root: fixture.nativeElement as HTMLElement };
+  }
+
+  it('uploads a chosen image and inserts the Markdown that shows it at the cursor', async () => {
+    const { fixture, http, root } = setup();
+    const component = fixture.componentInstance as unknown as { text: string };
+    component.text = 'Look:\nafter';
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const area = root.querySelector('textarea') as HTMLTextAreaElement;
+    area.value = component.text;   // ngModel writes the box asynchronously; set it so the cursor position exists
+    area.setSelectionRange(6, 6);
+    const input = root.querySelector('input[type="file"]') as HTMLInputElement;
+
+    Object.defineProperty(input, 'files', { value: [new File([new Uint8Array([0x89, 0x50])], 'shot.png', { type: 'image/png' })], configurable: true });
+    input.dispatchEvent(new Event('change'));
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/media')).flush({ id: 'm1', name: 'shot.png', url: 'https://api.test/api/media/m1/shot.png', markdown: '![shot](https://api.test/api/media/m1/shot.png)' });
+
+    expect(component.text).toBe('Look:\n![shot](https://api.test/api/media/m1/shot.png)\nafter');
+  });
+
+  it('shows a refused upload in the server own words and changes nothing', () => {
+    const { fixture, http, root } = setup();
+    const component = fixture.componentInstance as unknown as { text: string };
+    component.text = 'keep';
+    const input = root.querySelector('input[type="file"]') as HTMLInputElement;
+
+    Object.defineProperty(input, 'files', { value: [new File(['<html>'], 'evil.png', { type: 'image/png' })], configurable: true });
+    input.dispatchEvent(new Event('change'));
+    http.expectOne((r) => r.url.endsWith('/api/media')).flush({ title: 'Only PNG, JPEG, GIF and WebP images are accepted.' }, { status: 400, statusText: 'Bad Request' });
+    fixture.detectChanges();
+
+    expect(root.querySelector('.conversation__error')?.textContent).toContain('Only PNG, JPEG, GIF and WebP');
+    expect(component.text).toBe('keep');
+  });
+
+  it('previews the reply rendered, then goes back to the editor', async () => {
+    const { fixture, root } = setup();
+    const component = fixture.componentInstance as unknown as { text: string };
+    component.text = '**bold** reply';
+    const toggle = Array.from(root.querySelectorAll('.conversation__tools button')).find((b) => b.getAttribute('aria-label')?.startsWith('Preview')) as HTMLButtonElement;
+
+    toggle.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(root.querySelector('.conversation__preview strong')?.textContent).toBe('bold');
+    expect(root.querySelector('textarea')).toBeNull();
+  });
+});

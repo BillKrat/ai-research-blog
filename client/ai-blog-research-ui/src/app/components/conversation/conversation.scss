@@ -61,3 +61,15 @@
     justify-content: space-between;
   }
 }
+
+.conversation__preview {
+  min-height: 4.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--mat-sys-outline-variant);
+  border-radius: 0.5rem;
+}
+
+.conversation__tools {
+  display: inline-flex;
+  gap: 0.25rem;
+}
