@@ -176,7 +176,7 @@ describe('EntityGrid', () => {
     expect(requests).toEqual([]);
   });
 
-  it('offers a View icon (a new tab on the public page) only for a row with a slug when the host names a public route', () => {
+  it('offers a View icon (the public page, in the same tab) only for a row with a slug when the host names a public route', () => {
     const grid = model({
       schema: {
         schemaIri: 'urn:posts',
@@ -204,7 +204,7 @@ describe('EntityGrid', () => {
     withBase.detectChanges();
     const link = root.querySelector('a.entity-grid__view') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/post/has-slug');
-    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('target')).toBeNull();   // same tab: a new tab would start without the sign-in, and a draft shows only to a signed-in administrator
     expect(root.querySelector('.entity-grid__open')).not.toBeNull();   // the editor is still one click away
 
     rows[1].click();
