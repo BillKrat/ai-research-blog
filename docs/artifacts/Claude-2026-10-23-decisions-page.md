@@ -33,3 +33,7 @@ flowchart LR
 1. **Quick replies** under a post (Approve / Redirect / Ask in one tap), so a short visit can move several threads.
 2. **The Collaborators role** and hiding Collaboration posts from non-collaborators, when a second person needs to sign in.
 3. **An e-mail when a Collaboration draft appears** (the SmarterASP mail service), so a visit starts from a prompt rather than a habit.
+
+## Deployed and checked (2026-10-23)
+
+Merged to `main` in both repos; the API and client deploys succeeded; `/api/health` is Healthy; `GET /api/decisions` and `GET /api/settings` answer 401 to an anonymous caller; the site settings endpoint still answers the defaults. The collaboration post is public (the human published it), so the link in the README works. Not checked by me: the Decisions page and the read-only setting names in the browser as an administrator.
