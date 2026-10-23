@@ -75,13 +75,40 @@ public sealed class PostsController(IEntityPresenter<Post> presenter, IPostBll p
             };
         }
 
-        return decorated with
+        var actions = new List<EntityAction>
         {
-            Actions = published
-                ? [new EntityAction("unpublish", "Unpublish", $"{link}/unpublish", "Take this post back to a draft?")]
-                : [new EntityAction("publish", "Publish", $"{link}/publish", "Make this post public?")],
+            published
+                ? new EntityAction("unpublish", "Unpublish", $"{link}/unpublish", "Take this post back to a draft?")
+                : new EntityAction("publish", "Publish", $"{link}/publish", "Make this post public?"),
         };
+
+        // a post under review (the collaboration channel) can be approved, or sent back with a request for changes; both are recorded
+        var approval = form.Entity.Values.GetValueOrDefault("Approval");
+        if (!string.IsNullOrEmpty(approval))
+        {
+            if (approval != PostApproval.Approved)
+            {
+                actions.Add(new EntityAction("approve", "Approve", $"{link}/approve", null));
+            }
+
+            if (approval != PostApproval.ChangesRequested)
+            {
+                actions.Add(new EntityAction("request-changes", "Request changes", $"{link}/request-changes", null));
+            }
+        }
+
+        return decorated with { Actions = actions };
     }
+
+    /// <summary>Records the approval of a post under review: who, and when.</summary>
+    [HttpPost("{id}/approve")]
+    public Task<IActionResult> Approve(string id, CancellationToken cancellationToken) =>
+        GuardedAsync(async () => await posts.SetApprovalAsync(id, PostApproval.Approved, User.Identity?.Name, cancellationToken) ? (IActionResult)NoContent() : NotFound());
+
+    /// <summary>Sends a post under review back to its author with a request for changes (the questions go in chat); clears any earlier approval.</summary>
+    [HttpPost("{id}/request-changes")]
+    public Task<IActionResult> RequestChanges(string id, CancellationToken cancellationToken) =>
+        GuardedAsync(async () => await posts.SetApprovalAsync(id, PostApproval.ChangesRequested, User.Identity?.Name, cancellationToken) ? (IActionResult)NoContent() : NotFound());
 
     /// <summary>The id of the post with this slug (see <see cref="PagesController.BySlug"/>).</summary>
     [HttpGet("by-slug/{slug}")]

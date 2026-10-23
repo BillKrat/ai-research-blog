@@ -111,6 +111,10 @@ export class AdminEntity implements OnInit {
         return 'check_circle';
       case 'discard-revision':
         return 'cancel';
+      case 'approve':
+        return 'thumb_up';
+      case 'request-changes':
+        return 'rate_review';
       default:
         return 'play_arrow';
     }

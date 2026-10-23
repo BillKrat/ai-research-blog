@@ -1,0 +1,24 @@
+.approval-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid currentColor;
+  border-radius: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  white-space: nowrap;
+
+  &--review {
+    color: var(--mat-sys-secondary, inherit);
+  }
+
+  &--approved {
+    color: var(--mat-sys-primary, inherit);
+  }
+
+  &--changes {
+    color: var(--mat-sys-error, inherit);
+  }
+}

@@ -4,12 +4,11 @@ namespace AiBlogResearch.WebApi.Controllers;
 
 /// <summary>
 /// What waits for the human's review in the collaboration channel (backlog: the blog as the human and AI collaboration channel): the
-/// drafts in the category <see cref="Category"/>. Claude posts review summaries there as drafts; the count is the admin menu badge on Posts.
+/// posts in the category <see cref="PostApproval.CollaborationCategory"/> whose review state is <see cref="PostApproval.NeedsReview"/>.
+/// The count is the admin menu badge on Posts; an approved post, or one sent back with a request for changes, no longer waits for the human.
 /// </summary>
 public static class ReviewQueue
 {
-    public const string Category = "Collaboration";
-
     private const int PageSize = 50;
 
     public static async Task<int> CountAsync(IPublicContent content, CancellationToken cancellationToken)
@@ -17,8 +16,8 @@ public static class ReviewQueue
         var waiting = 0;
         for (var page = 1; ; page++)
         {
-            var list = await content.ListPostsAsync(page, PageSize, Category, tag: null, cancellationToken, includeDrafts: true);
-            waiting += list.Posts.Count(post => post.IsDraft);
+            var list = await content.ListPostsAsync(page, PageSize, PostApproval.CollaborationCategory, tag: null, cancellationToken, includeDrafts: true);
+            waiting += list.Posts.Count(post => post.Approval == PostApproval.NeedsReview);
             if (page * PageSize >= list.Total || list.Posts.Count == 0)
             {
                 return waiting;

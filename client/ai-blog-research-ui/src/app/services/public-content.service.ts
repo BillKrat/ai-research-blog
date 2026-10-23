@@ -13,6 +13,8 @@ export interface PublicPostSummary {
   tags: string[];
   /** True only in an administrator's view: the post is not published. */
   isDraft?: boolean;
+  /** The review state of a collaboration post (administrator's view only). */
+  approval?: string | null;
 }
 
 export interface PublicPost {

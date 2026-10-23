@@ -172,6 +172,9 @@ try
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-009-legacy-schemas.nq"), EntityConstants.Legacy.SchemaSeedName);
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-010-legacy-ids.nq"), EntityConstants.Legacy.IdFieldsSeedName);
+    // The review state of a collaboration post (Approval, ApprovedBy, ApprovedAt): changed only by the approve actions.
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-013-post-approval.nq"), EntityConstants.Content.ApprovalSeedName);
     // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), EntityConstants.Site.SeedName);

@@ -1,3 +1,4 @@
+import { ApprovalBadge } from '../../components/approval-badge/approval-badge';
 import { DraftBadge } from '../../components/draft-badge/draft-badge';
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -12,7 +13,7 @@ import { switchMap } from 'rxjs';
  */
 @Component({
   selector: 'app-post-list',
-  imports: [RouterLink, DatePipe, DraftBadge],
+  imports: [RouterLink, DatePipe, DraftBadge, ApprovalBadge],
   templateUrl: './post-list.html',
   styleUrl: './public.scss',
 })
