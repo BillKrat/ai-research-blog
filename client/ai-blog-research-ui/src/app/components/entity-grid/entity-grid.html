@@ -89,11 +89,18 @@
       @if (expandedId === row.entityId) {
         <tr class="entity-grid__details">
           <td [attr.colspan]="columns.length + (hasMessage ? 1 : 0)">
-            @if (rowLink(row)) {
-              <button mat-icon-button type="button" class="entity-grid__open" (click)="open(row)" [matTooltip]="'open' | label" [attr.aria-label]="'open' | label">
-                <mat-icon>open_in_new</mat-icon>
-              </button>
-            }
+            <div class="entity-grid__tools">
+              @if (viewRoute(row); as route) {
+                <a mat-icon-button class="entity-grid__view" [routerLink]="route" target="_blank" [matTooltip]="'view' | label" [attr.aria-label]="'view' | label">
+                  <mat-icon>open_in_new</mat-icon>
+                </a>
+              }
+              @if (rowLink(row)) {
+                <button mat-icon-button type="button" class="entity-grid__open" (click)="open(row)" [matTooltip]="'open' | label" [attr.aria-label]="'open' | label">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+            </div>
             <dl>
               @for (field of fields; track field.name) {
                 <dt>{{ labelOf(field) }}</dt>

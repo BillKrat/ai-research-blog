@@ -41,6 +41,11 @@ export class AdminGrid implements OnInit {
   }
 
   /** New: the empty form of this collection (only offered when the server says the caller may create and gave a create link). */
+  /** The public route prefix of this collection (posts and pages have a page on the site), or null. */
+  protected get viewBase(): string | null {
+    return this.collection === '/api/posts' ? '/post' : this.collection === '/api/pages' ? '/page' : null;
+  }
+
   protected get canCreate(): boolean {
     const grid = this.model();
     return grid?.canCreate === true && !!grid.links?.create;

@@ -34,6 +34,7 @@ export const LABELS = {
   revisionLocked: 'This is a proposed revision, not a post. Open it to apply or discard it; only the original is published.',
   save: 'Save',
   unpublish: 'Unpublish',
+  view: 'View on the site (new tab)',
   saving: 'Saving...',
   working: 'Working...',
 } as const;
