@@ -60,3 +60,7 @@ Merging deploys the API and the client (the Foundation merge goes first; the API
 ## Next
 
 A media library screen (list and pick an existing image, delete with the "still used by" check), then the security items on the beta checklist.
+
+## Deployed (2026-10-23)
+
+Merged to `main` in both repos (Foundation first); the API and Angular deploys succeeded. Live checks: `/api/health` Healthy, `/api/public/site` 200, the site 200, anonymous `GET /api/media` 401 (a POST without a file is refused earlier, 415). Not yet checked: an administrator's first upload (creates `app_media`); the human uploads a small image from a post editor.
