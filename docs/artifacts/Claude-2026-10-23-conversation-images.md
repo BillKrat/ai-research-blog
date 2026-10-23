@@ -6,3 +6,7 @@ Branch `claude-conversation-markdown` (client only, stacked on `claude-session-e
 
 **Verified:** 3 new tests (upload inserts at the cursor, a refusal shows the server's words and changes nothing, preview renders then returns to the editor), client 86 passing, production build.
 **Not verified:** the buttons in a browser.
+
+## Follow-up: the two icons moved to the top row
+
+The human looked for Insert and Preview at the top left, beside Approve and Ask, and did not notice them under the box. They now sit at the right end of that top row (right-aligned). Verified: client 89 passing.

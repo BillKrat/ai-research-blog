@@ -93,12 +93,12 @@ describe('Conversation quick replies', () => {
 
   it('offers Approve and Redirect only while the server offered those actions, and Ask always', () => {
     const withActions = setup().root;
-    const labels = Array.from(withActions.querySelectorAll('.conversation__quick button')).map((b) => b.textContent?.trim());
+    const labels = Array.from(withActions.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim());
     expect(labels).toEqual(['thumb_up Approve', 'rate_review Redirect', 'help Ask']);
 
     TestBed.resetTestingModule();
     const without = setup(false).root;
-    expect(Array.from(without.querySelectorAll('.conversation__quick button')).map((b) => b.textContent?.trim())).toEqual(['help Ask']);
+    expect(Array.from(without.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim())).toEqual(['help Ask']);
   });
 
   it('Approve runs the server action, notes it in the thread and tells the host to reload', () => {

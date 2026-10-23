@@ -37,6 +37,15 @@
       <mat-icon>help</mat-icon>
       Ask
     </button>
+    <span class="conversation__tools">
+      <button mat-icon-button type="button" [disabled]="uploading() || previewing()" (click)="imageInput.click()" [matTooltip]="'insertImage' | label" [attr.aria-label]="'insertImage' | label">
+        <mat-icon>add_photo_alternate</mat-icon>
+      </button>
+      <input #imageInput type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden (change)="insertImage($event)" />
+      <button mat-icon-button type="button" (click)="previewing.set(!previewing())" [matTooltip]="(previewing() ? 'editReply' : 'previewReply') | label" [attr.aria-label]="(previewing() ? 'editReply' : 'previewReply') | label">
+        <mat-icon>{{ previewing() ? 'edit' : 'visibility' }}</mat-icon>
+      </button>
+    </span>
   </div>
 
   <form class="conversation__add" (ngSubmit)="send()">
@@ -46,15 +55,6 @@
       <textarea name="text" rows="3" [(ngModel)]="text" aria-label="Add to the conversation" placeholder="Answer, ask, or record a decision (Markdown)"></textarea>
     }
     <div class="conversation__actions">
-      <span class="conversation__tools">
-        <button mat-icon-button type="button" [disabled]="uploading() || previewing()" (click)="imageInput.click()" [matTooltip]="'insertImage' | label" [attr.aria-label]="'insertImage' | label">
-          <mat-icon>add_photo_alternate</mat-icon>
-        </button>
-        <input #imageInput type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden (change)="insertImage($event)" />
-        <button mat-icon-button type="button" (click)="previewing.set(!previewing())" [matTooltip]="(previewing() ? 'editReply' : 'previewReply') | label" [attr.aria-label]="(previewing() ? 'editReply' : 'previewReply') | label">
-          <mat-icon>{{ previewing() ? 'edit' : 'visibility' }}</mat-icon>
-        </button>
-      </span>
       <mat-checkbox name="asDecision" [(ngModel)]="asDecision">Record as a decision</mat-checkbox>
       <button mat-icon-button color="primary" type="submit" [disabled]="sending() || !text.trim()" [matTooltip]="'send' | label" [attr.aria-label]="'send' | label">
         <mat-icon>send</mat-icon>
