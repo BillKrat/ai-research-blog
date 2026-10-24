@@ -1,6 +1,8 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var webApi = builder.AddProject<Projects.AiBlogResearch_WebApi>("webapi");
+// The child projects use their own "https" launch profile whatever profile the AppHost was started with: Aspire otherwise looks
+// for a child profile of the AppHost's name ("https-live" has none) and falls back to "http", which has no https endpoint for BACKEND_URL.
+var webApi = builder.AddProject<Projects.AiBlogResearch_WebApi>("webapi", launchProfileName: "https");
 
 // The "https-live" launch profile sets LiveData:Enabled: the local API then uses the production store (ConnectionStrings:LiveData in the
 // WebApi user-secrets), without seeding, and the client shows a banner. See LiveDataMode in the WebApi.
@@ -15,7 +17,7 @@ Console.WriteLine(liveDataOn
     ? "AppHost: LIVE DATA profile is on - the WebApi will use ConnectionStrings:LiveData (the production store)."
     : "AppHost: normal profile - the WebApi uses ConnectionStrings:Postgres. Start the 'https-live' launch profile for live data.");
 
-var mcpServer = builder.AddProject<Projects.McpServer_WebApi>("mcpserver");
+var mcpServer = builder.AddProject<Projects.McpServer_WebApi>("mcpserver", launchProfileName: "https");
 
 builder.AddNpmApp("angular", "../client/ai-blog-research-ui", "start")
     .WithReference(webApi)
