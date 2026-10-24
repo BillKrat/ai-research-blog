@@ -50,6 +50,7 @@ export class Conversation {
   protected text = '';
   protected asDecision = false;
   protected redirecting = signal(false);
+  protected approving = signal(false);
   protected readonly previewing = signal(false);
   protected readonly uploading = signal(false);
 
@@ -89,20 +90,6 @@ export class Conversation {
     return this.actions().find((a) => a.name === name)?.link ?? null;
   }
 
-  /** Approve and note it: one tap in a short visit. */
-  protected approve(): void {
-    const link = this.actionLink('approve');
-    if (!link || this.sending()) {
-      return;
-    }
-
-    this.begin();
-    this.entityApi.runAction(link).subscribe({
-      next: () => this.post('Approved.', 'Comment', () => this.changed.emit()),
-      error: (error) => this.fail(error),
-    });
-  }
-
   /** Takes a change request back: the item returns to review and the quick replies come back. */
   protected withdraw(): void {
     const link = this.actionLink('withdraw-changes');
@@ -120,8 +107,21 @@ export class Conversation {
     });
   }
 
+  /**
+   * Start a reply that, when sent, also approves the post (the way Redirect works): whatever is already typed in the box stays and is sent
+   * as the approval note, so nothing typed is lost. Nothing is approved until Send is pressed.
+   */
+  protected approve(): void {
+    this.approving.set(true);
+    this.redirecting.set(false);
+    if (!this.text.trim()) {
+      this.text = 'Approved: ';
+    }
+  }
+
   /** Start a reply that, when sent, also sends the post back with a request for changes. */
   protected redirect(): void {
+    this.approving.set(false);
     this.redirecting.set(true);
     if (!this.text.trim()) {
       this.text = 'Redirect: ';
@@ -131,6 +131,7 @@ export class Conversation {
   /** Start a question. */
   protected ask(): void {
     this.redirecting.set(false);
+    this.approving.set(false);
     if (!this.text.trim()) {
       this.text = 'Question: ';
     }
@@ -145,14 +146,15 @@ export class Conversation {
     this.begin();
     // read before the reply is sent: sending clears the flag, and a redirect is the one reply that changes the post's review state
     const wasRedirect = this.redirecting();
+    const wasApprove = this.approving();
     const sendIt = () => this.post(body, this.asDecision ? 'Decision' : 'Comment', () => {
-      if (wasRedirect) {
+      if (wasRedirect || wasApprove) {
         this.changed.emit();
       }
     });
-    const requestChanges = this.redirecting() ? this.actionLink('request-changes') : null;
-    if (requestChanges) {
-      this.entityApi.runAction(requestChanges).subscribe({ next: sendIt, error: (error) => this.fail(error) });
+    const review = this.redirecting() ? this.actionLink('request-changes') : this.approving() ? this.actionLink('approve') : null;
+    if (review) {
+      this.entityApi.runAction(review).subscribe({ next: sendIt, error: (error) => this.fail(error) });
     } else {
       sendIt();
     }
@@ -170,6 +172,7 @@ export class Conversation {
         this.text = '';
         this.asDecision = false;
         this.redirecting.set(false);
+        this.approving.set(false);
         this.previewing.set(false);
         this.sending.set(false);
         done();
