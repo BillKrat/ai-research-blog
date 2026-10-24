@@ -57,4 +57,11 @@ public class LiveDataModeTests
         Assert.Equal("db.example/blog", text);
         Assert.Equal("none", LiveDataMode.Describe(null));
     }
+
+    [Fact]
+    public void Seeding_is_applied_in_live_data_mode_unless_it_is_switched_off()
+    {
+        Assert.False(LiveDataMode.SkipSeeding(Config(("LiveData:Enabled", "true"))));
+        Assert.True(LiveDataMode.SkipSeeding(Config(("LiveData:SkipSeeding", "true"))));
+    }
 }

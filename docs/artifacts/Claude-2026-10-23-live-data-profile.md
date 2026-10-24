@@ -19,12 +19,12 @@ flowchart LR
 - Off unless `LiveData:Enabled` is `true`; the only switch is the `https-live` launch profile of the AppHost, so the normal profiles are unchanged.
 - Refuses to start outside the Development environment, and without `ConnectionStrings:LiveData` (error says what to do).
 - The connection string lives in the WebApi's user-secrets under `ConnectionStrings:LiveData` (from the vault; never a repo file). The ordinary `ConnectionStrings:Postgres` is left alone, so switching profiles switches databases.
-- **All startup seeding and table creation is skipped**, so a branch with a new seed or schema cannot write it into the live store.
+- **Seeding (changed 2026-10-24):** the store is the shared development environment, so live data mode now applies pending seeds and creates missing tables like any start (a named seed applies once and only adds schema and defaults), which lets a branch with a new schema run against it. Set `LiveData:SkipSeeding` to `true` (for example as an environment variable on the AppHost profile) to leave the store untouched; the startup check then names any schema the store lacks. A seed from an abandoned branch stays in the store: a change to an applied seed ships as a new seed, as always.
 - A red banner "LIVE DATA ..." shows to everyone on every page while it is on; the health response carries `liveData`.
 
 **Limits to know**
 - Every click is real: publish, delete, approve, upload change the live site. Exceptions the local run logs go to the live exception log.
-- A branch that needs a new seed or table will not work in this mode (its schema is not in the store). Review posts must say whether a branch can be tried this way.
+- A branch that ships a new seed applies it to the shared store when you start this mode (see Seeding above); review items must say so.
 - Sign in with your real production Admin account (the seeded local one does not exist there).
 
 **One-time setup (the human; I do not run it)**

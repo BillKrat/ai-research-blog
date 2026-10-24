@@ -162,11 +162,16 @@ try
         ? new InMemoryNQuadStore()
         : new NpgsqlNQuadStore(postgresConnection!, builder.Configuration["NQuadStore:Table"] ?? "app_n_quads");
     var seeded = false;
+    // Live data mode runs on the shared development store, so it applies pending seeds like any start (named seeds apply once and only add
+    // schema and defaults). Set LiveData:SkipSeeding=true to leave the store untouched instead.
+    var skipSeeding = liveData && LiveDataMode.SkipSeeding(builder.Configuration);
     if (liveData)
     {
-        Log.Warning("LIVE DATA mode: this local run uses the production store; startup seeding is skipped");
+        Log.Warning(skipSeeding
+            ? "LIVE DATA mode: this local run uses the shared store; startup seeding is skipped (LiveData:SkipSeeding)"
+            : "LIVE DATA mode: this local run uses the shared store and applies pending seeds to it");
     }
-    else
+    if (!skipSeeding)
     {
     if (nquadStore is INQuadStoreInitializer initializer)
     {
@@ -215,7 +220,7 @@ try
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
-    if (liveData && StartupChecks.FindMissingSchemas(userQuads, [CollaborationConstants.SchemaIri, PluginConstants.SchemaIri]) is { Count: > 0 } missingSchemas)
+    if (skipSeeding && StartupChecks.FindMissingSchemas(userQuads, [CollaborationConstants.SchemaIri, PluginConstants.SchemaIri]) is { Count: > 0 } missingSchemas)
     {
         await StartupChecks.RunReportingAppAsync(args, missingSchemas, builder.Environment.IsDevelopment(), liveData);
         return;
