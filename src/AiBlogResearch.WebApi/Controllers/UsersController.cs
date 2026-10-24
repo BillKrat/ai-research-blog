@@ -26,6 +26,11 @@ public sealed class UsersController(
     public Task<ActionResult<EntityGridModel>> List([FromQuery] EntityGridQuery query, CancellationToken cancellationToken) =>
         GridAsync(presenter, query, cancellationToken);
 
+    /// <summary>The blank form for adding a person (the user name is typed here and fixed afterwards).</summary>
+    [HttpGet("new")]
+    public async Task<ActionResult<EntityFormModel>> New(CancellationToken cancellationToken) =>
+        await presenter.GetNewFormAsync(cancellationToken) is { } blank ? Ok(blank) : NotFound();
+
     [HttpGet("{id}")]
     public async Task<ActionResult<EntityFormModel>> Get(string id, CancellationToken cancellationToken)
     {
