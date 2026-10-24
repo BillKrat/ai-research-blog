@@ -31,6 +31,33 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
         return me is null ? request : request with { Values = new Dictionary<string, string?>(request.Values) { ["Author"] = me.Entity.EntityId } };
     }
 
+    private static readonly string[] Remembered = ["Kind", "Branch", "Repos"];
+
+    /// <summary>
+    /// What the form of every item shares: Kind is a choice of the known kinds, Kind, Branch and Repositories start from the value last used
+    /// (the browser remembers it), and the Author comes first.
+    /// </summary>
+    private static EntityFormModel Shape(EntityFormModel form) =>
+        form with
+        {
+            Schema = form.Schema with
+            {
+                Fields = form.Schema.Fields
+                    .Select(field => field with
+                    {
+                        Choices = field.Name == "Kind" ? CollaborationKinds.All : field.Choices,
+                        Remember = Remembered.Contains(field.Name),
+                        Order = field.Name == "Author" ? -1 : field.Order,
+                    })
+                    .OrderBy(field => field.Order)
+                    .ToList(),
+            },
+        };
+
+    /// <summary>The grid can be filtered by Kind (all kinds when no filter is chosen).</summary>
+    protected override EntityGridModel DecorateGrid(EntityGridModel grid) =>
+        grid with { Filters = [new GridFilter("Kind", "Kind", CollaborationKinds.All)] };
+
     private static readonly string[] DeveloperOnly = ["Branch", "Repos", "Approval", "ApprovedBy", "ApprovedAt"];
     private static readonly string[] ResearchOnly = ["Sources", "Findings", "Status"];
 
@@ -41,7 +68,7 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
     /// </summary>
     protected override EntityFormModel Decorate(EntityFormModel form, string collectionPath)
     {
-        var decorated = base.Decorate(form, collectionPath);
+        var decorated = Shape(base.Decorate(form, collectionPath));
         var kind = form.Entity.Values.GetValueOrDefault("Kind");
         if (string.IsNullOrEmpty(form.Entity.EntityId) || string.IsNullOrEmpty(kind))
         {

@@ -51,6 +51,16 @@ export class AdminGrid implements OnInit {
     return grid?.canCreate === true && !!grid.links?.create;
   }
 
+  /** The value chosen in a filter dropdown ("" is all): the first page of the list again, filtered by the server. */
+  protected onFilter(field: string, value: string): void {
+    const current = this.model();
+    this.load(this.api.grid(this.collection, { pageSize: current?.paging?.pageSize, filter: value ? field : null, filterValue: value }));
+  }
+
+  protected selectedFilterValue(): string {
+    return this.model()?.paging?.filterValue ?? '';
+  }
+
   protected create(): void {
     void this.router.navigate(['new'], { relativeTo: this.route });
   }
@@ -73,7 +83,15 @@ export class AdminGrid implements OnInit {
         }
         break;
       case 'sort':
-        this.load(this.api.grid(this.collection, { sort: request.field, descending: request.descending, pageSize: current.paging?.pageSize }));
+        this.load(
+          this.api.grid(this.collection, {
+            sort: request.field,
+            descending: request.descending,
+            pageSize: current.paging?.pageSize,
+            filter: current.paging?.filter,
+            filterValue: current.paging?.filterValue,
+          }),
+        );
         break;
       case 'toggle':
         this.togglePublished(request);

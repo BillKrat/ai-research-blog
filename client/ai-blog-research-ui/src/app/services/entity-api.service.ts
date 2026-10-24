@@ -15,6 +15,8 @@ export interface GridQuery {
   sort?: string | null;
   descending?: boolean;
   pageSize?: number;
+  filter?: string | null;
+  filterValue?: string | null;
 }
 
 /**
@@ -34,6 +36,9 @@ export class EntityApiService {
     }
     if (query.pageSize) {
       params = params.set('pageSize', query.pageSize);
+    }
+    if (query.filter && query.filterValue) {
+      params = params.set('filter', query.filter).set('filterValue', query.filterValue);
     }
 
     return this.http.get<EntityGridModel>(`${environment.apiUrl}${collectionPath}`, { params });

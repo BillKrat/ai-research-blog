@@ -10,6 +10,16 @@
         @case ('checkbox') {
           <mat-checkbox [formControlName]="field.name">{{ labelOf(field) }}</mat-checkbox>
         }
+        @case ('choice') {
+          <label class="entity-form__select">
+            <span>{{ labelOf(field) }}</span>
+            <select [formControlName]="field.name" [attr.aria-label]="labelOf(field)">
+              @for (choice of field.choices; track choice) {
+                <option [value]="choice">{{ choice }}</option>
+              }
+            </select>
+          </label>
+        }
         @case ('ref') {
           <label class="entity-form__select">
             <span>{{ labelOf(field) }}</span>
