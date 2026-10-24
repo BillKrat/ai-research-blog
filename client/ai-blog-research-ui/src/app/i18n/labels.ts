@@ -33,7 +33,7 @@ export const LABELS = {
   open: 'Open',
   publish: 'Publish',
   purge: 'Purge',
-  quickApprove: 'Approve this post and note it in the conversation',
+  quickApprove: 'Start an approval: your note is sent with it when you press Send',
   quickAsk: 'Start a question',
   quickRedirect: 'Send it back: your reply is sent with a request for changes',
   purging: 'Purging...',

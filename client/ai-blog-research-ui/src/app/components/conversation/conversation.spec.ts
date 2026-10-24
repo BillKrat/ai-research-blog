@@ -101,18 +101,36 @@ describe('Conversation quick replies', () => {
     expect(Array.from(without.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim())).toEqual(['help Ask']);
   });
 
-  it('Approve runs the server action, notes it in the thread and tells the host to reload', () => {
+  it('Approve starts a reply; nothing is approved until Send, and what was typed goes with the approval', () => {
     const { http, changed, component } = setup();
 
+    component.text = 'All tests passed, looks excellent.';
     component.approve();
+    http.expectNone((r) => r.url.endsWith('/approve'));
+    expect(component.text).toBe('All tests passed, looks excellent.');
+
+    component.send();
     http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/approve')).flush(null);
     const note = http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/comments'));
-    expect(note.request.body).toEqual({ text: 'Approved.', kind: 'Comment' });
-    note.flush({ id: 'c1', author: 'Admin', kind: 'Comment', created: '2026-10-23T15:00:00Z', body: 'Approved.' });
+    expect(note.request.body).toEqual({ text: 'All tests passed, looks excellent.', kind: 'Comment' });
+    note.flush({ id: 'c1', author: 'Admin', kind: 'Comment', created: '2026-10-23T15:00:00Z', body: 'x' });
 
     expect(changed).toHaveBeenCalledTimes(1);
   });
 
+  it('Approve with an empty box starts the note with Approved: and Ask cancels the approval', () => {
+    const { http, changed, component } = setup();
+
+    component.approve();
+    expect(component.text).toBe('Approved: ');
+    component.ask();
+    component.text = 'Question: which settings first?';
+    component.send();
+    http.expectNone((r) => r.url.endsWith('/approve'));
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/comments')).flush({ id: 'c2', author: 'Admin', kind: 'Comment', created: '2026-10-23T15:01:00Z', body: 'x' });
+
+    expect(changed).not.toHaveBeenCalled();
+  });
   it('Redirect sends the reply together with the request for changes; Ask only starts a question', () => {
     const { http, changed, component } = setup();
 

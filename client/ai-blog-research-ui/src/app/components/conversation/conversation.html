@@ -30,7 +30,7 @@
 
   <div class="conversation__quick" role="group" aria-label="Quick replies">
     @if (actionLink('approve')) {
-      <button mat-stroked-button type="button" (click)="approve()" [disabled]="sending()" [matTooltip]="'quickApprove' | label">
+      <button mat-stroked-button type="button" (click)="approve()" [disabled]="sending()" [class.conversation__quick--on]="approving()" [matTooltip]="'quickApprove' | label">
         <mat-icon>thumb_up</mat-icon>
         Approve
       </button>
@@ -57,6 +57,12 @@
       </button>
     </span>
   </div>
+
+  @if (approving() || redirecting()) {
+    <p class="conversation__hint" role="status">
+      {{ approving() ? 'Write your note (or leave it as is) and press Send: that approves it and posts the note.' : 'Write what you want changed and press Send: that sends it back and posts the note.' }}
+    </p>
+  }
 
   <form class="conversation__add" (ngSubmit)="send()">
     @if (previewing()) {
