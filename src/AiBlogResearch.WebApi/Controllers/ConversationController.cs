@@ -34,6 +34,7 @@ public sealed class ConversationController(IConversation conversation) : ApiCont
 [ApiController]
 [Route("api/decisions")]
 [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[RequiresPlugin(PluginCatalog.Decisions)]
 public sealed class DecisionsController(IConversation conversation) : ControllerBase
 {
     [HttpGet]

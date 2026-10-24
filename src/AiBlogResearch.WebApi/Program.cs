@@ -206,13 +206,16 @@ try
     // Collaboration items (review requests and research questions): their own type, never public (not a post).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-015-collaboration.nq"), CollaborationConstants.SeedName);
+    // The on/off state of the built-in plug-ins (a plug-in with no stored state is on).
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-016-plugins.nq"), PluginConstants.SeedName);
     // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), EntityConstants.Site.SeedName);
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
-    if (liveData && StartupChecks.FindMissingSchemas(userQuads, [CollaborationConstants.SchemaIri]) is { Count: > 0 } missingSchemas)
+    if (liveData && StartupChecks.FindMissingSchemas(userQuads, [CollaborationConstants.SchemaIri, PluginConstants.SchemaIri]) is { Count: > 0 } missingSchemas)
     {
         await StartupChecks.RunReportingAppAsync(args, missingSchemas, builder.Environment.IsDevelopment(), liveData);
         return;
@@ -301,6 +304,11 @@ try
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, CollaborationConstants.SchemaIri), CollaborationConstants.BaseIri, CollaborationConstants.TypeIri,
         CollaborationConstants.DefaultGraph, s => new CollaborationItem(s), CurrentActor);
+    builder.Services.AddNQuadEntityRepository(
+        SchemaDal.Load(userQuads, PluginConstants.SchemaIri), PluginConstants.BaseIri, PluginConstants.TypeIri,
+        CollaborationConstants.DefaultGraph, s => new Plugin(s), CurrentActor);
+    builder.Services.AddScoped<IEntityBll<Plugin>>(provider => new EntityBll<Plugin>(provider.GetRequiredService<IEntityRepository<Plugin>>()));
+    builder.Services.AddScoped<IPlugins, Plugins>();
     builder.Services.AddScoped<ICollaborationBll, CollaborationBll>();
     builder.Services.AddScoped<IEntityPresenter<CollaborationItem>, CollaborationPresenter>();
     builder.Services.AddScoped<ICollaborationAuthoring, CollaborationAuthoring>();

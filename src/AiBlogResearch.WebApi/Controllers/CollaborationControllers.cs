@@ -15,6 +15,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 [ApiController]
 [Route("api/collaboration")]
 [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[RequiresPlugin(PluginCatalog.DeveloperCollaboration, PluginCatalog.ResearchCollaboration)]
 public sealed class CollaborationController(IEntityPresenter<CollaborationItem> presenter, ICollaborationBll items, IUserPresenter users, CollaborationMigration migration)
     : AdminEntityControllerBase<CollaborationItem>(presenter)
 {
@@ -77,6 +78,7 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
 [ApiController]
 [Route("api/author/collaboration")]
 [Authorize(Policy = "Scope:" + AuthoringController.RequiredScope)]
+[RequiresPlugin(PluginCatalog.DeveloperCollaboration, PluginCatalog.ResearchCollaboration)]
 public sealed class CollaborationAuthoringController(ICollaborationAuthoring authoring, IConfiguration configuration) : ApiControllerBase
 {
     private string Author => configuration["Authoring:AuthorUserName"] ?? "Claude";
