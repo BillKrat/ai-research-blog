@@ -41,3 +41,18 @@
     opacity: 0.75;
   }
 }
+
+.admin-entity__onetime {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--mat-sys-tertiary);
+  border-radius: 0.5rem;
+
+  code {
+    margin-right: 0.5rem;
+    padding: 0.15rem 0.4rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.05rem;
+    user-select: all;
+  }
+}

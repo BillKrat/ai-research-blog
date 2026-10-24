@@ -125,6 +125,8 @@ export class AdminEntity implements OnInit {
         return 'thumb_up';
       case 'request-changes':
         return 'rate_review';
+      case 'set-password':
+        return 'key';
       default:
         return 'play_arrow';
     }
@@ -186,14 +188,46 @@ export class AdminEntity implements OnInit {
   }
 
   /** Runs an action the server offered (publish, unpublish), after its confirmation, then reads the entity again. */
+  /** A password an administrator just generated: shown once, never kept after this panel is closed. */
+  protected readonly oneTimeLogin = signal<{ username: string; password: string } | null>(null);
+  protected readonly oneTimeCopied = signal(false);
+
+  protected async copyOneTime(): Promise<void> {
+    const login = this.oneTimeLogin();
+    if (!login) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(login.password);
+      this.oneTimeCopied.set(true);
+    } catch {
+      this.oneTimeCopied.set(false);
+    }
+  }
+
+  protected closeOneTime(): void {
+    this.oneTimeLogin.set(null);
+    this.oneTimeCopied.set(false);
+  }
+
   protected runAction(action: EntityAction): void {
     if (action.confirm && !window.confirm(action.confirm)) {
       return;
     }
 
     this.saveErrors.set([]);
-    this.api.runAction(action.link).subscribe({
-      next: () => this.reload(),
+    this.oneTimeLogin.set(null);
+    this.api.runAction<unknown>(action.link).subscribe({
+      next: (result) => {
+        // an action that hands back a password (Set password): show it once, here, and nowhere else
+        const login = result as { username?: string; password?: string } | null;
+        if (login && typeof login === 'object' && login.username && login.password) {
+          this.oneTimeLogin.set({ username: login.username, password: login.password });
+        }
+
+        this.reload();
+      },
       error: (error) => this.saveErrors.set(describeApiError(error, 'Could not do that.')),
     });
   }
