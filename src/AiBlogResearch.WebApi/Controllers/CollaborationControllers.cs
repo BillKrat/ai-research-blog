@@ -31,31 +31,73 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
         return me is null ? request : request with { Values = new Dictionary<string, string?>(request.Values) { ["Author"] = me.Entity.EntityId } };
     }
 
+    private static readonly string[] DeveloperOnly = ["Branch", "Repos", "Approval", "ApprovedBy", "ApprovedAt"];
+    private static readonly string[] ResearchOnly = ["Sources", "Findings", "Status"];
+
+    /// <summary>
+    /// The form of a saved item shows only the fields of its kind (a Developer item has no Sources, a Research item has no Branch), and offers
+    /// the actions of its kind: Approve and Request changes for Developer, Accept into a post, Close and Reopen for Research. A new item
+    /// (no kind yet) shows every field.
+    /// </summary>
     protected override EntityFormModel Decorate(EntityFormModel form, string collectionPath)
     {
         var decorated = base.Decorate(form, collectionPath);
         var kind = form.Entity.Values.GetValueOrDefault("Kind");
-        var approval = form.Entity.Values.GetValueOrDefault("Approval");
-        if (string.IsNullOrEmpty(form.Entity.EntityId) || kind != CollaborationKinds.Developer || string.IsNullOrEmpty(approval))
+        if (string.IsNullOrEmpty(form.Entity.EntityId) || string.IsNullOrEmpty(kind))
         {
             return decorated;
         }
 
+        var hidden = kind == CollaborationKinds.Research ? DeveloperOnly : ResearchOnly;
+        decorated = decorated with { Schema = decorated.Schema with { Fields = decorated.Schema.Fields.Where(field => !hidden.Contains(field.Name)).ToList() } };
         var link = $"{collectionPath}/{Uri.EscapeDataString(form.Entity.EntityId)}";
         var actions = new List<EntityAction>();
-        if (approval != PostApproval.Approved)
+        if (kind == CollaborationKinds.Developer)
         {
-            actions.Add(new EntityAction("approve", "Approve", $"{link}/approve", null));
-        }
+            var approval = form.Entity.Values.GetValueOrDefault("Approval");
+            if (approval != PostApproval.Approved)
+            {
+                actions.Add(new EntityAction("approve", "Approve", $"{link}/approve", null));
+            }
 
-        if (approval != PostApproval.ChangesRequested)
+            if (approval != PostApproval.ChangesRequested)
+            {
+                actions.Add(new EntityAction("request-changes", "Request changes", $"{link}/request-changes", null));
+            }
+        }
+        else if (kind == CollaborationKinds.Research)
         {
-            actions.Add(new EntityAction("request-changes", "Request changes", $"{link}/request-changes", null));
+            var status = form.Entity.Values.GetValueOrDefault("Status");
+            if (status != ResearchStatus.Accepted)
+            {
+                actions.Add(new EntityAction("accept", "Accept into a post", $"{link}/accept", null));
+            }
+
+            if (status != ResearchStatus.Closed)
+            {
+                actions.Add(new EntityAction("close", "Close", $"{link}/close", null));
+            }
+
+            if (status != ResearchStatus.Open)
+            {
+                actions.Add(new EntityAction("reopen", "Reopen", $"{link}/reopen", null));
+            }
         }
 
         return decorated with { Actions = actions };
     }
 
+    [HttpPost("{id}/accept")]
+    public Task<IActionResult> Accept(string id, CancellationToken cancellationToken) => SetStatusAsync(id, ResearchStatus.Accepted, cancellationToken);
+
+    [HttpPost("{id}/close")]
+    public Task<IActionResult> Close(string id, CancellationToken cancellationToken) => SetStatusAsync(id, ResearchStatus.Closed, cancellationToken);
+
+    [HttpPost("{id}/reopen")]
+    public Task<IActionResult> Reopen(string id, CancellationToken cancellationToken) => SetStatusAsync(id, ResearchStatus.Open, cancellationToken);
+
+    private Task<IActionResult> SetStatusAsync(string id, string status, CancellationToken cancellationToken) =>
+        GuardedAsync(async () => await items.SetStatusAsync(id, status, cancellationToken) ? (IActionResult)NoContent() : NotFound());
     [HttpPost("{id}/approve")]
     public Task<IActionResult> Approve(string id, CancellationToken cancellationToken) =>
         GuardedAsync(async () => await items.SetApprovalAsync(id, PostApproval.Approved, User.Identity?.Name, cancellationToken) ? (IActionResult)NoContent() : NotFound());

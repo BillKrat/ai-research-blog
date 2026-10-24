@@ -4,13 +4,18 @@ namespace AiBlogResearch.WebApi;
 /// "Live data" mode for local development: the app on the developer's machine reads and writes the production store, so the
 /// human's replies in the conversation under a post land where Claude reads them. It is opt-in (<c>LiveData:Enabled</c>), takes the
 /// connection string from <c>ConnectionStrings:LiveData</c> (user-secrets, from the vault; never a file in the repo), refuses to run
-/// outside the Development environment, and turns off the startup seeding so unmerged work cannot write schemas or data into the
-/// live store. The health response and the client's banner tell the person it is on.
+/// outside the Development environment, and (unless LiveData:SkipSeeding) applies pending seeds like any start: the store is the shared development
+/// environment, so a branch with a new schema runs against it (named seeds apply once and only add). The health response and the banner tell the person it is on.
 /// </summary>
 public static class LiveDataMode
 {
     public const string EnabledKey = "LiveData:Enabled";
     public const string ConnectionStringKey = "ConnectionStrings:LiveData";
+    public const string SkipSeedingKey = "LiveData:SkipSeeding";
+
+    /// <summary>True when live data mode was asked to leave the store untouched (no table creation, no seeding).</summary>
+    public static bool SkipSeeding(IConfiguration configuration) =>
+        string.Equals(configuration[SkipSeedingKey], "true", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Returns true when live data mode is on, after pointing <c>ConnectionStrings:Postgres</c> at the live store. Throws, with the

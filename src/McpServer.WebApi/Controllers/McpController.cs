@@ -107,7 +107,9 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
                 "content": { "type": "string", "description": "The body in Markdown (use the review post template for a Developer item)." },
                 "kind": { "type": "string", "enum": ["Developer", "Research"], "description": "Default Developer." },
                 "branch": { "type": "string" },
-                "repos": { "type": "string", "description": "The repositories involved, for example ai-research-blog, Adventures.Foundation." } },
+                "repos": { "type": "string", "description": "The repositories involved, for example ai-research-blog, Adventures.Foundation." },
+                "sources": { "type": "string", "description": "Research items: the sources, in Markdown." },
+                "findings": { "type": "string", "description": "Research items: what was found, in Markdown." } },
               "required": ["title"] }
             """)),
         (AuthoringScope, Tool(
@@ -117,7 +119,8 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
             { "type": "object",
               "properties": {
                 "id": { "type": "string", "description": "The id from list_my_collaboration or create_collaboration_item." },
-                "title": { "type": "string" }, "content": { "type": "string" }, "branch": { "type": "string" }, "repos": { "type": "string" } },
+                "title": { "type": "string" }, "content": { "type": "string" }, "branch": { "type": "string" }, "repos": { "type": "string" },
+                "sources": { "type": "string" }, "findings": { "type": "string" } },
               "required": ["id"] }
             """)),
         (AuthoringScope, Tool(
