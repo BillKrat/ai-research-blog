@@ -31,14 +31,26 @@ public static class AdminMenuDefinitions
         new("Users", "contacts", "Contacts", "/admin/contacts", "contacts", Admin, Available: false, Order: 3),
         new("System", "exceptions", "Exceptions", "/admin/exceptions", "warning", Admin, Order: 1),
         new("System", "settings", "Settings", "/admin/settings", "settings", Admin, Order: 2),
+        new("System", "plugins", "Plugins", "/admin/plugins", "extension", Admin, Order: 3),
     ];
+
+    /// <summary>The menu entries a plug-in contributes: the entry is listed only while one of its plug-ins is on.</summary>
+    private static readonly IReadOnlyDictionary<string, string[]> ContributedBy = new Dictionary<string, string[]>
+    {
+        ["collaboration"] = [PluginCatalog.DeveloperCollaboration, PluginCatalog.ResearchCollaboration],
+        ["decisions"] = [PluginCatalog.Decisions],
+    };
+
+    /// <summary>The definitions without the entries of plug-ins that are switched off.</summary>
+    public static IReadOnlyList<AdminMenuItemDefinition> Visible(IReadOnlySet<string> enabledPlugins) =>
+        All.Where(item => !ContributedBy.TryGetValue(item.Id, out var keys) || keys.Any(enabledPlugins.Contains)).ToList();
 }
 
 /// <summary>The admin navigation for the caller (empty for anyone who is not an administrator), with the exceptions count as a badge and, on Posts, the number of Collaboration drafts waiting for review.</summary>
 [ApiController]
 [Route("api/admin/menu")]
 [Authorize]
-public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPublicContent content, ICollaborationBll collaboration) : ControllerBase
+public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPublicContent content, ICollaborationBll collaboration, IPlugins plugins) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<AdminMenuModel>> Get(CancellationToken cancellationToken)
@@ -55,6 +67,6 @@ public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPubl
                 ["collaboration"] = await ReviewQueue.CountItemsAsync(collaboration, cancellationToken),
             }
             : null;
-        return Ok(AdminMenuBuilder.Build(AdminMenuDefinitions.All, User, badges));
+        return Ok(AdminMenuBuilder.Build(AdminMenuDefinitions.Visible(await plugins.EnabledKeysAsync(cancellationToken)), User, badges));
     }
 }

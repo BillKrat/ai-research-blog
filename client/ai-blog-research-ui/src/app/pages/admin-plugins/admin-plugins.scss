@@ -1,0 +1,22 @@
+.admin-plugins {
+  &__hint {
+    opacity: 0.8;
+  }
+
+  &__error {
+    color: var(--mat-sys-error);
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+      padding: 0.5rem;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+  }
+}
