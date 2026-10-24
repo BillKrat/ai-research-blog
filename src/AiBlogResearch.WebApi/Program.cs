@@ -214,6 +214,9 @@ try
     // The Research kind of collaboration item: Status, Sources and Findings.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-017-research.nq"), CollaborationConstants.ResearchSeedName);
+    // The rights of the Admin, Editor, Reviewer and Developer roles (a Rights field on Role and its default values).
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-018-role-rights.nq"), "018-role-rights");
     // The on/off state of the built-in plug-ins (a plug-in with no stored state is on).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-016-plugins.nq"), PluginConstants.SeedName);
@@ -317,6 +320,7 @@ try
         CollaborationConstants.DefaultGraph, s => new Plugin(s), CurrentActor);
     builder.Services.AddScoped<IEntityBll<Plugin>>(provider => new EntityBll<Plugin>(provider.GetRequiredService<IEntityRepository<Plugin>>()));
     builder.Services.AddScoped<IPlugins, Plugins>();
+    builder.Services.AddScoped<IRightsResolver, RightsResolver>();
     builder.Services.AddScoped<ICollaborationBll, CollaborationBll>();
     builder.Services.AddScoped<IEntityPresenter<CollaborationItem>, CollaborationPresenter>();
     builder.Services.AddScoped<ICollaborationAuthoring, CollaborationAuthoring>();

@@ -1,3 +1,4 @@
+using Adventures.Entities;
 using Adventures.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -106,6 +107,24 @@ public sealed class AuthController(IUserAccountService accountService, IConfigur
             ChangePasswordResult.AccountLocked => Rejected(nameof(ChangePasswordRequest.CurrentPassword), "Too many wrong attempts. Try again in a few minutes."),
             _ => Unauthorized(),
         };
+    }
+
+    /// <summary>
+    /// What the signed-in person may do: the rights of their roles, each with its description, so a person (and a test) can see exactly what
+    /// the server will allow. Read only; it decides nothing by itself.
+    /// </summary>
+    [HttpGet("rights")]
+    [Authorize]
+    public async Task<IActionResult> MyRights([FromServices] IRightsResolver resolver, CancellationToken cancellationToken)
+    {
+        var roles = User.FindAll(c => c.Type is Adventures.Security.WellKnownClaims.Roles or System.Security.Claims.ClaimTypes.Role)
+            .SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        var granted = await resolver.ResolveAsync(User.Identity?.Name ?? string.Empty, roles, cancellationToken);
+        return Ok(new
+        {
+            UserName = User.Identity?.Name,
+            Rights = Adventures.Entities.Rights.Catalog.Where(r => granted.Contains(r.Name)).Select(r => new { r.Name, r.Description }),
+        });
     }
 
     /// <summary>The 400 shape the client already turns into sentences (a field name and its messages).</summary>
