@@ -25,6 +25,16 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    // Missing configuration is reported, not fatal: a small app answers 503 with what is missing and how to fix it (see StartupChecks),
+    // so the page in the browser says so instead of waiting on an API that never started.
+    var startupProblems = StartupChecks.Find(builder.Configuration, builder.Environment.IsDevelopment());
+    if (startupProblems.Count > 0)
+    {
+        await StartupChecks.RunReportingAppAsync(args, startupProblems, builder.Environment.IsDevelopment(),
+            string.Equals(builder.Configuration[LiveDataMode.EnabledKey], "true", StringComparison.OrdinalIgnoreCase));
+        return;
+    }
+
     // Local development against the live store (opt-in, Development only; see LiveDataMode): the connection is switched here,
     // before anything reads ConnectionStrings:Postgres, and the startup seeding below is skipped.
     var liveData = LiveDataMode.Apply(builder.Configuration, builder.Environment.IsDevelopment());

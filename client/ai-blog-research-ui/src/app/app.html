@@ -1,4 +1,12 @@
 ﻿<div class="page">
+  @if (apiProblem.messages().length > 0) {
+    <section class="page__problem" role="alert">
+      @for (message of apiProblem.messages(); track $index) {
+        <p>{{ message }}</p>
+      }
+      <button mat-button type="button" (click)="apiProblem.clear()">Dismiss</button>
+    </section>
+  }
   @if (liveData()) {
     <p class="page__live" role="status">LIVE DATA: this local copy is using the production database. Changes you make here are real.</p>
   }

@@ -8,12 +8,13 @@ import { authInterceptor } from './interceptors/auth.interceptor';
 import { ClientErrorHandler } from './services/client-error-handler';
 import { correlationInterceptor } from './interceptors/correlation.interceptor';
 import { serverErrorInterceptor } from './interceptors/server-error.interceptor';
+import { apiProblemInterceptor } from './interceptors/api-problem.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([correlationInterceptor, authInterceptor, serverErrorInterceptor])),
+    provideHttpClient(withInterceptors([correlationInterceptor, authInterceptor, serverErrorInterceptor, apiProblemInterceptor])),
     provideAnimationsAsync(),
     { provide: ErrorHandler, useClass: ClientErrorHandler },
     provideMarkdown(),

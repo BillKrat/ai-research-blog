@@ -93,3 +93,16 @@
   font-weight: 600;
   text-align: center;
 }
+
+.page__problem {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--mat-sys-error);
+  border-radius: 0.5rem;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+
+  p {
+    margin: 0.25rem 0;
+  }
+}

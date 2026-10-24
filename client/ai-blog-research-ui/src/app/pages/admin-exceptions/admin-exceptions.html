@@ -83,6 +83,23 @@
 <ng-template #rowTools let-row>
   @let id = row.values['CorrelationId'] ?? '';
   <div class="admin-exceptions__diagnose">
+  <details class="admin-exceptions__prompt">
+    <summary>{{ 'promptClaude' | label }}</summary>
+    <p class="admin-exceptions__hint">
+      A ready-to-paste request for your own Claude Code session. Nothing is sent from here; edit it, copy it, paste it. It holds the
+      message and the ids, not the stack trace, and works for entries with no correlation id too.
+    </p>
+    <textarea
+      class="admin-exceptions__prompt-text"
+      rows="14"
+      [attr.aria-label]="'promptClaude' | label"
+      [value]="promptFor(row)"
+      (input)="editPrompt(row, $any($event.target).value)"
+    ></textarea>
+    <button mat-icon-button type="button" (click)="copyPrompt(row)" [matTooltip]="(promptCopied() === row.entityId ? 'copied' : 'copyCommand') | label" [attr.aria-label]="'copyCommand' | label">
+      <mat-icon>{{ promptCopied() === row.entityId ? 'check' : 'content_copy' }}</mat-icon>
+    </button>
+  </details>
     @if (id) {
       <button mat-icon-button type="button" (click)="diagnose(id)" [disabled]="triaging()[id]" [matTooltip]="(triaging()[id] ? 'diagnosing' : 'diagnose') | label" [attr.aria-label]="'diagnose' | label">
         <mat-icon>troubleshoot</mat-icon>

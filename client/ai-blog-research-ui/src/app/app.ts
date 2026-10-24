@@ -11,6 +11,7 @@ import { AdminExceptionsService } from './services/admin-exceptions.service';
 import { AdminMenuService } from './services/admin-menu.service';
 import { AuthService } from './services/auth.service';
 import { SiteService } from './services/site.service';
+import { ApiProblemService } from './services/api-problem.service';
 import { HealthResponse, HealthService, describeFailures } from './services/health.service';
 
 type HealthState = 'checking' | 'healthy' | 'degraded' | 'unhealthy' | 'unreachable';
@@ -28,6 +29,7 @@ export class App implements OnInit, OnDestroy {
   private readonly adminMenu = inject(AdminMenuService);
 
   private readonly site = inject(SiteService);
+  protected readonly apiProblem = inject(ApiProblemService);
   private readonly documentTitle = inject(Title);
 
   /** The site title, from the settings an administrator edits (the default until they are read). */

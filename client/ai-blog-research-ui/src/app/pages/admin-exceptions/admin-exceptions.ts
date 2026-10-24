@@ -6,7 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { LabelPipe } from '../../i18n/labels';
 import { EntityGrid } from '../../components/entity-grid/entity-grid';
 import { describeApiError } from '../../models/api-error';
-import { EntityGridModel } from '../../models/entity-form.model';
+import { EntityDataModel, EntityGridModel } from '../../models/entity-form.model';
 import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
 
 /**
@@ -83,6 +83,64 @@ export class AdminExceptions implements OnInit {
       this.copied.set(result.correlationId);
     } catch {
       this.copied.set(null);
+    }
+  }
+
+  /** The prompt text of each row (by entity id) once an administrator has edited it, and which row was last copied. */
+  protected readonly promptEdits = signal<Record<string, string>>({});
+  protected readonly promptCopied = signal<string | null>(null);
+
+  /**
+   * "Prompt Claude": a ready-to-paste request for a Claude Code session, built from the row on screen. It works for every row,
+   * including the ones with no correlation id (a failure at startup happens before any request, so Diagnose and Ask Claude have
+   * nothing to look up). Nothing is sent from here: the text is the administrator's to edit and paste. It names the ids and the
+   * message, not the stack trace; Claude reads the evidence itself through the MCP diagnostics tool.
+   */
+  promptFor(row: EntityDataModel): string {
+    const edited = this.promptEdits()[row.entityId];
+    if (edited !== undefined) {
+      return edited;
+    }
+
+    const pick = (...names: string[]): string => {
+      const wanted = names.map((n) => n.toLowerCase());
+      const key = Object.keys(row.values).find((k) => wanted.includes(k.toLowerCase()));
+      return (key ? row.values[key] : null) ?? '';
+    };
+    const message = pick('Message').replace(/\s+/g, ' ').slice(0, 600);
+    const correlationId = pick('CorrelationId');
+    const lines = [
+      'Claude: please triage this exception from the AI Research Blog and tell me the cause and the fix.',
+      '',
+      `- Type: ${pick('ExceptionType') || 'unknown'}`,
+      `- Message: ${message || 'none recorded'}`,
+      `- Occurred at: ${pick('OccurredAt', 'Occurred at') || 'unknown'}`,
+      `- Request: ${pick('Request') || 'none'}`,
+      `- Signature id: ${pick('SignatureId') || 'none'}`,
+      `- Correlation id: ${correlationId || 'none (recorded outside a request, for example at startup)'}`,
+      `- Exception entry id: ${row.entityId}`,
+      '',
+      'Read the evidence yourself rather than trusting this summary. From the workspace root:',
+      '',
+      correlationId
+        ? `.\docs\Claude-secret.ps1 run m2m/claude-diagnostics/claude-diagnostics -EnvVar CLAUDE_DIAG_SECRET -Exec powershell -ExecArgs "-NoProfile","-File",".\docs\Claude-diagnose.ps1","-CorrelationId","${correlationId}"`
+        : '.\docs\Claude-secret.ps1 run m2m/claude-diagnostics/claude-diagnostics -EnvVar CLAUDE_DIAG_SECRET -Exec powershell -ExecArgs "-NoProfile","-File",".\docs\Claude-diagnose.ps1"   (lists the kinds of failure and the most recent exceptions; match this one by its signature id and time)',
+      '',
+      'If this is a local run, also read the newest src/AiBlogResearch.WebApi/bin/Debug/net10.0/logs/startup-*.log. Then propose the smallest fix on a branch.',
+    ];
+    return lines.join('\n');
+  }
+
+  editPrompt(row: EntityDataModel, text: string): void {
+    this.promptEdits.update((state) => ({ ...state, [row.entityId]: text }));
+  }
+
+  async copyPrompt(row: EntityDataModel): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(this.promptFor(row));
+      this.promptCopied.set(row.entityId);
+    } catch {
+      this.promptCopied.set(null);
     }
   }
   protected readonly signatures = signal<ExceptionSignatureSummary[]>([]);

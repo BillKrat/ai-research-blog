@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { ErrorHandler, Injectable, Injector, inject } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { ApiProblemService } from './api-problem.service';
 
 /**
  * Angular's last-resort handler for an error nobody caught. It still writes to the console (what the default does), and
@@ -15,6 +16,11 @@ export class ClientErrorHandler implements ErrorHandler {
 
   handleError(error: unknown): void {
     console.error(error);
+    try {
+      this.injector.get(ApiProblemService).reportScript(describe(error).message);
+    } catch {
+      // showing the error must never raise another
+    }
     if (this.reporting) {
       return;
     }
