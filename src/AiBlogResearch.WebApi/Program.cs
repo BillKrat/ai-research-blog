@@ -211,6 +211,9 @@ try
     // Collaboration items (review requests and research questions): their own type, never public (not a post).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-015-collaboration.nq"), CollaborationConstants.SeedName);
+    // The Research kind of collaboration item: Status, Sources and Findings.
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-017-research.nq"), CollaborationConstants.ResearchSeedName);
     // The on/off state of the built-in plug-ins (a plug-in with no stored state is on).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-016-plugins.nq"), PluginConstants.SeedName);
