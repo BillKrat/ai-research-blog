@@ -6,6 +6,7 @@ Guiding aim: keep eyes on the running system at every level (logs, exceptions, h
 
 ## Next up (priority, set by the human 2026-10-20)
 
+- **Keep an unsent reply as a draft (human, 2026-10-24).** Text typed in the conversation reply box is lost if the person leaves the page or reloads. Keep it per item in browser storage (a per-viewer convenience) and restore it when the item is opened again; clear it when it is sent.
 - **No red 404 on every visit when no front page is pinned (human, 2026-10-24).** `GET /api/public/home` answers 404 when no page is marked as the front page, and the client treats the 404 as "redirect to the posts"; the browser console logs a red error on every request. It is not a server exception (the exception log is untouched), but it is control flow by error status. Change: answer 204 No Content (or 200 with a flag) when there is no front page and have `PageView` branch on that; update the two public-site specs that flush a 404.
 - **Duplicate the action buttons at the end of the page (human, 2026-10-24).** On the admin editors (a post with a long conversation, a collaboration item) repeat the action buttons (Save, Approve and the others) below the form, so nobody scrolls back to the top to save.
 - **Admin layout (human, 2026-10-24).** (1) Remove the large left margin on the admin pages. (2) A way to collapse and expand the admin menu. (3) Keep the grids inside the visible width: wrap words in cells (the collapsible menu gives them more room).
