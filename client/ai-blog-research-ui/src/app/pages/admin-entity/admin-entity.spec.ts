@@ -108,4 +108,28 @@ describe('AdminEntity', () => {
 
     expect(navigate).toHaveBeenCalledWith(['/admin', 'pages']);
   });
+
+  it('shows the password an action hands back once, and clears it when done', () => {
+    const { params, http, component, fixture } = setup();
+    http.expectOne((r) => r.url.endsWith('/api/pages/new')).flush(blank);
+    params.next(convertToParamMap({ id: 'p1' }));
+    http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/pages/p1')).flush(saved);
+
+    const run = component as unknown as {
+      runAction(action: { name: string; label: string; link: string }): void;
+      oneTimeLogin(): { username: string; password: string } | null;
+      closeOneTime(): void;
+    };
+    run.runAction({ name: 'set-password', label: 'Set password', link: '/api/users/p1/set-password' });
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/users/p1/set-password')).flush({ username: 'test-editor', password: 'abc123XYZ789qwertyui', accountCreated: true });
+    http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/pages/p1')).flush(saved);
+    fixture.detectChanges();
+
+    expect(run.oneTimeLogin()).toEqual({ username: 'test-editor', password: 'abc123XYZ789qwertyui' });
+    expect((fixture.nativeElement as HTMLElement).querySelector('.admin-entity__onetime code')?.textContent).toBe('abc123XYZ789qwertyui');
+
+    run.closeOneTime();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.admin-entity__onetime')).toBeNull();
+  });
 });

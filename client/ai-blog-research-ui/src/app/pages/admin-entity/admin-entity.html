@@ -59,6 +59,20 @@
         }
       </div>
 
+      @if (oneTimeLogin(); as login) {
+        <section class="admin-entity__onetime" role="status">
+          <p>
+            <strong>Sign-in for {{ login.username }}.</strong> Give them this password now: it is shown once and cannot be looked up again.
+            They must change it at their first sign-in.
+          </p>
+          <p>
+            <code>{{ login.password }}</code>
+            <button mat-stroked-button type="button" (click)="copyOneTime()">{{ oneTimeCopied() ? 'Copied' : 'Copy' }}</button>
+            <button mat-stroked-button type="button" (click)="closeOneTime()">Done</button>
+          </p>
+        </section>
+      }
+
       @if (saveState() === 'error') {
         <div class="admin-entity__error" role="alert">
           <p>Not saved.</p>
