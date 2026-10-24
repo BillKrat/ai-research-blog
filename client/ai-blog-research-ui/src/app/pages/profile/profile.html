@@ -84,4 +84,16 @@
       </div>
     }
   }
+  <section class="profile__rights" aria-label="What you can do">
+    <h3>What you can do</h3>
+    @if (rights().length === 0) {
+      <p>Nothing in the admin area: your account has no role that allows it.</p>
+    } @else {
+      <ul>
+        @for (right of rights(); track right.name) {
+          <li><code>{{ right.name }}</code> {{ right.description }}</li>
+        }
+      </ul>
+    }
+  </section>
 </section>

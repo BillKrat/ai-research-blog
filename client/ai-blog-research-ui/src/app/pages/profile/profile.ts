@@ -12,7 +12,7 @@ import { AuthService } from '../../services/auth.service';
 import { EntityForm } from '../../components/entity-form/entity-form';
 import { describeApiError } from '../../models/api-error';
 import { EntityDataModel, EntityFormModel } from '../../models/entity-form.model';
-import { ProfileService } from '../../services/profile.service';
+import { MyRight, ProfileService } from '../../services/profile.service';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 type DeleteState = 'idle' | 'deleting' | 'error';
@@ -55,7 +55,11 @@ export class Profile implements OnInit {
   protected readonly saveErrors = signal<string[]>([]);
   protected readonly deleteErrors = signal<string[]>([]);
 
+  /** What this person may do, as the server resolves it from their roles. */
+  protected readonly rights = signal<MyRight[]>([]);
+
   ngOnInit(): void {
+    this.profileService.getMyRights().subscribe({ next: (mine) => this.rights.set(mine.rights), error: () => this.rights.set([]) });
     this.profileService.getMyProfile().subscribe({
       next: (form) => {
         this.model.set(form);
