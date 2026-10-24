@@ -51,6 +51,23 @@ public static class StartupChecks
         return problems;
     }
 
+    /// <summary>
+    /// Schemas the app needs that the store does not hold. Live data mode skips the startup seeding on purpose, so a branch that ships a new
+    /// seed cannot run against the production store until that seed has been deployed; this says so instead of failing inside the schema loader.
+    /// </summary>
+    public static IReadOnlyList<StartupProblem> FindMissingSchemas(IEnumerable<Adventures.Data.NQuad.NQuad> quads, IEnumerable<string> requiredSchemaIris)
+    {
+        var present = quads
+            .Where(q => q.Predicate == Adventures.Entities.EntityConstants.Schema.TypePredicate && q.Object == Adventures.Entities.EntityConstants.Schema.TypeIri)
+            .Select(q => q.Subject)
+            .ToHashSet(StringComparer.Ordinal);
+        return requiredSchemaIris
+            .Where(iri => !present.Contains(iri))
+            .Select(iri => new StartupProblem(iri, "The store has no such schema: live data mode skips the seeding, and this code needs a seed the production store does not have yet.",
+                "Run the normal https profile (local database), or deploy this branch first so the seed is applied."))
+            .ToList();
+    }
+
     /// <summary>The same message as one exception, for the log and the failure journal.</summary>
     public static InvalidOperationException ToException(IReadOnlyList<StartupProblem> problems) =>
         new($"{ProblemTitle} " + string.Join(" ", problems.Select(p => $"[{p.Key}] {p.Message} {p.Fix}")));

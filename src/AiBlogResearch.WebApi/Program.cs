@@ -212,6 +212,12 @@ try
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
+    if (liveData && StartupChecks.FindMissingSchemas(userQuads, [CollaborationConstants.SchemaIri]) is { Count: > 0 } missingSchemas)
+    {
+        await StartupChecks.RunReportingAppAsync(args, missingSchemas, builder.Environment.IsDevelopment(), liveData);
+        return;
+    }
+
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
 
     builder.Services.AddSingleton<INQuadStore>(nquadStore);
