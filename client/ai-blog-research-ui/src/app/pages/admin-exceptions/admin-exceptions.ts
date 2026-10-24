@@ -123,8 +123,8 @@ export class AdminExceptions implements OnInit {
       'Read the evidence yourself rather than trusting this summary. From the workspace root:',
       '',
       correlationId
-        ? `.\docs\Claude-secret.ps1 run m2m/claude-diagnostics/claude-diagnostics -EnvVar CLAUDE_DIAG_SECRET -Exec powershell -ExecArgs "-NoProfile","-File",".\docs\Claude-diagnose.ps1","-CorrelationId","${correlationId}"`
-        : '.\docs\Claude-secret.ps1 run m2m/claude-diagnostics/claude-diagnostics -EnvVar CLAUDE_DIAG_SECRET -Exec powershell -ExecArgs "-NoProfile","-File",".\docs\Claude-diagnose.ps1"   (lists the kinds of failure and the most recent exceptions; match this one by its signature id and time)',
+        ? `.\\docs\\Claude-secret.ps1 run m2m/claude-diagnostics/claude-diagnostics -EnvVar CLAUDE_DIAG_SECRET -Exec powershell -ExecArgs "-NoProfile","-File",".\\docs\\Claude-diagnose.ps1","-CorrelationId","${correlationId}"`
+        : '.\\docs\\Claude-secret.ps1 run m2m/claude-diagnostics/claude-diagnostics -EnvVar CLAUDE_DIAG_SECRET -Exec powershell -ExecArgs "-NoProfile","-File",".\\docs\\Claude-diagnose.ps1"   (lists the kinds of failure and the most recent exceptions; match this one by its signature id and time)',
       '',
       'If this is a local run, also read the newest src/AiBlogResearch.WebApi/bin/Debug/net10.0/logs/startup-*.log. Then propose the smallest fix on a branch.',
     ];
