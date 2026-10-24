@@ -1,0 +1,58 @@
+.admin-entity {
+  margin: 2rem 0 0;
+
+  h2,
+  h3 {
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    margin-top: 2rem;
+  }
+
+  &__error {
+    color: var(--mat-sys-error);
+    margin: 0 0 0.5rem;
+  }
+
+  // The actions stay at the top and follow the page while a long form is scrolled.
+  &__top {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--mat-sys-surface, inherit);
+    margin-bottom: 1rem;
+  }
+
+  &__toolbar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+  }
+
+  &__status {
+    opacity: 0.75;
+  }
+
+  &__hint {
+    opacity: 0.75;
+  }
+}
+
+.admin-entity__onetime {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--mat-sys-tertiary);
+  border-radius: 0.5rem;
+
+  code {
+    margin-right: 0.5rem;
+    padding: 0.15rem 0.4rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.05rem;
+    user-select: all;
+  }
+}

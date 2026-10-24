@@ -1,0 +1,55 @@
+// Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
+import { DraftBadge } from '../../components/draft-badge/draft-badge';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ContentTools } from '../../components/content-tools/content-tools';
+import { MarkdownContent } from '../../components/markdown-content/markdown-content';
+import { PublicContentService, PublicPage } from '../../services/public-content.service';
+
+/**
+ * One published page by slug (/page/:slug), or, with route data front = true, the front page at the home address: when the site has
+ * no front page pinned it redirects to the posts, so the home address is never empty.
+ */
+@Component({
+  selector: 'app-page-view',
+  imports: [RouterLink, MarkdownContent, ContentTools, DraftBadge],
+  templateUrl: './page-view.html',
+  styleUrl: './public.scss',
+})
+export class PageView implements OnInit {
+  private readonly content = inject(PublicContentService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  protected readonly page = signal<PublicPage | null>(null);
+  protected readonly notFound = signal(false);
+  protected readonly isLoading = signal(true);
+
+  protected get isFront(): boolean {
+    return this.route.snapshot.data['front'] === true;
+  }
+
+  ngOnInit(): void {
+    this.route.paramMap.subscribe((params) => {
+      this.isLoading.set(true);
+      this.notFound.set(false);
+      const source = this.isFront ? this.content.home() : this.content.page(params.get('slug') ?? '');
+      source.subscribe({
+        next: (page) => {
+          this.page.set(page);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.page.set(null);
+          if (this.isFront) {
+            // no front page is pinned: the site opens on the posts, as BlogEngine.NET does
+            void this.router.navigateByUrl('/posts', { replaceUrl: true });
+            return;
+          }
+          this.notFound.set(true);
+          this.isLoading.set(false);
+        },
+      });
+    });
+  }
+}

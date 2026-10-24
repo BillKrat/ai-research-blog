@@ -1,0 +1,179 @@
+<section class="admin-exceptions">
+  <h2>Exceptions</h2>
+
+  @for (message of errors(); track message) {
+    <p class="admin-exceptions__error" role="alert">{{ message }}</p>
+  }
+
+  <h3>Occurrences</h3>
+
+  <div class="admin-exceptions__actions">
+    <button mat-icon-button color="primary" type="button" (click)="ok()" [matTooltip]="'ok' | label" [attr.aria-label]="'ok' | label">
+      <mat-icon>check</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      color="warn"
+      type="button"
+      (click)="purge()"
+      [disabled]="isPurging() || !model() || model()!.rows.length === 0"
+      [matTooltip]="(isPurging() ? 'purging' : 'purge') | label"
+      [attr.aria-label]="'purge' | label"
+    >
+      <mat-icon>delete_sweep</mat-icon>
+    </button>
+  </div>
+
+  <label class="admin-exceptions__toggle">
+    <input type="checkbox" [checked]="includePurged()" (change)="togglePurged($any($event.target).checked)" />
+    Show purged (history)
+  </label>
+
+  @if (isLoading()) {
+    <p>Loading exceptions...</p>
+  } @else if (model(); as grid) {
+    @if (grid.rows.length === 0) {
+      <p>{{ includePurged() ? 'No exceptions recorded.' : 'No active exceptions.' }}</p>
+    } @else {
+      <app-entity-grid [model]="grid" [rowTools]="rowTools" />
+    }
+  }
+  @if (signatures().length > 0) {
+    <h3>Kinds of failure</h3>
+    <p class="admin-exceptions__hint">Repeats of the same exception are grouped. Match a row above to a kind by its SignatureId.</p>
+    <table class="admin-exceptions__kinds">
+      <thead>
+        <tr>
+          <th>Seen</th>
+          <th>Type</th>
+          <th>Message</th>
+          <th>Where</th>
+          <th>Last seen</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (kind of signatures(); track kind.id) {
+          <tr>
+            <td class="admin-exceptions__count">{{ kind.occurrenceCount }}</td>
+            <td>{{ kind.exceptionType }}</td>
+            <td>{{ kind.messagePattern }}</td>
+            <td>{{ kind.topFrame }}</td>
+            <td>{{ kind.lastSeen }}</td>
+            <td>
+              @if (kind.status === 'Regressed') {
+                <strong class="admin-exceptions__regressed" title="Was marked fixed and happened again">Regressed</strong>
+              }
+              <select [attr.aria-label]="'Status of ' + kind.exceptionType" (change)="setStatus(kind, $any($event.target).value)">
+                @if (kind.status === 'Regressed') {
+                  <option value="Regressed" selected disabled>Regressed</option>
+                }
+                @for (choice of statusChoices; track choice) {
+                  <option [value]="choice" [selected]="choice === kind.status">{{ choice }}</option>
+                }
+              </select>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
+
+<ng-template #rowTools let-row>
+  @let id = row.values['CorrelationId'] ?? '';
+  <div class="admin-exceptions__diagnose">
+  <details class="admin-exceptions__prompt">
+    <summary>{{ 'promptClaude' | label }}</summary>
+    <p class="admin-exceptions__hint">
+      A ready-to-paste request for your own Claude Code session. Nothing is sent from here; edit it, copy it, paste it. It holds the
+      message and the ids, not the stack trace, and works for entries with no correlation id too.
+    </p>
+    <textarea
+      class="admin-exceptions__prompt-text"
+      rows="14"
+      [attr.aria-label]="'promptClaude' | label"
+      [value]="promptFor(row)"
+      (input)="editPrompt(row, $any($event.target).value)"
+    ></textarea>
+    <button mat-icon-button type="button" (click)="copyPrompt(row)" [matTooltip]="(promptCopied() === row.entityId ? 'copied' : 'copyCommand') | label" [attr.aria-label]="'copyCommand' | label">
+      <mat-icon>{{ promptCopied() === row.entityId ? 'check' : 'content_copy' }}</mat-icon>
+    </button>
+  </details>
+    @if (id) {
+      <button mat-icon-button type="button" (click)="diagnose(id)" [disabled]="triaging()[id]" [matTooltip]="(triaging()[id] ? 'diagnosing' : 'diagnose') | label" [attr.aria-label]="'diagnose' | label">
+        <mat-icon>troubleshoot</mat-icon>
+      </button>
+    } @else {
+      <span class="admin-exceptions__hint">No correlation id on this entry (recorded before ids existed).</span>
+    }
+
+    @if (triage()[id]; as result) {
+      <section class="triage" aria-live="polite">
+        <p class="triage__verdict">
+          <span class="triage__badge triage__badge--{{ result.verdict.toLowerCase().split(' ')[0] }}">{{ result.verdict }}</span>
+          {{ result.summary }}
+        </p>
+        <ul class="triage__findings">
+          @for (finding of result.findings; track $index) {
+            <li class="triage__finding triage__finding--{{ finding.severity }}">
+              <strong>{{ finding.title }}:</strong> {{ finding.detail }}
+            </li>
+          }
+        </ul>
+        @if (result.nextSteps.length > 0) {
+          <h4>Next</h4>
+          <ul>
+            @for (step of result.nextSteps; track $index) {
+              <li>{{ step }}</li>
+            }
+          </ul>
+        }
+        <h4>Ask Claude</h4>
+        <p class="admin-exceptions__hint">
+          Sends a scrubbed report of this request (no keys, tokens, passwords, e-mail or IP addresses) to Anthropic's Claude
+          for an assessment. It costs a little each time; the answer is kept for an hour.
+        </p>
+        <button mat-icon-button color="primary" type="button" (click)="askClaude(id)" [disabled]="asking()[id]" [matTooltip]="(asking()[id] ? 'asking' : ai()[id] ? 'askAgain' : 'askClaude') | label" [attr.aria-label]="'askClaude' | label">
+          <mat-icon>psychology</mat-icon>
+        </button>
+        @if (ai()[id]; as answer) {
+          @if (answer.available) {
+            <section class="triage__ai" aria-live="polite">
+              <p><strong>{{ answer.summary }}</strong></p>
+              <p><strong>Likely cause:</strong> {{ answer.likelyCause }} <em>(confidence: {{ answer.confidence }})</em></p>
+              @if (answer.nextSteps.length > 0) {
+                <h4>Claude suggests</h4>
+                <ol>
+                  @for (step of answer.nextSteps; track $index) {
+                    <li>{{ step }}</li>
+                  }
+                </ol>
+              }
+              @if (answer.missingEvidence.length > 0) {
+                <h4>What would help</h4>
+                <ul>
+                  @for (item of answer.missingEvidence; track $index) {
+                    <li>{{ item }}</li>
+                  }
+                </ul>
+              }
+              <p class="admin-exceptions__hint">
+                {{ answer.model }}, {{ answer.inputTokens }} tokens in / {{ answer.outputTokens }} out,
+                {{ answer.sentCharacters }} characters sent{{ answer.fromCache ? ' (kept from earlier)' : '' }}.
+              </p>
+            </section>
+          } @else {
+            <p class="triage__finding triage__finding--warning">{{ answer.reason }}</p>
+          }
+        }
+        <h4>Hand to Claude</h4>
+        <p class="admin-exceptions__hint">Run this from the workspace root; Claude then reads the same evidence through the MCP diagnostics tool.</p>
+        <code class="triage__command">{{ result.handOffCommand }}</code>
+        <button mat-icon-button type="button" (click)="copyHandOff(result)" [matTooltip]="(copied() === result.correlationId ? 'copied' : 'copyCommand') | label" [attr.aria-label]="'copyCommand' | label">
+          <mat-icon>{{ copied() === result.correlationId ? 'check' : 'content_copy' }}</mat-icon>
+        </button>
+      </section>
+    }
+  </div>
+</ng-template>

@@ -1,0 +1,15 @@
+<article class="public">
+  @if (isLoading()) {
+    <p>Loading...</p>
+  } @else if (notFound()) {
+    <h2>Not found</h2>
+    <p>This page does not exist or is not published. <a routerLink="/posts">Back to the posts</a>.</p>
+  } @else if (page(); as result) {
+    @if (result.parentSlug) {
+      <p class="public__crumb"><a [routerLink]="['/page', result.parentSlug]">{{ result.parentTitle }}</a> &rsaquo;</p>
+    }
+    <h2>{{ result.title }}@if (result.isDraft) {<app-draft-badge />}</h2>
+    <p class="public__meta public__meta--tools"><app-content-tools kind="pages" [slug]="result.slug" /></p>
+    <app-markdown-content [markdown]="result.content" />
+  }
+</article>

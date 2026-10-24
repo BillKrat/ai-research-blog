@@ -1,0 +1,103 @@
+﻿<div class="page">
+  @if (apiProblem.messages().length > 0) {
+    <section class="page__problem" role="alert">
+      @for (message of apiProblem.messages(); track $index) {
+        <p>{{ message }}</p>
+      }
+      <button mat-button type="button" (click)="apiProblem.clear()">Dismiss</button>
+    </section>
+  }
+  @if (liveData()) {
+    <p class="page__live" role="status">LIVE DATA: this local copy is using the production database. Changes you make here are real.</p>
+  }
+  <header class="page__header">
+    <div class="page__brand">
+      <h1><a routerLink="/" class="page__title-link">{{ title() }}</a></h1>
+      @if (tagline()) {
+        <p class="page__tagline">{{ tagline() }}</p>
+      }
+    </div>
+
+    <div class="page__header-actions">
+      @if (showAdminLink()) {
+        <!-- Interim home of the health line (backlog: the Dashboard carries it): top right, administrators only, out of the menu's way. -->
+        <span class="page__health" aria-live="polite">
+          @switch (healthState()) {
+            @case ('checking') {
+              <span class="badge badge--info">API: checking...</span>
+            }
+            @case ('healthy') {
+              <span class="badge badge--success" [attr.title]="'WebApi healthy as of ' + healthCheckedAt()">API: healthy</span>
+            }
+            @case ('degraded') {
+              <span class="badge badge--warning" [attr.title]="(healthTrace() ? 'Trace: ' + healthTrace() + '. ' : '') + 'As of ' + healthCheckedAt()">
+                API: degraded ({{ healthProblem() }})
+              </span>
+            }
+            @case ('unhealthy') {
+              <span class="badge badge--danger" [attr.title]="(healthTrace() ? 'Trace: ' + healthTrace() + '. ' : '') + 'As of ' + healthCheckedAt()">
+                API: unhealthy ({{ healthProblem() }})
+              </span>
+            }
+            @case ('unreachable') {
+              <span class="badge badge--danger">API: unreachable</span>
+            }
+          }
+        </span>
+      }
+     <button
+        mat-icon-button
+        (click)="toggleTheme()"
+        [attr.aria-label]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+      >
+        <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+
+      @if (isAuthenticated() && activeExceptionCount() > 0) {
+        <a
+          mat-icon-button
+          class="page__exceptions"
+          routerLink="/admin/exceptions"
+          [matBadge]="activeExceptionCount()"
+          matBadgeColor="warn"
+          matBadgeSize="small"
+          [attr.aria-label]="activeExceptionCount() + (activeExceptionCount() === 1 ? ' active exception' : ' active exceptions') + '. Open the exception log.'"
+          title="Server exceptions need review"
+        >
+          <mat-icon>warning</mat-icon>
+        </a>
+      }
+
+      @if (isAuthenticated()) {
+        <button mat-button [matMenuTriggerFor]="userMenu" aria-label="Account menu">
+          <mat-icon>account_circle</mat-icon>
+          {{ username() }}
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <a mat-menu-item routerLink="/profile">
+            <mat-icon>person</mat-icon>
+            <span>Profile</span>
+          </a>
+          @if (showAdminLink()) {
+            <a mat-menu-item routerLink="/admin">
+              <mat-icon>admin_panel_settings</mat-icon>
+              <span>Admin</span>
+            </a>
+          }
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Log out</span>
+          </button>
+        </mat-menu>
+      } @else {
+        <button mat-icon-button routerLink="/login" aria-label="Sign in">
+          <mat-icon>login</mat-icon>
+        </button>
+      }
+    </div>
+  </header>
+
+  <app-site-nav />
+
+  <router-outlet />
+</div>

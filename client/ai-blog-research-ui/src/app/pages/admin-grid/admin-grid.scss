@@ -1,0 +1,31 @@
+.admin-grid {
+  margin: 2rem 0 0;
+
+  h2 {
+    margin-bottom: 1rem;
+  }
+
+  &__error {
+    color: var(--mat-sys-error);
+    margin: 0 0 0.5rem;
+  }
+}
+
+.admin-grid__head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  // action icons sit at the right on every screen
+  .admin-grid__new {
+    margin-left: auto;
+  }
+}
+
+.admin-grid__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  margin-right: 0.5rem;
+}

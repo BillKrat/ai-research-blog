@@ -1,0 +1,46 @@
+﻿.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1.25rem;
+  margin: 0.5rem 0 1rem;
+
+  a {
+    display: inline-block;
+    color: inherit;
+    text-decoration: none;
+    padding: 0.2rem 0;
+    line-height: 1.4;
+    // every link reserves the same underline space, so the active one (bold, underlined) does not sit lower than its neighbours
+    border-bottom: 2px solid transparent;
+  }
+
+  &__active {
+    font-weight: 600;
+    border-bottom-color: currentColor;
+  }
+
+  &__group {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+
+    &:hover .site-nav__children,
+    &:focus-within .site-nav__children {
+      display: flex;
+    }
+  }
+
+  &__children {
+    display: none;
+    position: absolute;
+    z-index: 5;
+    top: 100%;
+    left: 0;
+    flex-direction: column;
+    min-width: 12rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--mat-sys-surface-container-high);
+    border-radius: 0.4rem;
+  }
+}

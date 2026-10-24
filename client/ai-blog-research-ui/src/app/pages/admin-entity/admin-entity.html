@@ -1,0 +1,98 @@
+<section class="admin-entity">
+  <h2>{{ title() }}{{ isNew() ? ': new' : '' }}</h2>
+
+  @for (message of loadErrors(); track message) {
+    <p class="admin-entity__error" role="alert">{{ message }}</p>
+  }
+
+  @if (isLoading()) {
+    <p>Loading...</p>
+  } @else if (model(); as form) {
+    <app-entity-form [model]="form" (save)="onSave($event)">
+      <div formToolbar class="admin-entity__top">
+      <div class="admin-entity__toolbar" role="toolbar" aria-label="Actions">
+        <button mat-icon-button type="button" (click)="back()" [matTooltip]="'back' | label" [attr.aria-label]="'back' | label">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        @if (form.permissions?.canUpdate !== false) {
+          <button
+            mat-icon-button
+            color="primary"
+            type="submit"
+            [disabled]="saveState() === 'saving'"
+            [matTooltip]="(saveState() === 'saving' ? 'saving' : 'save') | label"
+            [attr.aria-label]="'save' | label"
+          >
+            <mat-icon>save</mat-icon>
+          </button>
+        }
+        @if (canTogglePublish) {
+          <button
+            mat-icon-button
+            type="button"
+            (click)="togglePublish()"
+            [matTooltip]="(isPublished ? 'unpublish' : 'publish') | label"
+            [attr.aria-label]="(isPublished ? 'unpublish' : 'publish') | label"
+          >
+            <mat-icon>{{ isPublished ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        }
+        @if (viewRoute; as route) {
+          <a mat-icon-button [routerLink]="route" [matTooltip]="'view' | label" [attr.aria-label]="'view' | label">
+            <mat-icon>preview</mat-icon>
+          </a>
+        }
+        @for (action of form.actions ?? []; track action.name) {
+          <button mat-icon-button type="button" (click)="runAction(action)" [matTooltip]="action.label" [attr.aria-label]="action.label">
+            <mat-icon>{{ iconOf(action) }}</mat-icon>
+          </button>
+        }
+        @if (canDelete) {
+          <button mat-icon-button color="warn" type="button" (click)="remove()" [matTooltip]="'delete' | label" [attr.aria-label]="'delete' | label">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+        @switch (saveState()) {
+          @case ('saved') {
+            <span class="admin-entity__status" role="status">Saved.</span>
+          }
+        }
+      </div>
+
+      @if (oneTimeLogin(); as login) {
+        <section class="admin-entity__onetime" role="status">
+          <p>
+            <strong>Sign-in for {{ login.username }}.</strong> Give them this password now: it is shown once and cannot be looked up again.
+            They must change it at their first sign-in.
+          </p>
+          <p>
+            <code>{{ login.password }}</code>
+            <button mat-stroked-button type="button" (click)="copyOneTime()">{{ oneTimeCopied() ? 'Copied' : 'Copy' }}</button>
+            <button mat-stroked-button type="button" (click)="closeOneTime()">Done</button>
+          </p>
+        </section>
+      }
+
+      @if (saveState() === 'error') {
+        <div class="admin-entity__error" role="alert">
+          <p>Not saved.</p>
+          <ul>
+            @for (message of saveErrors(); track message) {
+              <li>{{ message }}</li>
+            }
+          </ul>
+        </div>
+      }
+      </div>
+    </app-entity-form>
+
+    @for (relation of form.relations ?? []; track relation.name) {
+      <h3>{{ relation.label }}</h3>
+      <app-relation-grid [relation]="relation" (changed)="reload()" />
+    }
+
+    @if (hasConversation) {
+      <app-conversation [postId]="form.entity.entityId" [base]="conversationBase" [actions]="form.actions ?? []" (changed)="reload()" />
+    }
+  }
+</section>

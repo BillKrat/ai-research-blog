@@ -1,0 +1,87 @@
+<section class="profile">
+  <h2>Profile</h2>
+
+  @if (isLoading()) {
+    <p>Loading profile...</p>
+  } @else if (model()) {
+    <app-entity-form [model]="model()!" (save)="onSave($event)">
+      @switch (saveState()) {
+        @case ('saved') {
+          <p class="profile__status profile__status--success" role="status">Saved.</p>
+        }
+        @case ('error') {
+          <div class="profile__errors" role="alert">
+            <p class="profile__errors-title">Your profile was not saved.</p>
+            <ul>
+              @for (message of saveErrors(); track message) {
+                <li>{{ message }}</li>
+              }
+            </ul>
+          </div>
+        }
+      }
+
+      @if (model()!.permissions?.canUpdate !== false) {
+        <button mat-icon-button color="primary" type="submit" [disabled]="saveState() === 'saving'" [matTooltip]="(saveState() === 'saving' ? 'saving' : 'save') | label" [attr.aria-label]="'save' | label">
+          <mat-icon>save</mat-icon>
+        </button>
+      }
+    </app-entity-form>
+
+    <form class="profile__password" [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+      <h3>Change password</h3>
+
+      @if (mustChangePassword()) {
+        <p class="profile__notice" role="status">This account is still using its starting password. Please choose a new one.</p>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>Current password</mat-label>
+        <input matInput type="password" formControlName="current" autocomplete="current-password" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>New password</mat-label>
+        <input matInput type="password" formControlName="next" autocomplete="new-password" />
+        <mat-hint>At least 12 characters, and different from the current one.</mat-hint>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Confirm new password</mat-label>
+        <input matInput type="password" formControlName="confirm" autocomplete="new-password" />
+      </mat-form-field>
+
+      @switch (passwordState()) {
+        @case ('saved') {
+          <p class="profile__status profile__status--success" role="status">Your password was changed.</p>
+        }
+        @case ('error') {
+          <div class="profile__errors" role="alert">
+            <p class="profile__errors-title">Your password was not changed.</p>
+            <ul>
+              @for (message of passwordErrors(); track message) {
+                <li>{{ message }}</li>
+              }
+            </ul>
+          </div>
+        }
+      }
+
+      <button mat-icon-button color="primary" type="submit" [disabled]="passwordForm.invalid || passwordState() === 'saving'" [matTooltip]="(passwordState() === 'saving' ? 'changing' : 'changePassword') | label" [attr.aria-label]="'changePassword' | label">
+        <mat-icon>key</mat-icon>
+      </button>
+    </form>
+
+    @if (model()!.permissions?.canDelete !== false) {
+      <div class="profile__danger-zone">
+      @if (deleteState() === 'error') {
+        @for (message of deleteErrors(); track message) {
+          <p class="profile__status profile__status--error" role="alert">{{ message }}</p>
+        }
+      }
+
+      <button mat-icon-button color="warn" type="button" (click)="deleteMyAccount()" [disabled]="deleteState() === 'deleting'" [matTooltip]="(deleteState() === 'deleting' ? 'deleting' : 'deleteAccount') | label" [attr.aria-label]="'deleteAccount' | label">
+          <mat-icon>person_remove</mat-icon>
+        </button>
+      </div>
+    }
+  }
+</section>

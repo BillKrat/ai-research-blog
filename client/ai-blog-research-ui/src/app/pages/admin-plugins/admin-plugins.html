@@ -1,0 +1,45 @@
+<section class="admin-plugins">
+  <h2>Plugins</h2>
+  <p class="admin-plugins__hint">
+    Built-in plug-ins add screens to the admin menu. Switching one off hides its menu entry and stops its endpoints; nothing is deleted, and
+    switching it on again brings everything back.
+  </p>
+
+  @for (message of errors(); track message) {
+    <p class="admin-plugins__error" role="alert">{{ message }}</p>
+  }
+
+  @if (isLoading()) {
+    <p>Loading...</p>
+  } @else {
+    <table class="admin-plugins__table">
+      <thead>
+        <tr>
+          <th>Plug-in</th>
+          <th>Description</th>
+          <th>Version</th>
+          <th>Enabled</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (plugin of plugins(); track plugin.key) {
+          <tr>
+            <td>{{ plugin.title }}</td>
+            <td>{{ plugin.description }}</td>
+            <td>{{ plugin.version }}</td>
+            <td>
+              <input
+                type="checkbox"
+                role="switch"
+                [checked]="plugin.enabled"
+                [disabled]="busy() !== null"
+                [attr.aria-label]="(plugin.enabled ? 'Switch off ' : 'Switch on ') + plugin.title"
+                (change)="toggle(plugin, $any($event.target).checked)"
+              />
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

@@ -1,0 +1,80 @@
+<section class="conversation" aria-label="Conversation">
+  <h3>Conversation</h3>
+
+  @for (message of errors(); track message) {
+    <p class="conversation__error" role="alert">{{ message }}</p>
+  }
+
+  @for (entry of entries(); track entry.id) {
+    <article class="conversation__entry" [class.conversation__entry--decision]="entry.kind === 'Decision'">
+      <header>
+        <strong>{{ entry.author }}</strong>
+        <span class="conversation__when">{{ entry.created | date: 'medium' }}</span>
+        @if (entry.kind === 'Decision') {
+          <span class="conversation__decision">Decision</span>
+        }
+      </header>
+      <app-markdown-content [markdown]="entry.body" />
+    </article>
+  } @empty {
+    <p class="conversation__none">Nothing said yet.</p>
+  }
+
+  @if (actionLink('withdraw-changes')) {
+    <p class="conversation__awaiting" role="status">
+      <mat-icon>edit_note</mat-icon>
+      <span><strong>Changes requested.</strong> Write what you want changed below and send it; the author revises and it comes back for review.</span>
+      <button mat-stroked-button type="button" (click)="withdraw()" [disabled]="sending()">Cancel change request</button>
+    </p>
+  }
+
+  <div class="conversation__quick" role="group" aria-label="Quick replies">
+    @if (actionLink('approve')) {
+      <button mat-stroked-button type="button" (click)="approve()" [disabled]="sending()" [class.conversation__quick--on]="approving()" [matTooltip]="'quickApprove' | label">
+        <mat-icon>thumb_up</mat-icon>
+        Approve
+      </button>
+    }
+    @if (actionLink('request-changes')) {
+      <button mat-stroked-button type="button" (click)="redirect()" [class.conversation__quick--on]="redirecting()" [matTooltip]="'quickRedirect' | label">
+        <mat-icon>rate_review</mat-icon>
+        Redirect
+      </button>
+    }
+    @if (!actionLink('withdraw-changes')) {
+      <button mat-stroked-button type="button" (click)="ask()" [matTooltip]="'quickAsk' | label">
+        <mat-icon>help</mat-icon>
+        Ask
+      </button>
+    }
+    <span class="conversation__tools">
+      <button mat-icon-button type="button" [disabled]="uploading() || previewing()" (click)="imageInput.click()" [matTooltip]="'insertImage' | label" [attr.aria-label]="'insertImage' | label">
+        <mat-icon>add_photo_alternate</mat-icon>
+      </button>
+      <input #imageInput type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden (change)="insertImage($event)" />
+      <button mat-icon-button type="button" (click)="previewing.set(!previewing())" [matTooltip]="(previewing() ? 'editReply' : 'previewReply') | label" [attr.aria-label]="(previewing() ? 'editReply' : 'previewReply') | label">
+        <mat-icon>{{ previewing() ? 'edit' : 'visibility' }}</mat-icon>
+      </button>
+    </span>
+  </div>
+
+  @if (approving() || redirecting()) {
+    <p class="conversation__hint" role="status">
+      {{ approving() ? 'Write your note (or leave it as is) and press Send: that approves it and posts the note.' : 'Write what you want changed and press Send: that sends it back and posts the note.' }}
+    </p>
+  }
+
+  <form class="conversation__add" (ngSubmit)="send()">
+    @if (previewing()) {
+      <div class="conversation__preview"><app-markdown-content [markdown]="text" /></div>
+    } @else {
+      <textarea name="text" rows="3" [(ngModel)]="text" aria-label="Add to the conversation" placeholder="Answer, ask, or record a decision (Markdown)"></textarea>
+    }
+    <div class="conversation__actions">
+      <mat-checkbox name="asDecision" [(ngModel)]="asDecision">Record as a decision</mat-checkbox>
+      <button mat-icon-button color="primary" type="submit" [disabled]="sending() || !text.trim()" [matTooltip]="'send' | label" [attr.aria-label]="'send' | label">
+        <mat-icon>send</mat-icon>
+      </button>
+    </div>
+  </form>
+</section>

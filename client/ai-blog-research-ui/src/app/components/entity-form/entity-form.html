@@ -1,0 +1,109 @@
+@if (unsupported) {
+  <p class="entity-form__unsupported" role="alert">
+    This page was built for an older version of the application than the server now speaks. Reload the page to get the latest.
+  </p>
+} @else {
+  <form class="entity-form" [formGroup]="form" (ngSubmit)="submit()">
+    <ng-content select="[formToolbar]"></ng-content>
+    @for (field of fields; track field.name) {
+      @switch (kindOf(field)) {
+        @case ('checkbox') {
+          <mat-checkbox [formControlName]="field.name">{{ labelOf(field) }}</mat-checkbox>
+        }
+        @case ('choice') {
+          <label class="entity-form__select">
+            <span>{{ labelOf(field) }}</span>
+            <select [formControlName]="field.name" [attr.aria-label]="labelOf(field)">
+              @for (choice of field.choices; track choice) {
+                <option [value]="choice" [disabled]="isDisabledChoice(field, choice)">{{ choice }}{{ isDisabledChoice(field, choice) ? ' (switched off in Admin > Plugins)' : '' }}</option>
+              }
+            </select>
+          </label>
+        }
+        @case ('ref') {
+          <label class="entity-form__select">
+            <span>{{ labelOf(field) }}</span>
+            <select [formControlName]="field.name" [attr.aria-label]="labelOf(field)">
+              <option value="">None</option>
+              @for (option of options()[field.name] ?? []; track option.id) {
+                <option [value]="option.id">{{ option.text }}</option>
+              }
+            </select>
+            @if (model.entity.display?.[field.name]; as shown) {
+              <span class="entity-form__hint">Currently: {{ shown }}</span>
+            }
+          </label>
+        }
+        @case ('refs') {
+          <fieldset class="entity-form__choices">
+            <legend>{{ labelOf(field) }}</legend>
+            @for (option of options()[field.name] ?? []; track option.id) {
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="isChosen(field.name, option.id)"
+                  [disabled]="field.isReadOnly === true"
+                  (change)="toggleChoice(field.name, option.id)"
+                />
+                {{ option.text }}
+              </label>
+            } @empty {
+              <span class="entity-form__hint">None to choose from yet.</span>
+            }
+          </fieldset>
+        }
+        @case ('markdown') {
+          <div class="entity-form__rich">
+            <div class="entity-form__rich-head">
+              <span>{{ labelOf(field) }} (Markdown)</span>
+              <span class="entity-form__rich-tools">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="entity-form__image"
+                  [disabled]="uploading()[field.name]"
+                  (click)="imageInput.click()"
+                  [matTooltip]="'insertImage' | label"
+                  [attr.aria-label]="'insertImage' | label"
+                >
+                  <mat-icon>add_photo_alternate</mat-icon>
+                </button>
+                <input #imageInput type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden (change)="insertImage(field, $event)" />
+                <button type="button" (click)="togglePreview(field.name)">{{ previewing()[field.name] ? 'Edit' : 'Preview' }}</button>
+              </span>
+            </div>
+            @for (message of uploadErrors()[field.name] ?? []; track message) {
+              <p class="entity-form__error" role="alert">{{ message }}</p>
+            }
+            @if (previewing()[field.name]) {
+              <div class="entity-form__preview"><app-markdown-content [markdown]="textOf(field)" /></div>
+            } @else {
+              <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)" [attr.data-field]="field.name"></textarea>
+            }
+          </div>
+        }
+        @case ('html') {
+          <div class="entity-form__rich">
+            <div class="entity-form__rich-head">
+              <span>{{ labelOf(field) }} (HTML)</span>
+              <button type="button" (click)="togglePreview(field.name)">{{ previewing()[field.name] ? 'Edit' : 'Preview' }}</button>
+            </div>
+            @if (previewing()[field.name]) {
+              <div class="entity-form__preview" [innerHTML]="previewOf(field)"></div>
+            } @else {
+              <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)"></textarea>
+            }
+          </div>
+        }
+        @default {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ labelOf(field) }}</mat-label>
+            <input matInput [type]="kindOf(field)" [formControlName]="field.name" [required]="field.isRequired" />
+          </mat-form-field>
+        }
+      }
+    }
+
+    <ng-content></ng-content>
+  </form>
+}

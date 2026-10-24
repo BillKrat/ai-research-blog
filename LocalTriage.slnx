@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AiBlogResearch.WebApi/AiBlogResearch.WebApi.csproj" />
+    <Project Path="src/McpServer.WebApi/McpServer.WebApi.csproj" />
+  </Folder>
+  <Project Path="../Adventures.Foundation/src/Adventures.Data/Adventures.Data.csproj" />
+  <Project Path="../Adventures.Foundation/src/Adventures.Identity/Adventures.Identity.csproj" />
+  <Project Path="../Adventures.Foundation/src/Adventures.Security/Adventures.Security.csproj" />
+  <Project Path="AiBlogResearch.ServiceDefaults/AiBlogResearch.ServiceDefaults.csproj" />
+</Solution>

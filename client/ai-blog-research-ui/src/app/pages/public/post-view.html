@@ -1,0 +1,30 @@
+<article class="public">
+  @if (isLoading()) {
+    <p>Loading...</p>
+  } @else if (notFound()) {
+    <h2>Not found</h2>
+    <p>This post does not exist or is not published. <a routerLink="/posts">Back to the posts</a>.</p>
+  } @else if (post(); as result) {
+    <h2>{{ result.summary.title }}@if (result.summary.isDraft) {<app-draft-badge />}@if (result.summary.approval) {<app-approval-badge [status]="result.summary.approval" />}</h2>
+    <p class="public__meta">
+      <span>
+        @if (result.summary.datePublished) {
+          {{ result.summary.datePublished | date: 'mediumDate' }}
+        }
+        @if (result.summary.author) {
+          by {{ result.summary.author }}
+        }
+      </span>
+      <app-content-tools kind="posts" [slug]="result.summary.slug" />
+    </p>
+    <app-markdown-content [markdown]="result.content" />
+    <p class="public__chips">
+      @for (category of result.summary.categories; track category) {
+        <a [routerLink]="['/category', category]">{{ category }}</a>
+      }
+      @for (tag of result.summary.tags; track tag) {
+        <a [routerLink]="['/tag', tag]">#{{ tag }}</a>
+      }
+    </p>
+  }
+</article>

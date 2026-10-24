@@ -1,0 +1,121 @@
+// Assessed 2026-10-24 17:51 CT (Claude): automated scan for secrets, injection and unsafe patterns, re-run after the fixes - security findings F-1 to F-3 fixed in this file or in code it uses, covered by tests. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
+using Adventures.Identity;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace AiBlogResearch.WebApi.Controllers;
+
+public sealed record TokenRequest(string? UserName, string? Password);
+
+public sealed record ChangePasswordRequest(string? CurrentPassword, string? NewPassword);
+
+public sealed record TokenResponse(string AccessToken, DateTimeOffset ExpiresAtUtc, bool MustChangePassword);
+
+/// <summary>
+/// Issues JWTs after validating credentials against the real user store (Adventures.Data +
+/// Adventures.Identity), replacing the config-seeded demo-user placeholder this controller used
+/// to have - see docs/artifacts/Claude-2026-09-21-real-login-wired.md for why that replacement
+/// was deferred until the underlying login path was verified end-to-end first.
+/// </summary>
+[ApiController]
+[Route("api/auth")]
+public sealed class AuthController(IUserAccountService accountService, IConfiguration configuration) : ControllerBase
+{
+    /// <summary>
+    /// Single-tenant today (see <c>Auth:Tenant</c> in configuration, defaulting to
+    /// "global-webnet.com") - <see cref="IUserAccountService.LoginAsync"/> is tenant-scoped for
+    /// when this app supports more than one, but nothing yet needs the client to supply it.
+    /// </summary>
+    private string Tenant => configuration["Auth:Tenant"] ?? "global-webnet.com";
+
+    [HttpPost("token")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Adventures.WebApi.RequestHardening.TokenPolicy)]
+    [AllowAnonymous]
+    public async Task<ActionResult<TokenResponse>> Token([FromBody] TokenRequest request)
+    {
+        var errors = ValidateCredentials(request);
+        if (errors.Count > 0)
+        {
+            return BadRequest(new ValidationProblemDetails(errors) { Status = StatusCodes.Status400BadRequest });
+        }
+
+        var result = await accountService.LoginAsync(Tenant, request.UserName!, request.Password!);
+        if (!result.Succeeded)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(new TokenResponse(result.AccessToken!, result.ExpiresAtUtc!.Value, result.MustChangePassword));
+    }
+
+    /// <summary>
+    /// Trust-boundary validation (AppArch: validate all input, server-side): a missing body or blank field is a
+    /// client error (400), not a fault inside the login service. Says nothing about whether the account exists.
+    /// </summary>
+    private static Dictionary<string, string[]> ValidateCredentials(TokenRequest? request)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(request?.UserName))
+        {
+            errors[nameof(TokenRequest.UserName)] = ["UserName is required."];
+        }
+
+        if (string.IsNullOrWhiteSpace(request?.Password))
+        {
+            errors[nameof(TokenRequest.Password)] = ["Password is required."];
+        }
+
+        return errors;
+    }
+
+    /// <summary>
+    /// The signed-in user changes their own password. The user is the token's subject (never a client-supplied id), the
+    /// current password must be right (and counts toward the login lockout when it is not), and the new one must meet
+    /// <see cref="PasswordPolicy"/>. A success clears the "must change password" flag, so the next login no longer asks.
+    /// </summary>
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(request?.CurrentPassword))
+        {
+            errors[nameof(ChangePasswordRequest.CurrentPassword)] = ["Your current password is required."];
+        }
+
+        if (string.IsNullOrWhiteSpace(request?.NewPassword))
+        {
+            errors[nameof(ChangePasswordRequest.NewPassword)] = ["A new password is required."];
+        }
+
+        if (errors.Count > 0)
+        {
+            return BadRequest(new ValidationProblemDetails(errors) { Status = StatusCodes.Status400BadRequest });
+        }
+
+        var subject = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        if (!Guid.TryParse(subject, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await accountService.ChangePasswordAsync(userId, request!.CurrentPassword!, request.NewPassword!, cancellationToken);
+        return result switch
+        {
+            ChangePasswordResult.Succeeded => NoContent(),
+            ChangePasswordResult.InvalidCurrentPassword => Rejected(nameof(ChangePasswordRequest.CurrentPassword), "Your current password is not right."),
+            ChangePasswordResult.NewPasswordRejected => Rejected(nameof(ChangePasswordRequest.NewPassword), PasswordPolicy.Description),
+            ChangePasswordResult.AccountLocked => Rejected(nameof(ChangePasswordRequest.CurrentPassword), "Too many wrong attempts. Try again in a few minutes."),
+            _ => Unauthorized(),
+        };
+    }
+
+    /// <summary>The 400 shape the client already turns into sentences (a field name and its messages).</summary>
+    private BadRequestObjectResult Rejected(string field, string message) =>
+        BadRequest(new ValidationProblemDetails(new Dictionary<string, string[]> { [field] = [message] }) { Status = StatusCodes.Status400BadRequest });
+
+    /// <summary>Sample protected endpoint to prove JWT validation works end to end.</summary>
+    [HttpGet("whoami")]
+    [Authorize]
+    public ActionResult<string> WhoAmI() => Ok(User.Identity?.Name ?? "unknown");
+}

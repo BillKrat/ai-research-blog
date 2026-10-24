@@ -1,0 +1,126 @@
+@if (model.schema.fields.length > 0) {
+  <div class="entity-grid__toolbar">
+    <button
+      type="button"
+      class="entity-grid__gear"
+      aria-label="Choose columns"
+      [attr.aria-expanded]="gearOpen"
+      (click)="gearOpen = !gearOpen"
+    >
+      Columns
+    </button>
+    @if (gearOpen) {
+      <ul class="entity-grid__columns" aria-label="Columns">
+        @for (field of fields; track field.name) {
+          <li>
+            <label>
+              <input type="checkbox" [checked]="isVisible(field)" (change)="toggleColumn(field)" />
+              {{ labelOf(field) }} <span class="entity-grid__type">({{ field.type }})</span>
+            </label>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}
+
+<table class="entity-grid">
+  <thead>
+    <tr>
+      @for (column of columns; track column.name) {
+        <th scope="col" [attr.aria-sort]="sortable ? ariaSort(column) : null">
+          @if (sortable) {
+            <button type="button" class="entity-grid__sort" (click)="sortBy(column)">
+              {{ labelOf(column) }}
+              @switch (ariaSort(column)) {
+                @case ('ascending') {
+                  <span aria-hidden="true"> &#9650;</span>
+                }
+                @case ('descending') {
+                  <span aria-hidden="true"> &#9660;</span>
+                }
+              }
+            </button>
+          } @else {
+            {{ labelOf(column) }}
+          }
+        </th>
+      }
+      @if (hasMessage) {
+        <th scope="col">Message</th>
+      }
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of model.rows; track row.entityId) {
+      <tr
+        class="entity-grid__row"
+        [class.entity-grid__row--open]="expandedId === row.entityId"
+        [class.entity-grid__row--revision]="isLocked(row)"
+        tabindex="0"
+        (click)="toggle(row.entityId)"
+        (keydown.enter)="toggle(row.entityId)"
+      >
+        @for (column of columns; track column.name) {
+          @if (isToggle(column) && rowLink(row)) {
+            <td>
+              <span
+                class="entity-grid__switch"
+                [matTooltip]="isLocked(row) ? ('revisionLocked' | label) : ''"
+                [matTooltipDisabled]="!isLocked(row)"
+                (click)="$event.stopPropagation()"
+              >
+                <mat-slide-toggle
+                  [checked]="cell(row, column.name).toLowerCase() === 'true'"
+                  [disabled]="isLocked(row)"
+                  [attr.aria-label]="labelOf(column) + ': ' + row.entityId"
+                  (change)="flip(row, column, $event.checked)"
+                />
+              </span>
+            </td>
+          } @else {
+            <td>{{ cell(row, column.name) }}</td>
+          }
+        }
+        @if (hasMessage) {
+          <td class="entity-grid__message">{{ cell(row, 'Message') }}</td>
+        }
+      </tr>
+      @if (expandedId === row.entityId) {
+        <tr class="entity-grid__details">
+          <td [attr.colspan]="columns.length + (hasMessage ? 1 : 0)">
+            <div class="entity-grid__tools">
+              @if (viewRoute(row); as route) {
+                <a mat-icon-button class="entity-grid__view" [routerLink]="route" [matTooltip]="'view' | label" [attr.aria-label]="'view' | label">
+                  <mat-icon>preview</mat-icon>
+                </a>
+              }
+              @if (rowLink(row)) {
+                <button mat-icon-button type="button" class="entity-grid__open" (click)="open(row)" [matTooltip]="'open' | label" [attr.aria-label]="'open' | label">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+            </div>
+            <dl>
+              @for (field of fields; track field.name) {
+                <dt>{{ labelOf(field) }}</dt>
+                <dd>{{ cell(row, field.name) }}</dd>
+              }
+            </dl>
+            @if (rowTools) {
+              <ng-container [ngTemplateOutlet]="rowTools" [ngTemplateOutletContext]="{ $implicit: row }" />
+            }
+          </td>
+        </tr>
+      }
+    }
+  </tbody>
+</table>
+
+@if (model.paging; as paging) {
+  <nav class="entity-grid__pager" aria-label="Pages">
+    <button type="button" (click)="previous()" [disabled]="!model.links?.previous">Previous</button>
+    <span>Page {{ paging.page }} of {{ paging.totalPages }} ({{ paging.totalCount }} in all)</span>
+    <button type="button" (click)="next()" [disabled]="!model.links?.next">Next</button>
+  </nav>
+}

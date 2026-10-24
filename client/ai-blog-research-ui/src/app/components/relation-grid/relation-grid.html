@@ -1,0 +1,38 @@
+<div class="relation-grid">
+  @for (message of errors(); track message) {
+    <p class="relation-grid__error" role="alert">{{ message }}</p>
+  }
+
+  @if (relation.grid.rows.length === 0) {
+    <p class="relation-grid__hint">None.</p>
+  } @else {
+    <app-entity-grid [model]="relation.grid" [rowTools]="canRemove ? rowTools : undefined" />
+  }
+
+  @if (canAdd) {
+    <form class="relation-grid__add" (submit)="$event.preventDefault(); add()">
+      @for (field of pointerFields; track field.name) {
+        <label>
+          {{ labelOf(field) }}
+          <select [attr.aria-label]="labelOf(field)" (change)="pick(field.name, $any($event.target).value)">
+            <option value="">Choose...</option>
+            @for (option of options()[field.name] ?? []; track option.id) {
+              <option [value]="option.id" [selected]="choice()[field.name] === option.id">{{ option.text }}</option>
+            }
+          </select>
+        </label>
+      }
+      <button mat-icon-button color="primary" type="submit" [disabled]="!canSubmit" [matTooltip]="(busy() ? 'working' : 'add') | label" [attr.aria-label]="'add' | label">
+        <mat-icon>add</mat-icon>
+      </button>
+    </form>
+  }
+</div>
+
+<ng-template #rowTools let-row>
+  @if (removeLink(row.entityId)) {
+    <button mat-icon-button color="warn" type="button" (click)="remove(row.entityId)" [disabled]="busy()" [matTooltip]="'remove' | label" [attr.aria-label]="'remove' | label">
+      <mat-icon>link_off</mat-icon>
+    </button>
+  }
+</ng-template>

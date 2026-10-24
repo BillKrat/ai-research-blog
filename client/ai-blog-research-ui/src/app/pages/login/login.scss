@@ -1,0 +1,25 @@
+.login {
+  max-width: 360px;
+  margin: 2rem auto 0;
+
+  h2 {
+    margin-bottom: 1rem;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  &__notice {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+  }
+
+  &__error {
+    color: var(--mat-sys-error);
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+  }
+}
