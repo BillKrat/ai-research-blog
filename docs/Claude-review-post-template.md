@@ -1,6 +1,6 @@
 # Review post template (review loop step 2)
 
-Create a Collaboration draft (category Collaboration) through `docs/Claude-author.ps1` with these sections, in this order. Keep it short enough to read in a review visit; link the stage review in `docs/artifacts/` for detail. Replace everything in angle brackets.
+Create a Developer collaboration item (Admin > Collaboration; `Claude-author.ps1 -Action collab-new`, not a post) with these sections, in this order. Keep it short enough to read in a review visit; link the stage review in `docs/artifacts/` for detail. Replace everything in angle brackets.
 
 ```markdown
 ## Summary

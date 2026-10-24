@@ -8,7 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { LabelPipe } from '../../i18n/labels';
 import { describeApiError } from '../../models/api-error';
 import { EntityAction } from '../../models/entity-form.model';
-import { ConversationEntry, ConversationService } from '../../services/conversation.service';
+import { ConversationBase, ConversationEntry, ConversationService } from '../../services/conversation.service';
 import { EntityApiService } from '../../services/entity-api.service';
 import { MediaService } from '../../services/media.service';
 import { MarkdownContent } from '../markdown-content/markdown-content';
@@ -35,6 +35,8 @@ export class Conversation {
   private readonly host = inject(ElementRef<HTMLElement>);
 
   readonly postId = input.required<string>();
+  /** Whether the conversation hangs under a post or a collaboration item (selects the API route). */
+  readonly base = input<ConversationBase>('posts');
 
   /** The actions the server offered for this post (Approve and Request changes appear while it is under review). */
   readonly actions = input<EntityAction[]>([]);
@@ -145,7 +147,7 @@ export class Conversation {
   }
 
   private post(text: string, kind: 'Comment' | 'Decision', done: () => void): void {
-    this.conversation.add(this.postId(), text, kind).subscribe({
+    this.conversation.add(this.postId(), text, kind, this.base()).subscribe({
       next: (entry) => {
         this.entries.update((all) => [...all, entry]);
         this.text = '';
@@ -166,7 +168,7 @@ export class Conversation {
 
   private load(postId: string): void {
     this.errors.set([]);
-    this.conversation.list(postId).subscribe({
+    this.conversation.list(postId, this.base()).subscribe({
       next: (all) => this.entries.set(all),
       error: (error) => this.errors.set(describeApiError(error, 'Could not load the conversation.')),
     });

@@ -1,4 +1,4 @@
-﻿import { Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 
 /**
@@ -43,6 +43,7 @@ export const routes: Routes = [
       ...adminCollection('users', '/api/users', 'Users'),
       ...adminCollection('roles', '/api/roles', 'Roles'),
       ...adminCollection('posts', '/api/posts', 'Posts'),
+      ...adminCollection('collaboration', '/api/collaboration', 'Collaboration'),
       ...adminCollection('pages', '/api/pages', 'Pages'),
       ...adminCollection('categories', '/api/categories', 'Categories'),
       ...adminCollection('tags', '/api/tags', 'Tags'),

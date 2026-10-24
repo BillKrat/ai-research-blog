@@ -48,4 +48,17 @@ public class StartupChecksTests
         Assert.Contains(problems, p => p.Key == "Jwt:SigningKey");
         Assert.DoesNotContain("s3cret", StartupChecks.ToException(problems).Message);
     }
+
+    [Fact]
+    public void A_schema_the_store_lacks_is_named_with_the_way_out()
+    {
+        var present = new Adventures.Data.NQuad.NQuad(
+            Guid.NewGuid(), "https://schema.example/Have", Adventures.Entities.EntityConstants.Schema.TypePredicate, Adventures.Entities.EntityConstants.Schema.TypeIri, "g");
+
+        var problems = StartupChecks.FindMissingSchemas([present], ["https://schema.example/Have", "https://schema.example/Missing"]);
+
+        var problem = Assert.Single(problems);
+        Assert.Equal("https://schema.example/Missing", problem.Key);
+        Assert.Contains("https profile", problem.Fix);
+    }
 }

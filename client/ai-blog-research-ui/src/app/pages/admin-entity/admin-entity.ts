@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -96,7 +96,11 @@ export class AdminEntity implements OnInit {
 
   /** Posts have a conversation (questions, answers, decisions) under the editor, once saved. */
   protected get hasConversation(): boolean {
-    return this.collection === '/api/posts' && !this.isNew() && !!this.model()?.entity.entityId;
+    return (this.collection === '/api/posts' || this.collection === '/api/collaboration') && !this.isNew() && !!this.model()?.entity.entityId;
+  }
+
+  protected get conversationBase(): 'posts' | 'collaboration' {
+    return this.collection === '/api/collaboration' ? 'collaboration' : 'posts';
   }
 
   /** The page of this entry on the public site (a saved post or page with a slug), opened in a new tab; null for anything else. */

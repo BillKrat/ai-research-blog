@@ -15,6 +15,7 @@ public sealed record NewConversationEntry(string? Text, string? Kind);
 /// </summary>
 [ApiController]
 [Route("api/posts/{postId}/comments")]
+[Route("api/collaboration/{postId}/comments")]
 [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
 public sealed class ConversationController(IConversation conversation) : ApiControllerBase
 {

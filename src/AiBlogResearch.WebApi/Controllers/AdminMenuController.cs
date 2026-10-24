@@ -19,7 +19,8 @@ public static class AdminMenuDefinitions
     [
         new("Dashboard", "dashboard", "Dashboard", "/admin/dashboard", "dashboard", Admin, Available: false, Order: 1),
         new("Content", "posts", "Posts", "/admin/posts", "article", Admin, Order: 1),
-        new("Content", "comments", "Comments", "/admin/comments", "comment", Admin, Available: false, Order: 2),
+        new("Content", "collaboration", "Collaboration", "/admin/collaboration", "forum", Admin, Order: 2),
+        new("Content", "comments", "Comments", "/admin/comments", "comment", Admin, Available: false, Order: 8),
         new("Content", "pages", "Pages", "/admin/pages", "description", Admin, Order: 3),
         new("Content", "categories", "Categories", "/admin/categories", "folder", Admin, Order: 4),
         new("Content", "tags", "Tags", "/admin/tags", "sell", Admin, Order: 5),
@@ -37,7 +38,7 @@ public static class AdminMenuDefinitions
 [ApiController]
 [Route("api/admin/menu")]
 [Authorize]
-public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPublicContent content) : ControllerBase
+public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPublicContent content, ICollaborationBll collaboration) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<AdminMenuModel>> Get(CancellationToken cancellationToken)
@@ -50,6 +51,8 @@ public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPubl
                 ["exceptions"] = await exceptions.CountActiveAsync(cancellationToken),
                 // drafts in the Collaboration category: what waits for the human's review
                 ["posts"] = await ReviewQueue.CountAsync(content, cancellationToken),
+                // collaboration items waiting for the human's review
+                ["collaboration"] = await ReviewQueue.CountItemsAsync(collaboration, cancellationToken),
             }
             : null;
         return Ok(AdminMenuBuilder.Build(AdminMenuDefinitions.All, User, badges));
