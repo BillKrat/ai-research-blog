@@ -24,7 +24,7 @@ public class LiveDataModeTests
     [Fact]
     public void When_enabled_in_development_points_the_app_at_the_live_connection()
     {
-        var config = Config(("LiveData:Enabled", "true"), ("LiveData:ConnectionString", "live"), ("ConnectionStrings:Postgres", "local"));
+        var config = Config(("LiveData:Enabled", "true"), ("ConnectionStrings:LiveData", "live"), ("ConnectionStrings:Postgres", "local"));
 
         Assert.True(LiveDataMode.Apply(config, isDevelopment: true));
         Assert.Equal("live", config["ConnectionStrings:Postgres"]);
@@ -33,7 +33,7 @@ public class LiveDataModeTests
     [Fact]
     public void Refuses_to_run_outside_development()
     {
-        var config = Config(("LiveData:Enabled", "true"), ("LiveData:ConnectionString", "live"));
+        var config = Config(("LiveData:Enabled", "true"), ("ConnectionStrings:LiveData", "live"));
 
         var error = Assert.Throws<InvalidOperationException>(() => LiveDataMode.Apply(config, isDevelopment: false));
         Assert.Contains("Development", error.Message);
@@ -45,7 +45,16 @@ public class LiveDataModeTests
         var config = Config(("LiveData:Enabled", "true"), ("ConnectionStrings:Postgres", "local"));
 
         var error = Assert.Throws<InvalidOperationException>(() => LiveDataMode.Apply(config, isDevelopment: true));
-        Assert.Contains("LiveData:ConnectionString", error.Message);
+        Assert.Contains("ConnectionStrings:LiveData", error.Message);
         Assert.Equal("local", config["ConnectionStrings:Postgres"]);
+    }
+
+    [Fact]
+    public void Describe_names_host_and_database_but_never_the_password()
+    {
+        var text = LiveDataMode.Describe("Host=db.example;Port=6432;Database=blog;Username=u;Password=s3cret");
+
+        Assert.Equal("db.example/blog", text);
+        Assert.Equal("none", LiveDataMode.Describe(null));
     }
 }

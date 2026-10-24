@@ -197,7 +197,7 @@ try
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), EntityConstants.Site.SeedName);
     }
-    Log.Information("N-Quad store: {Provider}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", seeded ? "applied" : "already applied");
+    Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
 

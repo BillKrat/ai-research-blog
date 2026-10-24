@@ -3,14 +3,14 @@ namespace AiBlogResearch.WebApi;
 /// <summary>
 /// "Live data" mode for local development: the app on the developer's machine reads and writes the production store, so the
 /// human's replies in the conversation under a post land where Claude reads them. It is opt-in (<c>LiveData:Enabled</c>), takes the
-/// connection string from <c>LiveData:ConnectionString</c> (user-secrets, from the vault; never a file in the repo), refuses to run
+/// connection string from <c>ConnectionStrings:LiveData</c> (user-secrets, from the vault; never a file in the repo), refuses to run
 /// outside the Development environment, and turns off the startup seeding so unmerged work cannot write schemas or data into the
 /// live store. The health response and the client's banner tell the person it is on.
 /// </summary>
 public static class LiveDataMode
 {
     public const string EnabledKey = "LiveData:Enabled";
-    public const string ConnectionStringKey = "LiveData:ConnectionString";
+    public const string ConnectionStringKey = "ConnectionStrings:LiveData";
 
     /// <summary>
     /// Returns true when live data mode is on, after pointing <c>ConnectionStrings:Postgres</c> at the live store. Throws, with the
@@ -31,10 +31,30 @@ public static class LiveDataMode
         var connection = configuration[ConnectionStringKey];
         if (string.IsNullOrWhiteSpace(connection))
         {
-            throw new InvalidOperationException("LiveData:Enabled is on but LiveData:ConnectionString is not set (store it with Claude-secret.ps1 sync).");
+            throw new InvalidOperationException("LiveData:Enabled is on but ConnectionStrings:LiveData is not set (see docs/artifacts/Claude-2026-10-23-live-data-profile.md for the usersecret command).");
         }
 
         configuration["ConnectionStrings:Postgres"] = connection;
         return true;
+    }
+
+    /// <summary>Host and database of a connection string, never the credentials: safe to log so a run says which store it is on.</summary>
+    public static string Describe(string? connection)
+    {
+        if (string.IsNullOrWhiteSpace(connection))
+        {
+            return "none";
+        }
+
+        try
+        {
+            var parts = new System.Data.Common.DbConnectionStringBuilder { ConnectionString = connection };
+            string Get(string key) => parts.TryGetValue(key, out var v) ? v?.ToString() ?? "?" : "?";
+            return $"{Get("Host")}/{Get("Database")}";
+        }
+        catch (ArgumentException)
+        {
+            return "unreadable";
+        }
     }
 }
