@@ -203,6 +203,9 @@ try
     // The conversation under a post (comments and decisions).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-014-comments.nq"), EntityConstants.Content.CommentsSeedName);
+    // Collaboration items (review requests and research questions): their own type, never public (not a post).
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-015-collaboration.nq"), CollaborationConstants.SeedName);
     // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), EntityConstants.Site.SeedName);
@@ -289,6 +292,13 @@ try
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.CommentSchemaIri, EntityConstants.Content.CommentBaseIri, EntityConstants.Content.CommentTypeIri, s => new Comment(s));
     builder.Services.AddScoped<IEntityBll<Comment>>(provider => new EntityBll<Comment>(provider.GetRequiredService<IEntityRepository<Comment>>()));
     builder.Services.AddScoped<IConversation, Conversation>();
+    builder.Services.AddNQuadEntityRepository(
+        SchemaDal.Load(userQuads, CollaborationConstants.SchemaIri), CollaborationConstants.BaseIri, CollaborationConstants.TypeIri,
+        CollaborationConstants.DefaultGraph, s => new CollaborationItem(s), CurrentActor);
+    builder.Services.AddScoped<ICollaborationBll, CollaborationBll>();
+    builder.Services.AddScoped<IEntityPresenter<CollaborationItem>, CollaborationPresenter>();
+    builder.Services.AddScoped<ICollaborationAuthoring, CollaborationAuthoring>();
+    builder.Services.AddScoped<CollaborationMigration>();
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, EntityConstants.Site.SettingSchemaIri), EntityConstants.Site.SettingBaseIri, EntityConstants.Site.SettingTypeIri,
         EntityConstants.Site.DefaultGraph, s => new SiteSetting(s), CurrentActor);

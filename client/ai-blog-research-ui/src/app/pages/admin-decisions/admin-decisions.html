@@ -15,7 +15,7 @@
           <strong>{{ decision.author }}</strong>
           <span class="admin-decisions__when">{{ decision.created | date: 'medium' }}</span>
           <span class="admin-decisions__post">
-            under <a [routerLink]="['/admin/posts', decision.postId]">{{ decision.postTitle }}</a>
+            under <a [routerLink]="[decision.source === 'collaboration' ? '/admin/collaboration' : '/admin/posts', decision.postId]">{{ decision.postTitle }}</a>
           </span>
         </header>
         <app-markdown-content [markdown]="decision.body" />

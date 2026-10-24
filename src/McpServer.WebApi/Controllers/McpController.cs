@@ -93,6 +93,41 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
             "add_post_comment",
             "Adds a plain comment (an answer, a question, a note) to the conversation under one of the authoring account's own posts. It can never record a decision: the human does that.",
             """{ "type": "object", "properties": { "id": { "type": "string", "description": "The post id from list_my_posts." }, "text": { "type": "string", "description": "Markdown, up to 8000 characters." } }, "required": ["id", "text"] }""")),
+        (AuthoringScope, Tool(
+            "list_my_collaboration",
+            "The collaboration items (review requests and research questions, never public) the authoring account has written: id, title, kind, review state, branch, repositories, created, newest first.",
+            """{ "type": "object", "properties": {} }""")),
+        (AuthoringScope, Tool(
+            "create_collaboration_item",
+            "Creates a collaboration item for the human: a Developer item (review request, starts as Needs review) or a Research item (a question or findings, no approval). It is never public and can never be approved from here. Content is Markdown.",
+            """
+            { "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "content": { "type": "string", "description": "The body in Markdown (use the review post template for a Developer item)." },
+                "kind": { "type": "string", "enum": ["Developer", "Research"], "description": "Default Developer." },
+                "branch": { "type": "string" },
+                "repos": { "type": "string", "description": "The repositories involved, for example ai-research-blog, Adventures.Foundation." } },
+              "required": ["title"] }
+            """)),
+        (AuthoringScope, Tool(
+            "update_collaboration_item",
+            "Revises one of the authoring account's own collaboration items; only the fields given change, and a revised Developer item goes back to Needs review. The kind cannot change.",
+            """
+            { "type": "object",
+              "properties": {
+                "id": { "type": "string", "description": "The id from list_my_collaboration or create_collaboration_item." },
+                "title": { "type": "string" }, "content": { "type": "string" }, "branch": { "type": "string" }, "repos": { "type": "string" } },
+              "required": ["id"] }
+            """)),
+        (AuthoringScope, Tool(
+            "list_collaboration_comments",
+            "The conversation under one of the authoring account's own collaboration items, oldest first (author, kind Comment or Decision, time, text). Read it at the start of a session.",
+            """{ "type": "object", "properties": { "id": { "type": "string", "description": "The id from list_my_collaboration." } }, "required": ["id"] }""")),
+        (AuthoringScope, Tool(
+            "add_collaboration_comment",
+            "Adds a plain comment to the conversation under one of the authoring account's own collaboration items. It can never record a decision: the human does that.",
+            """{ "type": "object", "properties": { "id": { "type": "string" }, "text": { "type": "string", "description": "Markdown, up to 8000 characters." } }, "required": ["id", "text"] }""")),
         (AuthoringScope, Tool("list_categories", "Every category (id and name).", """{ "type": "object", "properties": {} }""")),
         (AuthoringScope, Tool("list_tags", "Every tag (id and name).", """{ "type": "object", "properties": {} }""")),
         (AuthoringScope, Tool(
@@ -316,7 +351,45 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
                 comment.Remove("id");
                 (method, path, payload) = (HttpMethod.Post, $"api/author/posts/{Uri.EscapeDataString(Text("id")!)}/comments", comment);
                 break;
-            case "list_categories":
+            case "list_my_collaboration":
+                (method, path) = (HttpMethod.Get, "api/author/collaboration");
+                break;
+            case "create_collaboration_item":
+                if (string.IsNullOrWhiteSpace(Text("title")))
+                {
+                    return ToolResult(id, "title is required.", isError: true);
+                }
+
+                (method, path, payload) = (HttpMethod.Post, "api/author/collaboration", Args());
+                break;
+            case "update_collaboration_item":
+                if (string.IsNullOrWhiteSpace(Text("id")))
+                {
+                    return ToolResult(id, "id is required.", isError: true);
+                }
+
+                var itemUpdate = Args()!.AsObject();
+                itemUpdate.Remove("id");
+                (method, path, payload) = (HttpMethod.Put, $"api/author/collaboration/{Uri.EscapeDataString(Text("id")!)}", itemUpdate);
+                break;
+            case "list_collaboration_comments":
+                if (string.IsNullOrWhiteSpace(Text("id")))
+                {
+                    return ToolResult(id, "id is required.", isError: true);
+                }
+
+                (method, path) = (HttpMethod.Get, $"api/author/collaboration/{Uri.EscapeDataString(Text("id")!)}/comments");
+                break;
+            case "add_collaboration_comment":
+                if (string.IsNullOrWhiteSpace(Text("id")) || string.IsNullOrWhiteSpace(Text("text")))
+                {
+                    return ToolResult(id, "id and text are required.", isError: true);
+                }
+
+                var itemComment = Args()!.AsObject();
+                itemComment.Remove("id");
+                (method, path, payload) = (HttpMethod.Post, $"api/author/collaboration/{Uri.EscapeDataString(Text("id")!)}/comments", itemComment);
+                break;            case "list_categories":
                 (method, path) = (HttpMethod.Get, "api/author/categories");
                 break;
             case "list_tags":

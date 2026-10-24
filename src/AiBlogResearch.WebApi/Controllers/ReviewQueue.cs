@@ -11,6 +11,11 @@ public static class ReviewQueue
 {
     private const int PageSize = 50;
 
+    /// <summary>The Developer collaboration items whose review state is Needs review.</summary>
+    public static async Task<int> CountItemsAsync(ICollaborationBll items, CancellationToken cancellationToken) =>
+        (await items.ListAsync(cancellationToken)).Count(item =>
+            item.GetValue("Kind") as string == CollaborationKinds.Developer && item.GetValue("Approval") as string == PostApproval.NeedsReview);
+
     public static async Task<int> CountAsync(IPublicContent content, CancellationToken cancellationToken)
     {
         var waiting = 0;

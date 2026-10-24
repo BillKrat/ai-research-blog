@@ -21,15 +21,20 @@ export interface DecisionEntry {
   author: string;
   created: string;
   body: string;
+  /** Whether the decision sits under a post or a collaboration item. */
+  source?: string;
 }
+
+/** What a conversation hangs under: a post or a collaboration item (the API route differs, the conversation is the same). */
+export type ConversationBase = 'posts' | 'collaboration';
 
 /** The conversation under a post, for administrators: read it, add to it. Entries are only added. */
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
   private readonly http = inject(HttpClient);
 
-  list(postId: string): Observable<ConversationEntry[]> {
-    return this.http.get<ConversationEntry[]>(`${environment.apiUrl}/api/posts/${encodeURIComponent(postId)}/comments`);
+  list(postId: string, base: ConversationBase = 'posts'): Observable<ConversationEntry[]> {
+    return this.http.get<ConversationEntry[]>(`${environment.apiUrl}/api/${base}/${encodeURIComponent(postId)}/comments`);
   }
 
   /** Every decision recorded under any post, newest first, each with its post. */
@@ -37,7 +42,7 @@ export class ConversationService {
     return this.http.get<DecisionEntry[]>(`${environment.apiUrl}/api/decisions`);
   }
 
-  add(postId: string, text: string, kind: 'Comment' | 'Decision'): Observable<ConversationEntry> {
-    return this.http.post<ConversationEntry>(`${environment.apiUrl}/api/posts/${encodeURIComponent(postId)}/comments`, { text, kind });
+  add(postId: string, text: string, kind: 'Comment' | 'Decision', base: ConversationBase = 'posts'): Observable<ConversationEntry> {
+    return this.http.post<ConversationEntry>(`${environment.apiUrl}/api/${base}/${encodeURIComponent(postId)}/comments`, { text, kind });
   }
 }
