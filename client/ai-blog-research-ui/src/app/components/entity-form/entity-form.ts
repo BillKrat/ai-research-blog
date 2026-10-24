@@ -14,7 +14,7 @@ import { EntityApiService, LookupOption } from '../../services/entity-api.servic
 import { MediaService } from '../../services/media.service';
 
 /** How a field is drawn; decided from the server-supplied type name, never from the entity. */
-export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'refs' | 'markdown' | 'html';
+export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'refs' | 'markdown' | 'html' | 'choice';
 
 /**
  * Renders one control per schema field, from the matching entity value. Generic: works for any EntityFormModel - a page hosts
@@ -107,6 +107,10 @@ export class EntityForm implements OnChanges {
   }
 
   kindOf(field: EntityFieldSchema): ControlKind {
+    if (field.choices && field.choices.length > 0) {
+      return 'choice';
+    }
+
     if (field.refSchema) {
       return field.type.toLowerCase().startsWith('refs:') ? 'refs' : 'ref';
     }
@@ -130,6 +134,11 @@ export class EntityForm implements OnChanges {
       default:
         return 'text';
     }
+  }
+
+  /** A choice the server lists but does not allow now (its plug-in is switched off). */
+  protected isDisabledChoice(field: EntityFieldSchema, choice: string): boolean {
+    return field.disabledChoices?.includes(choice) === true;
   }
 
   labelOf(field: EntityFieldSchema): string {
@@ -190,6 +199,7 @@ export class EntityForm implements OnChanges {
       values[field.name] = this.kindOf(field) === 'checkbox' ? (value ? 'true' : 'false') : ((value as string | null) ?? '');
     }
 
+    this.rememberValues(values);
     this.save.emit(values);
   }
 
@@ -199,10 +209,54 @@ export class EntityForm implements OnChanges {
     }
 
     for (const field of this.model.schema.fields) {
-      const raw = this.model.entity.values[field.name] ?? '';
+      const stored = this.model.entity.values[field.name] ?? '';
+      const raw = stored === '' ? this.startingValue(field) : stored;
       const value = this.kindOf(field) === 'checkbox' ? raw.toLowerCase() === 'true' : raw;
       this.form.addControl(field.name, new UntypedFormControl({ value, disabled: field.isReadOnly === true }));
     }
+  }
+
+  /**
+   * A new entity (no id yet) starts a "remember" field, and a choice field, from what was last saved here (this browser only), else
+   * from the first choice; an existing entity shows what it holds. Storage can be blocked or empty: then the form just starts blank.
+   */
+  private startingValue(field: EntityFieldSchema): string {
+    if (this.model.entity.entityId) {
+      return '';
+    }
+
+    let last = '';
+    if (field.remember) {
+      try {
+        last = localStorage.getItem(this.rememberKey(field)) ?? '';
+      } catch {
+        last = '';
+      }
+    }
+
+    const usable = (field.choices ?? []).filter((choice) => !this.isDisabledChoice(field, choice));
+    return last && !this.isDisabledChoice(field, last) ? last : (usable[0] ?? '');
+  }
+
+  private rememberValues(values: Record<string, string | null>): void {
+    if (this.model.entity.entityId) {
+      return;
+    }
+
+    for (const field of this.model.schema.fields.filter((f) => f.remember)) {
+      const value = values[field.name];
+      if (value) {
+        try {
+          localStorage.setItem(this.rememberKey(field), value);
+        } catch {
+          // a blocked store only means no default next time
+        }
+      }
+    }
+  }
+
+  private rememberKey(field: EntityFieldSchema): string {
+    return `entity.last.${this.model.schema.schemaIri}.${field.name}`;
   }
 
   /** Fills each pointer field select from the lookup link the server put in the model. */

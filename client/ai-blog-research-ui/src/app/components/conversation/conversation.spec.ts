@@ -193,4 +193,23 @@ describe('Conversation reply box', () => {
     expect(root.querySelector('.conversation__preview strong')?.textContent).toBe('bold');
     expect(root.querySelector('textarea')).toBeNull();
   });
+
+  it('says changes are requested, hides the quick replies, and can take the request back', async () => {
+    const { fixture, http, root } = setup();
+    fixture.componentRef.setInput('actions', [{ name: 'withdraw-changes', label: 'Cancel change request', link: '/api/collaboration/p1/withdraw-changes' }]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(root.querySelector('.conversation__awaiting')?.textContent).toContain('Changes requested');
+    expect(root.querySelector('.conversation__quick')?.textContent).not.toContain('Ask');
+    expect(root.querySelector('.conversation__quick')?.textContent).not.toContain('Approve');
+
+    const changed = vi.fn();
+    fixture.componentInstance.changed.subscribe(changed);
+    (Array.from(root.querySelectorAll('.conversation__awaiting button')).find((b) => b.textContent?.includes('Cancel change request')) as HTMLElement).click();
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/collaboration/p1/withdraw-changes')).flush(null);
+
+    expect(changed).toHaveBeenCalled();
+  });
 });

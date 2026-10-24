@@ -244,4 +244,82 @@ describe('EntityForm', () => {
 
     expect(emitted?.['Categories']).toBe('c1,c2');
   });
+
+  describe('choices and remembered defaults', () => {
+    const iri = 'https://schema.global-webnet.com/collaboration/CollaborationItem';
+
+    function itemModel(entityId: string, values: Record<string, string> = {}): EntityFormModel {
+      return {
+        schema: {
+          schemaIri: iri,
+          fields: [
+            { name: 'Kind', type: 'String', isRequired: false, choices: ['Developer', 'Research'], remember: true },
+            { name: 'Branch', type: 'String', isRequired: false, remember: true },
+          ],
+        },
+        entity: { entityId, values },
+      };
+    }
+
+    beforeEach(() => {
+      const store = new Map<string, string>();
+      vi.stubGlobal('localStorage', {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => void store.set(key, value),
+        removeItem: (key: string) => void store.delete(key),
+        clear: () => store.clear(),
+      });
+    });
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('draws a dropdown for a field with choices and starts a new entity on the first choice', () => {
+      const fixture = TestBed.createComponent(EntityForm);
+      applyModel(fixture, itemModel(''));
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).querySelectorAll('select option').length).toBe(2);
+      expect(fixture.componentInstance.form.value['Kind']).toBe('Developer');
+    });
+
+    it('starts a new entity from the values last saved, and remembers a save', () => {
+      localStorage.setItem(`entity.last.${iri}.Kind`, 'Research');
+      localStorage.setItem(`entity.last.${iri}.Branch`, 'claude-x');
+      const fixture = TestBed.createComponent(EntityForm);
+      applyModel(fixture, itemModel(''));
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.form.value).toEqual({ Kind: 'Research', Branch: 'claude-x' });
+
+      fixture.componentInstance.form.controls['Branch'].setValue('claude-y');
+      fixture.componentInstance.submit();
+
+      expect(localStorage.getItem(`entity.last.${iri}.Branch`)).toBe('claude-y');
+    });
+
+    it('lists a choice that is switched off but cannot be picked, and never starts on it', () => {
+      localStorage.setItem(`entity.last.${iri}.Kind`, 'Research');
+      const model = itemModel('');
+      model.schema.fields[0].disabledChoices = ['Research'];
+      const fixture = TestBed.createComponent(EntityForm);
+      applyModel(fixture, model);
+      fixture.detectChanges();
+
+      const options = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('select option')) as HTMLOptionElement[];
+      expect(options.find((o) => o.value === 'Research')?.disabled).toBe(true);
+      expect(options.find((o) => o.value === 'Developer')?.disabled).toBe(false);
+      expect(fixture.componentInstance.form.value['Kind']).toBe('Developer');
+    });
+
+    it('leaves an existing entity alone and does not overwrite the remembered values from it', () => {
+      localStorage.setItem(`entity.last.${iri}.Branch`, 'claude-x');
+      const fixture = TestBed.createComponent(EntityForm);
+      applyModel(fixture, itemModel('item-1', { Kind: 'Research', Branch: '' }));
+      fixture.detectChanges();
+      fixture.componentInstance.submit();
+
+      expect(fixture.componentInstance.form.value['Branch']).toBe('');
+      expect(localStorage.getItem(`entity.last.${iri}.Branch`)).toBe('claude-x');
+    });
+  });
 });

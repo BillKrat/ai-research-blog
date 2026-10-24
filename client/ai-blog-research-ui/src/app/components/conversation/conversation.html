@@ -20,6 +20,14 @@
     <p class="conversation__none">Nothing said yet.</p>
   }
 
+  @if (actionLink('withdraw-changes')) {
+    <p class="conversation__awaiting" role="status">
+      <mat-icon>edit_note</mat-icon>
+      <span><strong>Changes requested.</strong> Write what you want changed below and send it; the author revises and it comes back for review.</span>
+      <button mat-stroked-button type="button" (click)="withdraw()" [disabled]="sending()">Cancel change request</button>
+    </p>
+  }
+
   <div class="conversation__quick" role="group" aria-label="Quick replies">
     @if (actionLink('approve')) {
       <button mat-stroked-button type="button" (click)="approve()" [disabled]="sending()" [matTooltip]="'quickApprove' | label">
@@ -33,10 +41,12 @@
         Redirect
       </button>
     }
-    <button mat-stroked-button type="button" (click)="ask()" [matTooltip]="'quickAsk' | label">
-      <mat-icon>help</mat-icon>
-      Ask
-    </button>
+    @if (!actionLink('withdraw-changes')) {
+      <button mat-stroked-button type="button" (click)="ask()" [matTooltip]="'quickAsk' | label">
+        <mat-icon>help</mat-icon>
+        Ask
+      </button>
+    }
     <span class="conversation__tools">
       <button mat-icon-button type="button" [disabled]="uploading() || previewing()" (click)="imageInput.click()" [matTooltip]="'insertImage' | label" [attr.aria-label]="'insertImage' | label">
         <mat-icon>add_photo_alternate</mat-icon>

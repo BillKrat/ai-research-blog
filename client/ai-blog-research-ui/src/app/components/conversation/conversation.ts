@@ -103,6 +103,23 @@ export class Conversation {
     });
   }
 
+  /** Takes a change request back: the item returns to review and the quick replies come back. */
+  protected withdraw(): void {
+    const link = this.actionLink('withdraw-changes');
+    if (!link || this.sending()) {
+      return;
+    }
+
+    this.begin();
+    this.entityApi.runAction(link).subscribe({
+      next: () => {
+        this.sending.set(false);
+        this.changed.emit();
+      },
+      error: (error) => this.fail(error),
+    });
+  }
+
   /** Start a reply that, when sent, also sends the post back with a request for changes. */
   protected redirect(): void {
     this.redirecting.set(true);

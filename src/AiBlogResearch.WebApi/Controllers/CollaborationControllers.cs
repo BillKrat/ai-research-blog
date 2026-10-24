@@ -16,7 +16,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 [Route("api/collaboration")]
 [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
 [RequiresPlugin(PluginCatalog.DeveloperCollaboration, PluginCatalog.ResearchCollaboration)]
-public sealed class CollaborationController(IEntityPresenter<CollaborationItem> presenter, ICollaborationBll items, IUserPresenter users, CollaborationMigration migration)
+public sealed class CollaborationController(IEntityPresenter<CollaborationItem> presenter, ICollaborationBll items, IUserPresenter users, CollaborationMigration migration, IPlugins plugins)
     : AdminEntityControllerBase<CollaborationItem>(presenter)
 {
     /// <summary>The signed-in user is the author unless the form names one.</summary>
@@ -31,6 +31,53 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
         return me is null ? request : request with { Values = new Dictionary<string, string?>(request.Values) { ["Author"] = me.Entity.EntityId } };
     }
 
+    private static readonly string[] Remembered = ["Kind", "Branch", "Repos"];
+
+    /// <summary>
+    /// What the form of every item shares: Kind is a choice of the known kinds, Kind, Branch and Repositories start from the value last used
+    /// (the browser remembers it), and the Author comes first.
+    /// </summary>
+    private static EntityFormModel Shape(EntityFormModel form) =>
+        form with
+        {
+            Schema = form.Schema with
+            {
+                Fields = form.Schema.Fields
+                    .Select(field => field with
+                    {
+                        Choices = field.Name == "Kind" ? CollaborationKinds.All : field.Choices,
+                        Remember = Remembered.Contains(field.Name),
+                        Order = field.Name == "Author" ? -1 : field.Order,
+                    })
+                    .OrderBy(field => field.Order)
+                    .ToList(),
+            },
+        };
+
+    /// <summary>
+    /// The kinds whose plug-in is switched off stay in the Kind dropdown but cannot be chosen (the browser shows them disabled), so the
+    /// refusal comes when the person picks the kind, not after the whole form is filled in and saved.
+    /// </summary>
+    protected override async Task<EntityFormModel> DecorateAsync(EntityFormModel form, string collectionPath, CancellationToken cancellationToken)
+    {
+        var decorated = Decorate(form, collectionPath);
+        var enabled = await plugins.EnabledKeysAsync(cancellationToken);
+        var off = CollaborationKinds.All.Where(kind => PluginCatalog.ForKind(kind) is { } key && !enabled.Contains(key)).ToList();
+        return off.Count == 0
+            ? decorated
+            : decorated with
+            {
+                Schema = decorated.Schema with
+                {
+                    Fields = decorated.Schema.Fields.Select(field => field.Name == "Kind" ? field with { DisabledChoices = off } : field).ToList(),
+                },
+            };
+    }
+
+    /// <summary>The grid can be filtered by Kind (all kinds when no filter is chosen).</summary>
+    protected override EntityGridModel DecorateGrid(EntityGridModel grid) =>
+        grid with { Filters = [new GridFilter("Kind", "Kind", CollaborationKinds.All)] };
+
     private static readonly string[] DeveloperOnly = ["Branch", "Repos", "Approval", "ApprovedBy", "ApprovedAt"];
     private static readonly string[] ResearchOnly = ["Sources", "Findings", "Status"];
 
@@ -41,7 +88,7 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
     /// </summary>
     protected override EntityFormModel Decorate(EntityFormModel form, string collectionPath)
     {
-        var decorated = base.Decorate(form, collectionPath);
+        var decorated = Shape(base.Decorate(form, collectionPath));
         var kind = form.Entity.Values.GetValueOrDefault("Kind");
         if (string.IsNullOrEmpty(form.Entity.EntityId) || string.IsNullOrEmpty(kind))
         {
@@ -55,13 +102,18 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
         if (kind == CollaborationKinds.Developer)
         {
             var approval = form.Entity.Values.GetValueOrDefault("Approval");
-            if (approval != PostApproval.Approved)
+            if (approval == PostApproval.ChangesRequested)
             {
-                actions.Add(new EntityAction("approve", "Approve", $"{link}/approve", null));
+                // the change request is out: the next move is the reply, so the only action is to take the request back
+                actions.Add(new EntityAction("withdraw-changes", "Cancel change request", $"{link}/withdraw-changes", null));
             }
-
-            if (approval != PostApproval.ChangesRequested)
+            else
             {
+                if (approval != PostApproval.Approved)
+                {
+                    actions.Add(new EntityAction("approve", "Approve", $"{link}/approve", null));
+                }
+
                 actions.Add(new EntityAction("request-changes", "Request changes", $"{link}/request-changes", null));
             }
         }
@@ -86,6 +138,11 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
 
         return decorated with { Actions = actions };
     }
+
+    /// <summary>Takes a change request back: the item returns to Needs review.</summary>
+    [HttpPost("{id}/withdraw-changes")]
+    public Task<IActionResult> WithdrawChanges(string id, CancellationToken cancellationToken) =>
+        GuardedAsync(async () => await items.SetApprovalAsync(id, PostApproval.NeedsReview, null, cancellationToken) ? (IActionResult)NoContent() : NotFound());
 
     [HttpPost("{id}/accept")]
     public Task<IActionResult> Accept(string id, CancellationToken cancellationToken) => SetStatusAsync(id, ResearchStatus.Accepted, cancellationToken);

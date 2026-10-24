@@ -1,6 +1,17 @@
 <section class="admin-grid">
   <div class="admin-grid__head">
     <h2>{{ title() }}</h2>
+    @for (filter of model()?.filters ?? []; track filter.field) {
+      <label class="admin-grid__filter">
+        <span>{{ filter.label }}</span>
+        <select [attr.aria-label]="'Filter by ' + filter.label" (change)="onFilter(filter.field, $any($event.target).value)">
+          <option value="" [selected]="selectedFilterValue() === ''">All</option>
+          @for (choice of filter.choices; track choice) {
+            <option [value]="choice" [selected]="selectedFilterValue() === choice">{{ choice }}</option>
+          }
+        </select>
+      </label>
+    }
     @if (canCreate) {
       <button mat-icon-button type="button" class="admin-grid__new" (click)="create()" [matTooltip]="'new' | label" [attr.aria-label]="'new' | label">
         <mat-icon>add</mat-icon>
@@ -16,7 +27,7 @@
     <p>Loading...</p>
   } @else if (model(); as grid) {
     @if (grid.rows.length === 0) {
-      <p>Nothing here yet.</p>
+      <p>{{ selectedFilterValue() ? 'Nothing matches this filter.' : 'Nothing here yet.' }}</p>
     } @else {
       <app-entity-grid [model]="grid" [toggleFields]="['IsPublished']" toggleLockedField="RevisionOf" [viewBase]="viewBase" (request)="onRequest($event)" />
     }

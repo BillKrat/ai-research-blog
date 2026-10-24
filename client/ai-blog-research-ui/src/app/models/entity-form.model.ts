@@ -22,6 +22,19 @@ export interface EntityFieldSchema {
   isListVisible?: boolean;
   /** The schema a pointer field points at (a lookup is offered from it); null for an ordinary field. */
   refSchema?: string | null;
+  /** A fixed set of values to choose from (the server decides them); the form draws a dropdown. */
+  choices?: string[] | null;
+  /** The form starts a new entity from the value last used in this field (kept in this browser only). */
+  remember?: boolean;
+  /** Choices that are listed but cannot be picked now (for example a kind whose plug-in is switched off). */
+  disabledChoices?: string[] | null;
+}
+
+/** A filter a grid offers: the field, its label and the values to choose from; "all" is the default. */
+export interface GridFilter {
+  field: string;
+  label: string;
+  choices: string[];
 }
 
 /** What the caller may do with one entity; the server enforces it, the renderer only decides which buttons to show. */
@@ -54,6 +67,8 @@ export interface GridPaging {
   totalPages: number;
   sort: string | null;
   descending: boolean;
+  filter?: string | null;
+  filterValue?: string | null;
 }
 
 /** Server-supplied URLs (relative to the API root); the client follows them and holds no URL templates. */
@@ -69,6 +84,8 @@ export interface EntityGridLinks {
 }
 
 export interface EntityGridModel {
+  /** The filters the server offers for this list (empty or absent: none). */
+  filters?: GridFilter[] | null;
   schema: EntitySchemaModel;
   rows: EntityDataModel[];
   paging?: GridPaging | null;

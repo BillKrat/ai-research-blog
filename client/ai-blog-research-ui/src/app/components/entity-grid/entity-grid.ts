@@ -59,6 +59,31 @@ export class EntityGrid implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['model'] && changes['model'].previousValue?.schema?.schemaIri !== this.model.schema.schemaIri) {
       this.overrides.clear();
+      this.restoreColumns();
+    }
+  }
+
+  /** The columns chosen with the gear are kept per list (browser storage, this browser only) so they need choosing once. */
+  private columnsKey(): string {
+    return `grid.columns.${this.model.schema.schemaIri}`;
+  }
+
+  private restoreColumns(): void {
+    try {
+      const saved = JSON.parse(localStorage.getItem(this.columnsKey()) ?? '{}') as Record<string, boolean>;
+      for (const [name, visible] of Object.entries(saved)) {
+        this.overrides.set(name, visible === true);
+      }
+    } catch {
+      // nothing saved, or storage blocked: the server defaults apply
+    }
+  }
+
+  private saveColumns(): void {
+    try {
+      localStorage.setItem(this.columnsKey(), JSON.stringify(Object.fromEntries(this.overrides)));
+    } catch {
+      // storage blocked: the choice lasts for this view only
     }
   }
 
@@ -87,6 +112,7 @@ export class EntityGrid implements OnChanges {
 
   protected toggleColumn(field: EntityFieldSchema): void {
     this.overrides.set(field.name, !this.isVisible(field));
+    this.saveColumns();
   }
 
   protected toggle(entityId: string): void {
