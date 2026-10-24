@@ -297,6 +297,20 @@ describe('EntityForm', () => {
       expect(localStorage.getItem(`entity.last.${iri}.Branch`)).toBe('claude-y');
     });
 
+    it('lists a choice that is switched off but cannot be picked, and never starts on it', () => {
+      localStorage.setItem(`entity.last.${iri}.Kind`, 'Research');
+      const model = itemModel('');
+      model.schema.fields[0].disabledChoices = ['Research'];
+      const fixture = TestBed.createComponent(EntityForm);
+      applyModel(fixture, model);
+      fixture.detectChanges();
+
+      const options = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('select option')) as HTMLOptionElement[];
+      expect(options.find((o) => o.value === 'Research')?.disabled).toBe(true);
+      expect(options.find((o) => o.value === 'Developer')?.disabled).toBe(false);
+      expect(fixture.componentInstance.form.value['Kind']).toBe('Developer');
+    });
+
     it('leaves an existing entity alone and does not overwrite the remembered values from it', () => {
       localStorage.setItem(`entity.last.${iri}.Branch`, 'claude-x');
       const fixture = TestBed.createComponent(EntityForm);

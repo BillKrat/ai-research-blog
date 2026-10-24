@@ -136,6 +136,11 @@ export class EntityForm implements OnChanges {
     }
   }
 
+  /** A choice the server lists but does not allow now (its plug-in is switched off). */
+  protected isDisabledChoice(field: EntityFieldSchema, choice: string): boolean {
+    return field.disabledChoices?.includes(choice) === true;
+  }
+
   labelOf(field: EntityFieldSchema): string {
     return field.label?.trim() ? field.label : field.name;
   }
@@ -229,7 +234,8 @@ export class EntityForm implements OnChanges {
       }
     }
 
-    return last || (field.choices?.[0] ?? '');
+    const usable = (field.choices ?? []).filter((choice) => !this.isDisabledChoice(field, choice));
+    return last && !this.isDisabledChoice(field, last) ? last : (usable[0] ?? '');
   }
 
   private rememberValues(values: Record<string, string | null>): void {

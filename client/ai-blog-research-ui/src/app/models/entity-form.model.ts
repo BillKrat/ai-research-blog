@@ -26,6 +26,8 @@ export interface EntityFieldSchema {
   choices?: string[] | null;
   /** The form starts a new entity from the value last used in this field (kept in this browser only). */
   remember?: boolean;
+  /** Choices that are listed but cannot be picked now (for example a kind whose plug-in is switched off). */
+  disabledChoices?: string[] | null;
 }
 
 /** A filter a grid offers: the field, its label and the values to choose from; "all" is the default. */

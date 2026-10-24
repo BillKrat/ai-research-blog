@@ -236,4 +236,29 @@ describe('EntityGrid', () => {
     (noLinks.querySelector('tbody tr.entity-grid__row') as HTMLElement).click();
     expect(noLinks.querySelector('.entity-grid__open')).toBeNull();
   });
+
+  describe('remembered columns', () => {
+    beforeEach(() => {
+      const store = new Map<string, string>();
+      vi.stubGlobal('localStorage', {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => void store.set(key, value),
+      });
+    });
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('keeps the columns chosen with the gear for the next visit to the same list', () => {
+      const first = render(model());
+      const component = first.componentInstance as unknown as { toggleColumn(f: unknown): void; columns: { name: string }[] };
+      component.toggleColumn({ name: 'Email', type: 'String', isRequired: false });
+      expect(component.columns.map((c) => c.name)).not.toContain('Email');
+
+      const second = render(model());
+      const again = second.componentInstance as unknown as { columns: { name: string }[] };
+
+      expect(again.columns.map((c) => c.name)).not.toContain('Email');
+      expect(again.columns.map((c) => c.name)).toContain('UserName');
+    });
+  });
 });

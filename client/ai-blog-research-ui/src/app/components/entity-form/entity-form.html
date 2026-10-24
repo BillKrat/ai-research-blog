@@ -15,7 +15,7 @@
             <span>{{ labelOf(field) }}</span>
             <select [formControlName]="field.name" [attr.aria-label]="labelOf(field)">
               @for (choice of field.choices; track choice) {
-                <option [value]="choice">{{ choice }}</option>
+                <option [value]="choice" [disabled]="isDisabledChoice(field, choice)">{{ choice }}{{ isDisabledChoice(field, choice) ? ' (switched off in Admin > Plugins)' : '' }}</option>
               }
             </select>
           </label>
