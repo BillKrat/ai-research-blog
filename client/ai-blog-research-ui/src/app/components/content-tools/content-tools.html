@@ -1,13 +1,19 @@
-@if (auth.isAuthenticated()) {
+@if (auth.isAuthenticated() && (canAdd || canEdit || canDelete)) {
   <span class="content-tools" role="toolbar" [attr.aria-label]="'Manage this ' + noun">
+    @if (canAdd) {
     <button mat-icon-button type="button" (click)="add()" [matTooltip]="'Add a ' + noun" [attr.aria-label]="'Add a ' + noun">
       <mat-icon>add</mat-icon>
     </button>
+    }
+    @if (canEdit) {
     <button mat-icon-button type="button" (click)="edit()" [matTooltip]="'Edit this ' + noun" [attr.aria-label]="'Edit this ' + noun">
       <mat-icon>edit</mat-icon>
     </button>
+    }
+    @if (canDelete) {
     <button mat-icon-button type="button" (click)="remove()" [matTooltip]="'Delete this ' + noun" [attr.aria-label]="'Delete this ' + noun">
       <mat-icon>delete</mat-icon>
     </button>
+    }
   </span>
 }

@@ -15,7 +15,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/collaboration")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[AdminRights(Read = Rights.CollaborationRead, Create = Rights.CollaborationWrite, Update = Rights.CollaborationWrite, Delete = Rights.CollaborationWrite)]
 [RequiresPlugin(PluginCatalog.DeveloperCollaboration, PluginCatalog.ResearchCollaboration)]
 public sealed class CollaborationController(IEntityPresenter<CollaborationItem> presenter, ICollaborationBll items, IUserPresenter users, CollaborationMigration migration, IPlugins plugins)
     : AdminEntityControllerBase<CollaborationItem>(presenter)
@@ -141,25 +141,31 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
     }
 
     /// <summary>Takes a change request back: the item returns to Needs review.</summary>
+    [RequireRight(Rights.CollaborationWrite)]
     [HttpPost("{id}/withdraw-changes")]
     public Task<IActionResult> WithdrawChanges(string id, CancellationToken cancellationToken) =>
         GuardedAsync(async () => await items.SetApprovalAsync(id, PostApproval.NeedsReview, null, cancellationToken) ? (IActionResult)NoContent() : NotFound());
 
+    [RequireRight(Rights.CollaborationReview)]
     [HttpPost("{id}/accept")]
     public Task<IActionResult> Accept(string id, CancellationToken cancellationToken) => SetStatusAsync(id, ResearchStatus.Accepted, cancellationToken);
 
+    [RequireRight(Rights.CollaborationReview)]
     [HttpPost("{id}/close")]
     public Task<IActionResult> Close(string id, CancellationToken cancellationToken) => SetStatusAsync(id, ResearchStatus.Closed, cancellationToken);
 
+    [RequireRight(Rights.CollaborationReview)]
     [HttpPost("{id}/reopen")]
     public Task<IActionResult> Reopen(string id, CancellationToken cancellationToken) => SetStatusAsync(id, ResearchStatus.Open, cancellationToken);
 
     private Task<IActionResult> SetStatusAsync(string id, string status, CancellationToken cancellationToken) =>
         GuardedAsync(async () => await items.SetStatusAsync(id, status, cancellationToken) ? (IActionResult)NoContent() : NotFound());
+    [RequireRight(Rights.CollaborationReview)]
     [HttpPost("{id}/approve")]
     public Task<IActionResult> Approve(string id, CancellationToken cancellationToken) =>
         GuardedAsync(async () => await items.SetApprovalAsync(id, PostApproval.Approved, User.Identity?.Name, cancellationToken) ? (IActionResult)NoContent() : NotFound());
 
+    [RequireRight(Rights.CollaborationReview)]
     [HttpPost("{id}/request-changes")]
     public Task<IActionResult> RequestChanges(string id, CancellationToken cancellationToken) =>
         GuardedAsync(async () => await items.SetApprovalAsync(id, PostApproval.ChangesRequested, User.Identity?.Name, cancellationToken) ? (IActionResult)NoContent() : NotFound());
@@ -169,6 +175,7 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
     /// decisions and review state carry over). A dry run unless <c>apply=true</c>; safe to run again (an item that already exists is not
     /// created twice, and a post is only taken out of the Posts list once its item exists).
     /// </summary>
+    [RequireRight(Rights.SettingsManage)]
     [HttpPost("migrate")]
     public Task<IActionResult> Migrate([FromQuery] bool apply, CancellationToken cancellationToken) =>
         GuardedAsync(async () => (IActionResult)Ok(await migration.RunAsync(apply, cancellationToken)));

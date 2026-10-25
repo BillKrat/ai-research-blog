@@ -13,7 +13,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/roles")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[RequireRight(Rights.RolesManage)]
 public sealed class RolesController(IEntityPresenter<Role> presenter) : EntityControllerBase<Role>
 {
     [HttpGet]

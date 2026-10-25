@@ -323,6 +323,7 @@ try
     builder.Services.AddScoped<IEntityBll<Plugin>>(provider => new EntityBll<Plugin>(provider.GetRequiredService<IEntityRepository<Plugin>>()));
     builder.Services.AddScoped<IPlugins, Plugins>();
     builder.Services.AddScoped<IRightsResolver, RightsResolver>();
+    builder.Services.AddRightsAuthorization();
     builder.Services.AddScoped<IEntityBll<Tenant>>(provider => new EntityBll<Tenant>(provider.GetRequiredService<IEntityRepository<Tenant>>()));
     builder.Services.AddScoped<ITenantResolver, TenantResolver>();
     builder.Services.AddScoped<ICollaborationBll, CollaborationBll>();

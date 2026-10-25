@@ -17,24 +17,36 @@ public sealed record NewConversationEntry(string? Text, string? Kind);
 [ApiController]
 [Route("api/posts/{postId}/comments")]
 [Route("api/collaboration/{postId}/comments")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
-public sealed class ConversationController(IConversation conversation) : ApiControllerBase
+
+public sealed class ConversationController(IConversation conversation, IRightsAuthorizer authorizer) : ApiControllerBase
 {
+    [RequireRight(Rights.CollaborationRead)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<ConversationEntry>>> List(string postId, CancellationToken cancellationToken) =>
         Ok(await conversation.ListAsync(postId, cancellationToken));
 
+    [RequireRight(Rights.CollaborationWrite)]
     [HttpPost]
-    public Task<IActionResult> Add(string postId, [FromBody] NewConversationEntry entry, CancellationToken cancellationToken) =>
-        GuardedAsync(async () => (IActionResult)StatusCode(
+    public async Task<IActionResult> Add(string postId, [FromBody] NewConversationEntry entry, CancellationToken cancellationToken)
+    {
+        var kind = string.IsNullOrWhiteSpace(entry.Kind) ? CommentKinds.Comment : entry.Kind;
+
+        // a decision is the human's word: recording one needs the review right, not only the right to comment
+        if (string.Equals(kind, CommentKinds.Decision, StringComparison.Ordinal) && !await authorizer.IsAllowedAsync(User, Rights.CollaborationReview, cancellationToken))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden);
+        }
+
+        return await GuardedAsync(async () => (IActionResult)StatusCode(
             StatusCodes.Status201Created,
-            await conversation.AddAsync(postId, User.Identity?.Name ?? "unknown", string.IsNullOrWhiteSpace(entry.Kind) ? CommentKinds.Comment : entry.Kind, entry.Text ?? string.Empty, cancellationToken)));
+            await conversation.AddAsync(postId, User.Identity?.Name ?? "unknown", kind, entry.Text ?? string.Empty, cancellationToken)));
+    }
 }
 
 /// <summary>The decisions page for administrators: every entry the human recorded as a decision, across all posts, newest first, each with its post.</summary>
 [ApiController]
 [Route("api/decisions")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[RequireRight(Rights.DecisionsRead)]
 [RequiresPlugin(PluginCatalog.Decisions)]
 public sealed class DecisionsController(IConversation conversation) : ControllerBase
 {

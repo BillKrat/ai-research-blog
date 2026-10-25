@@ -9,12 +9,12 @@ namespace AiBlogResearch.WebApi.Tests.Controllers;
 public sealed class AdminExceptionsControllerTests
 {
     [Fact]
-    public void Controller_IsRestrictedToTheTenantAdminPolicy()
+    public void Controller_NeedsTheDiagnosticsRight()
     {
-        var authorize = Assert.Single(
-            typeof(AdminExceptionsController).GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true).Cast<AuthorizeAttribute>());
+        var guard = Assert.Single(
+            typeof(AdminExceptionsController).GetCustomAttributes(typeof(Adventures.WebApi.RequireRightAttribute), inherit: true).Cast<Adventures.WebApi.RequireRightAttribute>());
 
-        Assert.Equal(WellKnownClaims.TenantAdminPolicy, authorize.Policy);
+        Assert.Equal(Adventures.Entities.Rights.DiagnosticsRead, guard.Right);
     }
 
     [Fact]

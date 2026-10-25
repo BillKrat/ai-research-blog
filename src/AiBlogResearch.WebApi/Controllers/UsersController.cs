@@ -18,7 +18,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/users")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[RequireRight(Rights.UsersManage)]
 public sealed class UsersController(
     IUserPresenter presenter, IEntityRelationWriter relationWriter, EntitySchemaOf<User> userSchema,
     IUserProvisioning provisioning, IConfiguration configuration, ILogger<UsersController> logger) : EntityControllerBase<User>

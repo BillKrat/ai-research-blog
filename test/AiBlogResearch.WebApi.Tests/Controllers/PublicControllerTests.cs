@@ -1,6 +1,7 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 using System.Security.Claims;
 using Adventures.Entities;
+using Adventures.WebApi;
 using Adventures.Security;
 using AiBlogResearch.WebApi.Controllers;
 using Microsoft.AspNetCore.Authorization;
@@ -53,17 +54,17 @@ public sealed class PublicControllerTests
             Task.FromResult<IReadOnlyList<PublicTerm>>([]);
     }
 
-    private sealed class FakeAuthorization(bool succeeds) : IAuthorizationService
+    private sealed class FakeAuthorization(bool succeeds) : IRightsAuthorizer
     {
-        public string? PolicyAsked;
+        public string? RightAsked;
 
-        public Task<AuthorizationResult> AuthorizeAsync(ClaimsPrincipal user, object? resource, IEnumerable<IAuthorizationRequirement> requirements) =>
-            Task.FromResult(succeeds ? AuthorizationResult.Success() : AuthorizationResult.Failed());
+        public Task<IReadOnlySet<string>> RightsOfAsync(ClaimsPrincipal user, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlySet<string>>(succeeds ? Rights.AllNames : new HashSet<string>());
 
-        public Task<AuthorizationResult> AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName)
+        public Task<bool> IsAllowedAsync(ClaimsPrincipal user, string right, CancellationToken cancellationToken = default)
         {
-            PolicyAsked = policyName;
-            return Task.FromResult(succeeds ? AuthorizationResult.Success() : AuthorizationResult.Failed());
+            RightAsked = right;
+            return Task.FromResult(succeeds);
         }
     }
 
@@ -82,7 +83,7 @@ public sealed class PublicControllerTests
     }
 
     [Fact]
-    public async Task AnAdministrator_GetsDraftsOnEveryRead_AndThePolicyAskedIsTheAdminPolicy()
+    public async Task AnAdministrator_GetsDraftsOnEveryRead_AndTheRightAskedIsPostsRead()
     {
         var (controller, content, authorization) = Build(signedIn: true, policyPasses: true);
 
@@ -95,7 +96,7 @@ public sealed class PublicControllerTests
         Assert.True(content.PostIncludeDrafts);
         Assert.True(content.PageIncludeDrafts);
         Assert.True(content.MenuIncludeDrafts);
-        Assert.Equal(WellKnownClaims.TenantAdminPolicy, authorization.PolicyAsked);
+        Assert.Equal(Rights.PostsRead, authorization.RightAsked);
     }
 
     [Fact]
@@ -110,7 +111,7 @@ public sealed class PublicControllerTests
         Assert.False(content.PostsIncludeDrafts);
         Assert.False(content.PostIncludeDrafts);
         Assert.False(content.MenuIncludeDrafts);
-        Assert.Null(authorization.PolicyAsked);
+        Assert.Null(authorization.RightAsked);
     }
 
     [Fact]

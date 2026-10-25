@@ -31,7 +31,7 @@ public sealed class RequiresPluginAttribute(params string[] keys) : Attribute, I
 /// <summary>The Plugins page for administrators: the built-in plug-ins with their state, and switching one on or off (the admin menu follows).</summary>
 [ApiController]
 [Route("api/plugins")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[RequireRight(Rights.PluginsManage)]
 public sealed class PluginsController(IPlugins plugins) : ApiControllerBase
 {
     [HttpGet]

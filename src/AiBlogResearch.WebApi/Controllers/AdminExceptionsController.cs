@@ -1,4 +1,5 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
+using Adventures.WebApi;
 using Adventures.Common.Diagnostics;
 using Adventures.Entities;
 using Adventures.Security;
@@ -21,7 +22,7 @@ public sealed record SignatureStatusChange(string? Status);
 /// </summary>
 [ApiController]
 [Route("api/admin/exceptions")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[RequireRight(Rights.DiagnosticsRead)]
 public sealed class AdminExceptionsController(IExceptionLogPresenter presenter, IExceptionSignatureBll signatures) : ControllerBase
 {
     /// <summary>The kinds of failure seen (grouped repeats), most recently seen first, each with how often.</summary>
@@ -39,6 +40,7 @@ public sealed class AdminExceptionsController(IExceptionLogPresenter presenter, 
     public async Task<ActionResult<ExceptionCount>> Count(CancellationToken cancellationToken) =>
         Ok(new ExceptionCount(await presenter.CountActiveAsync(cancellationToken), await presenter.CountTotalAsync(cancellationToken)));
 
+    [RequireRight(Rights.SettingsManage)]
     [HttpDelete]
     public async Task<ActionResult<PurgeResult>> Purge(CancellationToken cancellationToken) =>
         Ok(new PurgeResult(await presenter.PurgeAsync(cancellationToken)));

@@ -78,11 +78,11 @@ public sealed class MediaControllerTests
     [Fact]
     public void OnlyAdministratorsUploadOrList_AndAnyoneMayReadAnImage()
     {
-        string? PolicyOf(string method) =>
-            typeof(MediaController).GetMethod(method)!.GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>().SingleOrDefault()?.Policy;
+        string? RightOf(string method) =>
+            typeof(MediaController).GetMethod(method)!.GetCustomAttributes(typeof(Adventures.WebApi.RequireRightAttribute), true).Cast<Adventures.WebApi.RequireRightAttribute>().SingleOrDefault()?.Right;
 
-        Assert.Equal(WellKnownClaims.TenantAdminPolicy, PolicyOf(nameof(MediaController.Upload)));
-        Assert.Equal(WellKnownClaims.TenantAdminPolicy, PolicyOf(nameof(MediaController.List)));
+        Assert.Equal(Adventures.Entities.Rights.MediaUpload, RightOf(nameof(MediaController.Upload)));
+        Assert.Equal(Adventures.Entities.Rights.MediaUpload, RightOf(nameof(MediaController.List)));
         Assert.NotEmpty(typeof(MediaController).GetMethod(nameof(MediaController.Serve))!.GetCustomAttributes(typeof(AllowAnonymousAttribute), true));
     }
 }

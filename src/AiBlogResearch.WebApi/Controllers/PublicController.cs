@@ -1,4 +1,5 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
+using Adventures.WebApi;
 using Adventures.Entities;
 using Adventures.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -10,16 +11,16 @@ namespace AiBlogResearch.WebApi.Controllers;
 /// The read side of the site, anonymous by default: published posts and pages only (see <see cref="IPublicContent"/>). Nothing here
 /// accepts a write, or returns an id or an e-mail address; page size is capped by the service. When the caller sends a token that
 /// passes the administrator policy (the same one the admin uses), unpublished posts and pages are included and flagged as drafts, as
-/// BlogEngine.NET shows its administrators the drafts. A visitor, or a token without that role, gets the published content only.
+/// BlogEngine.NET shows its administrators the drafts. A visitor, or a person without that right, gets the published content only.
 /// </summary>
 [ApiController]
 [Route("api/public")]
 [AllowAnonymous]
-public sealed class PublicController(IPublicContent content, IAuthorizationService authorization) : ControllerBase
+public sealed class PublicController(IPublicContent content, IRightsAuthorizer rights) : ControllerBase
 {
     /// <summary>True only for a signed-in administrator: the one condition under which drafts are returned.</summary>
     private async Task<bool> SeesDraftsAsync() =>
-        User.Identity?.IsAuthenticated == true && (await authorization.AuthorizeAsync(User, WellKnownClaims.TenantAdminPolicy)).Succeeded;
+        User.Identity?.IsAuthenticated == true && await rights.IsAllowedAsync(User, Rights.PostsRead);
 
     /// <summary>Published posts, newest first (an administrator also sees drafts); optionally those in one category or carrying one tag.</summary>
     [HttpGet("posts")]
