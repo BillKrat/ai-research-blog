@@ -180,7 +180,9 @@ export class AdminEntity implements OnInit {
     }
 
     if (this.pendingRelations.size > 0) {
+      // the error block next to the Save button only shows in the error state: setting the message alone left the refusal invisible
       this.saveErrors.set(['A row is chosen but not added: press Add (or clear the choice) before you save.']);
+      this.saveState.set('error');
       return;
     }
 

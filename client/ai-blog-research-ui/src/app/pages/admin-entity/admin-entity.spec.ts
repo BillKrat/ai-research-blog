@@ -135,8 +135,9 @@ describe('AdminEntity', () => {
   });
 
   it('refuses to save while a role row is chosen but not added, and says so instead of silently ignoring it', () => {
-    const { http, component } = setup();
+    const { http, component, fixture } = setup();
     http.expectOne((r) => r.url.endsWith('/api/pages/new')).flush(blank);
+    fixture.detectChanges();
     const host = component as unknown as { onSave(v: Record<string, string | null>): void; setPending(name: string, pending: boolean): void; saveErrors(): string[] };
 
     host.setPending('TenantRoles', true);
@@ -144,6 +145,10 @@ describe('AdminEntity', () => {
 
     http.expectNone((r) => r.method === 'POST' || r.method === 'PUT');
     expect(host.saveErrors().join(' ')).toContain('press Add');
+    // visible beside the Save button, not only held in a signal: this was the silent failure
+    fixture.detectChanges();
+    const alert = (fixture.nativeElement as HTMLElement).querySelector('.admin-entity__error[role="alert"]');
+    expect(alert?.textContent).toContain('press Add');
 
     host.setPending('TenantRoles', false);
     host.onSave({ Title: 'Home' });
