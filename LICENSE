@@ -11,11 +11,17 @@ Licensed Work:        ai-research-blog
 Additional Use Grant: You may make production use of the Licensed Work,
                       provided that BOTH of the following are true:
 
-                      1. You are a Small Team. A "Small Team" is an individual,
-                         or an organization together with its affiliates, in
-                         which no more than two (2) individuals develop,
-                         modify, deploy, or administer the Licensed Work or
-                         software built on it.
+                      1. Strict Team & Revenue Caps: You are a pre-scale 
+                         operator, defined as an individual or organization 
+                         together with its affiliates, that meets ALL of the 
+                         following criteria:
+                         a. Headcount: No more than two (1) individuals develop, 
+                            modify, deploy, or administer the Licensed Work or 
+                            software built on it.
+                         b. Financial Ceiling: Total gross annual revenue does 
+                            not exceed $100,000 USD (or local currency equivalent), 
+                            and total aggregate external funding or investment does 
+                            not exceed $100,000 USD.
 
                       2. You do not offer a Competing Offering. A "Competing
                          Offering" is a product or service, made available to
@@ -43,7 +49,7 @@ Change License:       GNU Affero General Public License, version 3.0
 
 For information about alternative licensing arrangements for the Licensed Work,
 including commercial licenses and subscriptions for organizations that are not
-a Small Team, please contact the Licensor at https://AdventuresOnTheEdge.net
+a Small Team, please contact the Licensor at diane@AdventuresOnTheEdge.net
 
 Notice
 
