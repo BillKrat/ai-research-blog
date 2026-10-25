@@ -118,4 +118,52 @@ describe('RelationGrid', () => {
     expect(root.querySelector('.relation-grid__add')).toBeNull();
     expect(root.querySelector('.entity-grid__row')).not.toBeNull();
   });
+
+  function choose(fixture: ComponentFixture<RelationGrid>, index: number, value: string): void {
+    const selects = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('select')) as HTMLSelectElement[];
+    selects[index].value = value;
+    selects[index].dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  }
+
+  it('labels the add button with the word Add, so nobody has to guess what the plus does', () => {
+    const fixture = render(relation());
+    answerLookups();
+    fixture.detectChanges();
+
+    const add = (fixture.nativeElement as HTMLElement).querySelector('.relation-grid__add button') as HTMLButtonElement;
+    expect(add.textContent).toContain('Add');
+  });
+
+  it('says what to do once a choice is made but not added, and tells the host a row is pending until it is added or cleared', () => {
+    const fixture = render(relation());
+    answerLookups();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const pending: boolean[] = [];
+    fixture.componentInstance.pendingChange.subscribe((value: boolean) => pending.push(value));
+    expect(root.querySelector('.relation-grid__pending')).toBeNull();
+
+    choose(fixture, 1, 'r2');
+    expect(root.querySelector('.relation-grid__pending')?.textContent).toContain('press Add');
+    expect(pending).toEqual([true]);
+
+    choose(fixture, 1, '');
+    expect(root.querySelector('.relation-grid__pending')).toBeNull();
+    expect(pending).toEqual([true, false]);
+  });
+
+  it('is no longer pending once the row has been added', () => {
+    const fixture = render(relation());
+    answerLookups();
+    fixture.detectChanges();
+    const pending: boolean[] = [];
+    fixture.componentInstance.pendingChange.subscribe((value: boolean) => pending.push(value));
+    choose(fixture, 0, 't2');
+    choose(fixture, 1, 'r2');
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.relation-grid__add button')!.click();
+    http.expectOne((r) => r.method === 'POST').flush({ entityId: 'a2', values: {} });
+
+    expect(pending.at(-1)).toBe(false);
+  });
 });

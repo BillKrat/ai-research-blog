@@ -22,10 +22,14 @@
           </select>
         </label>
       }
-      <button mat-icon-button color="primary" type="submit" [disabled]="!canSubmit" [matTooltip]="(busy() ? 'working' : 'add') | label" [attr.aria-label]="'add' | label">
+      <button mat-stroked-button color="primary" type="submit" [disabled]="!canSubmit" [matTooltip]="(busy() ? 'working' : 'add') | label">
         <mat-icon>add</mat-icon>
+        Add
       </button>
     </form>
+    @if (pending) {
+      <p class="relation-grid__pending" role="status">{{ canSubmit ? 'Not added yet: press Add to add this row.' : 'Not added yet: choose every field, then press Add.' }}</p>
+    }
   }
 </div>
 

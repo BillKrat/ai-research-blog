@@ -88,7 +88,7 @@
 
     @for (relation of form.relations ?? []; track relation.name) {
       <h3>{{ relation.label }}</h3>
-      <app-relation-grid [relation]="relation" (changed)="reload()" />
+      <app-relation-grid [relation]="relation" (changed)="reload()" (pendingChange)="setPending(relation.name, $event)" />
     }
 
     @if (hasConversation) {
