@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminMenuService } from '../../services/admin-menu.service';
+import { TenantService } from '../../services/tenant.service';
 
 /**
  * The admin area frame: the server-supplied menu on the left (sections, items, a count badge, items for screens that are not
@@ -17,10 +18,13 @@ import { AdminMenuService } from '../../services/admin-menu.service';
 })
 export class AdminShell implements OnInit {
   private readonly menuService = inject(AdminMenuService);
+  private readonly tenantService = inject(TenantService);
 
   protected readonly menu = this.menuService.menu;
+  protected readonly tenant = this.tenantService.current;
 
   ngOnInit(): void {
     this.menuService.load();
+    this.tenantService.load();
   }
 }

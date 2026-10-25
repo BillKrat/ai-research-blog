@@ -14,6 +14,21 @@
     padding: 0;
   }
 
+  &__tenant {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid currentColor;
+    border-radius: 0.4rem;
+    font-size: 0.85rem;
+
+    small {
+      opacity: 0.75;
+    }
+  }
+
   &__heading {
     margin: 1rem 0 0.25rem;
     font-size: 0.75rem;
