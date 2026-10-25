@@ -138,6 +138,15 @@ export class Conversation {
     }
   }
 
+  /** Start a backlog entry: a plain comment that Claude reads at the start of its next session and adds to the backlog. No review state changes. */
+  protected backlog(): void {
+    this.requestingChange.set(false);
+    this.approving.set(false);
+    if (!this.text.trim()) {
+      this.text = 'Backlog: ';
+    }
+  }
+
   protected send(): void {
     const body = this.text.trim();
     if (!body || this.sending()) {

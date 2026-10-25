@@ -36,6 +36,7 @@ export const LABELS = {
   purge: 'Purge',
   quickApprove: 'Start an approval: your note is sent with it when you press Send',
   quickAsk: 'Start a question',
+  quickBacklog: 'Add a backlog item: a note Claude adds to the backlog; nothing else changes',
   quickChangeRequest: 'Send it back: your reply is sent with a request for changes',
   purging: 'Purging...',
   remove: 'Remove',

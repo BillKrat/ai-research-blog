@@ -89,17 +89,29 @@ describe('Conversation quick replies', () => {
     const http = TestBed.inject(HttpTestingController);
     http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/posts/p1/comments')).flush([]);
     fixture.detectChanges();
-    return { fixture, http, changed, root: fixture.nativeElement as HTMLElement, component: fixture.componentInstance as unknown as { approve(): void; changeRequest(): void; ask(): void; send(): void; text: string } };
+    return { fixture, http, changed, root: fixture.nativeElement as HTMLElement, component: fixture.componentInstance as unknown as { approve(): void; changeRequest(): void; ask(): void; backlog(): void; send(): void; text: string } };
   }
 
-  it('offers Approve and Change request only while the server offered those actions, and Ask always', () => {
+  it('offers Approve and Change request only while the server offered those actions, and Ask and Backlog always', () => {
     const withActions = setup().root;
     const labels = Array.from(withActions.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim());
-    expect(labels).toEqual(['thumb_up Approve', 'rate_review Change request', 'help Ask']);
+    expect(labels).toEqual(['thumb_up Approve', 'rate_review Change request', 'help Ask', 'playlist_add Backlog']);
 
     TestBed.resetTestingModule();
     const without = setup(false).root;
-    expect(Array.from(without.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim())).toEqual(['help Ask']);
+    expect(Array.from(without.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim())).toEqual(['help Ask', 'playlist_add Backlog']);
+  });
+
+  it('Backlog starts a plain reply that is only a comment: no review action is run', () => {
+    const { http, changed, component } = setup();
+
+    component.backlog();
+    expect(component.text).toBe('Backlog: ');
+    component.text = 'Backlog: show Backlog next to Ask';
+    component.send();
+    http.expectNone((r) => r.url.endsWith('/approve') || r.url.endsWith('/request-changes'));
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/comments')).flush({ id: 'c3', author: 'Admin', kind: 'Comment', created: '2026-10-25T15:05:00Z', body: 'x' });
+    expect(changed).not.toHaveBeenCalled();
   });
 
   it('Approve starts a reply; nothing is approved until Send, and what was typed goes with the approval', () => {

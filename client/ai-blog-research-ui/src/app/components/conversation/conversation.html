@@ -47,6 +47,10 @@
         Ask
       </button>
     }
+    <button mat-stroked-button type="button" (click)="backlog()" [matTooltip]="'quickBacklog' | label">
+      <mat-icon>playlist_add</mat-icon>
+      Backlog
+    </button>
     <span class="conversation__tools">
       <button mat-icon-button type="button" [disabled]="uploading() || previewing()" (click)="imageInput.click()" [matTooltip]="'insertImage' | label" [attr.aria-label]="'insertImage' | label">
         <mat-icon>add_photo_alternate</mat-icon>
