@@ -10,7 +10,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 /// <summary>Pages for administrators (the six standard admin actions); the page rules live in <see cref="IPageBll"/>.</summary>
 [ApiController]
 [Route("api/pages")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[AdminRights(Read = Rights.PagesRead, Create = Rights.PagesEdit, Update = Rights.PagesEdit, Delete = Rights.PagesEdit)]
 public sealed class PagesController(IEntityPresenter<Page> presenter) : AdminEntityControllerBase<Page>(presenter)
 {
     /// <summary>The id of the page with this slug, so the public reader can offer Edit and Delete to a signed-in administrator (the public API carries no ids).</summary>
@@ -22,13 +22,13 @@ public sealed class PagesController(IEntityPresenter<Page> presenter) : AdminEnt
 /// <summary>Categories for administrators.</summary>
 [ApiController]
 [Route("api/categories")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[AdminRights(Read = Rights.PostsRead, Create = Rights.TaxonomyManage, Update = Rights.TaxonomyManage, Delete = Rights.TaxonomyManage)]
 public sealed class CategoriesController(IEntityPresenter<Category> presenter) : AdminEntityControllerBase<Category>(presenter);
 
 /// <summary>Tags for administrators.</summary>
 [ApiController]
 [Route("api/tags")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[AdminRights(Read = Rights.PostsRead, Create = Rights.TaxonomyManage, Update = Rights.TaxonomyManage, Delete = Rights.TaxonomyManage)]
 public sealed class TagsController(IEntityPresenter<Tag> presenter) : AdminEntityControllerBase<Tag>(presenter);
 
 /// <summary>
@@ -38,7 +38,7 @@ public sealed class TagsController(IEntityPresenter<Tag> presenter) : AdminEntit
 /// </summary>
 [ApiController]
 [Route("api/posts")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[AdminRights(Read = Rights.PostsRead, Create = Rights.PostsCreate, Update = Rights.PostsEditAny, Delete = Rights.PostsDeleteAny)]
 public sealed class PostsController(IEntityPresenter<Post> presenter, IPostBll posts, IUserPresenter users) : AdminEntityControllerBase<Post>(presenter)
 {
     /// <summary>The signed-in user is the author unless the form names one.</summary>
@@ -102,11 +102,13 @@ public sealed class PostsController(IEntityPresenter<Post> presenter, IPostBll p
     }
 
     /// <summary>Records the approval of a post under review: who, and when.</summary>
+    [RequireRight(Rights.CollaborationReview)]
     [HttpPost("{id}/approve")]
     public Task<IActionResult> Approve(string id, CancellationToken cancellationToken) =>
         GuardedAsync(async () => await posts.SetApprovalAsync(id, PostApproval.Approved, User.Identity?.Name, cancellationToken) ? (IActionResult)NoContent() : NotFound());
 
     /// <summary>Sends a post under review back to its author with a request for changes (the questions go in chat); clears any earlier approval.</summary>
+    [RequireRight(Rights.CollaborationReview)]
     [HttpPost("{id}/request-changes")]
     public Task<IActionResult> RequestChanges(string id, CancellationToken cancellationToken) =>
         GuardedAsync(async () => await posts.SetApprovalAsync(id, PostApproval.ChangesRequested, User.Identity?.Name, cancellationToken) ? (IActionResult)NoContent() : NotFound());
@@ -116,18 +118,22 @@ public sealed class PostsController(IEntityPresenter<Post> presenter, IPostBll p
     public async Task<IActionResult> BySlug(string slug, CancellationToken cancellationToken) =>
         await SlugLookup.IdOfAsync(presenter, slug, cancellationToken) is { } id ? Ok(new { id }) : NotFound();
 
+    [RequireRight(Rights.PostsEditAny)]
     [HttpPost("{id}/apply-revision")]
     public Task<IActionResult> ApplyRevision(string id, CancellationToken cancellationToken) =>
         GuardedAsync(async () => await posts.ApplyRevisionAsync(id, cancellationToken) ? (IActionResult)NoContent() : NotFound());
 
+    [RequireRight(Rights.PostsEditAny)]
     [HttpPost("{id}/discard-revision")]
     public Task<IActionResult> DiscardRevision(string id, CancellationToken cancellationToken) =>
         GuardedAsync(async () => await posts.DiscardRevisionAsync(id, cancellationToken) ? (IActionResult)NoContent() : NotFound());
 
+    [RequireRight(Rights.PostsPublish)]
     [HttpPost("{id}/publish")]
     public async Task<IActionResult> Publish(string id, CancellationToken cancellationToken) =>
         await posts.PublishAsync(id, cancellationToken) ? NoContent() : NotFound();
 
+    [RequireRight(Rights.PostsPublish)]
     [HttpPost("{id}/unpublish")]
     public async Task<IActionResult> Unpublish(string id, CancellationToken cancellationToken) =>
         await posts.UnpublishAsync(id, cancellationToken) ? NoContent() : NotFound();

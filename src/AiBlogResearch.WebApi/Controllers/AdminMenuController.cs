@@ -18,21 +18,21 @@ public static class AdminMenuDefinitions
 
     public static readonly IReadOnlyList<AdminMenuItemDefinition> All =
     [
-        new("Dashboard", "dashboard", "Dashboard", "/admin/dashboard", "dashboard", Admin, Available: false, Order: 1),
-        new("Content", "posts", "Posts", "/admin/posts", "article", Admin, Order: 1),
-        new("Content", "collaboration", "Collaboration", "/admin/collaboration", "forum", Admin, Order: 2),
-        new("Content", "comments", "Comments", "/admin/comments", "comment", Admin, Available: false, Order: 8),
-        new("Content", "pages", "Pages", "/admin/pages", "description", Admin, Order: 3),
-        new("Content", "categories", "Categories", "/admin/categories", "folder", Admin, Order: 4),
-        new("Content", "tags", "Tags", "/admin/tags", "sell", Admin, Order: 5),
-        new("Content", "blogs", "Blogs", "/admin/blogs", "library_books", Admin, Available: false, Order: 6),
-        new("Content", "decisions", "Decisions", "/admin/decisions", "gavel", Admin, Order: 7),
-        new("Users", "users", "Users", "/admin/users", "group", Admin, Order: 1),
-        new("Users", "roles", "Roles", "/admin/roles", "admin_panel_settings", Admin, Order: 2),
-        new("Users", "contacts", "Contacts", "/admin/contacts", "contacts", Admin, Available: false, Order: 3),
-        new("System", "exceptions", "Exceptions", "/admin/exceptions", "warning", Admin, Order: 1),
-        new("System", "settings", "Settings", "/admin/settings", "settings", Admin, Order: 2),
-        new("System", "plugins", "Plugins", "/admin/plugins", "extension", Admin, Order: 3),
+        new("Dashboard", "dashboard", "Dashboard", "/admin/dashboard", "dashboard", RequiredRight: Rights.AdminAccess, Available: false, Order: 1),
+        new("Content", "posts", "Posts", "/admin/posts", "article", RequiredRight: Rights.PostsRead, Order: 1),
+        new("Content", "collaboration", "Collaboration", "/admin/collaboration", "forum", RequiredRight: Rights.CollaborationRead, Order: 2),
+        new("Content", "comments", "Comments", "/admin/comments", "comment", RequiredRight: Rights.PostsRead, Available: false, Order: 8),
+        new("Content", "pages", "Pages", "/admin/pages", "description", RequiredRight: Rights.PagesRead, Order: 3),
+        new("Content", "categories", "Categories", "/admin/categories", "folder", RequiredRight: Rights.PostsRead, Order: 4),
+        new("Content", "tags", "Tags", "/admin/tags", "sell", RequiredRight: Rights.PostsRead, Order: 5),
+        new("Content", "blogs", "Blogs", "/admin/blogs", "library_books", RequiredRight: Rights.PostsRead, Available: false, Order: 6),
+        new("Content", "decisions", "Decisions", "/admin/decisions", "gavel", RequiredRight: Rights.DecisionsRead, Order: 7),
+        new("Users", "users", "Users", "/admin/users", "group", RequiredRight: Rights.UsersManage, Order: 1),
+        new("Users", "roles", "Roles", "/admin/roles", "admin_panel_settings", RequiredRight: Rights.RolesManage, Order: 2),
+        new("Users", "contacts", "Contacts", "/admin/contacts", "contacts", RequiredRight: Rights.UsersManage, Available: false, Order: 3),
+        new("System", "exceptions", "Exceptions", "/admin/exceptions", "warning", RequiredRight: Rights.DiagnosticsRead, Order: 1),
+        new("System", "settings", "Settings", "/admin/settings", "settings", RequiredRight: Rights.SettingsManage, Order: 2),
+        new("System", "plugins", "Plugins", "/admin/plugins", "extension", RequiredRight: Rights.PluginsManage, Order: 3),
     ];
 
     /// <summary>The menu entries a plug-in contributes: the entry is listed only while one of its plug-ins is on.</summary>
@@ -51,14 +51,13 @@ public static class AdminMenuDefinitions
 [ApiController]
 [Route("api/admin/menu")]
 [Authorize]
-public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPublicContent content, ICollaborationBll collaboration, IPlugins plugins) : ControllerBase
+public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPublicContent content, ICollaborationBll collaboration, IPlugins plugins, IRightsAuthorizer authorizer) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<AdminMenuModel>> Get(CancellationToken cancellationToken)
     {
-        var isAdmin = User.IsInRole(AdminMenuDefinitions.Admin)
-            || User.FindAll(claim => claim.Type is WellKnownClaims.Roles).Any(claim => claim.Value.Split(' ').Contains(AdminMenuDefinitions.Admin));
-        var badges = isAdmin
+        var rights = await authorizer.RightsOfAsync(User, cancellationToken);
+        var badges = rights.Contains(Rights.AdminAccess)
             ? new Dictionary<string, int>
             {
                 ["exceptions"] = await exceptions.CountActiveAsync(cancellationToken),
@@ -68,6 +67,6 @@ public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPubl
                 ["collaboration"] = await ReviewQueue.CountItemsAsync(collaboration, cancellationToken),
             }
             : null;
-        return Ok(AdminMenuBuilder.Build(AdminMenuDefinitions.Visible(await plugins.EnabledKeysAsync(cancellationToken)), User, badges));
+        return Ok(AdminMenuBuilder.Build(AdminMenuDefinitions.Visible(await plugins.EnabledKeysAsync(cancellationToken)), User, badges, rights));
     }
 }

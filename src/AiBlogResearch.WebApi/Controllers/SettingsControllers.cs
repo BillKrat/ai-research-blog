@@ -10,7 +10,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 /// <summary>The site settings for administrators (the six standard admin actions): SiteTitle, Tagline, PostsPerPage, TimeZone.</summary>
 [ApiController]
 [Route("api/settings")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[AdminRights(Read = Rights.SettingsManage, Create = Rights.SettingsManage, Update = Rights.SettingsManage, Delete = Rights.SettingsManage)]
 public sealed class SettingsController(IEntityPresenter<SiteSetting> presenter) : AdminEntityControllerBase<SiteSetting>(presenter);
 
 /// <summary>The part of the settings a visitor's browser needs (the site title, the tagline, how many posts a page shows): anonymous, read-only, no secrets.</summary>

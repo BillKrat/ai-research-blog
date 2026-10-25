@@ -31,7 +31,7 @@ internal static class DiagnosticsLookup
 /// </summary>
 [ApiController]
 [Route("api/admin/diagnostics")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[RequireRight(Rights.DiagnosticsRead)]
 public sealed class AdminDiagnosticsController(IDiagnosticsReader reader, IDependencyProbes probes, IAiTriage aiTriage) : ControllerBase
 {
     /// <summary>
@@ -39,6 +39,7 @@ public sealed class AdminDiagnosticsController(IDiagnosticsReader reader, IDepen
     /// Anthropic, so it only ever runs from an explicit click; cached an hour per request and capped per hour in all.
     /// Answers 200 with <c>Available: false</c> and a reason when the AI is not set up or unreachable.
     /// </summary>
+    [RequireRight(Rights.DiagnosticsAi)]
     [HttpPost("{correlationId}/ai-triage")]
     public async Task<ActionResult<AiTriageResult>> AskClaude(string correlationId, CancellationToken cancellationToken)
     {

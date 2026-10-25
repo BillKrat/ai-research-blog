@@ -188,13 +188,13 @@ public class UsersControllerTests
     }
 
     [Fact]
-    public void Controller_IsRestrictedToTheTenantAdminPolicy()
+    public void Controller_NeedsTheUsersManageRight()
     {
-        var authorize = Assert.Single(
-            typeof(UsersController).GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute), inherit: true)
-                .Cast<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>());
+        var guard = Assert.Single(
+            typeof(UsersController).GetCustomAttributes(typeof(Adventures.WebApi.RequireRightAttribute), inherit: true)
+                .Cast<Adventures.WebApi.RequireRightAttribute>());
 
-        Assert.Equal(Adventures.Security.WellKnownClaims.TenantAdminPolicy, authorize.Policy);
+        Assert.Equal(Adventures.Entities.Rights.UsersManage, guard.Right);
     }
 
     [Fact]

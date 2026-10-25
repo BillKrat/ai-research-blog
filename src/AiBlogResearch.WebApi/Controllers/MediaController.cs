@@ -1,4 +1,5 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
+using Adventures.WebApi;
 using Adventures.Entities;
 using Adventures.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -21,7 +22,7 @@ public sealed class MediaController(IMediaStore store) : ControllerBase
 {
     /// <summary>Uploads one image (multipart form field <c>file</c>); answers 201 with its address and a ready-made Markdown image.</summary>
     [HttpPost]
-    [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+    [RequireRight(Rights.MediaUpload)]
     [RequestSizeLimit(MediaRules.MaxBytes + 64 * 1024)]
     public async Task<ActionResult<MediaView>> Upload(IFormFile file, CancellationToken cancellationToken)
     {
@@ -46,7 +47,7 @@ public sealed class MediaController(IMediaStore store) : ControllerBase
 
     /// <summary>The stored images, newest first.</summary>
     [HttpGet]
-    [Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+    [RequireRight(Rights.MediaUpload)]
     public async Task<ActionResult<IReadOnlyList<MediaView>>> List(CancellationToken cancellationToken) =>
         Ok((await store.ListAsync(cancellationToken)).Select(View).ToList());
 

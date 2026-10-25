@@ -41,16 +41,23 @@
         Change request
       </button>
     }
-    @if (!actionLink('withdraw-changes')) {
+    @if (base() === 'posts') {
+      <button mat-stroked-button type="button" (click)="addComment()" [matTooltip]="'quickAddComment' | label">
+        <mat-icon>add_comment</mat-icon>
+        Add comment
+      </button>
+    } @else {
+      @if (!actionLink('withdraw-changes')) {
       <button mat-stroked-button type="button" (click)="ask()" [matTooltip]="'quickAsk' | label">
         <mat-icon>help</mat-icon>
         Ask
       </button>
-    }
-    <button mat-stroked-button type="button" (click)="backlog()" [matTooltip]="'quickBacklog' | label">
+      }
+      <button mat-stroked-button type="button" (click)="backlog()" [matTooltip]="'quickBacklog' | label">
       <mat-icon>playlist_add</mat-icon>
       Backlog
     </button>
+    }
     <span class="conversation__tools">
       <button mat-icon-button type="button" [disabled]="uploading() || previewing()" (click)="imageInput.click()" [matTooltip]="'insertImage' | label" [attr.aria-label]="'insertImage' | label">
         <mat-icon>add_photo_alternate</mat-icon>
@@ -75,7 +82,9 @@
       <textarea name="text" rows="3" [(ngModel)]="text" aria-label="Add to the conversation" placeholder="Answer, ask, or record a decision (Markdown)"></textarea>
     }
     <div class="conversation__actions">
-      <mat-checkbox name="asDecision" [(ngModel)]="asDecision">Record as a decision</mat-checkbox>
+      @if (base() === 'collaboration') {
+        <mat-checkbox name="asDecision" [(ngModel)]="asDecision">Record as a decision</mat-checkbox>
+      }
       <button mat-icon-button color="primary" type="submit" [disabled]="sending() || !text.trim()" [matTooltip]="'send' | label" [attr.aria-label]="'send' | label">
         <mat-icon>send</mat-icon>
       </button>

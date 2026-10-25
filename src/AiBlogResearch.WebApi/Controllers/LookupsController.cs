@@ -1,4 +1,5 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
+using Adventures.WebApi;
 using Adventures.Entities;
 using Adventures.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -12,7 +13,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/lookups")]
-[Authorize(Policy = WellKnownClaims.TenantAdminPolicy)]
+[RequireRight(Rights.AdminAccess)]
 public sealed class LookupsController(IEntityRelationProvider provider) : ControllerBase
 {
     [HttpGet]

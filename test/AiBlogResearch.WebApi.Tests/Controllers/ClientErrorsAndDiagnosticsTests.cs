@@ -88,8 +88,8 @@ public sealed class ClientErrorsAndDiagnosticsTests
     public void ClientErrors_AreOpenToAnonymous_AndDiagnostics_RequireAnAdministrator()
     {
         Assert.NotEmpty(typeof(ClientErrorsController).GetCustomAttributes(typeof(AllowAnonymousAttribute), true));
-        var admin = Assert.Single(typeof(AdminDiagnosticsController).GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>());
-        Assert.Equal(Adventures.Security.WellKnownClaims.TenantAdminPolicy, admin.Policy);
+        var admin = Assert.Single(typeof(AdminDiagnosticsController).GetCustomAttributes(typeof(Adventures.WebApi.RequireRightAttribute), true).Cast<Adventures.WebApi.RequireRightAttribute>());
+        Assert.Equal(Adventures.Entities.Rights.DiagnosticsRead, admin.Right);
         var machine = Assert.Single(typeof(McpDiagnosticsController).GetCustomAttributes(typeof(AuthorizeAttribute), true).Cast<AuthorizeAttribute>());
         Assert.Equal("Scope:mcp.diagnostics.read", machine.Policy);
     }
