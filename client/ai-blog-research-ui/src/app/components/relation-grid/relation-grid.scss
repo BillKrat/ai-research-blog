@@ -4,6 +4,11 @@
     margin: 0 0 0.5rem;
   }
 
+  &__pending {
+    margin: 0.5rem 0 0;
+    color: var(--mat-sys-tertiary, #e0a800);
+  }
+
   &__hint {
     opacity: 0.75;
   }

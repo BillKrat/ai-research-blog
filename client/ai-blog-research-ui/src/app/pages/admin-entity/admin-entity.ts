@@ -162,9 +162,25 @@ export class AdminEntity implements OnInit {
     return !this.isNew() && this.model()?.permissions?.canDelete !== false;
   }
 
+  /** Relations whose Add row holds a choice that was never added; a Save over it is refused, not silently dropped. */
+  private readonly pendingRelations = new Set<string>();
+
+  protected setPending(relation: string, pending: boolean): void {
+    if (pending) {
+      this.pendingRelations.add(relation);
+    } else {
+      this.pendingRelations.delete(relation);
+    }
+  }
+
   protected onSave(values: Record<string, string | null>): void {
     const current = this.model();
     if (!current || this.saveState() === 'saving') {
+      return;
+    }
+
+    if (this.pendingRelations.size > 0) {
+      this.saveErrors.set(['A row is chosen but not added: press Add (or clear the choice) before you save.']);
       return;
     }
 

@@ -30,6 +30,11 @@ export class RelationGrid implements OnChanges {
   /** The server accepted a change (an add or a remove): the host should reload the parent. */
   @Output() changed = new EventEmitter<void>();
 
+  /** True while a choice has been made in the Add row but the row has not been added: the host refuses to save over it, so it is never silently lost. */
+  @Output() pendingChange = new EventEmitter<boolean>();
+
+  private wasPending = false;
+
   protected readonly options = signal<Record<string, LookupOption[]>>({});
   protected readonly choice = signal<Record<string, string>>({});
   protected readonly busy = signal(false);
@@ -38,6 +43,7 @@ export class RelationGrid implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['relation']) {
       this.choice.set({});
+      this.announcePending();
       this.loadOptions();
     }
   }
@@ -67,6 +73,20 @@ export class RelationGrid implements OnChanges {
 
   protected pick(field: string, value: string): void {
     this.choice.update((current) => ({ ...current, [field]: value }));
+    this.announcePending();
+  }
+
+  /** Something is chosen in the Add row that has not been added yet. */
+  protected get pending(): boolean {
+    return this.pointerFields.some((field) => !!this.choice()[field.name]);
+  }
+
+  private announcePending(): void {
+    const now = this.pending;
+    if (now !== this.wasPending) {
+      this.wasPending = now;
+      this.pendingChange.emit(now);
+    }
   }
 
   protected get canSubmit(): boolean {
@@ -103,6 +123,7 @@ export class RelationGrid implements OnChanges {
       next: () => {
         this.busy.set(false);
         this.choice.set({});
+        this.announcePending();
         this.changed.emit();
       },
       error: (error) => {
