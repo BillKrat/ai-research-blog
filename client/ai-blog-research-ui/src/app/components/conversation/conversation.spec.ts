@@ -89,13 +89,13 @@ describe('Conversation quick replies', () => {
     const http = TestBed.inject(HttpTestingController);
     http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/posts/p1/comments')).flush([]);
     fixture.detectChanges();
-    return { fixture, http, changed, root: fixture.nativeElement as HTMLElement, component: fixture.componentInstance as unknown as { approve(): void; redirect(): void; ask(): void; send(): void; text: string } };
+    return { fixture, http, changed, root: fixture.nativeElement as HTMLElement, component: fixture.componentInstance as unknown as { approve(): void; changeRequest(): void; ask(): void; send(): void; text: string } };
   }
 
-  it('offers Approve and Redirect only while the server offered those actions, and Ask always', () => {
+  it('offers Approve and Change request only while the server offered those actions, and Ask always', () => {
     const withActions = setup().root;
     const labels = Array.from(withActions.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim());
-    expect(labels).toEqual(['thumb_up Approve', 'rate_review Redirect', 'help Ask']);
+    expect(labels).toEqual(['thumb_up Approve', 'rate_review Change request', 'help Ask']);
 
     TestBed.resetTestingModule();
     const without = setup(false).root;
@@ -132,12 +132,12 @@ describe('Conversation quick replies', () => {
 
     expect(changed).not.toHaveBeenCalled();
   });
-  it('Redirect sends the reply together with the request for changes; Ask only starts a question', () => {
+  it('Change request sends the reply together with the request for changes; Ask only starts a question', () => {
     const { http, changed, component } = setup();
 
-    component.redirect();
-    expect(component.text).toBe('Redirect: ');
-    component.text = 'Redirect: split this into two posts';
+    component.changeRequest();
+    expect(component.text).toBe('Change request: ');
+    component.text = 'Change request: split this into two posts';
     component.send();
     http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/request-changes')).flush(null);
     http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/comments')).flush({ id: 'c2', author: 'Admin', kind: 'Comment', created: '2026-10-23T15:05:00Z', body: 'x' });

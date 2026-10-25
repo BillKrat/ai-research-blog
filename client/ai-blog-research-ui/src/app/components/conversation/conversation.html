@@ -36,9 +36,9 @@
       </button>
     }
     @if (actionLink('request-changes')) {
-      <button mat-stroked-button type="button" (click)="redirect()" [class.conversation__quick--on]="redirecting()" [matTooltip]="'quickRedirect' | label">
+      <button mat-stroked-button type="button" (click)="changeRequest()" [class.conversation__quick--on]="requestingChange()" [matTooltip]="'quickChangeRequest' | label">
         <mat-icon>rate_review</mat-icon>
-        Redirect
+        Change request
       </button>
     }
     @if (!actionLink('withdraw-changes')) {
@@ -58,7 +58,7 @@
     </span>
   </div>
 
-  @if (approving() || redirecting()) {
+  @if (approving() || requestingChange()) {
     <p class="conversation__hint" role="status">
       {{ approving() ? 'Write your note (or leave it as is) and press Send: that approves it and posts the note.' : 'Write what you want changed and press Send: that sends it back and posts the note.' }}
     </p>
