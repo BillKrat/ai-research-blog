@@ -1,5 +1,20 @@
 <div class="admin-shell">
   <nav class="admin-shell__nav" aria-label="Admin">
+    @if (tenant(); as current) {
+      <p class="admin-shell__tenant" role="status">
+        <mat-icon aria-hidden="true">domain</mat-icon>
+        @if (current.tenant) {
+          <span>
+            <strong>{{ current.tenant.name }}</strong> ({{ current.tenant.domain }})
+            @if (current.match === 'Fallback') {
+              <br /><small>development: {{ current.host }} matches no tenant</small>
+            }
+          </span>
+        } @else {
+          <span>No tenant for {{ current.host }}</span>
+        }
+      </p>
+    }
     @for (section of menu().sections; track section.id) {
       <section class="admin-shell__section">
         <h2 class="admin-shell__heading">{{ section.label }}</h2>
