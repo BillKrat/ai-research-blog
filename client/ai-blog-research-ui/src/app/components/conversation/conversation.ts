@@ -19,9 +19,9 @@ import { MarkdownContent } from '../markdown-content/markdown-content';
  * record of the collaboration (the same thread Claude reads and answers through its tools). Entries are only added; the human can
  * mark one as a decision, which the decisions page lists. Administrators only: the server refuses anyone else.
  *
- * Quick replies for a short visit: <b>Approve</b> approves the post and notes it in the thread in one tap, <b>Redirect</b> starts a
+ * Quick replies for a short visit: <b>Approve</b> approves the post and notes it in the thread in one tap, <b>Change request</b> starts a
  * reply that, when sent, also sends the post back with a request for changes, and <b>Ask</b> starts a question. They use the actions
- * the server offered for this post (links it supplied), so a post that is not under review simply has no Approve or Redirect.
+ * the server offered for this post (links it supplied), so a post that is not under review simply has no Approve or Change request.
  */
 @Component({
   selector: 'app-conversation',
@@ -42,7 +42,7 @@ export class Conversation {
   /** The actions the server offered for this post (Approve and Request changes appear while it is under review). */
   readonly actions = input<EntityAction[]>([]);
 
-  /** The post's review state changed (an Approve or Redirect was sent): the host should read the post again. */
+  /** The post's review state changed (an Approve or Change request was sent): the host should read the post again. */
   readonly changed = output<void>();
 
   protected readonly entries = signal<ConversationEntry[]>([]);
@@ -50,7 +50,7 @@ export class Conversation {
   protected readonly sending = signal(false);
   protected text = '';
   protected asDecision = false;
-  protected redirecting = signal(false);
+  protected requestingChange = signal(false);
   protected approving = signal(false);
   protected readonly previewing = signal(false);
   protected readonly uploading = signal(false);
@@ -109,32 +109,41 @@ export class Conversation {
   }
 
   /**
-   * Start a reply that, when sent, also approves the post (the way Redirect works): whatever is already typed in the box stays and is sent
+   * Start a reply that, when sent, also approves the post (the way Change request works): whatever is already typed in the box stays and is sent
    * as the approval note, so nothing typed is lost. Nothing is approved until Send is pressed.
    */
   protected approve(): void {
     this.approving.set(true);
-    this.redirecting.set(false);
+    this.requestingChange.set(false);
     if (!this.text.trim()) {
       this.text = 'Approved: ';
     }
   }
 
   /** Start a reply that, when sent, also sends the post back with a request for changes. */
-  protected redirect(): void {
+  protected changeRequest(): void {
     this.approving.set(false);
-    this.redirecting.set(true);
+    this.requestingChange.set(true);
     if (!this.text.trim()) {
-      this.text = 'Redirect: ';
+      this.text = 'Change request: ';
     }
   }
 
   /** Start a question. */
   protected ask(): void {
-    this.redirecting.set(false);
+    this.requestingChange.set(false);
     this.approving.set(false);
     if (!this.text.trim()) {
       this.text = 'Question: ';
+    }
+  }
+
+  /** Start a backlog entry: a plain comment that Claude reads at the start of its next session and adds to the backlog. No review state changes. */
+  protected backlog(): void {
+    this.requestingChange.set(false);
+    this.approving.set(false);
+    if (!this.text.trim()) {
+      this.text = 'Backlog: ';
     }
   }
 
@@ -145,15 +154,15 @@ export class Conversation {
     }
 
     this.begin();
-    // read before the reply is sent: sending clears the flag, and a redirect is the one reply that changes the post's review state
-    const wasRedirect = this.redirecting();
+    // read before the reply is sent: sending clears the flag, and a change request is the one reply that changes the post's review state
+    const wasChangeRequest = this.requestingChange();
     const wasApprove = this.approving();
     const sendIt = () => this.post(body, this.asDecision ? 'Decision' : 'Comment', () => {
-      if (wasRedirect || wasApprove) {
+      if (wasChangeRequest || wasApprove) {
         this.changed.emit();
       }
     });
-    const review = this.redirecting() ? this.actionLink('request-changes') : this.approving() ? this.actionLink('approve') : null;
+    const review = this.requestingChange() ? this.actionLink('request-changes') : this.approving() ? this.actionLink('approve') : null;
     if (review) {
       this.entityApi.runAction(review).subscribe({ next: sendIt, error: (error) => this.fail(error) });
     } else {
@@ -172,7 +181,7 @@ export class Conversation {
         this.entries.update((all) => [...all, entry]);
         this.text = '';
         this.asDecision = false;
-        this.redirecting.set(false);
+        this.requestingChange.set(false);
         this.approving.set(false);
         this.previewing.set(false);
         this.sending.set(false);
