@@ -357,6 +357,17 @@ try
 
     var app = builder.Build();
 
+    if (!skipSeeding)
+    {
+        // Improved default rights for roles still at their first shipped values (a seed cannot supersede a stored value); an edited role is left alone.
+        using var upgradeScope = app.Services.CreateScope();
+        var upgraded = await RoleRightsUpgrade.ApplyAsync(upgradeScope.ServiceProvider.GetRequiredService<IEntityRepository<Role>>());
+        if (upgraded > 0)
+        {
+            Log.Information("Upgraded the default rights of {Count} role(s).", upgraded);
+        }
+    }
+
     // First in the pipeline: everything after it (request logging, the exception handler, controllers) logs under the id.
     app.UseCorrelationId();
     app.UseSecurityHeaders(app.Environment.IsDevelopment());

@@ -78,28 +78,50 @@ describe('Conversation quick replies', () => {
     { name: 'request-changes', label: 'Request changes', link: '/api/posts/p1/request-changes' },
   ];
 
-  function setup(withActions = true) {
+  function setup(withActions = true, base: 'posts' | 'collaboration' = 'posts') {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
     const fixture = TestBed.createComponent(Conversation);
     fixture.componentRef.setInput('postId', 'p1');
+    fixture.componentRef.setInput('base', base);
     fixture.componentRef.setInput('actions', withActions ? actions : []);
     const changed = vi.fn();
     fixture.componentInstance.changed.subscribe(changed);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/posts/p1/comments')).flush([]);
+    http.expectOne((r) => r.method === 'GET' && r.url.endsWith(`/api/${base}/p1/comments`)).flush([]);
     fixture.detectChanges();
-    return { fixture, http, changed, root: fixture.nativeElement as HTMLElement, component: fixture.componentInstance as unknown as { approve(): void; changeRequest(): void; ask(): void; backlog(): void; send(): void; text: string } };
+    return { fixture, http, changed, root: fixture.nativeElement as HTMLElement, component: fixture.componentInstance as unknown as { approve(): void; changeRequest(): void; ask(): void; backlog(): void; addComment(): void; send(): void; text: string } };
   }
 
-  it('offers Approve and Change request only while the server offered those actions, and Ask and Backlog always', () => {
+  it('on a post offers Approve and Change request only while the server offered them, and always Add comment (no Ask, no Backlog)', () => {
     const withActions = setup().root;
     const labels = Array.from(withActions.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim());
-    expect(labels).toEqual(['thumb_up Approve', 'rate_review Change request', 'help Ask', 'playlist_add Backlog']);
+    expect(labels).toEqual(['thumb_up Approve', 'rate_review Change request', 'add_comment Add comment']);
 
     TestBed.resetTestingModule();
     const without = setup(false).root;
-    expect(Array.from(without.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim())).toEqual(['help Ask', 'playlist_add Backlog']);
+    expect(Array.from(without.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim())).toEqual(['add_comment Add comment']);
+  });
+
+  it('on a collaboration item offers Ask and Backlog and the decision box; a post has none of them', () => {
+    const item = setup(true, 'collaboration').root;
+    expect(Array.from(item.querySelectorAll('.conversation__quick > button')).map((b) => b.textContent?.trim())).toEqual([
+      'thumb_up Approve', 'rate_review Change request', 'help Ask', 'playlist_add Backlog',
+    ]);
+    expect(item.textContent).toContain('Record as a decision');
+
+    TestBed.resetTestingModule();
+    expect(setup(true, 'posts').root.textContent).not.toContain('Record as a decision');
+  });
+
+  it('Add comment on a post puts the cursor in the reply box and prefixes nothing', () => {
+    const { component, root, fixture } = setup();
+
+    component.addComment();
+    fixture.detectChanges();
+
+    expect(component.text).toBe('');
+    expect(document.activeElement).toBe(root.querySelector('textarea[name="text"]'));
   });
 
   it('Backlog starts a plain reply that is only a comment: no review action is run', () => {

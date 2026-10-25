@@ -138,6 +138,20 @@ export class Conversation {
     }
   }
 
+  /** Put the cursor in the reply box: a plain comment on a post, nothing prefixed and nothing else changed. */
+  protected addComment(): void {
+    this.requestingChange.set(false);
+    this.approving.set(false);
+    this.previewing.set(false);
+    const area = () => (this.host.nativeElement as HTMLElement).querySelector('textarea[name="text"]') as HTMLTextAreaElement | null;
+    // the box is hidden while previewing: focus it once it is back
+    if (area()) {
+      area()!.focus();
+    } else {
+      setTimeout(() => area()?.focus());
+    }
+  }
+
   /** Start a backlog entry: a plain comment that Claude reads at the start of its next session and adds to the backlog. No review state changes. */
   protected backlog(): void {
     this.requestingChange.set(false);
