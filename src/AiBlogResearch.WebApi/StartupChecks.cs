@@ -24,6 +24,15 @@ public static class StartupChecks
     {
         var problems = new List<StartupProblem>();
 
+        try
+        {
+            _ = Adventures.WebApi.SiteDomain.Domain(configuration);
+        }
+        catch (InvalidOperationException ex)
+        {
+            problems.Add(new StartupProblem(Adventures.WebApi.SiteDomain.Key, ex.Message, "Set Site__Domain to your bare domain name, for example example.com, or remove it."));
+        }
+
         if (string.Equals(configuration[LiveDataMode.EnabledKey], "true", StringComparison.OrdinalIgnoreCase))
         {
             if (!isDevelopment)
@@ -81,7 +90,7 @@ public static class StartupChecks
         FailureJournal.Write(FailureJournal.DefaultDirectory, "startup", failure);
 
         var builder = WebApplication.CreateBuilder(args);
-        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        var allowedOrigins = Adventures.WebApi.SiteDomain.AllowedOrigins(builder.Configuration, builder.Environment.IsDevelopment()).ToArray();
         builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
             policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
 

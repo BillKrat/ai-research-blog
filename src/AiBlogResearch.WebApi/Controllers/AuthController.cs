@@ -27,7 +27,7 @@ public sealed class AuthController(IUserAccountService accountService, IConfigur
     /// "global-webnet.com") - <see cref="IUserAccountService.LoginAsync"/> is tenant-scoped for
     /// when this app supports more than one, but nothing yet needs the client to supply it.
     /// </summary>
-    private string Tenant => configuration["Auth:Tenant"] ?? "global-webnet.com";
+    private string Tenant => Adventures.WebApi.SiteDomain.Tenant(configuration, "global-webnet.com");
 
     [HttpPost("token")]
     [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Adventures.WebApi.RequestHardening.TokenPolicy)]

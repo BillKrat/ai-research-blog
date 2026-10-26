@@ -28,6 +28,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # An installation on another domain sets the repository variable SITE_DOMAIN; without it the file keeps this project's own address.
+      - name: Point the client at this installation's API
+        env:
+          SITE_DOMAIN: ${{ vars.SITE_DOMAIN }}
+        run: |
+          if [ -n "$SITE_DOMAIN" ]; then
+            case "$SITE_DOMAIN" in *[!a-zA-Z0-9.-]*) echo "::error::SITE_DOMAIN must be a bare domain name"; exit 1;; esac
+            sed -i "s|apiUrl: '[^']*'|apiUrl: 'https://api.${SITE_DOMAIN}'|" src/environments/environment.production.ts
+            grep apiUrl src/environments/environment.production.ts
+          fi
+
       - name: Build (production)
         run: npm run build
 

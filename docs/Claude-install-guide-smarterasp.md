@@ -21,18 +21,12 @@
 ## 3. FTP users, one per site *(ours)*
 Create a scoped FTP user for each site restricted to that site's folder (see the older guide, section 3). The deploy tool's remote folder is `/` for such a user. Keep the account's root login out of GitHub.
 
-## 4. Settings tied to the domain *(unproved: this is where a fresh install will bite)*
-The repository still names our own domain in places. Search for `global-webnet.com` and change what is listed here in **your fork**:
+## 4. One setting for the domain *(built, unproved on a fresh install)*
+Your domain is set in two places, never by editing files:
+- **On the API and MCP sites (host secret):** `Site__Domain` = `<domain-name>` (a bare name such as `example.com`; a malformed value is reported by name at startup). It decides the allowed browser origins (`https://<domain-name>`, `https://www.<domain-name>`), the sign-in tenant, and the addresses `https://api.<domain-name>/` and `https://mcp.<domain-name>/`. Without it the older explicit settings apply, which is how our own installation still runs.
+- **On GitHub (repository variables, Settings > Secrets and variables > Actions > Variables):** `SITE_DOMAIN` = `<domain-name>` (the client is built to call `https://api.<domain-name>`, and the deploy checks that address's health) and, if you use your own fork of the libraries, `FOUNDATION_REPO` = `<your-account>/Adventures.Foundation`. Without them the workflows use ours.
 
-| Where | What to change |
-|---|---|
-| `client/ai-blog-research-ui/src/environments/environment.production.ts` | `apiUrl` to `https://api.<domain-name>` |
-| `src/AiBlogResearch.WebApi/appsettings.json` | `Cors:AllowedOrigins` to your client origins; `McpServer:BaseUrl` to `https://mcp.<domain-name>/` |
-| Host site secret (API) | `Auth__Tenant` to `<domain-name>` (the tenant sign-in uses; default is ours) |
-| `.github/workflows/deploy-*.yml` | the health-check address in `deploy-webapi.yml`; the `git clone` line that fetches `BillKrat/Adventures.Foundation` (point at your fork); same clone line in `test.yml` |
-| `src/McpServer.WebApi` | the issuer/host names in its settings and `web.config` if they name our domain |
-
-Finding while writing this guide: these should be settings, not edits (see the backlog item "Make the domain a setting").
+Still ours to remove by hand if you publish a fork: the example text in `README.md` and the sample hostnames in comments.
 
 ## 5. Secrets
 **On the host (site environment secrets, then restart the site)** *(ours)*:
@@ -77,6 +71,6 @@ Merge to `main`; the gate tests, then the three workflows deploy only the part w
 - Local runs use `https-live` against the **live** store only when you choose that profile; use the normal profile with a local database for experiments.
 
 ## What would make this install shorter (backlog)
-1. Make the domain a setting (CORS origins, API address, tenant, workflow health check), so a fork changes one place.
+1. (Done on branch `claude-site-domain`.) The domain is now the single setting `Site__Domain` plus the variables `SITE_DOMAIN` and `FOUNDATION_REPO`.
 2. A first-run page that forces the default passwords to change and offers to remove the `Claude` account.
 3. One script that checks every secret and DNS name before the first deploy.

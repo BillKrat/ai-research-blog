@@ -70,7 +70,7 @@ try
 
     const string AngularCorsPolicy = "Angular";
 
-    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+    var allowedOrigins = Adventures.WebApi.SiteDomain.AllowedOrigins(builder.Configuration, builder.Environment.IsDevelopment()).ToArray();
     builder.Services.AddCors(options =>
     {
         options.AddPolicy(AngularCorsPolicy, policy =>
@@ -103,7 +103,7 @@ try
 #pragma warning disable EXTEXP0001 // RemoveAllResilienceHandlers is marked experimental; it is the supported way to opt one client out.
     builder.Services.AddHttpClient("McpServer", (services, client) =>
     {
-        var baseUrl = services.GetRequiredService<IConfiguration>()["McpServer:BaseUrl"]
+        var baseUrl = Adventures.WebApi.SiteDomain.McpBaseUrl(services.GetRequiredService<IConfiguration>())
             ?? throw new InvalidOperationException("McpServer:BaseUrl is not configured.");
         client.BaseAddress = new Uri(baseUrl);
         client.Timeout = TimeSpan.FromSeconds(10);

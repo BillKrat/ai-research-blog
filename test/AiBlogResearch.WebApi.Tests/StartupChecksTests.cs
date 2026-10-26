@@ -16,6 +16,15 @@ public class StartupChecksTests
     }
 
     [Fact]
+    public void A_malformed_site_domain_is_reported_by_name_instead_of_crashing_the_start()
+    {
+        var problems = StartupChecks.Find(Config(("ConnectionStrings:Postgres", "p"), ("Jwt:SigningKey", "k"), ("Site:Domain", "https://oops.example/")), isDevelopment: false);
+
+        var problem = Assert.Single(problems);
+        Assert.Equal("Site:Domain", problem.Key);
+    }
+
+    [Fact]
     public void Live_data_without_its_connection_string_names_that_key_not_postgres()
     {
         var problems = StartupChecks.Find(Config(("LiveData:Enabled", "true"), ("Jwt:SigningKey", "k")), isDevelopment: true);

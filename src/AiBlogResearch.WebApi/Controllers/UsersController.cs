@@ -73,7 +73,7 @@ public sealed class UsersController(
             return Problem(title: "This person has no user name, so there is nothing to sign in with.", statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var tenant = configuration["Auth:Tenant"] ?? "global-webnet.com";
+        var tenant = Adventures.WebApi.SiteDomain.Tenant(configuration, "global-webnet.com");
         var login = await provisioning.SetInitialPasswordAsync(tenant, userName, Value("Email"), Value("DisplayName"), cancellationToken);
         logger.LogInformation("Password set for {UserName} (account created: {Created}) by {Administrator}", login.Username, login.AccountCreated, User.Identity?.Name);
         Response.Headers.CacheControl = "no-store";

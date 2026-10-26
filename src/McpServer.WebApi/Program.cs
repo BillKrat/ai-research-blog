@@ -16,7 +16,7 @@ builder.Services.AddSingleton<McpServer.WebApi.BlogAi.IBlogAiReader, McpServer.W
 // The API owns the exception store and the log files; the diagnostics tool asks it (Api:BaseUrl), carrying the request id.
 builder.Services.AddHttpClient(McpServer.WebApi.Controllers.DiagnosticsController.ApiClientName, (services, client) =>
 {
-    client.BaseAddress = new Uri(services.GetRequiredService<IConfiguration>()["Api:BaseUrl"] ?? "https://api.global-webnet.com/");
+    client.BaseAddress = new Uri(Adventures.WebApi.SiteDomain.ApiBaseUrl(services.GetRequiredService<IConfiguration>(), "https://api.global-webnet.com/")!);
     client.Timeout = TimeSpan.FromSeconds(15);
 }).AddCorrelationIdHandler();
 

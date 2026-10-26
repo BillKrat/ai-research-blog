@@ -21,7 +21,7 @@ jobs:
       # actions/checkout@v4 refuses a `path` outside its own repo's checkout folder, so this is
       # a plain git clone instead - not subject to that restriction.
       - name: Checkout Adventures.Foundation
-        run: git clone --depth 1 --branch main https://github.com/BillKrat/Adventures.Foundation.git ../Adventures.Foundation
+        run: git clone --depth 1 --branch main "https://github.com/${{ vars.FOUNDATION_REPO || 'BillKrat/Adventures.Foundation' }}.git" ../Adventures.Foundation
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
