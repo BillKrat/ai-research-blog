@@ -1,0 +1,68 @@
+name: Tests
+
+# The gate before every deploy (review finding F-6). The three deploy workflows call this one and only deploy when it passes; it also runs
+# on every push to a branch other than main and on pull requests, so a branch proves itself before it is merged. It deploys nothing.
+on:
+  push:
+    branches-ignore: [main]
+  pull_request: {}
+  workflow_call:
+    inputs:
+      suite:
+        description: "Which suite a deploy needs: api, mcp or client (empty runs all)"
+        type: string
+        default: ""
+
+jobs:
+  api:
+    if: ${{ inputs.suite == '' || inputs.suite == 'api' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout Adventures.Foundation (same branch if it has one, otherwise main)
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          url=https://github.com/BillKrat/Adventures.Foundation.git
+          git clone --depth 1 --branch "$BRANCH" "$url" ../Adventures.Foundation || git clone --depth 1 --branch main "$url" ../Adventures.Foundation
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Test the API and the legacy import
+        run: |
+          dotnet test test/AiBlogResearch.WebApi.Tests -c Release
+          dotnet test test/LegacyImport.Tests -c Release
+
+  mcp:
+    if: ${{ inputs.suite == '' || inputs.suite == 'mcp' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout Adventures.Foundation (same branch if it has one, otherwise main)
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          url=https://github.com/BillKrat/Adventures.Foundation.git
+          git clone --depth 1 --branch "$BRANCH" "$url" ../Adventures.Foundation || git clone --depth 1 --branch main "$url" ../Adventures.Foundation
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Test the MCP server
+        run: dotnet test test/McpServer.WebApi.Tests -c Release
+
+  client:
+    if: ${{ inputs.suite == '' || inputs.suite == 'client' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client/ai-blog-research-ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: "npm"
+          cache-dependency-path: client/ai-blog-research-ui/package-lock.json
+      - run: npm ci
+      - name: Test the client
+        run: npx ng test --watch=false
