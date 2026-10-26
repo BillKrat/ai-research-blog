@@ -16,13 +16,13 @@ internal sealed class FakeRelationWriter : IEntityRelationWriter
 
     public (string ParentId, string Relation, string ChildId)? LastRemove { get; private set; }
 
-    public Task<EntityDataModel?> AddAsync(EntitySchema parentSchema, string parentId, string relationName, EntityDataModel data, CancellationToken cancellationToken = default)
+    public Task<EntityDataModel?> AddAsync(EntitySchema parentSchema, string parentId, string relationName, EntityDataModel data, string? actingUserName = null, CancellationToken cancellationToken = default)
     {
         LastAdd = (parentId, relationName, data);
         return Throw is null ? Task.FromResult(AddResult) : throw Throw;
     }
 
-    public Task<bool> RemoveAsync(EntitySchema parentSchema, string parentId, string relationName, string childId, CancellationToken cancellationToken = default)
+    public Task<bool> RemoveAsync(EntitySchema parentSchema, string parentId, string relationName, string childId, string? actingUserName = null, CancellationToken cancellationToken = default)
     {
         LastRemove = (parentId, relationName, childId);
         return Throw is null ? Task.FromResult(RemoveResult) : throw Throw;
