@@ -17,11 +17,6 @@ depending on expensive identity, data or AI service providers.
   library with vetted sources, comes next on the same foundation.
 - **Scope.** The public work is deliberately one complete, working blog, not a platform. Use it to
   learn from, to start your own, and to run your own site.
-- **License.** Business Source License 1.1: free production use for a pre-scale operator (one
-  individual, under $100,000 in annual revenue and in outside funding, not offering a competing
-  hosted platform), non-production use always free, and each version becomes AGPL-3.0 after four
-  years. See [LICENSE](LICENSE) and [NOTICE](NOTICE). These terms are under attorney review and may
-  change for future versions.
 
 It is also an early-stage replacement for [AdventuresOnTheEdge.net](https://AdventuresOnTheEdge.net),
 currently powered by a legacy private [BlogEngine.NET fork](https://github.com/BillKrat/BlogAI).
@@ -121,4 +116,4 @@ If you're evaluating SmarterASP.NET,
 
 ## License
 
-Business Source License 1.1 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). Free production use for a pre-scale operator (one individual, under $100,000 gross annual revenue and under $100,000 outside funding) that does not offer a competing hosted platform; non-production use is always free; everyone else needs a commercial license or subscription from Diane Kratochvil, doing business as Adventures On The Edge. Each version converts to AGPL-3.0 after four years. These terms are under attorney review and may change for future versions. Versions published before 2026-10-24 remain under MIT. Outside contributions: see [CONTRIBUTING.md](CONTRIBUTING.md).
+Source-available under the Business Source License 1.1 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)); non-production use is always free. Versions published before 2026-10-24 remain under MIT. Outside contributions: see [CONTRIBUTING.md](CONTRIBUTING.md).
