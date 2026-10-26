@@ -25,5 +25,14 @@ Source: the human's closing note of 2026-10-25. Status: vision only. Developer c
 ## Decisions pending
 
 - Tenant data scoping (needed before a second domain holds its own data).
-- Which side of the public/private line the research features sit (see `Claude-decision-2026-10-protect-and-help.md`).
 - Corpus licensing check per source before upload (public domain by edition, not just by author; translations and critical editions can be copyrighted).
+
+## Vetting design notes (from the human's research, 2026-10-26)
+
+- **Tiered flags.** A red flag for a direct contradiction of defined dogma or scripture; a yellow flag or query for matters of theological debate or historical interpretation (a single Doctor's opinion is not dogma).
+- **A flag is a scholarly review, not punishment.** Private notice to the author citing the exact source (for example Summa Theologiae, I, Q.2, A.3); then the author edits, or submits a rationale with supporting documents from the library; if unresolved the post publishes with a neutral status such as "Under Scholarly Review" and a side-by-side link to the sources.
+- **AI proposes, human decides.** The evaluator is a swappable role (Claude out of the box, any MCP provider later); it never clears a flag or publishes. Its proposals and the author's responses are kept in the collaboration log.
+- **Sources are internal.** Authors cite the library, not external documents; links are allowed.
+- **Footer disclaimer and framing.** An independent research community, not canonically affiliated with any order or diocese; the name "Order of the Cross" collides with real orders, so the landing page defines it at once.
+- **Open question:** automated detection (semantic search) versus community review, or both; decide when the stage starts. Not yet built.
+
