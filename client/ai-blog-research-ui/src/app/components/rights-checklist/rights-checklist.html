@@ -1,0 +1,26 @@
+<section class="rights">
+  <h3>What this role allows</h3>
+
+  @for (message of errors(); track message) {
+    <p class="rights__error" role="alert">{{ message }}</p>
+  }
+
+  <ul class="rights__list">
+    @for (right of catalog(); track right.name) {
+      <li>
+        <label>
+          <input type="checkbox" [checked]="ticked().has(right.name)" [disabled]="!canEdit() || saving()" (change)="toggle(right.name)" />
+          <span class="rights__name">{{ right.name }}</span>
+          <span class="rights__description">{{ right.description }}</span>
+        </label>
+      </li>
+    }
+  </ul>
+
+  @if (canEdit()) {
+    <button class="rights__save" type="button" [disabled]="saving() || !dirty()" (click)="save()">Save rights</button>
+  }
+  @if (status() === 'saved') {
+    <span class="rights__status" role="status">Saved.</span>
+  }
+</section>

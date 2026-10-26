@@ -91,6 +91,10 @@
       <app-relation-grid [relation]="relation" (changed)="reload()" (pendingChange)="setPending(relation.name, $event)" />
     }
 
+    @if (hasRightsChecklist) {
+      <app-rights-checklist [roleId]="form.entity.entityId" [rights]="form.entity.values['Rights'] ?? ''" (saved)="reload()" />
+    }
+
     @if (hasConversation) {
       <app-conversation [postId]="form.entity.entityId" [base]="conversationBase" [actions]="form.actions ?? []" (changed)="reload()" />
     }

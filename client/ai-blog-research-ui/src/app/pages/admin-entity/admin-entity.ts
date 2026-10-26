@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Conversation } from '../../components/conversation/conversation';
+import { RightsChecklist } from '../../components/rights-checklist/rights-checklist';
 import { EntityForm } from '../../components/entity-form/entity-form';
 import { RelationGrid } from '../../components/relation-grid/relation-grid';
 import { LabelPipe } from '../../i18n/labels';
@@ -22,7 +23,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  */
 @Component({
   selector: 'app-admin-entity',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation, RightsChecklist],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',
 })
@@ -102,6 +103,11 @@ export class AdminEntity implements OnInit {
 
   protected get conversationBase(): 'posts' | 'collaboration' {
     return this.collection === '/api/collaboration' ? 'collaboration' : 'posts';
+  }
+
+  /** A saved role shows its rights as a checklist under the form (the roles endpoint is itself behind the roles.manage right). */
+  protected get hasRightsChecklist(): boolean {
+    return this.collection === '/api/roles' && !this.isNew() && !!this.model()?.entity.entityId;
   }
 
   /** The page of this entry on the public site (a saved post or page with a slug), opened in a new tab; null for anything else. */
