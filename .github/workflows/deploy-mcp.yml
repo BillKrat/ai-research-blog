@@ -10,7 +10,13 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+    with:
+      suite: mcp
+
   build-and-deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
