@@ -1,9 +1,30 @@
 # ai-research-blog
 
-AI Research Blog is an early-stage, open-source replacement for
-[AdventuresOnTheEdge.net](https://AdventuresOnTheEdge.net), currently powered by a legacy private
-[BlogEngine.NET fork](https://github.com/BillKrat/BlogAI). It is being built as an Angular and
-ASP.NET Core application, with Aspire providing the local development composition.
+**An AI starter kit for developers.** Our mission is to give every developer a fully functional
+foundation for building with AI, so that one person can build something with the potential to
+succeed for as little as about $60 a month (hosting, a domain and an AI subscription), without
+depending on expensive identity, data or AI service providers.
+
+- **The kit is the `Adventures.*` libraries.** Self-hosted security (JWT and machine-to-machine
+  authentication, no external identity provider), a tenant-scoped data store, identity and login,
+  a dynamic entity model, and request hardening live in
+  [Adventures.Foundation](https://github.com/BillKrat/Adventures.Foundation) as reusable NuGet
+  packages.
+- **This repository is the worked example.** `ai-research-blog` is a single blog application
+  (Angular client, ASP.NET Core API, a separate MCP server, Aspire for local composition) that
+  shows how the libraries fit together and demonstrates every feature the kit offers today,
+  including the human and AI collaboration channel below. Researcher collaboration, a research
+  library with vetted sources, comes next on the same foundation.
+- **Scope.** The public work is deliberately one complete, working blog, not a platform. Use it to
+  learn from, to start your own, and to run your own site.
+- **License.** Business Source License 1.1: free production use for a pre-scale operator (one
+  individual, under $100,000 in annual revenue and in outside funding, not offering a competing
+  hosted platform), non-production use always free, and each version becomes AGPL-3.0 after four
+  years. See [LICENSE](LICENSE) and [NOTICE](NOTICE). These terms are under attorney review and may
+  change for future versions.
+
+It is also an early-stage replacement for [AdventuresOnTheEdge.net](https://AdventuresOnTheEdge.net),
+currently powered by a legacy private [BlogEngine.NET fork](https://github.com/BillKrat/BlogAI).
 
 - [AGENTS.md](AGENTS.md) — AI context index: repo state, per-AI sections, docs index
 
