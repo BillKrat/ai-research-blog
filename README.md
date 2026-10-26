@@ -2,7 +2,7 @@
 
 **An AI starter kit for developers.** Our mission is to give every developer a fully functional
 foundation for building with AI, so that one person can build something with the potential to
-succeed for as little as about $35 a month (hosting, a domain and an AI subscription), without
+succeed for less than $35 a month (hosting $38/qtr and an AI subscription $20/mon), without
 depending on expensive identity, data or AI service providers.
 
 - **The kit is the `Adventures.*` libraries.** Self-hosted security (JWT and machine-to-machine
