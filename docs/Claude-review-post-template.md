@@ -7,7 +7,7 @@ Create a Developer collaboration item (Admin > Collaboration; `Claude-author.ps1
 <Two or three sentences: what changed and why, in the reader's words, not file names.>
 
 ## Status
-- Branch: `<branch>` in <repos>, committed, not merged.
+- Branch: `<session branch>` in <repos>, committed, not merged. Use the session's one branch, never a new branch per item; name the commit that holds this item's change.
 - Verified: <tests run with counts; what was exercised end to end>.
 - Not verified: <what could not be checked and why>.
 
@@ -31,3 +31,4 @@ Rules:
 - The human's answers go in the post's Conversation (the human uses the quick replies, or Claude copies what was said in chat and says so).
 - Claude never marks the post Approved and never records a Decision; only the human does.
 - Merge and deploy wait for "approved" in chat and an Approved state on the post.
+- One branch per session: every item of the session shares it. After the merge, delete the branch locally and on origin.
