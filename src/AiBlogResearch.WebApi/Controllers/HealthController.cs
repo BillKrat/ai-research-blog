@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AiBlogResearch.WebApi.Controllers;
 
-[Microsoft.AspNetCore.Authorization.AllowAnonymous]
 [ApiController]
 [Route("api/[controller]")]
 public class HealthController(
@@ -14,7 +13,8 @@ public class HealthController(
     IExceptionLogBll? exceptionLog = null,
     Microsoft.Extensions.Options.IOptions<AnthropicOptions>? anthropic = null,
     TimeProvider? clock = null,
-    IConfiguration? configuration = null) : ControllerBase
+    IConfiguration? configuration = null,
+    HealthSnapshotCache? snapshots = null) : ControllerBase
 {
     /// <summary>A failing dependency reaches the exception log (and the admin icon) at most once per signature per hour.</summary>
     internal static readonly TimeSpan ProbeFailureWindow = TimeSpan.FromHours(1);
@@ -31,8 +31,34 @@ public class HealthController(
             HttpContext is null ? null : CorrelationIdMiddleware.Get(HttpContext), ProbeFailureWindow, cancellationToken);
     }
 
+    /// <summary>
+    /// The anonymous answer (backlog 3a): only whether the API is up, so a stranger learns nothing about the dependencies, the mcp
+    /// text or a trace id. Rate limited per client address, and answered from a snapshot at most <c>Health:CacheSeconds</c> old.
+    /// A failed database still answers 503, which is what a deploy smoke test needs.
+    /// </summary>
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Adventures.WebApi.RequestHardening.HealthPolicy)]
     [HttpGet]
-    public async Task<ActionResult<HealthResponse>> Get(CancellationToken cancellationToken)
+    public async Task<ActionResult<PublicHealthResponse>> Get(CancellationToken cancellationToken)
+    {
+        var full = await SnapshotAsync(cancellationToken);
+        var response = new PublicHealthResponse(full.Status, full.TimestampUtc, full.LiveData);
+        return full.Status == "Unhealthy" ? StatusCode(StatusCodes.Status503ServiceUnavailable, response) : Ok(response);
+    }
+
+    /// <summary>Every dependency with its timing and short code, plus the trace id: for people who may read diagnostics.</summary>
+    [Adventures.WebApi.RequireRight(Adventures.Entities.Rights.DiagnosticsRead)]
+    [HttpGet("detail")]
+    public async Task<ActionResult<HealthResponse>> Detail(CancellationToken cancellationToken)
+    {
+        var response = await SnapshotAsync(cancellationToken);
+        return response.Status == "Unhealthy" ? StatusCode(StatusCodes.Status503ServiceUnavailable, response) : Ok(response);
+    }
+
+    private Task<HealthResponse> SnapshotAsync(CancellationToken cancellationToken) =>
+        snapshots is null ? BuildAsync(cancellationToken) : snapshots.GetAsync(BuildAsync, cancellationToken);
+
+    private async Task<HealthResponse> BuildAsync(CancellationToken cancellationToken)
     {
         var dependencies = new List<DependencyHealth>();
 
@@ -57,12 +83,10 @@ public class HealthController(
         var status = dependencies.Any(d => d.Name == "database" && d.Status != "ok") ? "Unhealthy"
             : dependencies.Any(d => d.Status != "ok") ? "Degraded"
             : "Healthy";
-        var response = new HealthResponse(
+        return new HealthResponse(
             status, DateTimeOffset.UtcNow, mcpMessage, mcpStatus, dependencies,
             HttpContext is null ? null : CorrelationIdMiddleware.Get(HttpContext),
             configuration?["LiveData:Active"] == "true");
-
-        return status == "Unhealthy" ? StatusCode(StatusCodes.Status503ServiceUnavailable, response) : Ok(response);
     }
 
     /// <summary>How many days before the AI key expires the health check starts to warn.</summary>
@@ -140,6 +164,9 @@ public class HealthController(
 
 /// <summary>One thing the API depends on: ok or failed, how long the check took, and a short non-sensitive code.</summary>
 public sealed record DependencyHealth(string Name, string Status, long DurationMs, string? Detail);
+
+/// <summary>What an anonymous caller sees: the overall status, when it was taken, and whether this is a local run on the live store.</summary>
+public sealed record PublicHealthResponse(string Status, DateTimeOffset TimestampUtc, bool LiveData = false);
 
 /// <summary>Healthy, Degraded (a dependency other than the database failed) or Unhealthy (the database failed; HTTP 503).</summary>
 public record HealthResponse(

@@ -41,7 +41,7 @@ public sealed class AiKeyHealthTests
             Options.Create(new AnthropicOptions { ApiKey = key, KeyExpiresOn = expires }),
             new FixedClock(new DateTimeOffset(today.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero)));
 
-        var result = await controller.Get(CancellationToken.None);
+        var result = await controller.Detail(CancellationToken.None);
         return (Assert.IsType<HealthResponse>(Assert.IsType<OkObjectResult>(result.Result).Value), log);
     }
 

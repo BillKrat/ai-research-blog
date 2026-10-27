@@ -1,7 +1,7 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 /** One thing the API depends on: ok or failed, how long the check took, and a short non-sensitive code. */
@@ -34,7 +34,18 @@ export function describeFailures(health: Pick<HealthResponse, 'dependencies'>): 
 export class HealthService {
   private readonly http = inject(HttpClient);
 
-  check(): Observable<HealthResponse> {
-    return this.http.get<HealthResponse>(`${environment.apiUrl}/api/health`);
+  /**
+   * The anonymous answer is only status and time. A signed-in person asks for the detail first (dependencies, trace id); a person
+   * without the diagnostics right gets 401/403 there and falls back to the public answer. A 503 is an answer, so it is passed on.
+   */
+  check(signedIn: boolean): Observable<HealthResponse> {
+    const publicHealth = this.http.get<HealthResponse>(`${environment.apiUrl}/api/health`);
+    if (!signedIn) {
+      return publicHealth;
+    }
+
+    return this.http.get<HealthResponse>(`${environment.apiUrl}/api/health/detail`).pipe(
+      catchError((error) => (error?.status === 401 || error?.status === 403 ? publicHealth : throwError(() => error))),
+    );
   }
 }

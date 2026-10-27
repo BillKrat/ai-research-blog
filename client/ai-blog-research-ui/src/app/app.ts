@@ -98,7 +98,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   private checkHealth(): void {
-    this.healthService.check().subscribe({
+    this.healthService.check(this.authService.isAuthenticated()).subscribe({
       next: (res) => this.showHealth(res),
       // A 503 (database failed) carries the same body as a 200: show what it says instead of a bare "unreachable".
       error: (error) => {

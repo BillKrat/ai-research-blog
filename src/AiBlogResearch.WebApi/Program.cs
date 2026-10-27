@@ -88,6 +88,7 @@ try
 
     builder.Services.AddSharedJwtAuthentication(builder.Configuration);
     builder.Services.AddRequestHardening(builder.Configuration);
+    builder.Services.AddSingleton(_ => new AiBlogResearch.WebApi.Controllers.HealthSnapshotCache(AiBlogResearch.WebApi.Controllers.HealthSnapshotCache.WindowFrom(builder.Configuration), TimeProvider.System));
 
     builder.Services.AddOptions<M2MClientsOptions>()
         .Bind(builder.Configuration.GetSection(M2MClientsOptions.SectionName));

@@ -47,7 +47,7 @@ public class HealthControllerTests
         new(Probes(handler));
 
     [Fact]
-    public async Task Get_IncludesMcpMessage_WhenMcpServerRespondsSuccessfully()
+    public async Task Detail_IncludesMcpMessage_WhenMcpServerRespondsSuccessfully()
     {
         var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -55,7 +55,7 @@ public class HealthControllerTests
         });
         var controller = BuildController(handler);
 
-        var result = await controller.Get(CancellationToken.None);
+        var result = await controller.Detail(CancellationToken.None);
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<HealthResponse>(okResult.Value);
@@ -71,12 +71,12 @@ public class HealthControllerTests
     }
 
     [Fact]
-    public async Task Get_ReturnsHealthyWithNullMcpMessage_WhenMcpServerIsUnreachable()
+    public async Task Detail_ReturnsHealthyWithNullMcpMessage_WhenMcpServerIsUnreachable()
     {
         var handler = new FakeHttpMessageHandler(_ => throw new HttpRequestException("simulated network failure"));
         var controller = BuildController(handler);
 
-        var result = await controller.Get(CancellationToken.None);
+        var result = await controller.Detail(CancellationToken.None);
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<HealthResponse>(okResult.Value);
@@ -89,12 +89,12 @@ public class HealthControllerTests
     }
 
     [Fact]
-    public async Task Get_ReturnsHealthyWithNullMcpMessage_WhenMcpServerReturnsErrorStatus()
+    public async Task Detail_ReturnsHealthyWithNullMcpMessage_WhenMcpServerReturnsErrorStatus()
     {
         var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
         var controller = BuildController(handler);
 
-        var result = await controller.Get(CancellationToken.None);
+        var result = await controller.Detail(CancellationToken.None);
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<HealthResponse>(okResult.Value);
@@ -125,11 +125,11 @@ public class HealthControllerTests
         new(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { message = "hi" }) });
 
     [Fact]
-    public async Task Get_IsUnhealthyWith503_WhenTheDatabaseFails_EvenIfMcpIsFine()
+    public async Task Detail_IsUnhealthyWith503_WhenTheDatabaseFails_EvenIfMcpIsFine()
     {
         var controller = BuildController(HealthyMcp(), new CountingStore(() => throw new InvalidOperationException("db down")));
 
-        var result = await controller.Get(CancellationToken.None);
+        var result = await controller.Detail(CancellationToken.None);
 
         var objectResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(503, objectResult.StatusCode);
@@ -139,11 +139,11 @@ public class HealthControllerTests
     }
 
     [Fact]
-    public async Task Get_IsHealthy_WhenMcpAndDatabaseAreFine()
+    public async Task Detail_IsHealthy_WhenMcpAndDatabaseAreFine()
     {
         var controller = BuildController(HealthyMcp(), new CountingStore(() => Task.FromResult(42L)));
 
-        var result = await controller.Get(CancellationToken.None);
+        var result = await controller.Detail(CancellationToken.None);
 
         var response = Assert.IsType<HealthResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
         Assert.Equal("Healthy", response.Status);
@@ -151,14 +151,76 @@ public class HealthControllerTests
         Assert.Equal(2, response.Dependencies!.Count);
     }
 
+    // Backlog 3a: the anonymous answer says only whether the API is up; the dependency detail needs a right.
+
     [Fact]
-    public async Task Get_RecordsAnUnreachableMcpInTheExceptionLog_ThrottledToOncePerHour()
+    public async Task Get_AnswersOnlyStatusAndTime_NeverDependenciesOrMcpText()
+    {
+        var controller = BuildController(HealthyMcp(), new CountingStore(() => Task.FromResult(42L)));
+
+        var result = await controller.Get(CancellationToken.None);
+
+        var response = Assert.IsType<PublicHealthResponse>(Assert.IsType<OkObjectResult>(result.Result).Value);
+        Assert.Equal("Healthy", response.Status);
+        var json = System.Text.Json.JsonSerializer.Serialize(response);
+        Assert.DoesNotContain("ependenc", json);
+        Assert.DoesNotContain("mcp", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("orrelation", json);
+    }
+
+    [Fact]
+    public async Task Get_IsStill503WhenTheDatabaseFails_SoADeploySmokeTestFails_ButSaysNothingAboutWhy()
+    {
+        var controller = BuildController(HealthyMcp(), new CountingStore(() => throw new InvalidOperationException("db down")));
+
+        var result = await controller.Get(CancellationToken.None);
+
+        var objectResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(503, objectResult.StatusCode);
+        var response = Assert.IsType<PublicHealthResponse>(objectResult.Value);
+        Assert.Equal("Unhealthy", response.Status);
+    }
+
+    [Fact]
+    public void Get_IsAnonymousAndRateLimited_AndDetailNeedsTheDiagnosticsRight()
+    {
+        var get = typeof(HealthController).GetMethod(nameof(HealthController.Get))!;
+        var detail = typeof(HealthController).GetMethod(nameof(HealthController.Detail))!;
+
+        Assert.Equal(Adventures.WebApi.RequestHardening.HealthPolicy,
+            Assert.Single(get.GetCustomAttributes(typeof(Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute), true).Cast<Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute>()).PolicyName);
+        Assert.Equal(Adventures.Entities.Rights.DiagnosticsRead,
+            Assert.Single(detail.GetCustomAttributes(typeof(Adventures.WebApi.RequireRightAttribute), true).Cast<Adventures.WebApi.RequireRightAttribute>()).Right);
+        Assert.Empty(detail.GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute), true));
+    }
+
+    [Fact]
+    public async Task GetAndDetail_ShareOneProbeRunWhileTheSnapshotIsFresh()
+    {
+        var calls = 0;
+        var handler = new FakeHttpMessageHandler(_ =>
+        {
+            calls++;
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { message = "hi" }) };
+        });
+        var cache = new HealthSnapshotCache(TimeSpan.FromSeconds(15), TimeProvider.System);
+        var controller = new HealthController(Probes(handler), snapshots: cache);
+
+        await controller.Get(CancellationToken.None);
+        await controller.Get(CancellationToken.None);
+        await controller.Detail(CancellationToken.None);
+
+        Assert.Equal(1, calls);
+    }
+
+    [Fact]
+    public async Task Detail_RecordsAnUnreachableMcpInTheExceptionLog_ThrottledToOncePerHour()
     {
         var log = new RecordingExceptionLog("id-1");
         var handler = new FakeHttpMessageHandler(_ => throw new HttpRequestException("simulated network failure"));
         var controller = new HealthController(Probes(handler), log);
 
-        await controller.Get(CancellationToken.None);
+        await controller.Detail(CancellationToken.None);
 
         var recorded = Assert.Single(log.Throttled);
         Assert.Equal("health probe: mcp", recorded.Request);
@@ -166,17 +228,17 @@ public class HealthControllerTests
     }
 
     [Fact]
-    public async Task Get_RecordsAnMcpErrorStatus_ButNotASuccess()
+    public async Task Detail_RecordsAnMcpErrorStatus_ButNotASuccess()
     {
         var log = new RecordingExceptionLog("id-1");
         var failing = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
         await new HealthController(Probes(failing), log)
-            .Get(CancellationToken.None);
+            .Detail(CancellationToken.None);
         Assert.Single(log.Throttled);
 
         var healthy = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { message = "hi" }) });
         await new HealthController(Probes(healthy), log)
-            .Get(CancellationToken.None);
+            .Detail(CancellationToken.None);
         Assert.Single(log.Throttled);
     }
 }
