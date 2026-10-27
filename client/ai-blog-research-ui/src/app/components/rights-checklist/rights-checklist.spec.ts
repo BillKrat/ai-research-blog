@@ -13,13 +13,13 @@ describe('RightsChecklist', () => {
   let http: HttpTestingController;
   let fixture: ComponentFixture<RightsChecklist>;
 
-  async function open(rights: string, canEdit = true): Promise<HTMLElement> {
+  async function open(rights: string, canEdit = true, rightsCatalog = catalog): Promise<HTMLElement> {
     fixture = TestBed.createComponent(RightsChecklist);
     fixture.componentRef.setInput('roleId', 'r1');
     fixture.componentRef.setInput('rights', rights);
     fixture.componentRef.setInput('canEdit', canEdit);
     fixture.detectChanges();
-    http.expectOne((r) => r.url.endsWith('/api/roles/rights-catalog')).flush(catalog);
+    http.expectOne((r) => r.url.endsWith('/api/roles/rights-catalog')).flush(rightsCatalog);
     fixture.detectChanges();
     await fixture.whenStable();
     return fixture.nativeElement as HTMLElement;
@@ -40,6 +40,19 @@ describe('RightsChecklist', () => {
 
     expect(boxes(el).map((b) => b.checked)).toEqual([true, false, true]);
     expect(el.textContent).toContain('Add people, set passwords, assign roles.');
+  });
+
+  it('lists the rights alphabetically by name whatever order the server sends', async () => {
+    const el = await open('posts.read', true, [
+      { name: 'users.manage', description: 'Add people.' },
+      { name: 'Posts.create', description: 'Write posts.' },
+      { name: 'admin.access', description: 'See the admin area.' },
+      { name: 'posts.read', description: 'See posts.' },
+    ]);
+
+    const names = Array.from(el.querySelectorAll('.rights__name')).map((n) => n.textContent?.trim());
+    expect(names).toEqual(['admin.access', 'Posts.create', 'posts.read', 'users.manage']);
+    expect(boxes(el).map((b) => b.checked)).toEqual([false, false, true, false]);
   });
 
   it('shows every right ticked for a role that holds all of them (*)', async () => {

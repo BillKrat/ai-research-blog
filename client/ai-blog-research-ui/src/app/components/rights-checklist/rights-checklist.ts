@@ -32,6 +32,8 @@ export class RightsChecklist implements OnInit {
   ngOnInit(): void {
     this.api.catalog().subscribe({
       next: (catalog) => {
+        // Alphabetical by name so a long list can be scanned like an index, whatever order the server keeps.
+        catalog = [...catalog].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
         this.catalog.set(catalog);
         const stored = this.rights().trim();
         this.ticked.set(
