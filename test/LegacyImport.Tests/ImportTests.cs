@@ -146,7 +146,7 @@ public sealed class ImportTests
         var quads = await store.QueryAsync();
         EntitySchema Live(string iri) => SchemaDal.Load(quads, iri);
         NQuadEntityRepository<T> Repo<T>(string schemaIri, string baseIri, string typeIri, Func<EntitySchema, T> factory) where T : DynamicEntity =>
-            new(store, Live(schemaIri), baseIri, typeIri, EntityConstants.Content.DefaultGraph, factory, changedBy: "legacy-import");
+            new(store, Live(schemaIri), baseIri, typeIri, EntityConstants.Content.DefaultGraph, factory);
 
         var categories = Repo(EntityConstants.Content.CategorySchemaIri, EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, s => new Category(s));
         var tags = Repo(EntityConstants.Content.TagSchemaIri, EntityConstants.Content.TagBaseIri, EntityConstants.Content.TagTypeIri, s => new Tag(s));

@@ -29,7 +29,7 @@ public sealed class RolesController(IEntityPresenter<Role> presenter, IRoleRight
     public IActionResult RightsCatalog() => Ok(Rights.Catalog);
 
     /// <summary>
-    /// Replaces what a role allows. The acting person is the signed-in one, so the change is audited against them and the editor can refuse a change that
+    /// Replaces what a role allows. The acting person is the signed-in one, so the editor can refuse a change that
     /// would take away their own ability to manage users and roles (409) or leave nobody with it (409).
     /// </summary>
     [HttpPut("{id}/rights")]

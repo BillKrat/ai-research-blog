@@ -43,7 +43,7 @@ IDs are stable so reviews can cite them.
 - **C2. Authentication.** Authenticate at trust boundaries; store only password hashes; enforce lockout and strong password policy; no plaintext passwords on the wire.
 - **C3. Authorization.** Authorize across trust boundaries; role-based for business decisions, resource-based for auditing; avoid over-fine granularity.
 - **C4. Exception management.** Catch only what you can handle or must annotate; never use exceptions for control flow; separate business errors (friendly message, retry) from system exceptions (log, generic message); global handler; exception shielding (no internals or sensitive data to the user); the DAL handles data-source exceptions and passes on only what affects the caller.
-- **C5. Logging and audit.** Centralised, configurable, no sensitive data; audit user-management events and business-critical operations at the point of resource access.
+- **C5. Logging and audit.** Centralised, configurable, no sensitive data; audit user-management events and business-critical operations at the point of resource access. (Owner decision 2026-10-29: this project deliberately ships no audit trail and makes no audit claim; see NOTICE, Regulated use. The principle stays here as reference guidance from the source papers.)
 - **C6. Statelessness and session.** BLL stateless; avoid server affinity (no local state that must be synchronised in a web farm).
 - **C7. Caching.** Cache ready-to-use data, never volatile or unencrypted sensitive data; do not depend on the cache holding.
 - **C8. Navigation and layout.** Navigation separate from processing and UI components; templates/master layout and composite views; CSS for layout; design for accessibility, localisation and different devices.

@@ -19,7 +19,7 @@ Four named people, one per shipped role plus one with no role, so every manual t
 `RoleMatrixTests` (Foundation) pins the rights of every shipped role; `RoleRouteMatrixTests` (app) pins which admin controllers each role reaches; `RouteRightsGuardTests` fails when a route has no right. The manual check above is for what no test can see: the menu and the screens as a person experiences them.
 
 ## Cleaning up
-Admin > Users > the test person > Delete. Deleting is a tombstone; the audit trail keeps who created and removed the person.
+Admin > Users > the test person > Delete. Deleting is a tombstone: the person disappears from the lists (no history of who did it is kept).
 
 ## F-8 record (2026-10-26)
 A read-only check of the live identity store found the seeded `Claude` account with its password-change flag still set (the human is resetting its password) and a leftover `Admin` account (role `TenantAdmin`) under the old tenant name `www.global-webnet.com`. The leftover was deleted by id after a dry run (one entity, one credential row, no other data). The store now holds only `Admin`, `Claude` and the two test people.

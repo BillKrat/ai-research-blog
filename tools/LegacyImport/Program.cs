@@ -146,7 +146,7 @@ if (!Flag("--mirror-only"))
     Console.WriteLine("LIVE PROJECTION (content, as unpublished drafts)");
     EntitySchema Live(string iri) => SchemaDal.Load(quads, iri);
     NQuadEntityRepository<T> Repo<T>(string schemaIri, string baseIri, string typeIri, Func<EntitySchema, T> factory) where T : DynamicEntity =>
-        new(store, Live(schemaIri), baseIri, typeIri, EntityConstants.Content.DefaultGraph, factory, changedBy: "legacy-import");
+        new(store, Live(schemaIri), baseIri, typeIri, EntityConstants.Content.DefaultGraph, factory);
 
     var categorySchema = Live(EntityConstants.Content.CategorySchemaIri);
     var tagSchema = Live(EntityConstants.Content.TagSchemaIri);

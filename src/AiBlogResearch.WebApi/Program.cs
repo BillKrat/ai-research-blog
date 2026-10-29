@@ -240,18 +240,14 @@ try
     builder.Services.AddSingleton<INQuadStore>(nquadStore);
     // Uploaded images: in the same PostgreSQL database as the content (survives a redeploy, travels with the backup); memory for the in-memory development store.
     builder.Services.AddSingleton<IMediaStore>(useMemoryStore ? new InMemoryMediaStore() : new NpgsqlMediaStore(postgresConnection!, builder.Configuration["Media:Table"] ?? "app_media"));
-    // The audit trail records who made each change: the signed-in user for a request, "system" otherwise.
     builder.Services.AddHttpContextAccessor();
-    static string? CurrentActor(IServiceProvider services) =>
-        services.GetService<IHttpContextAccessor>()?.HttpContext?.User.Identity?.Name;
 
     builder.Services.AddNQuadEntityRepository(
         userSchema,
         EntityConstants.User.BaseIri,
         EntityConstants.User.TypeIri,
         EntityConstants.User.DefaultGraph,
-        schema => new User(schema),
-        CurrentActor);
+        schema => new User(schema));
 
     // SchemaBll (Adventures.Entities) is auto-registered by AddLifetimeServices above via its
     // reflection scan across every loaded assembly, not just what this host actually uses - ASP.NET
@@ -264,38 +260,34 @@ try
         EntityConstants.ExceptionLog.BaseIri,
         EntityConstants.ExceptionLog.TypeIri,
         EntityConstants.ExceptionLog.DefaultGraph,
-        schema => new ExceptionLogEntry(schema),
-        CurrentActor);
+        schema => new ExceptionLogEntry(schema));
 
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, EntityConstants.ExceptionSignatureEntity.SchemaIri),
         EntityConstants.ExceptionSignatureEntity.BaseIri,
         EntityConstants.ExceptionSignatureEntity.TypeIri,
         EntityConstants.ExceptionSignatureEntity.DefaultGraph,
-        schema => new ExceptionSignatureEntry(schema),
-        CurrentActor);
+        schema => new ExceptionSignatureEntry(schema));
 
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, EntityConstants.Schema.EntityTypeIri),
         EntityConstants.Schema.EntityBaseIri,
         EntityConstants.Schema.EntityTypeIri,
         EntityConstants.User.DefaultGraph,
-        schema => new SchemaEntity(schema),
-        CurrentActor);
+        schema => new SchemaEntity(schema));
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, EntityConstants.Schema.FieldEntityTypeIri),
         EntityConstants.Schema.FieldEntityBaseIri,
         EntityConstants.Schema.FieldEntityTypeIri,
         EntityConstants.User.DefaultGraph,
-        schema => new SchemaFieldEntity(schema),
-        CurrentActor);
+        schema => new SchemaFieldEntity(schema));
 
     // Identity schemas (seed 004): the data is untouched; each schema maps onto the existing predicates. Roles get an admin grid;
     // the rest are read through the relation provider (a user role assignments) and need only their registrations.
     static void AddIdentityEntity<TEntity>(
         IServiceCollection services, IReadOnlyList<NQuad> quads, string schemaIri, string baseIri, string typeIri, Func<EntitySchema, TEntity> factory)
         where TEntity : DynamicEntity =>
-        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, EntityConstants.Identity.DefaultGraph, factory, CurrentActor);
+        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, EntityConstants.Identity.DefaultGraph, factory);
 
     AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.RoleSchemaIri, EntityConstants.Identity.RoleBaseIri, EntityConstants.Identity.RoleTypeIri, s => new Role(s));
     AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.TenantSchemaIri, EntityConstants.Identity.TenantBaseIri, EntityConstants.Identity.TenantTypeIri, s => new Tenant(s));
@@ -306,7 +298,7 @@ try
     static void AddContentEntity<TEntity>(
         IServiceCollection services, IReadOnlyList<NQuad> quads, string schemaIri, string baseIri, string typeIri, Func<EntitySchema, TEntity> factory)
         where TEntity : DynamicEntity =>
-        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, EntityConstants.Content.DefaultGraph, factory, CurrentActor);
+        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, EntityConstants.Content.DefaultGraph, factory);
 
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.PageSchemaIri, EntityConstants.Content.PageBaseIri, EntityConstants.Content.PageTypeIri, s => new Page(s));
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.PostSchemaIri, EntityConstants.Content.PostBaseIri, EntityConstants.Content.PostTypeIri, s => new Post(s));
@@ -317,10 +309,10 @@ try
     builder.Services.AddScoped<IConversation, Conversation>();
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, CollaborationConstants.SchemaIri), CollaborationConstants.BaseIri, CollaborationConstants.TypeIri,
-        CollaborationConstants.DefaultGraph, s => new CollaborationItem(s), CurrentActor);
+        CollaborationConstants.DefaultGraph, s => new CollaborationItem(s));
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, PluginConstants.SchemaIri), PluginConstants.BaseIri, PluginConstants.TypeIri,
-        CollaborationConstants.DefaultGraph, s => new Plugin(s), CurrentActor);
+        CollaborationConstants.DefaultGraph, s => new Plugin(s));
     builder.Services.AddScoped<IEntityBll<Plugin>>(provider => new EntityBll<Plugin>(provider.GetRequiredService<IEntityRepository<Plugin>>()));
     builder.Services.AddScoped<IPlugins, Plugins>();
     builder.Services.AddScoped<IRightsResolver, RightsResolver>();
@@ -334,7 +326,7 @@ try
     builder.Services.AddScoped<CollaborationMigration>();
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, EntityConstants.Site.SettingSchemaIri), EntityConstants.Site.SettingBaseIri, EntityConstants.Site.SettingTypeIri,
-        EntityConstants.Site.DefaultGraph, s => new SiteSetting(s), CurrentActor);
+        EntityConstants.Site.DefaultGraph, s => new SiteSetting(s));
     builder.Services.AddScoped<IEntityBll<SiteSetting>>(provider => new EntityBll<SiteSetting>(provider.GetRequiredService<IEntityRepository<SiteSetting>>()));
     builder.Services.AddScoped<IEntityPresenter<SiteSetting>, SiteSettingPresenter>();
     builder.Services.AddScoped<ISiteSettings, SiteSettings>();

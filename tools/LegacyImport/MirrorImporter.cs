@@ -22,7 +22,7 @@ public static class MirrorImporter
     public const string OntologyBase = "https://global-webnet.com/ontology/legacy/";
 
     public static NQuadEntityRepository<LegacyRow> Repository(INQuadStore store, EntitySchema schema, string table) =>
-        new(store, schema, $"{BaseIri}{table}/", $"{OntologyBase}{table}#Row", EntityConstants.Legacy.DefaultGraph, s => new LegacyRow(s), changedBy: "legacy-import");
+        new(store, schema, $"{BaseIri}{table}/", $"{OntologyBase}{table}#Row", EntityConstants.Legacy.DefaultGraph, s => new LegacyRow(s));
 
     public static async Task<TableResult> ImportAsync(
         BlogAiTable table,
