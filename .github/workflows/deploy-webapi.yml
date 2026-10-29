@@ -31,7 +31,18 @@ jobs:
       # hard way: "Repository path ... is not under ..."), so a sibling clone has to be a plain
       # git clone instead - not subject to that restriction.
       - name: Checkout Adventures.Foundation
-        run: git clone --depth 1 --branch main "https://github.com/${{ vars.FOUNDATION_REPO || 'BillKrat/Adventures.Foundation' }}.git" ../Adventures.Foundation
+        env:
+          FOUNDATION_REPO: ${{ vars.FOUNDATION_REPO || 'BillKrat/Adventures.Foundation' }}
+          # Only needed when your Foundation fork is private: a token with read access to it (repository secret).
+          FOUNDATION_TOKEN: ${{ secrets.FOUNDATION_TOKEN }}
+        run: |
+          auth=()
+          if [ -n "$FOUNDATION_TOKEN" ]; then
+            header="$(printf 'x-access-token:%s' "$FOUNDATION_TOKEN" | base64 -w0)"
+            echo "::add-mask::$header"
+            auth=(-c "http.https://github.com/.extraheader=AUTHORIZATION: basic $header")
+          fi
+          git "${auth[@]}" clone --depth 1 --branch main "https://github.com/${FOUNDATION_REPO}.git" ../Adventures.Foundation
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v4

@@ -22,9 +22,18 @@ jobs:
       - name: Checkout Adventures.Foundation (same branch if it has one, otherwise main)
         env:
           BRANCH: ${{ github.head_ref || github.ref_name }}
+          FOUNDATION_REPO: ${{ vars.FOUNDATION_REPO || 'BillKrat/Adventures.Foundation' }}
+          # Only needed when your Foundation fork is private: a token with read access to it (repository secret).
+          FOUNDATION_TOKEN: ${{ secrets.FOUNDATION_TOKEN }}
         run: |
-          url=https://github.com/BillKrat/Adventures.Foundation.git
-          git clone --depth 1 --branch "$BRANCH" "$url" ../Adventures.Foundation || git clone --depth 1 --branch main "$url" ../Adventures.Foundation
+          url="https://github.com/${FOUNDATION_REPO}.git"
+          auth=()
+          if [ -n "$FOUNDATION_TOKEN" ]; then
+            header="$(printf 'x-access-token:%s' "$FOUNDATION_TOKEN" | base64 -w0)"
+            echo "::add-mask::$header"
+            auth=(-c "http.https://github.com/.extraheader=AUTHORIZATION: basic $header")
+          fi
+          git "${auth[@]}" clone --depth 1 --branch "$BRANCH" "$url" ../Adventures.Foundation || git "${auth[@]}" clone --depth 1 --branch main "$url" ../Adventures.Foundation
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
@@ -41,9 +50,18 @@ jobs:
       - name: Checkout Adventures.Foundation (same branch if it has one, otherwise main)
         env:
           BRANCH: ${{ github.head_ref || github.ref_name }}
+          FOUNDATION_REPO: ${{ vars.FOUNDATION_REPO || 'BillKrat/Adventures.Foundation' }}
+          # Only needed when your Foundation fork is private: a token with read access to it (repository secret).
+          FOUNDATION_TOKEN: ${{ secrets.FOUNDATION_TOKEN }}
         run: |
-          url=https://github.com/BillKrat/Adventures.Foundation.git
-          git clone --depth 1 --branch "$BRANCH" "$url" ../Adventures.Foundation || git clone --depth 1 --branch main "$url" ../Adventures.Foundation
+          url="https://github.com/${FOUNDATION_REPO}.git"
+          auth=()
+          if [ -n "$FOUNDATION_TOKEN" ]; then
+            header="$(printf 'x-access-token:%s' "$FOUNDATION_TOKEN" | base64 -w0)"
+            echo "::add-mask::$header"
+            auth=(-c "http.https://github.com/.extraheader=AUTHORIZATION: basic $header")
+          fi
+          git "${auth[@]}" clone --depth 1 --branch "$BRANCH" "$url" ../Adventures.Foundation || git "${auth[@]}" clone --depth 1 --branch main "$url" ../Adventures.Foundation
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"

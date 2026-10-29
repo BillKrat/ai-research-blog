@@ -41,7 +41,7 @@ Still ours to remove by hand if you publish a fork: the example text in `README.
 
 If the API shows a 503 "reporting app", a required secret is missing and the page names it. If sign-in answers 500, the API cannot reach the database.
 
-**On GitHub (repository secrets):** `SMARTERASP_FTP_SERVER`; `SMARTERASP_FTP_USERNAME` and `SMARTERASP_FTP_PASSWORD` (client site); `SMARTERASP_API_FTP_USERNAME` and `SMARTERASP_API_FTP_PASSWORD`; `SMARTERASP_MCP_FTP_USERNAME` and `SMARTERASP_MCP_FTP_PASSWORD`. Use the scoped users from step 3.
+**On GitHub (repository secrets):** `FOUNDATION_TOKEN` (only if your Adventures.Foundation fork is private: a fine-grained token with read-only Contents access to that one repository); `SMARTERASP_FTP_SERVER`; `SMARTERASP_FTP_USERNAME` and `SMARTERASP_FTP_PASSWORD` (client site); `SMARTERASP_API_FTP_USERNAME` and `SMARTERASP_API_FTP_PASSWORD`; `SMARTERASP_MCP_FTP_USERNAME` and `SMARTERASP_MCP_FTP_PASSWORD`. Use the scoped users from step 3.
 
 ## 6. Run the tests first
 Push a branch: the `Tests` workflow runs the API, MCP and client suites on GitHub. Expect: three green jobs. A deploy only runs after the same tests pass.
