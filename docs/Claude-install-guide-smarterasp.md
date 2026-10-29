@@ -44,6 +44,8 @@ If the API shows a 503 "reporting app", a required secret is missing and the pag
 **On GitHub (repository secrets):** `FOUNDATION_TOKEN` (only if your Adventures.Foundation fork is private: a fine-grained token with read-only Contents access to that one repository); `SMARTERASP_FTP_SERVER`; `SMARTERASP_FTP_USERNAME` and `SMARTERASP_FTP_PASSWORD` (client site); `SMARTERASP_API_FTP_USERNAME` and `SMARTERASP_API_FTP_PASSWORD`; `SMARTERASP_MCP_FTP_USERNAME` and `SMARTERASP_MCP_FTP_PASSWORD`. Use the scoped users from step 3.
 
 ## 6. Run the tests first
+Before pushing, run the read-only preflight (see the backlog note at the end) to catch a missing secret, variable or DNS name.
+
 Push a branch: the `Tests` workflow runs the API, MCP and client suites on GitHub. Expect: three green jobs. A deploy only runs after the same tests pass.
 
 ## 7. First deploy
@@ -73,4 +75,4 @@ Merge to `main`; the gate tests, then the three workflows deploy only the part w
 ## What would make this install shorter (backlog)
 1. (Done on branch `claude-site-domain`.) The domain is now the single setting `Site__Domain` plus the variables `SITE_DOMAIN` and `FOUNDATION_REPO`.
 2. A first-run page that forces the default passwords to change and offers to remove the `Claude` account.
-3. One script that checks every secret and DNS name before the first deploy.
+3. (Built 2026-10-29, `Claude-preflight.ps1` in the workspace root; proved only against our own domain until the proof run.) One script that checks every secret and DNS name before the first deploy: `.docsClaude-preflight.ps1 -Domain <domain-name> -Repo <you>/ai-research-blog -FoundationRepo <you>/Adventures.Foundation`.
