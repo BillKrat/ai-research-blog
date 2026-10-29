@@ -130,8 +130,8 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
 
         string[] Names(JsonElement answer) => answer.GetProperty("result").GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()!).ToArray();
         Assert.Equal(["diagnose_request", "recent_exceptions", "exception_signatures"], Names(diagnostics));
-        Assert.Equal(["list_my_posts", "create_draft_post", "update_draft_post", "propose_revision", "list_post_comments", "add_post_comment", "list_my_collaboration", "create_collaboration_item", "update_collaboration_item", "list_collaboration_comments", "add_collaboration_comment", "list_categories", "list_tags", "create_category", "create_tag"], Names(authoring));
-        Assert.Equal(18, Names(both).Length);
+        Assert.Equal(["list_my_posts", "create_draft_post", "update_draft_post", "propose_revision", "list_post_comments", "add_post_comment", "list_my_collaboration", "get_collaboration_item", "create_collaboration_item", "update_collaboration_item", "list_collaboration_comments", "add_collaboration_comment", "list_categories", "list_tags", "create_category", "create_tag"], Names(authoring));
+        Assert.Equal(19, Names(both).Length);
     }
 
     [Fact]
@@ -161,6 +161,25 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
         using var sent = JsonDocument.Parse(_app.Api.LastBody!);
         Assert.Equal("How Pages Work", sent.RootElement.GetProperty("title").GetString());
         Assert.Equal("Help", sent.RootElement.GetProperty("categories")[0].GetString());
+    }
+
+    [Fact]
+    public async Task GetCollaborationItem_ReadsOneItemFromTheAuthoringApi_WithTheCallersToken_AndNeedsAnId()
+    {
+        _app.Api.Respond = _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"summary":{"id":"i1"},"content":"## Test steps","truncated":false}""") };
+        var client = ClientWith("content.draft");
+
+        var answer = await RpcAsync(client, new { jsonrpc = "2.0", id = 7, method = "tools/call", @params = new { name = "get_collaboration_item", arguments = new { id = "i 1" } } });
+
+        var result = answer.GetProperty("result");
+        Assert.False(result.GetProperty("isError").GetBoolean());
+        Assert.Contains("## Test steps", result.GetProperty("content")[0].GetProperty("text").GetString());
+        Assert.Equal("GET", _app.Api.LastRequest!.Method.Method);
+        Assert.Equal("/api/author/collaboration/i%201", _app.Api.LastRequest.RequestUri!.AbsolutePath);
+        Assert.Equal(client.DefaultRequestHeaders.Authorization!.Parameter, _app.Api.LastRequest.Headers.Authorization?.Parameter);
+
+        var missing = await RpcAsync(client, new { jsonrpc = "2.0", id = 8, method = "tools/call", @params = new { name = "get_collaboration_item", arguments = new { } } });
+        Assert.True(missing.GetProperty("result").GetProperty("isError").GetBoolean());
     }
 
     [Fact]

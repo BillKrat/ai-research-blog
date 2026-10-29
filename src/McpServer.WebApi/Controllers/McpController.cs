@@ -99,6 +99,10 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
             "The collaboration items (review requests and research questions, never public) the authoring account has written: id, title, kind, review state, branch, repositories, created, newest first.",
             """{ "type": "object", "properties": {} }""")),
         (AuthoringScope, Tool(
+            "get_collaboration_item",
+            "The text of one of the authoring account's own collaboration items: the summary (id, title, kind, review state, branch, repositories) plus content, sources and findings in Markdown, each capped at 100000 characters (truncated says so). Use it to read an item's test steps and decisions needed.",
+            """{ "type": "object", "properties": { "id": { "type": "string", "description": "The id from list_my_collaboration." } }, "required": ["id"] }""")),
+        (AuthoringScope, Tool(
             "create_collaboration_item",
             "Creates a collaboration item for the human: a Developer item (review request, starts as Needs review) or a Research item (a question or findings, no approval). It is never public and can never be approved from here. Content is Markdown.",
             """
@@ -357,6 +361,14 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
                 break;
             case "list_my_collaboration":
                 (method, path) = (HttpMethod.Get, "api/author/collaboration");
+                break;
+            case "get_collaboration_item":
+                if (string.IsNullOrWhiteSpace(Text("id")))
+                {
+                    return ToolResult(id, "id is required.", isError: true);
+                }
+
+                (method, path) = (HttpMethod.Get, $"api/author/collaboration/{Uri.EscapeDataString(Text("id")!)}");
                 break;
             case "create_collaboration_item":
                 if (string.IsNullOrWhiteSpace(Text("title")))

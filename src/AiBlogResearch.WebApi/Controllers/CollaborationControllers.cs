@@ -194,6 +194,11 @@ public sealed class CollaborationAuthoringController(ICollaborationAuthoring aut
     public async Task<ActionResult<IReadOnlyList<CollaborationSummary>>> Mine(CancellationToken cancellationToken) =>
         Ok(await authoring.ListMineAsync(Author, cancellationToken));
 
+    /// <summary>The text of one of the author's own items (summary, content, sources, findings), each field size-capped; another author's item is refused.</summary>
+    [HttpGet("{id}")]
+    public Task<IActionResult> Show(string id, CancellationToken cancellationToken) =>
+        GuardedAsync(async () => await authoring.GetAsync(Author, id, cancellationToken) is { } detail ? Ok(detail) : NotFound());
+
     [HttpPost]
     public Task<IActionResult> Create([FromBody] CollaborationDraft draft, CancellationToken cancellationToken) =>
         GuardedAsync(async () => (IActionResult)StatusCode(StatusCodes.Status201Created, await authoring.CreateAsync(Author, draft, cancellationToken)));
