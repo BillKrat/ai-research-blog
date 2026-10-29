@@ -1,5 +1,7 @@
 # Proof run: install from scratch on a spare domain (plan)
 
+**Postponed until beta (owner, 2026-10-29): beta is the priority, so this run waits for a beta state.** The plan stays as written.
+
 **Purpose:** turn [the install guide draft](Claude-install-guide-smarterasp.md) into a proved guide by following it exactly, on a domain that is not ours, with the code in **private** repositories. Written 2026-10-29. Nothing here has been run yet.
 
 **Window:** the sparse time before ~2026-11-03 (human). **Needs from the human before it starts:** the spare domain (written `<domain-name>`) and the day.
