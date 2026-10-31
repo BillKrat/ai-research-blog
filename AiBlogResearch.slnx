@@ -14,6 +14,7 @@
     <Project Path="../Adventures.Foundation/src/Adventures.Entities/Adventures.Entities.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Identity/Adventures.Identity.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Security/Adventures.Security.csproj" />
+    <Project Path="../Adventures.Foundation/src/Adventures.Security.AspNetCore/Adventures.Security.AspNetCore.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.WebApi/Adventures.WebApi.csproj" />
   </Folder>
   <Folder Name="/Adventures.Foundation/Tests/">
@@ -26,6 +27,7 @@
     <Project Path="../Adventures.Foundation/test/Adventures.Entities.Tests/Adventures.Entities.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Identity.Tests/Adventures.Identity.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Security.Tests/Adventures.Security.Tests.csproj" />
+    <Project Path="../Adventures.Foundation/test/Adventures.Security.AspNetCore.Tests/Adventures.Security.AspNetCore.Tests.csproj" />
   </Folder>
   <Folder Name="/AIBlogResearch/">
     <Project Path="src/AiBlogResearch.AppHost/AiBlogResearch.AppHost.csproj" />
