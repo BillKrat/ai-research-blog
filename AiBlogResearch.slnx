@@ -2,6 +2,8 @@
   <Folder Name="/Adventures.Foundation/">
     <Project Path="../Adventures.Foundation/src/Adventures.Common/Adventures.Common.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Ioc/Adventures.Ioc.csproj" />
+    <Project Path="../Adventures.Foundation/src/Adventures.Collaboration/Adventures.Collaboration.csproj" />
+    <Project Path="../Adventures.Foundation/src/Adventures.MEF/Adventures.MEF.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Blog/Adventures.Blog.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Blog.Postgres/Adventures.Blog.Postgres.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Blog.WebApi/Adventures.Blog.WebApi.csproj" />
@@ -14,6 +16,7 @@
   </Folder>
   <Folder Name="/Adventures.Foundation/Tests/">
     <Project Path="../Adventures.Foundation/test/Adventures.Blog.Tests/Adventures.Blog.Tests.csproj" />
+    <Project Path="../Adventures.Foundation/test/Adventures.Collaboration.Tests/Adventures.Collaboration.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Common.Tests/Adventures.Common.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Ioc.Tests/Adventures.Ioc.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Data.NQuad.Tests/Adventures.Data.NQuad.Tests.csproj" />

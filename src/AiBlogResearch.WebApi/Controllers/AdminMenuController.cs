@@ -5,6 +5,8 @@ using Adventures.WebApi;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Adventures.Blog;
+using Adventures.Collaboration;
+using Adventures.MEF;
 
 namespace AiBlogResearch.WebApi.Controllers;
 
@@ -39,8 +41,8 @@ public static class AdminMenuDefinitions
     /// <summary>The menu entries a plug-in contributes: the entry is listed only while one of its plug-ins is on.</summary>
     private static readonly IReadOnlyDictionary<string, string[]> ContributedBy = new Dictionary<string, string[]>
     {
-        ["collaboration"] = [PluginCatalog.DeveloperCollaboration, PluginCatalog.ResearchCollaboration],
-        ["decisions"] = [PluginCatalog.Decisions],
+        ["collaboration"] = [CollaborationPlugins.DeveloperCollaboration, CollaborationPlugins.ResearchCollaboration],
+        ["decisions"] = [CollaborationPlugins.Decisions],
     };
 
     /// <summary>The definitions without the entries of plug-ins that are switched off.</summary>

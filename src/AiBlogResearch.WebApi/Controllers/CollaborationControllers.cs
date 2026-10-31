@@ -6,6 +6,8 @@ using Adventures.WebApi;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Adventures.Blog;
+using Adventures.Collaboration;
+using Adventures.MEF;
 
 namespace AiBlogResearch.WebApi.Controllers;
 
@@ -17,7 +19,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 [ApiController]
 [Route("api/collaboration")]
 [AdminRights(Read = Rights.CollaborationRead, Create = Rights.CollaborationWrite, Update = Rights.CollaborationWrite, Delete = Rights.CollaborationWrite)]
-[RequiresPlugin(PluginCatalog.DeveloperCollaboration, PluginCatalog.ResearchCollaboration)]
+[RequiresPlugin(CollaborationPlugins.DeveloperCollaboration, CollaborationPlugins.ResearchCollaboration)]
 public sealed class CollaborationController(IEntityPresenter<CollaborationItem> presenter, ICollaborationBll items, IUserPresenter users, CollaborationMigration migration, IPlugins plugins)
     : AdminEntityControllerBase<CollaborationItem>(presenter)
 {
@@ -64,7 +66,7 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
     {
         var decorated = Decorate(form, collectionPath);
         var enabled = await plugins.EnabledKeysAsync(cancellationToken);
-        var off = CollaborationKinds.All.Where(kind => PluginCatalog.ForKind(kind) is { } key && !enabled.Contains(key)).ToList();
+        var off = CollaborationKinds.All.Where(kind => CollaborationPlugins.ForKind(kind) is { } key && !enabled.Contains(key)).ToList();
         return off.Count == 0
             ? decorated
             : decorated with
@@ -186,7 +188,7 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
 [ApiController]
 [Route("api/author/collaboration")]
 [Authorize(Policy = "Scope:" + Adventures.Blog.WebApi.AuthoringController.RequiredScope)]
-[RequiresPlugin(PluginCatalog.DeveloperCollaboration, PluginCatalog.ResearchCollaboration)]
+[RequiresPlugin(CollaborationPlugins.DeveloperCollaboration, CollaborationPlugins.ResearchCollaboration)]
 public sealed class CollaborationAuthoringController(ICollaborationAuthoring authoring, IConfiguration configuration) : ApiControllerBase
 {
     private string Author => configuration["Authoring:AuthorUserName"] ?? "Claude";

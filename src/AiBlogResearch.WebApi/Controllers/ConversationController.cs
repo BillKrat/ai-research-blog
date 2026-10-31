@@ -4,6 +4,7 @@ using Adventures.Security;
 using Adventures.WebApi;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Adventures.Collaboration;
 
 namespace AiBlogResearch.WebApi.Controllers;
 
@@ -47,7 +48,7 @@ public sealed class ConversationController(IConversation conversation, IRightsAu
 [ApiController]
 [Route("api/decisions")]
 [RequireRight(Rights.DecisionsRead)]
-[RequiresPlugin(PluginCatalog.Decisions)]
+[RequiresPlugin(CollaborationPlugins.Decisions)]
 public sealed class DecisionsController(IConversation conversation) : ControllerBase
 {
     [HttpGet]

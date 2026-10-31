@@ -3,6 +3,7 @@ using Adventures.Entities;
 using AiBlogResearch.WebApi.Controllers;
 using Xunit;
 using Adventures.Blog;
+using Adventures.Collaboration;
 
 namespace AiBlogResearch.WebApi.Tests.Controllers;
 

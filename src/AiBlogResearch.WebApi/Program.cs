@@ -13,6 +13,8 @@ using Serilog;
 using Adventures.Blog;
 using Adventures.Blog.WebApi;
 using Adventures.Blog.Postgres;
+using Adventures.Collaboration;
+using Adventures.MEF;
 
 // Bootstrap logger: catches and logs anything that goes wrong before the real Serilog pipeline
 // (which needs configuration/DI to be built) is up - including a crash inside WebApplication.CreateBuilder
@@ -309,29 +311,22 @@ try
     AddContentEntity(builder.Services, userQuads, BlogConstants.Content.CategorySchemaIri, BlogConstants.Content.CategoryBaseIri, BlogConstants.Content.CategoryTypeIri, s => new Category(s));
     AddContentEntity(builder.Services, userQuads, BlogConstants.Content.TagSchemaIri, BlogConstants.Content.TagBaseIri, BlogConstants.Content.TagTypeIri, s => new Tag(s));
     AddContentEntity(builder.Services, userQuads, CollaborationConstants.CommentSchemaIri, CollaborationConstants.CommentBaseIri, CollaborationConstants.CommentTypeIri, s => new Comment(s));
-    builder.Services.AddScoped<IEntityBll<Comment>>(provider => new EntityBll<Comment>(provider.GetRequiredService<IEntityDal<Comment>>()));
-    builder.Services.AddScoped<IConversation, Conversation>();
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, CollaborationConstants.SchemaIri), CollaborationConstants.BaseIri, CollaborationConstants.TypeIri,
         CollaborationConstants.DefaultGraph, s => new CollaborationItem(s));
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, PluginConstants.SchemaIri), PluginConstants.BaseIri, PluginConstants.TypeIri,
         CollaborationConstants.DefaultGraph, s => new Plugin(s));
-    builder.Services.AddScoped<IEntityBll<Plugin>>(provider => new EntityBll<Plugin>(provider.GetRequiredService<IEntityDal<Plugin>>()));
-    builder.Services.AddScoped<IPlugins, Plugins>();
     builder.Services.AddScoped<IRightsResolver, RightsResolver>();
     builder.Services.AddScoped<IRoleRightsEditor, RoleRightsEditor>();
     builder.Services.AddRightsAuthorization();
     builder.Services.AddScoped<IEntityBll<Tenant>>(provider => new EntityBll<Tenant>(provider.GetRequiredService<IEntityDal<Tenant>>()));
     builder.Services.AddScoped<ITenantResolver, TenantResolver>();
-    builder.Services.AddScoped<ICollaborationBll, CollaborationBll>();
-    builder.Services.AddScoped<IEntityPresenter<CollaborationItem>, CollaborationPresenter>();
-    builder.Services.AddScoped<ICollaborationAuthoring, CollaborationAuthoring>();
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, BlogConstants.Site.SettingSchemaIri), BlogConstants.Site.SettingBaseIri, BlogConstants.Site.SettingTypeIri,
         BlogConstants.Site.DefaultGraph, s => new SiteSetting(s));
     builder.Services.AddBlog();
-    builder.Services.AddScoped<IConversationTarget, CollaborationConversationTarget>();
+    builder.Services.AddCollaboration();
     builder.Services.AddNQuadRelations();
     builder.Services.AddNQuadRelationWriter();
     builder.Services.AddScoped<IEntityBll<Role>>(provider => new EntityBll<Role>(provider.GetRequiredService<IEntityDal<Role>>()));

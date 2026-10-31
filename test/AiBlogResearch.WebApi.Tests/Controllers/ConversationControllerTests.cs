@@ -6,6 +6,7 @@ using AiBlogResearch.WebApi.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
+using Adventures.Collaboration;
 
 namespace AiBlogResearch.WebApi.Tests.Controllers;
 

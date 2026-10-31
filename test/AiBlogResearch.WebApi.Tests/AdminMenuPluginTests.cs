@@ -2,12 +2,13 @@
 using AiBlogResearch.WebApi.Controllers;
 using Adventures.Entities;
 using Xunit;
+using Adventures.Collaboration;
 
 namespace AiBlogResearch.WebApi.Tests;
 
 public class AdminMenuPluginTests
 {
-    private static readonly string[] AllKeys = [PluginCatalog.DeveloperCollaboration, PluginCatalog.ResearchCollaboration, PluginCatalog.Decisions];
+    private static readonly string[] AllKeys = [CollaborationPlugins.DeveloperCollaboration, CollaborationPlugins.ResearchCollaboration, CollaborationPlugins.Decisions];
 
     [Fact]
     public void With_every_plugin_on_the_whole_menu_is_listed()
@@ -18,7 +19,7 @@ public class AdminMenuPluginTests
     [Fact]
     public void Decisions_disappears_with_its_plugin()
     {
-        var visible = AdminMenuDefinitions.Visible(AllKeys.Where(k => k != PluginCatalog.Decisions).ToHashSet());
+        var visible = AdminMenuDefinitions.Visible(AllKeys.Where(k => k != CollaborationPlugins.Decisions).ToHashSet());
 
         Assert.DoesNotContain(visible, item => item.Id == "decisions");
         Assert.Contains(visible, item => item.Id == "collaboration");
@@ -27,8 +28,8 @@ public class AdminMenuPluginTests
     [Fact]
     public void Collaboration_stays_while_either_kind_is_on_and_goes_when_both_are_off()
     {
-        Assert.Contains(AdminMenuDefinitions.Visible(new HashSet<string> { PluginCatalog.ResearchCollaboration }), item => item.Id == "collaboration");
-        Assert.DoesNotContain(AdminMenuDefinitions.Visible(new HashSet<string> { PluginCatalog.Decisions }), item => item.Id == "collaboration");
+        Assert.Contains(AdminMenuDefinitions.Visible(new HashSet<string> { CollaborationPlugins.ResearchCollaboration }), item => item.Id == "collaboration");
+        Assert.DoesNotContain(AdminMenuDefinitions.Visible(new HashSet<string> { CollaborationPlugins.Decisions }), item => item.Id == "collaboration");
     }
 
     [Fact]

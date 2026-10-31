@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 using Adventures.Blog;
+using Adventures.Collaboration;
 
 using Adventures.Blog.WebApi;
 
