@@ -46,9 +46,11 @@
   </Folder>
   <Folder Name="/MCP/">
     <Project Path="src/McpServer.WebApi/McpServer.WebApi.csproj" />
+    <Project Path="src/NQuadBrowser.WebApi/NQuadBrowser.WebApi.csproj" />
   </Folder>
   <Folder Name="/MCP/Tests/">
     <Project Path="test/McpServer.WebApi.Tests/McpServer.WebApi.Tests.csproj" />
+    <Project Path="test/NQuadBrowser.WebApi.Tests/NQuadBrowser.WebApi.Tests.csproj" />
   </Folder>
   <Folder Name="/Poc/">
     <Project Path="../poc/nquad-end-to-end-poc/src/Poc.Api/Poc.Api.csproj" />
