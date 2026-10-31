@@ -37,10 +37,11 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      - name: Test the API and the legacy import
+      - name: Test the API, the legacy import and the NQuad browser
         run: |
           dotnet test test/AiBlogResearch.WebApi.Tests -c Release
           dotnet test test/LegacyImport.Tests -c Release
+          dotnet test test/NQuadBrowser.WebApi.Tests -c Release
 
   mcp:
     if: ${{ inputs.suite == '' || inputs.suite == 'mcp' }}
