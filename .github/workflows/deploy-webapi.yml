@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "src/AiBlogResearch.WebApi/**"
-      - "AiBlogResearch.ServiceDefaults/**"
+      - "src/AiBlogResearch.ServiceDefaults/**"
       - ".github/workflows/deploy-webapi.yml"
   workflow_dispatch: {}
 

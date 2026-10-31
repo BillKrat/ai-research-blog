@@ -20,7 +20,7 @@ Console.WriteLine(liveDataOn
 
 var mcpServer = builder.AddProject<Projects.McpServer_WebApi>("mcpserver", launchProfileName: "https");
 
-builder.AddNpmApp("angular", "../client/ai-blog-research-ui", "start")
+builder.AddNpmApp("angular", "../../client/ai-blog-research-ui", "start")
     .WithReference(webApi)
     .WithReference(mcpServer)
     .WithEnvironment("BACKEND_URL", webApi.GetEndpoint("https"))

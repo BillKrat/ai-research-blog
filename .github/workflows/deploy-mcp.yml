@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "src/McpServer.WebApi/**"
-      - "AiBlogResearch.ServiceDefaults/**"
+      - "src/AiBlogResearch.ServiceDefaults/**"
       - ".github/workflows/deploy-mcp.yml"
   workflow_dispatch: {}
 

@@ -46,7 +46,7 @@ Aspire orchestrates multiple projects (an API, a frontend, eventually a database
 container) as a single unit:
 
 ```
-AiBlogResearch.AppHost/     ← orchestrator: `dotnet run` here starts everything
+src/AiBlogResearch.AppHost/     ← orchestrator: `dotnet run` here starts everything
 src/YourApi/                ← your backend
 client/your-frontend/       ← your frontend (wired in via Aspire.Hosting.NodeJs)
 ```

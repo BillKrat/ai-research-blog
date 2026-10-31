@@ -19,8 +19,8 @@
     <Project Path="../Adventures.Foundation/test/Adventures.Security.Tests/Adventures.Security.Tests.csproj" />
   </Folder>
   <Folder Name="/AIBlogResearch/">
-    <Project Path="AiBlogResearch.AppHost/AiBlogResearch.AppHost.csproj" />
-    <Project Path="AiBlogResearch.ServiceDefaults/AiBlogResearch.ServiceDefaults.csproj" />
+    <Project Path="src/AiBlogResearch.AppHost/AiBlogResearch.AppHost.csproj" />
+    <Project Path="src/AiBlogResearch.ServiceDefaults/AiBlogResearch.ServiceDefaults.csproj" />
     <Project Path="client/ai-blog-research-ui/ai-blog-research-ui.client.esproj">
       <Build />
       <Deploy />
