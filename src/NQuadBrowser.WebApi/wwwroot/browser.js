@@ -9,6 +9,8 @@
   var current = null;      // { key, title }
   var query = { page: 1, pageSize: 25, sort: null, descending: false };
 
+  // A token copied from DevTools may carry the "Bearer " prefix, quotes or line breaks; keep only the three dot-separated parts.
+  function clean(raw) { return (raw || '').replace(/^\s*"?bearer\s+/i, '').replace(/["'\s]/g, ''); }
   function token() { try { return sessionStorage.getItem('nqb.token') || ''; } catch (e) { return ''; } }
   function el(tag, attrs, children) {
     var node = document.createElement(tag);
@@ -145,8 +147,9 @@
   }
 
   document.getElementById('saveToken').addEventListener('click', function () {
-    try { sessionStorage.setItem('nqb.token', tokenEl.value.trim()); } catch (e) { /* storage blocked: the token stays in the field only */ }
+    try { var cleaned = clean(tokenEl.value); tokenEl.value = cleaned; sessionStorage.setItem('nqb.token', cleaned); } catch (e) { /* storage blocked: the token stays in the field only */ }
     loadTypes();
   });
   if (token()) { tokenEl.value = token(); loadTypes(); }
+  tokenEl.addEventListener('paste', function () { setTimeout(function () { tokenEl.value = clean(tokenEl.value); }, 0); });
 })();
