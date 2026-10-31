@@ -5,6 +5,8 @@ using AiBlogResearch.WebApi.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
 
+using Adventures.Blog.WebApi;
+
 namespace AiBlogResearch.WebApi.Tests;
 
 /// <summary>
@@ -29,7 +31,7 @@ public sealed class RoleRouteMatrixTests
 
     /// <summary>Per controller, the rights that open any of its routes (the controller-level right, or the read right of an entity controller).</summary>
     private static Dictionary<string, string> EntryRight() =>
-        typeof(TenantController).Assembly.GetTypes()
+        typeof(TenantController).Assembly.GetTypes().Concat(typeof(AuthoringController).Assembly.GetTypes())
             .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract)
             .Select(t => (t.Name, Right: t.GetCustomAttribute<RequireRightAttribute>()?.Right ?? t.GetCustomAttribute<AdminRightsAttribute>()?.Read))
             .Where(x => x.Right is not null)

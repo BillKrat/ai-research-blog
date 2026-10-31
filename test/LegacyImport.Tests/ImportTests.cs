@@ -4,6 +4,7 @@ using Adventures.Entities;
 using LegacyImport;
 using McpServer.WebApi.BlogAi;
 using Xunit;
+using Adventures.Blog;
 
 namespace LegacyImport.Tests;
 
@@ -146,15 +147,15 @@ public sealed class ImportTests
         var quads = await store.QueryAsync();
         EntitySchema Live(string iri) => SchemaDal.Load(quads, iri);
         NQuadEntityRepository<T> Repo<T>(string schemaIri, string baseIri, string typeIri, Func<EntitySchema, T> factory) where T : DynamicEntity =>
-            new(store, Live(schemaIri), baseIri, typeIri, EntityConstants.Content.DefaultGraph, factory);
+            new(store, Live(schemaIri), baseIri, typeIri, BlogConstants.Content.DefaultGraph, factory);
 
-        var categories = Repo(EntityConstants.Content.CategorySchemaIri, EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, s => new Category(s));
-        var tags = Repo(EntityConstants.Content.TagSchemaIri, EntityConstants.Content.TagBaseIri, EntityConstants.Content.TagTypeIri, s => new Tag(s));
-        var pages = Repo(EntityConstants.Content.PageSchemaIri, EntityConstants.Content.PageBaseIri, EntityConstants.Content.PageTypeIri, s => new Page(s));
-        var posts = Repo(EntityConstants.Content.PostSchemaIri, EntityConstants.Content.PostBaseIri, EntityConstants.Content.PostTypeIri, s => new Post(s));
+        var categories = Repo(BlogConstants.Content.CategorySchemaIri, BlogConstants.Content.CategoryBaseIri, BlogConstants.Content.CategoryTypeIri, s => new Category(s));
+        var tags = Repo(BlogConstants.Content.TagSchemaIri, BlogConstants.Content.TagBaseIri, BlogConstants.Content.TagTypeIri, s => new Tag(s));
+        var pages = Repo(BlogConstants.Content.PageSchemaIri, BlogConstants.Content.PageBaseIri, BlogConstants.Content.PageTypeIri, s => new Page(s));
+        var posts = Repo(BlogConstants.Content.PostSchemaIri, BlogConstants.Content.PostBaseIri, BlogConstants.Content.PostTypeIri, s => new Post(s));
         var result = await ContentProjection.ProjectAsync(
             tables, categories, tags, pages, posts,
-            Live(EntityConstants.Content.CategorySchemaIri), Live(EntityConstants.Content.TagSchemaIri), Live(EntityConstants.Content.PageSchemaIri), Live(EntityConstants.Content.PostSchemaIri),
+            Live(BlogConstants.Content.CategorySchemaIri), Live(BlogConstants.Content.TagSchemaIri), Live(BlogConstants.Content.PageSchemaIri), Live(BlogConstants.Content.PostSchemaIri),
             new FakeConverter(), ["skipped-post"], ["disclaimer"], apply, CancellationToken.None);
         return (store, result, posts, categories, tags, pages);
     }
@@ -236,14 +237,14 @@ public sealed class ImportTests
 
         // what the authoring surface left earlier: a category named MCP and a draft with the same slug, both under random ids
         var quads = await store.QueryAsync();
-        var categoryRepository = new NQuadEntityRepository<Category>(store, SchemaDal.Load(quads, EntityConstants.Content.CategorySchemaIri), EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, EntityConstants.Content.DefaultGraph, s => new Category(s));
-        var authored = new Category(SchemaDal.Load(quads, EntityConstants.Content.CategorySchemaIri));
+        var categoryRepository = new NQuadEntityRepository<Category>(store, SchemaDal.Load(quads, BlogConstants.Content.CategorySchemaIri), BlogConstants.Content.CategoryBaseIri, BlogConstants.Content.CategoryTypeIri, BlogConstants.Content.DefaultGraph, s => new Category(s));
+        var authored = new Category(SchemaDal.Load(quads, BlogConstants.Content.CategorySchemaIri));
         var authoredId = Guid.NewGuid();
         authored.Set("Id", Guid.NewGuid().ToString(), authoredId);
         authored.Set("Name", Guid.NewGuid().ToString(), "MCP");
         await categoryRepository.CreateAsync(authored);
-        var postRepository = new NQuadEntityRepository<Post>(store, SchemaDal.Load(quads, EntityConstants.Content.PostSchemaIri), EntityConstants.Content.PostBaseIri, EntityConstants.Content.PostTypeIri, EntityConstants.Content.DefaultGraph, s => new Post(s));
-        var authoredPost = new Post(SchemaDal.Load(quads, EntityConstants.Content.PostSchemaIri));
+        var postRepository = new NQuadEntityRepository<Post>(store, SchemaDal.Load(quads, BlogConstants.Content.PostSchemaIri), BlogConstants.Content.PostBaseIri, BlogConstants.Content.PostTypeIri, BlogConstants.Content.DefaultGraph, s => new Post(s));
+        var authoredPost = new Post(SchemaDal.Load(quads, BlogConstants.Content.PostSchemaIri));
         authoredPost.Set("Id", Guid.NewGuid().ToString(), Guid.NewGuid());
         authoredPost.Set("Title", Guid.NewGuid().ToString(), "Authored copy");
         authoredPost.Set("Slug", Guid.NewGuid().ToString(), "Published-Post");

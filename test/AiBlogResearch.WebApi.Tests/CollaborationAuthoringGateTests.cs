@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
 
+using Adventures.Blog.WebApi;
+
 namespace AiBlogResearch.WebApi.Tests;
 
 /// <summary>Reading an item's text (backlog 3b) goes through the same gates as every other collaboration authoring route.</summary>

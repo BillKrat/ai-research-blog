@@ -5,6 +5,7 @@ using Adventures.Security;
 using Adventures.WebApi;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Adventures.Blog;
 
 namespace AiBlogResearch.WebApi.Controllers;
 
@@ -184,7 +185,7 @@ public sealed class CollaborationController(IEntityPresenter<CollaborationItem> 
 /// <summary>The collaboration authoring surface for Claude (scope <c>content.draft</c>), next to the posts one: create, revise and list its own items and use their conversation.</summary>
 [ApiController]
 [Route("api/author/collaboration")]
-[Authorize(Policy = "Scope:" + AuthoringController.RequiredScope)]
+[Authorize(Policy = "Scope:" + Adventures.Blog.WebApi.AuthoringController.RequiredScope)]
 [RequiresPlugin(PluginCatalog.DeveloperCollaboration, PluginCatalog.ResearchCollaboration)]
 public sealed class CollaborationAuthoringController(ICollaborationAuthoring authoring, IConfiguration configuration) : ApiControllerBase
 {

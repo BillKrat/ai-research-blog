@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Xunit;
+using Adventures.Blog;
+
+using Adventures.Blog.WebApi;
 
 namespace AiBlogResearch.WebApi.Tests.Controllers;
 
@@ -67,7 +70,7 @@ public sealed class AuthoringControllerTests
         var controller = Build(authoring, "Claude");
 
         var read = await controller.Comments("p1", CancellationToken.None);
-        var added = await controller.AddComment("p1", new NewConversationEntry("Answering item 2.", "Decision"), CancellationToken.None);
+        var added = await controller.AddComment("p1", new AuthoringCommentRequest("Answering item 2.", "Decision"), CancellationToken.None);
 
         Assert.IsType<OkObjectResult>(read);
         Assert.Equal(StatusCodes.Status201Created, ((ObjectResult)added).StatusCode);

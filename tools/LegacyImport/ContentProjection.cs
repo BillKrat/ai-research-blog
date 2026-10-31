@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Adventures.Data.NQuad;
 using Adventures.Entities;
+using Adventures.Blog;
 
 namespace LegacyImport;
 

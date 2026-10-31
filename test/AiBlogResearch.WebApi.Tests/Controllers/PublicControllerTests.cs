@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
+using Adventures.Blog;
+
+using Adventures.Blog.WebApi;
 
 namespace AiBlogResearch.WebApi.Tests.Controllers;
 

@@ -10,6 +10,9 @@ using Adventures.WebApi;
 using AiBlogResearch.WebApi;
 using Microsoft.AspNetCore.Diagnostics;
 using Serilog;
+using Adventures.Blog;
+using Adventures.Blog.WebApi;
+using Adventures.Blog.Postgres;
 
 // Bootstrap logger: catches and logs anything that goes wrong before the real Serilog pipeline
 // (which needs configuration/DI to be built) is up - including a crash inside WebApplication.CreateBuilder
@@ -82,7 +85,8 @@ try
         });
     });
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .AddBlogControllers();
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
 
@@ -94,7 +98,7 @@ try
         .Bind(builder.Configuration.GetSection(M2MClientsOptions.SectionName));
     builder.Services.AddSingleton<IClientSecretHasher, ClientSecretHasher>();
     builder.Services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
-    builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search", AiBlogResearch.WebApi.Controllers.McpDiagnosticsController.RequiredScope, AiBlogResearch.WebApi.Controllers.AuthoringController.RequiredScope);
+    builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search", AiBlogResearch.WebApi.Controllers.McpDiagnosticsController.RequiredScope, Adventures.Blog.WebApi.AuthoringController.RequiredScope);
     builder.Services.AddRoleAuthorization(WellKnownClaims.TenantAdminRole);
 
     // McpServer:BaseUrl -> mcp.global-webnet.com. HealthController calls this over M2M auth (minting
@@ -195,11 +199,11 @@ try
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-005-identity-required.nq"), EntityConstants.Identity.RequiredSeedName);
     // The content model (pages, posts, categories, tags): new schemas under the schema host, modelled on the BlogEngine admin.
     await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-006-content.nq"), EntityConstants.Content.SeedName);
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-006-content.nq"), BlogConstants.Content.SeedName);
     await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-007-post-taxonomy.nq"), EntityConstants.Content.TaxonomySeedName);
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-007-post-taxonomy.nq"), BlogConstants.Content.TaxonomySeedName);
     await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-008-post-revision.nq"), EntityConstants.Content.RevisionSeedName);
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-008-post-revision.nq"), BlogConstants.Content.RevisionSeedName);
     // The legacy mirror layer: one schema per ported BlogEngine.NET table (generated; see the legacy table migration plan). Schemas only, no data.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-009-legacy-schemas.nq"), EntityConstants.Legacy.SchemaSeedName);
@@ -207,10 +211,10 @@ try
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-010-legacy-ids.nq"), EntityConstants.Legacy.IdFieldsSeedName);
     // The review state of a collaboration post (Approval, ApprovedBy, ApprovedAt): changed only by the approve actions.
     await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-013-post-approval.nq"), EntityConstants.Content.ApprovalSeedName);
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-013-post-approval.nq"), BlogConstants.Content.ApprovalSeedName);
     // The conversation under a post (comments and decisions).
     await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-014-comments.nq"), EntityConstants.Content.CommentsSeedName);
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-014-comments.nq"), CollaborationConstants.CommentsSeedName);
     // Collaboration items (review requests and research questions): their own type, never public (not a post).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-015-collaboration.nq"), CollaborationConstants.SeedName);
@@ -225,7 +229,7 @@ try
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-016-plugins.nq"), PluginConstants.SeedName);
     // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
     await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), EntityConstants.Site.SeedName);
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), BlogConstants.Site.SeedName);
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
@@ -298,13 +302,13 @@ try
     static void AddContentEntity<TEntity>(
         IServiceCollection services, IReadOnlyList<NQuad> quads, string schemaIri, string baseIri, string typeIri, Func<EntitySchema, TEntity> factory)
         where TEntity : DynamicEntity =>
-        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, EntityConstants.Content.DefaultGraph, factory);
+        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, BlogConstants.Content.DefaultGraph, factory);
 
-    AddContentEntity(builder.Services, userQuads, EntityConstants.Content.PageSchemaIri, EntityConstants.Content.PageBaseIri, EntityConstants.Content.PageTypeIri, s => new Page(s));
-    AddContentEntity(builder.Services, userQuads, EntityConstants.Content.PostSchemaIri, EntityConstants.Content.PostBaseIri, EntityConstants.Content.PostTypeIri, s => new Post(s));
-    AddContentEntity(builder.Services, userQuads, EntityConstants.Content.CategorySchemaIri, EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, s => new Category(s));
-    AddContentEntity(builder.Services, userQuads, EntityConstants.Content.TagSchemaIri, EntityConstants.Content.TagBaseIri, EntityConstants.Content.TagTypeIri, s => new Tag(s));
-    AddContentEntity(builder.Services, userQuads, EntityConstants.Content.CommentSchemaIri, EntityConstants.Content.CommentBaseIri, EntityConstants.Content.CommentTypeIri, s => new Comment(s));
+    AddContentEntity(builder.Services, userQuads, BlogConstants.Content.PageSchemaIri, BlogConstants.Content.PageBaseIri, BlogConstants.Content.PageTypeIri, s => new Page(s));
+    AddContentEntity(builder.Services, userQuads, BlogConstants.Content.PostSchemaIri, BlogConstants.Content.PostBaseIri, BlogConstants.Content.PostTypeIri, s => new Post(s));
+    AddContentEntity(builder.Services, userQuads, BlogConstants.Content.CategorySchemaIri, BlogConstants.Content.CategoryBaseIri, BlogConstants.Content.CategoryTypeIri, s => new Category(s));
+    AddContentEntity(builder.Services, userQuads, BlogConstants.Content.TagSchemaIri, BlogConstants.Content.TagBaseIri, BlogConstants.Content.TagTypeIri, s => new Tag(s));
+    AddContentEntity(builder.Services, userQuads, CollaborationConstants.CommentSchemaIri, CollaborationConstants.CommentBaseIri, CollaborationConstants.CommentTypeIri, s => new Comment(s));
     builder.Services.AddScoped<IEntityBll<Comment>>(provider => new EntityBll<Comment>(provider.GetRequiredService<IEntityDal<Comment>>()));
     builder.Services.AddScoped<IConversation, Conversation>();
     builder.Services.AddNQuadEntityRepository(
@@ -323,26 +327,11 @@ try
     builder.Services.AddScoped<ICollaborationBll, CollaborationBll>();
     builder.Services.AddScoped<IEntityPresenter<CollaborationItem>, CollaborationPresenter>();
     builder.Services.AddScoped<ICollaborationAuthoring, CollaborationAuthoring>();
-    builder.Services.AddScoped<CollaborationMigration>();
     builder.Services.AddNQuadEntityRepository(
-        SchemaDal.Load(userQuads, EntityConstants.Site.SettingSchemaIri), EntityConstants.Site.SettingBaseIri, EntityConstants.Site.SettingTypeIri,
-        EntityConstants.Site.DefaultGraph, s => new SiteSetting(s));
-    builder.Services.AddScoped<IEntityBll<SiteSetting>>(provider => new EntityBll<SiteSetting>(provider.GetRequiredService<IEntityDal<SiteSetting>>()));
-    builder.Services.AddScoped<IEntityPresenter<SiteSetting>, SiteSettingPresenter>();
-    builder.Services.AddScoped<ISiteSettings, SiteSettings>();
-    builder.Services.AddScoped<IPageBll, PageBll>();
-    builder.Services.AddScoped<IPostBll, PostBll>();
-    builder.Services.AddScoped<IContentAuthoring, ContentAuthoring>();
-    builder.Services.AddScoped<IPublicContent, PublicContent>();
-    builder.Services.AddScoped<IEntityPresenter<Post>, PostPresenter>();
-    builder.Services.AddScoped<IEntityBll<Category>>(provider => new EntityBll<Category>(provider.GetRequiredService<IEntityDal<Category>>()));
-    builder.Services.AddScoped<IEntityBll<Tag>>(provider => new EntityBll<Tag>(provider.GetRequiredService<IEntityDal<Tag>>()));
-    builder.Services.AddScoped<IEntityPresenter<Category>>(provider => new EntityPresenter<Category>(
-        provider.GetRequiredService<IEntityBll<Category>>(), provider.GetRequiredService<EntitySchemaOf<Category>>().Schema, s => new Category(s), provider.GetService<IEntityRelationProvider>()));
-    builder.Services.AddScoped<IEntityPresenter<Tag>>(provider => new EntityPresenter<Tag>(
-        provider.GetRequiredService<IEntityBll<Tag>>(), provider.GetRequiredService<EntitySchemaOf<Tag>>().Schema, s => new Tag(s), provider.GetService<IEntityRelationProvider>()));
-    builder.Services.AddScoped<IEntityPresenter<Page>>(provider => new EntityPresenter<Page>(
-        provider.GetRequiredService<IPageBll>(), provider.GetRequiredService<EntitySchemaOf<Page>>().Schema, s => new Page(s), provider.GetService<IEntityRelationProvider>()));
+        SchemaDal.Load(userQuads, BlogConstants.Site.SettingSchemaIri), BlogConstants.Site.SettingBaseIri, BlogConstants.Site.SettingTypeIri,
+        BlogConstants.Site.DefaultGraph, s => new SiteSetting(s));
+    builder.Services.AddBlog();
+    builder.Services.AddScoped<IConversationTarget, CollaborationConversationTarget>();
     builder.Services.AddNQuadRelations();
     builder.Services.AddNQuadRelationWriter();
     builder.Services.AddScoped<IEntityBll<Role>>(provider => new EntityBll<Role>(provider.GetRequiredService<IEntityDal<Role>>()));

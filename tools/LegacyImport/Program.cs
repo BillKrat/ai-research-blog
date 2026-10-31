@@ -5,6 +5,7 @@ using LegacyImport;
 using McpServer.WebApi.BlogAi;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
+using Adventures.Blog;
 
 // Legacy BlogAI -> N-Quad import (stage B of the schema-faithful migration; docs/Claude-decision-2026-10-legacy-table-migration-plan.md).
 //
@@ -146,18 +147,18 @@ if (!Flag("--mirror-only"))
     Console.WriteLine("LIVE PROJECTION (content, as unpublished drafts)");
     EntitySchema Live(string iri) => SchemaDal.Load(quads, iri);
     NQuadEntityRepository<T> Repo<T>(string schemaIri, string baseIri, string typeIri, Func<EntitySchema, T> factory) where T : DynamicEntity =>
-        new(store, Live(schemaIri), baseIri, typeIri, EntityConstants.Content.DefaultGraph, factory);
+        new(store, Live(schemaIri), baseIri, typeIri, BlogConstants.Content.DefaultGraph, factory);
 
-    var categorySchema = Live(EntityConstants.Content.CategorySchemaIri);
-    var tagSchema = Live(EntityConstants.Content.TagSchemaIri);
-    var pageSchema = Live(EntityConstants.Content.PageSchemaIri);
-    var postSchema = Live(EntityConstants.Content.PostSchemaIri);
+    var categorySchema = Live(BlogConstants.Content.CategorySchemaIri);
+    var tagSchema = Live(BlogConstants.Content.TagSchemaIri);
+    var pageSchema = Live(BlogConstants.Content.PageSchemaIri);
+    var postSchema = Live(BlogConstants.Content.PostSchemaIri);
     var projection = await ContentProjection.ProjectAsync(
         data,
-        Repo(EntityConstants.Content.CategorySchemaIri, EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, s => new Category(s)),
-        Repo(EntityConstants.Content.TagSchemaIri, EntityConstants.Content.TagBaseIri, EntityConstants.Content.TagTypeIri, s => new Tag(s)),
-        Repo(EntityConstants.Content.PageSchemaIri, EntityConstants.Content.PageBaseIri, EntityConstants.Content.PageTypeIri, s => new Page(s)),
-        Repo(EntityConstants.Content.PostSchemaIri, EntityConstants.Content.PostBaseIri, EntityConstants.Content.PostTypeIri, s => new Post(s)),
+        Repo(BlogConstants.Content.CategorySchemaIri, BlogConstants.Content.CategoryBaseIri, BlogConstants.Content.CategoryTypeIri, s => new Category(s)),
+        Repo(BlogConstants.Content.TagSchemaIri, BlogConstants.Content.TagBaseIri, BlogConstants.Content.TagTypeIri, s => new Tag(s)),
+        Repo(BlogConstants.Content.PageSchemaIri, BlogConstants.Content.PageBaseIri, BlogConstants.Content.PageTypeIri, s => new Page(s)),
+        Repo(BlogConstants.Content.PostSchemaIri, BlogConstants.Content.PostBaseIri, BlogConstants.Content.PostTypeIri, s => new Post(s)),
         categorySchema,
         tagSchema,
         pageSchema,

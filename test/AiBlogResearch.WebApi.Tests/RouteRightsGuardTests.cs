@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Xunit;
 
+using Adventures.Blog.WebApi;
+
 namespace AiBlogResearch.WebApi.Tests;
 
 /// <summary>
@@ -35,7 +37,8 @@ public sealed class RouteRightsGuardTests
     };
 
     private static IEnumerable<Type> Controllers() =>
-        typeof(TenantController).Assembly.GetTypes().Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract);
+        typeof(TenantController).Assembly.GetTypes().Concat(typeof(AuthoringController).Assembly.GetTypes())
+            .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract);
 
     private static IEnumerable<MethodInfo> Actions(Type controller) =>
         controller.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)

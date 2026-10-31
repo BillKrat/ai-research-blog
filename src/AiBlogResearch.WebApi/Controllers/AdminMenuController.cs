@@ -4,6 +4,7 @@ using Adventures.Security;
 using Adventures.WebApi;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Adventures.Blog;
 
 namespace AiBlogResearch.WebApi.Controllers;
 
