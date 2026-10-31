@@ -13,6 +13,7 @@ using AiBlogResearch.WebApi;
 using Microsoft.AspNetCore.Diagnostics;
 using Serilog;
 using Adventures.Blog;
+using Adventures.Blog.Legacy;
 using Adventures.Blog.WebApi;
 using Adventures.Blog.Postgres;
 using Adventures.Collaboration;
@@ -49,6 +50,17 @@ try
     if (liveData)
     {
         builder.Configuration["LiveData:Active"] = "true";
+    }
+
+    // Which data layer this host runs on (Data:Mode = New | Legacy). Only registrations differ between the two; no Bll, presenter or controller knows the mode.
+    // Legacy serves posts, pages, categories and tags from a BlogEngine.NET SQL Server database (ConnectionStrings:LegacySql) and everything else
+    // from the in-memory store seeded at start; collaboration is switched off; sign-in is the developer-testing account (see DevLoginOptions).
+    var dataMode = DataModes.Parse(builder.Configuration[DataModes.SettingName]);
+    var legacy = dataMode == DataMode.Legacy;
+    var legacySql = builder.Configuration.GetConnectionString("LegacySql");
+    if (legacy && (liveData || string.IsNullOrWhiteSpace(legacySql)))
+    {
+        throw new InvalidOperationException("Data:Mode=Legacy needs ConnectionStrings:LegacySql and cannot be combined with live data mode.");
     }
 
     // Every line carries the request's CorrelationId (pushed by the middleware below into the LogContext). The text log is
@@ -149,12 +161,25 @@ try
     // NpgsqlSqlExecutor doesn't open a connection until something actually queries through it, so
     // this registration alone can't reproduce today's Jwt:SigningKey-shaped startup crash even if
     // ConnectionStrings:Postgres is ever missing in an environment.
-    builder.Services.AddSingleton<ISqlExecutor>(_ =>
+    if (legacy)
+    {
+        // No vault and no user store in Legacy: the developer-testing sign-in only, behind four gates (Legacy mode, Legacy:DevLogin=true in user-secrets,
+        // the Development environment, a request from this machine). A deployed site cannot satisfy them.
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<IRequestOrigin, HttpRequestOrigin>();
+        builder.Services.AddDevLogin(
+            enabled: string.Equals(builder.Configuration[DevLoginOptions.SettingName], "true", StringComparison.OrdinalIgnoreCase),
+            isDevelopment: builder.Environment.IsDevelopment());
+    }
+    else
+    {
+        builder.Services.AddSingleton<ISqlExecutor>(_ =>
         new NpgsqlSqlExecutor(builder.Configuration.GetConnectionString("Postgres")
             ?? throw new InvalidOperationException("ConnectionStrings:Postgres is not configured.")));
     builder.Services.AddScoped<IEntityRecordRepository, PostgresEntityRepository>();
     builder.Services.AddUserIdentity();
     builder.Services.AddPostgresUserCredentials();
+    }
 
     // Adventures.Ioc's reflection-based auto-registration for the Bll/Dal/Presenter MvpVm pattern
     // (see Adventures.Common.Tests/MvpVmTests.cs) - picks up UserBll and UserPresenter below.
@@ -169,6 +194,7 @@ try
     // resurrect values the users have since edited. A seed change ships as a new, separately named seed file.
     var postgresConnection = builder.Configuration.GetConnectionString("Postgres");
     var useMemoryStore = string.Equals(builder.Configuration["NQuadStore:Provider"], "Memory", StringComparison.OrdinalIgnoreCase)
+        || legacy
         || string.IsNullOrWhiteSpace(postgresConnection);
     INQuadStore nquadStore = useMemoryStore
         ? new InMemoryNQuadStore()
@@ -247,6 +273,12 @@ try
     var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
 
     builder.Services.AddSingleton<INQuadStore>(nquadStore);
+    if (legacy)
+    {
+        // The whole Legacy switch: the SQL Dals are registered first, so the repository registrations below add no Dal for these types.
+        builder.Services.AddBlogLegacy(legacySql!, Guid.TryParse(builder.Configuration["Legacy:BlogId"], out var legacyBlogId) ? legacyBlogId : null);
+        Log.Information("Data mode: Legacy (BlogEngine SQL Server for posts, pages, categories and tags; collaboration off)");
+    }
     // Uploaded images: in the same PostgreSQL database as the content (survives a redeploy, travels with the backup); memory for the in-memory development store.
     builder.Services.AddSingleton<IMediaStore>(useMemoryStore ? new InMemoryMediaStore() : new NpgsqlMediaStore(postgresConnection!, builder.Configuration["Media:Table"] ?? "app_media"));
     builder.Services.AddHttpContextAccessor();
@@ -337,6 +369,20 @@ try
         provider.GetRequiredService<IEntityBll<Role>>(), provider.GetRequiredService<EntitySchemaOf<Role>>(), provider.GetService<IEntityRelationProvider>()));
 
     var app = builder.Build();
+
+    if (legacy)
+    {
+        // The legacy tables have no place for collaboration items: its plug-ins are switched off (the Plugins page shows them off).
+        using var pluginScope = app.Services.CreateScope();
+        var plugins = pluginScope.ServiceProvider.GetRequiredService<IPlugins>();
+        foreach (var definition in CollaborationPlugins.Definitions)
+        {
+            if (await plugins.IsEnabledAsync(definition.Key))
+            {
+                await plugins.SetEnabledAsync(definition.Key, false);
+            }
+        }
+    }
 
     if (!skipSeeding)
     {
