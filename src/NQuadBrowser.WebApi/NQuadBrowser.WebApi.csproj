@@ -9,8 +9,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- The same user-secrets store as the main API, so the browser reads the same Jwt settings and (when set) the same Postgres connection in development. -->
-    <UserSecretsId>aiblogresearch-webapi-c9b1f4b2-8f3a-4a3a-9d1e-6a6b4d0b3f21</UserSecretsId>
+    <!-- The workspace's common user-secrets store (the id also on Adventures.Common.Tests), so a changed secret is edited in one place. -->
+    <UserSecretsId>35f5242d-e0ef-427b-8901-a1a38c165ac4</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

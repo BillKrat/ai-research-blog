@@ -10,7 +10,7 @@ Branch `refactor-s7-sql-legacy` in `Adventures.Foundation` and `ai-research-blog
 4. **Pointer fields in Legacy**: `IRelationNameSource` (Entities) lets the relation provider take the names and choices of a schema from a source other than the N-Quad store; the legacy category and tag Dals are the sources.
 5. **Collaboration is off in Legacy**: the host switches its three plug-ins off at start (the Plugins page shows them off); the legacy tables have no place for items.
 6. **Developer sign-in (your caveat)**: `DevLoginAccountService` accepts Admin with the password Password, only when four gates all hold: the host registered it (Legacy mode only), `Legacy:DevLogin=true` (user-secrets or the Development settings file, never a deployed setting), the host environment is Development, and the request comes from this machine (`IRequestOrigin`: loopback address, and no `X-Forwarded-For`, `Forwarded` or `X-Real-IP` header). Any failed gate answers like a wrong password. No other account or password works. Each gate has a failing-if-removed test; the app has a guard that `AddDevLogin` appears once, inside the Legacy branch, and that the password literal appears nowhere in the app source.
-7. **Guards** (17) pin the new references; **tests**: Blog.Legacy 18 (plus 1 live check that skips unless `LEGACY_SQL_CONNECTION` is set), Identity 43, WebApi 100.
+7. **Guards** (17) pin the new references; **tests**: Blog.Legacy 18 (plus 1 live check that skips unless `ConnectionStrings:BlogEngine` is in the common user-secrets store (the human changed it from an environment variable, 2026-10-31)), Identity 43, WebApi 100.
 
 ```mermaid
 flowchart LR
