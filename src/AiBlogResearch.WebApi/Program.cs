@@ -1,6 +1,8 @@
 // Assessed 2026-10-24 17:51 CT (Claude): automated scan for secrets, injection and unsafe patterns, re-run after the fixes - security findings F-1 to F-3 fixed in this file or in code it uses, covered by tests. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 using Adventures.Common.Diagnostics;
 using Adventures.Data;
+using Adventures.Data.Postgres;
+using Adventures.Identity.Postgres;
 using Adventures.Data.NQuad;
 using Adventures.Entities;
 using Adventures.Identity;
@@ -125,7 +127,7 @@ try
     builder.Services.AddScoped<IDependencyProbes>(sp => new DependencyProbes(
         sp.GetRequiredService<IJwtTokenService>(),
         sp.GetRequiredService<IHttpClientFactory>(),
-        sp.GetService<INQuadStore>(),
+        sp.GetService<Adventures.Common.Diagnostics.IStoreProbe>(),
         sp.GetRequiredService<ILoggerFactory>().CreateLogger<DependencyProbes>()));
 
     // The AI triage (an administrator's button): Anthropic:ApiKey is a secret (user-secrets locally, the host's environment
@@ -152,6 +154,7 @@ try
             ?? throw new InvalidOperationException("ConnectionStrings:Postgres is not configured.")));
     builder.Services.AddScoped<IEntityRecordRepository, PostgresEntityRepository>();
     builder.Services.AddUserIdentity();
+    builder.Services.AddPostgresUserCredentials();
 
     // Adventures.Ioc's reflection-based auto-registration for the Bll/Dal/Presenter MvpVm pattern
     // (see Adventures.Common.Tests/MvpVmTests.cs) - picks up UserBll and UserPresenter below.

@@ -41,7 +41,7 @@ public class HealthControllerTests
     }
 
     private static IDependencyProbes Probes(FakeHttpMessageHandler handler, Adventures.Data.NQuad.INQuadStore? store = null) =>
-        new Adventures.WebApi.DependencyProbes(BuildTokenService(), new FakeHttpClientFactory(handler), store);
+        new Adventures.WebApi.DependencyProbes(BuildTokenService(), new FakeHttpClientFactory(handler), store is null ? null : new Adventures.Data.NQuad.NQuadStoreProbe(store));
 
     private static HealthController BuildController(FakeHttpMessageHandler handler) =>
         new(Probes(handler));
