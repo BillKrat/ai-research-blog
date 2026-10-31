@@ -5,9 +5,10 @@ Branch `refactor-s1-folders` in `Adventures.Foundation` (app repo: one rename in
 ## What was built
 
 1. **Every library project keeps its source in folders; none at a project root** (was 0 / 9 / 14 / 67 / 10 / 0 / 17 / 15 files). Files were moved with `git mv`, so history follows.
-2. **Namespaces were left unchanged on purpose**: the app, tools and tests compile untouched, and the later extraction stages (S3, S4, S5) move whole folders into new projects, which is the moment namespaces change.
+1b. **Project folders under src and test** (change request on the S1 item): `Adventures.Common` and `Adventures.Ioc` moved from the repository root into `src/`, and `Adventures.Common.Tests`, `Adventures.Ioc.Tests` and `Adventures.Tests` into `test/`; solution files, project references and the app's `.slnx` and `Program` project reference were updated. A new guard test fails if any project sits outside `src` or `test` (proven red with a stray project).
+2. **Namespaces were left unchanged on purpose**: no C# consumer needed an edit (only project paths changed), and the later extraction stages (S3, S4, S5) move whole folders into new projects, which is the moment namespaces change.
 3. **One name clash removed**: the Postgres-side `Adventures.Data.IEntityRepository` is now `IEntityRecordRepository` (it stores `Entity` records, not `DynamicEntity` types). `Adventures.Entities.IEntityRepository<TEntity>` keeps its name. The Postgres class `PostgresEntityRepository` keeps its name for now (renamed with the Dal work in S2).
-4. **Guard tests** (9 now): root files must be 0 (was a recorded-counts ratchet), and public type names must be unique across the libraries.
+4. **Guard tests** (10 now): root files must be 0 (was a recorded-counts ratchet), public type names must be unique across the libraries, and every project lives under `src` or `test`.
 
 ```mermaid
 flowchart LR

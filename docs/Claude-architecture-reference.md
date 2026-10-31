@@ -159,4 +159,4 @@ Each stage ends with: suites green in both repos, app running locally, a stage r
 ## 8. Living-document log
 
 - 2026-10-31: first version from the four sources and a read of the code.
-- 2026-10-31 (S1): every library project now keeps its source in folders (none at a project root); namespaces were deliberately left unchanged so no consumer changes; the Data-side `IEntityRepository` is now `IEntityRecordRepository`; guard tests: root files must be 0, public type names unique (9 tests). Folder maps: see the S1 stage review.
+- 2026-10-31 (S1): every library project now keeps its source in folders (none at a project root); namespaces were deliberately left unchanged so no consumer changes; the Data-side `IEntityRepository` is now `IEntityRecordRepository`; guard tests: root files must be 0, public type names unique (10 tests; also every project lives under src or test). Folder maps: see the S1 stage review.
