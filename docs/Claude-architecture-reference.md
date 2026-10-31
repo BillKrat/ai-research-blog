@@ -142,7 +142,7 @@ Sizes: S under half a day, M about a day, L multi-day (my estimate; no stage is 
 | Stage | Branch | What | Done when | Size |
 |---|---|---|---|---|
 | **S0** | `refactor-s0-guard` | This document approved; architecture-test project with today's graph as allow-list; baseline: build and run all suites, record counts | Tests green; counts recorded (built: 8 tests, red proven by mutation; Foundation suite 542 green) | S |
-| **S1** | `refactor-s1-folders` | Folder structure and naming inside existing projects, no behaviour change: `Entities/{Core,Schema,Security,Blog,Collaboration,Diagnostics}`, nothing at project roots; rename clashes (`IEntityRepository` in Data) | R16/R17 rule tests green; suites green | M |
+| **S1** | `refactor-s1-folders` | Folder structure and naming inside existing projects, no behaviour change: `Entities/{Core,Schema,Security,Blog,Collaboration,Diagnostics}`, nothing at project roots; rename clashes (`IEntityRepository` in Data) | R16/R17 rule tests green; suites green | M (DONE 2026-10-31, awaiting review) |
 | **S2** | `refactor-s2-dal` | Introduce the Dal layer: `IDal<T>`/`EntityDal<T>` in Common/Entities; `EntityBll<T>` depends on `IEntityDal<T>`; the N-Quad repository becomes what the Dal uses; Postgres side follows | Bll has no repository reference; suites green | M-L |
 | **S3** | `refactor-s3-blog` | Extract `Adventures.Blog` (entities, Bll, presenters, SlugRules, SiteSettings, PublicContent, ContentAuthoring, Media) with `AddBlog()`; move blog controllers to `Adventures.Blog.WebApi` (D2) | `Entities` has no blog types; app uses `AddBlog()`; suites green | L |
 | **S4** | `refactor-s4-collab` | Extract `Adventures.Collaboration` and `Adventures.MEF`/Plugins seam with `AddCollaboration()` | Collaboration absent from Entities; plug-in switch intact | M |
@@ -159,3 +159,4 @@ Each stage ends with: suites green in both repos, app running locally, a stage r
 ## 8. Living-document log
 
 - 2026-10-31: first version from the four sources and a read of the code.
+- 2026-10-31 (S1): every library project now keeps its source in folders (none at a project root); namespaces were deliberately left unchanged so no consumer changes; the Data-side `IEntityRepository` is now `IEntityRecordRepository`; guard tests: root files must be 0, public type names unique (9 tests). Folder maps: see the S1 stage review.

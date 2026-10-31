@@ -144,7 +144,7 @@ try
     builder.Services.AddSingleton<ISqlExecutor>(_ =>
         new NpgsqlSqlExecutor(builder.Configuration.GetConnectionString("Postgres")
             ?? throw new InvalidOperationException("ConnectionStrings:Postgres is not configured.")));
-    builder.Services.AddScoped<IEntityRepository, PostgresEntityRepository>();
+    builder.Services.AddScoped<IEntityRecordRepository, PostgresEntityRepository>();
     builder.Services.AddUserIdentity();
 
     // Adventures.Ioc's reflection-based auto-registration for the Bll/Dal/Presenter MvpVm pattern
