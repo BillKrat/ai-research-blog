@@ -29,7 +29,9 @@
       if (r.status === 401 || r.status === 403) { throw new Error('Not allowed: use a token of an Admin from the main API.'); }
       if (r.status === 204) { return null; }
       return r.text().then(function (t) {
-        var data = t ? JSON.parse(t) : null;
+        var data = null;
+        try { data = t ? JSON.parse(t) : null; }
+        catch (e) { throw new Error('The server answered ' + r.status + ' with text, not JSON: ' + t.slice(0, 400)); }
         if (!r.ok) { throw new Error((data && (data.detail || data.title || (data.errors && JSON.stringify(data.errors)))) || ('Request failed (' + r.status + ')')); }
         return data;
       });
