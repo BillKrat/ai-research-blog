@@ -305,7 +305,7 @@ try
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.CategorySchemaIri, EntityConstants.Content.CategoryBaseIri, EntityConstants.Content.CategoryTypeIri, s => new Category(s));
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.TagSchemaIri, EntityConstants.Content.TagBaseIri, EntityConstants.Content.TagTypeIri, s => new Tag(s));
     AddContentEntity(builder.Services, userQuads, EntityConstants.Content.CommentSchemaIri, EntityConstants.Content.CommentBaseIri, EntityConstants.Content.CommentTypeIri, s => new Comment(s));
-    builder.Services.AddScoped<IEntityBll<Comment>>(provider => new EntityBll<Comment>(provider.GetRequiredService<IEntityRepository<Comment>>()));
+    builder.Services.AddScoped<IEntityBll<Comment>>(provider => new EntityBll<Comment>(provider.GetRequiredService<IEntityDal<Comment>>()));
     builder.Services.AddScoped<IConversation, Conversation>();
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, CollaborationConstants.SchemaIri), CollaborationConstants.BaseIri, CollaborationConstants.TypeIri,
@@ -313,12 +313,12 @@ try
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, PluginConstants.SchemaIri), PluginConstants.BaseIri, PluginConstants.TypeIri,
         CollaborationConstants.DefaultGraph, s => new Plugin(s));
-    builder.Services.AddScoped<IEntityBll<Plugin>>(provider => new EntityBll<Plugin>(provider.GetRequiredService<IEntityRepository<Plugin>>()));
+    builder.Services.AddScoped<IEntityBll<Plugin>>(provider => new EntityBll<Plugin>(provider.GetRequiredService<IEntityDal<Plugin>>()));
     builder.Services.AddScoped<IPlugins, Plugins>();
     builder.Services.AddScoped<IRightsResolver, RightsResolver>();
     builder.Services.AddScoped<IRoleRightsEditor, RoleRightsEditor>();
     builder.Services.AddRightsAuthorization();
-    builder.Services.AddScoped<IEntityBll<Tenant>>(provider => new EntityBll<Tenant>(provider.GetRequiredService<IEntityRepository<Tenant>>()));
+    builder.Services.AddScoped<IEntityBll<Tenant>>(provider => new EntityBll<Tenant>(provider.GetRequiredService<IEntityDal<Tenant>>()));
     builder.Services.AddScoped<ITenantResolver, TenantResolver>();
     builder.Services.AddScoped<ICollaborationBll, CollaborationBll>();
     builder.Services.AddScoped<IEntityPresenter<CollaborationItem>, CollaborationPresenter>();
@@ -327,7 +327,7 @@ try
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, EntityConstants.Site.SettingSchemaIri), EntityConstants.Site.SettingBaseIri, EntityConstants.Site.SettingTypeIri,
         EntityConstants.Site.DefaultGraph, s => new SiteSetting(s));
-    builder.Services.AddScoped<IEntityBll<SiteSetting>>(provider => new EntityBll<SiteSetting>(provider.GetRequiredService<IEntityRepository<SiteSetting>>()));
+    builder.Services.AddScoped<IEntityBll<SiteSetting>>(provider => new EntityBll<SiteSetting>(provider.GetRequiredService<IEntityDal<SiteSetting>>()));
     builder.Services.AddScoped<IEntityPresenter<SiteSetting>, SiteSettingPresenter>();
     builder.Services.AddScoped<ISiteSettings, SiteSettings>();
     builder.Services.AddScoped<IPageBll, PageBll>();
@@ -335,8 +335,8 @@ try
     builder.Services.AddScoped<IContentAuthoring, ContentAuthoring>();
     builder.Services.AddScoped<IPublicContent, PublicContent>();
     builder.Services.AddScoped<IEntityPresenter<Post>, PostPresenter>();
-    builder.Services.AddScoped<IEntityBll<Category>>(provider => new EntityBll<Category>(provider.GetRequiredService<IEntityRepository<Category>>()));
-    builder.Services.AddScoped<IEntityBll<Tag>>(provider => new EntityBll<Tag>(provider.GetRequiredService<IEntityRepository<Tag>>()));
+    builder.Services.AddScoped<IEntityBll<Category>>(provider => new EntityBll<Category>(provider.GetRequiredService<IEntityDal<Category>>()));
+    builder.Services.AddScoped<IEntityBll<Tag>>(provider => new EntityBll<Tag>(provider.GetRequiredService<IEntityDal<Tag>>()));
     builder.Services.AddScoped<IEntityPresenter<Category>>(provider => new EntityPresenter<Category>(
         provider.GetRequiredService<IEntityBll<Category>>(), provider.GetRequiredService<EntitySchemaOf<Category>>().Schema, s => new Category(s), provider.GetService<IEntityRelationProvider>()));
     builder.Services.AddScoped<IEntityPresenter<Tag>>(provider => new EntityPresenter<Tag>(
@@ -345,7 +345,7 @@ try
         provider.GetRequiredService<IPageBll>(), provider.GetRequiredService<EntitySchemaOf<Page>>().Schema, s => new Page(s), provider.GetService<IEntityRelationProvider>()));
     builder.Services.AddNQuadRelations();
     builder.Services.AddNQuadRelationWriter();
-    builder.Services.AddScoped<IEntityBll<Role>>(provider => new EntityBll<Role>(provider.GetRequiredService<IEntityRepository<Role>>()));
+    builder.Services.AddScoped<IEntityBll<Role>>(provider => new EntityBll<Role>(provider.GetRequiredService<IEntityDal<Role>>()));
     builder.Services.AddScoped<IEntityPresenter<Role>>(provider => new RolePresenter(
         provider.GetRequiredService<IEntityBll<Role>>(), provider.GetRequiredService<EntitySchemaOf<Role>>(), provider.GetService<IEntityRelationProvider>()));
 
@@ -355,7 +355,8 @@ try
     {
         // Improved default rights for roles still at their first shipped values (a seed cannot supersede a stored value); an edited role is left alone.
         using var upgradeScope = app.Services.CreateScope();
-        var upgraded = await RoleRightsUpgrade.ApplyAsync(upgradeScope.ServiceProvider.GetRequiredService<IEntityRepository<Role>>());
+        var upgraded = await RoleRightsUpgrade.ApplyAsync(upgradeScope.ServiceProvider.GetRequiredService<IEntityDal<Role>>());
+
         if (upgraded > 0)
         {
             Log.Information("Upgraded the default rights of {Count} role(s).", upgraded);
