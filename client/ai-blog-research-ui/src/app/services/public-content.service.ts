@@ -2,7 +2,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { API_BASE_URL } from '../api-base-url';
 
 export interface PublicPostSummary {
   title: string;
@@ -57,8 +57,9 @@ export interface PublicTerm {
 /** The anonymous read side of the site: published posts and pages only. Nothing here needs a token or can change anything. */
 @Injectable({ providedIn: 'root' })
 export class PublicContentService {
+  private readonly apiUrl = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/api/public`;
+  private readonly base = `${this.apiUrl}/api/public`;
 
   posts(page = 1, pageSize = 10, category?: string | null, tag?: string | null): Observable<PublicPostList> {
     let params = new HttpParams().set('page', page).set('pageSize', pageSize);

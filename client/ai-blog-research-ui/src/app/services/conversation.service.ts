@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { API_BASE_URL } from '../api-base-url';
 
 /** One entry of the conversation under a post (the server sets the author and the time). */
 export interface ConversationEntry {
@@ -32,18 +32,19 @@ export type ConversationBase = 'posts' | 'collaboration';
 /** The conversation under a post, for administrators: read it, add to it. Entries are only added. */
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
+  private readonly apiUrl = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
 
   list(postId: string, base: ConversationBase = 'posts'): Observable<ConversationEntry[]> {
-    return this.http.get<ConversationEntry[]>(`${environment.apiUrl}/api/${base}/${encodeURIComponent(postId)}/comments`);
+    return this.http.get<ConversationEntry[]>(`${this.apiUrl}/api/${base}/${encodeURIComponent(postId)}/comments`);
   }
 
   /** Every decision recorded under any post, newest first, each with its post. */
   decisions(): Observable<DecisionEntry[]> {
-    return this.http.get<DecisionEntry[]>(`${environment.apiUrl}/api/decisions`);
+    return this.http.get<DecisionEntry[]>(`${this.apiUrl}/api/decisions`);
   }
 
   add(postId: string, text: string, kind: 'Comment' | 'Decision', base: ConversationBase = 'posts'): Observable<ConversationEntry> {
-    return this.http.post<ConversationEntry>(`${environment.apiUrl}/api/${base}/${encodeURIComponent(postId)}/comments`, { text, kind });
+    return this.http.post<ConversationEntry>(`${this.apiUrl}/api/${base}/${encodeURIComponent(postId)}/comments`, { text, kind });
   }
 }

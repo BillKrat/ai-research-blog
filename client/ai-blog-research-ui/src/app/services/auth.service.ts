@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, switchMap, tap } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { API_BASE_URL } from '../api-base-url';
 
 export interface TokenResponse {
   accessToken: string;
@@ -20,6 +20,7 @@ const RETURN_STORAGE_KEY = 'auth.returnUrl';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly apiUrl = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
 
   private readonly _accessToken = signal<string | null>(sessionStorage.getItem(TOKEN_STORAGE_KEY));
@@ -44,7 +45,7 @@ export class AuthService {
 
   login(userName: string, password: string): Observable<string> {
     return this.http
-      .post<TokenResponse>(`${environment.apiUrl}/api/auth/token`, { userName, password })
+      .post<TokenResponse>(`${this.apiUrl}/api/auth/token`, { userName, password })
       .pipe(
         tap((response) => {
           this._accessToken.set(response.accessToken);
@@ -52,7 +53,7 @@ export class AuthService {
           sessionStorage.setItem(TOKEN_STORAGE_KEY, response.accessToken);
           sessionStorage.setItem(EXPIRY_STORAGE_KEY, response.expiresAtUtc);
         }),
-        switchMap(() => this.http.get(`${environment.apiUrl}/api/auth/whoami`, { responseType: 'text' })),
+        switchMap(() => this.http.get(`${this.apiUrl}/api/auth/whoami`, { responseType: 'text' })),
         tap((username) => {
           this._username.set(username);
           sessionStorage.setItem(USERNAME_STORAGE_KEY, username);
@@ -63,7 +64,7 @@ export class AuthService {
   /** Changes the signed-in user's own password; on success the "must change" reminder goes away. The current password is re-checked by the server. */
   changePassword(currentPassword: string, newPassword: string): Observable<void> {
     return this.http
-      .post<void>(`${environment.apiUrl}/api/auth/change-password`, { currentPassword, newPassword })
+      .post<void>(`${this.apiUrl}/api/auth/change-password`, { currentPassword, newPassword })
       .pipe(tap(() => this._mustChangePassword.set(false)));
   }
 

@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, of, shareReplay, tap } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { API_BASE_URL } from '../api-base-url';
 
 /** What the browser needs of the site settings (an administrator edits them under Admin > Settings). */
 export interface SiteSettings {
@@ -19,6 +19,7 @@ const DEFAULTS: SiteSettings = { title: 'AI Research Blog', tagline: '', postsPe
  */
 @Injectable({ providedIn: 'root' })
 export class SiteService {
+  private readonly apiUrl = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
   private request: Observable<SiteSettings> | null = null;
 
@@ -26,7 +27,7 @@ export class SiteService {
 
   /** The settings, loaded on first use and then served from memory. */
   get(): Observable<SiteSettings> {
-    this.request ??= this.http.get<SiteSettings>(`${environment.apiUrl}/api/public/site`).pipe(
+    this.request ??= this.http.get<SiteSettings>(`${this.apiUrl}/api/public/site`).pipe(
       tap((loaded) => this.settings.set(loaded)),
       catchError(() => of(this.settings())),
       shareReplay(1),

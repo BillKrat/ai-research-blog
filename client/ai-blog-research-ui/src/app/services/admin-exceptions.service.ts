@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, OnDestroy, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { API_BASE_URL } from '../api-base-url';
 import { EntityGridModel } from '../models/entity-form.model';
 
 export interface TriageFinding {
@@ -56,10 +56,11 @@ export interface ExceptionSignatureSummary {
  */
 @Injectable({ providedIn: 'root' })
 export class AdminExceptionsService implements OnDestroy {
+  private readonly apiUrl = inject(API_BASE_URL);
   private static readonly PollMilliseconds = 60_000;
 
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/api/admin/exceptions`;
+  private readonly baseUrl = `${this.apiUrl}/api/admin/exceptions`;
   private timer: ReturnType<typeof setInterval> | null = null;
   private notAdministrator = false;
 
@@ -86,13 +87,13 @@ export class AdminExceptionsService implements OnDestroy {
 
   /** Runs the server's triage of one request (read-only); the id is the CorrelationId shown in the grid. */
   triage(correlationId: string): Observable<TriageResult> {
-    return this.http.get<TriageResult>(`${environment.apiUrl}/api/admin/diagnostics/${encodeURIComponent(correlationId)}/triage`);
+    return this.http.get<TriageResult>(`${this.apiUrl}/api/admin/diagnostics/${encodeURIComponent(correlationId)}/triage`);
   }
 
   /** Asks Claude to assess one request. Sends a redacted report to Anthropic and costs money, so it only runs from a click. */
   askClaude(correlationId: string): Observable<AiTriageResult> {
     return this.http.post<AiTriageResult>(
-      `${environment.apiUrl}/api/admin/diagnostics/${encodeURIComponent(correlationId)}/ai-triage`,
+      `${this.apiUrl}/api/admin/diagnostics/${encodeURIComponent(correlationId)}/ai-triage`,
       {},
     );
   }

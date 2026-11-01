@@ -1,7 +1,7 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 import { HttpClient } from '@angular/common/http';
 import { ErrorHandler, Injectable, Injector, inject } from '@angular/core';
-import { environment } from '../../environments/environment';
+import { API_BASE_URL } from '../api-base-url';
 import { ApiProblemService } from './api-problem.service';
 
 /**
@@ -13,6 +13,7 @@ import { ApiProblemService } from './api-problem.service';
 @Injectable()
 export class ClientErrorHandler implements ErrorHandler {
   private readonly injector = inject(Injector);
+  private readonly apiUrl = inject(API_BASE_URL);
   private reporting = false;
 
   handleError(error: unknown): void {
@@ -31,7 +32,7 @@ export class ClientErrorHandler implements ErrorHandler {
       const { message, stack } = describe(error);
       this.injector
         .get(HttpClient)
-        .post(`${environment.apiUrl}/api/client-errors`, { message, stack, url: window.location.pathname })
+        .post(`${this.apiUrl}/api/client-errors`, { message, stack, url: window.location.pathname })
         .subscribe({
           next: () => (this.reporting = false),
           error: () => (this.reporting = false),

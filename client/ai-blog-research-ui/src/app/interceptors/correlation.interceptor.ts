@@ -1,6 +1,7 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 import { HttpInterceptorFn } from '@angular/common/http';
-import { environment } from '../../environments/environment';
+import { inject } from '@angular/core';
+import { API_BASE_URL } from '../api-base-url';
 
 export const correlationHeader = 'X-Correlation-Id';
 
@@ -15,8 +16,9 @@ export function newCorrelationId(): string {
  * id alone. Requests that already carry one are left alone; other sites are never sent it.
  */
 export const correlationInterceptor: HttpInterceptorFn = (req, next) => {
-  // apiUrl is '' in development (same origin, proxied), where our requests are the relative ones.
-  const isOurApi = environment.apiUrl ? req.url.startsWith(environment.apiUrl) : req.url.startsWith('/');
+  // the base is '' in development (same origin, proxied), where our requests are the relative ones.
+  const apiUrl = inject(API_BASE_URL);
+  const isOurApi = apiUrl ? req.url.startsWith(apiUrl) : req.url.startsWith('/');
   if (!isOurApi || req.headers.has(correlationHeader)) {
     return next(req);
   }

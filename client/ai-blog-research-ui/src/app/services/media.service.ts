@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { API_BASE_URL } from '../api-base-url';
 
 /** An uploaded image: where it is served from and the Markdown that shows it. */
 export interface MediaItem {
@@ -19,11 +19,12 @@ export interface MediaItem {
 /** Uploads an image for a post or page (administrators only; the server accepts PNG, JPEG, GIF and WebP up to 5 MB and checks the bytes). */
 @Injectable({ providedIn: 'root' })
 export class MediaService {
+  private readonly apiUrl = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
 
   upload(file: File): Observable<MediaItem> {
     const form = new FormData();
     form.append('file', file, file.name);
-    return this.http.post<MediaItem>(`${environment.apiUrl}/api/media`, form);
+    return this.http.post<MediaItem>(`${this.apiUrl}/api/media`, form);
   }
 }

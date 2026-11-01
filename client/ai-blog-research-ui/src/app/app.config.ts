@@ -5,6 +5,8 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { provideMarkdown } from 'ngx-markdown';
 import { routes } from './app.routes';
+import { API_BASE_URL } from './api-base-url';
+import { environment } from '../environments/environment';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { ClientErrorHandler } from './services/client-error-handler';
 import { correlationInterceptor } from './interceptors/correlation.interceptor';
@@ -13,6 +15,8 @@ import { apiProblemInterceptor } from './interceptors/api-problem.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    // the one place the app's own environment file is read: everything below gets the address by injection
+    { provide: API_BASE_URL, useValue: environment.apiUrl },
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([correlationInterceptor, authInterceptor, serverErrorInterceptor, apiProblemInterceptor])),

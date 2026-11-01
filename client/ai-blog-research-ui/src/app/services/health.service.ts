@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, throwError } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { API_BASE_URL } from '../api-base-url';
 
 /** One thing the API depends on: ok or failed, how long the check took, and a short non-sensitive code. */
 export interface DependencyHealth {
@@ -32,6 +32,7 @@ export function describeFailures(health: Pick<HealthResponse, 'dependencies'>): 
 
 @Injectable({ providedIn: 'root' })
 export class HealthService {
+  private readonly apiUrl = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
 
   /**
@@ -39,12 +40,12 @@ export class HealthService {
    * without the diagnostics right gets 401/403 there and falls back to the public answer. A 503 is an answer, so it is passed on.
    */
   check(signedIn: boolean): Observable<HealthResponse> {
-    const publicHealth = this.http.get<HealthResponse>(`${environment.apiUrl}/api/health`);
+    const publicHealth = this.http.get<HealthResponse>(`${this.apiUrl}/api/health`);
     if (!signedIn) {
       return publicHealth;
     }
 
-    return this.http.get<HealthResponse>(`${environment.apiUrl}/api/health/detail`).pipe(
+    return this.http.get<HealthResponse>(`${this.apiUrl}/api/health/detail`).pipe(
       catchError((error) => (error?.status === 401 || error?.status === 403 ? publicHealth : throwError(() => error))),
     );
   }

@@ -1,7 +1,7 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { environment } from '../../environments/environment';
+import { API_BASE_URL } from '../api-base-url';
 
 /** One menu entry as the server sends it: a screen that is not built yet has available false and no route. */
 export interface AdminMenuItem {
@@ -31,6 +31,7 @@ export interface AdminMenuModel {
  */
 @Injectable({ providedIn: 'root' })
 export class AdminMenuService {
+  private readonly apiUrl = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
 
   private readonly _menu = signal<AdminMenuModel>({ sections: [] });
@@ -40,7 +41,7 @@ export class AdminMenuService {
   readonly hasMenu = computed(() => this._menu().sections.length > 0);
 
   load(): void {
-    this.http.get<AdminMenuModel>(`${environment.apiUrl}/api/admin/menu`).subscribe({
+    this.http.get<AdminMenuModel>(`${this.apiUrl}/api/admin/menu`).subscribe({
       next: (menu) => this._menu.set(menu),
       error: () => this._menu.set({ sections: [] }),
     });
