@@ -92,7 +92,7 @@
     }
 
     @if (hasRightsChecklist) {
-      <app-rights-checklist [roleId]="form.entity.entityId" [rights]="form.entity.values['Rights'] ?? ''" (saved)="reload()" />
+      <adv-rights-checklist [roleId]="form.entity.entityId" [rights]="form.entity.values['Rights'] ?? ''" (saved)="reload()" />
     }
 
     @if (hasConversation) {

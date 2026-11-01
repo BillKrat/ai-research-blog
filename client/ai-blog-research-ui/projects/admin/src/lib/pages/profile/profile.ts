@@ -21,7 +21,7 @@ type DeleteState = 'idle' | 'deleting' | 'error';
  * server's delete-own-account guard, which always rejects this exact call.
  */
 @Component({
-  selector: 'app-profile',
+  selector: 'adv-profile',
   imports: [ReactiveFormsModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MatFormFieldModule, MatInputModule, EntityForm],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',

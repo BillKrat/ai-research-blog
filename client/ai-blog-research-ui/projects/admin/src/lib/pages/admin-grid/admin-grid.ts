@@ -15,7 +15,7 @@ import { describeApiError, EntityApiService, EntityGridModel } from '@adventures
  * screen. Roles, Posts, Pages later are one route each.
  */
 @Component({
-  selector: 'app-admin-grid',
+  selector: 'adv-admin-grid',
   imports: [EntityGrid, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './admin-grid.html',
   styleUrl: './admin-grid.scss',

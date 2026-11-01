@@ -7,7 +7,7 @@ import { provideMarkdown } from 'ngx-markdown';
 import { routes } from './app.routes';
 import { API_BASE_URL, apiProblemInterceptor, authInterceptor, ClientErrorHandler, correlationInterceptor } from '@adventures/core';
 import { environment } from '../environments/environment';
-import { serverErrorInterceptor } from './interceptors/server-error.interceptor';
+import { serverErrorInterceptor } from '@adventures/admin';
 
 export const appConfig: ApplicationConfig = {
   providers: [

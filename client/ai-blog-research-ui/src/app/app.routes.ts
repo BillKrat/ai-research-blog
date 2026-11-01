@@ -9,12 +9,12 @@ import { authGuard } from '@adventures/core';
 const adminCollection = (path: string, collection: string, title: string): Routes => [
   {
     path,
-    loadComponent: () => import('./pages/admin-grid/admin-grid').then((m) => m.AdminGrid),
+    loadComponent: () => import('@adventures/admin').then((m) => m.AdminGrid),
     data: { collection, title },
   },
   {
     path: `${path}/:id`,
-    loadComponent: () => import('./pages/admin-entity/admin-entity').then((m) => m.AdminEntity),
+    loadComponent: () => import('@adventures/admin').then((m) => m.AdminEntity),
     data: { collection, title },
   },
 ];
@@ -27,17 +27,17 @@ export const routes: Routes = [
   { path: 'page/:slug', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PageView) },
   { path: 'category/:name', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'category' } },
   { path: 'tag/:name', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'tag' } },
-  { path: 'login', loadComponent: () => import('./pages/login/login').then((m) => m.Login) },
+  { path: 'login', loadComponent: () => import('@adventures/admin').then((m) => m.Login) },
   {
     path: 'profile',
-    loadComponent: () => import('./pages/profile/profile').then((m) => m.Profile),
+    loadComponent: () => import('@adventures/admin').then((m) => m.Profile),
     canActivate: [authGuard],
   },
   {
     // The admin area: the frame renders the server-supplied menu; every screen inside is administrators only on the server
     // (403 otherwise), the guard only keeps anonymous visitors on the sign-in page.
     path: 'admin',
-    loadComponent: () => import('./pages/admin-shell/admin-shell').then((m) => m.AdminShell),
+    loadComponent: () => import('@adventures/admin').then((m) => m.AdminShell),
     canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'users' },
@@ -49,9 +49,9 @@ export const routes: Routes = [
       ...adminCollection('categories', '/api/categories', 'Categories'),
       ...adminCollection('tags', '/api/tags', 'Tags'),
       ...adminCollection('settings', '/api/settings', 'Settings'),
-      { path: 'plugins', loadComponent: () => import('./pages/admin-plugins/admin-plugins').then((m) => m.AdminPlugins) },
+      { path: 'plugins', loadComponent: () => import('@adventures/admin').then((m) => m.AdminPlugins) },
       { path: 'decisions', loadComponent: () => import('@adventures/collaboration').then((m) => m.AdminDecisions) },
-      { path: 'exceptions', loadComponent: () => import('./pages/admin-exceptions/admin-exceptions').then((m) => m.AdminExceptions) },
+      { path: 'exceptions', loadComponent: () => import('@adventures/admin').then((m) => m.AdminExceptions) },
     ],
   },
 ];

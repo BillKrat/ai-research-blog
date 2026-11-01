@@ -9,7 +9,7 @@ import { PluginState, PluginsService } from '../../services/plugins.service';
  * switched off disappears from the admin menu and its endpoints refuse; its data is kept. The menu is read again after every change.
  */
 @Component({
-  selector: 'app-admin-plugins',
+  selector: 'adv-admin-plugins',
   templateUrl: './admin-plugins.html',
   styleUrl: './admin-plugins.scss',
 })

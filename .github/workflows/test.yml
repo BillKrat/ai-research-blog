@@ -84,5 +84,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: client/ai-blog-research-ui/package-lock.json
       - run: npm ci
-      - name: Test the client
+      - name: Test the client (the app and every library, plus the layering guard)
         run: npx ng test --watch=false
+      - name: Package the client libraries, in dependency order
+        run: npm run build:libs

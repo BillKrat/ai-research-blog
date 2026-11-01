@@ -8,7 +8,7 @@ import { RightInfo, RolesApiService } from '../../services/roles-api.service';
  * words and the ticks stay as they were typed. Nothing about which rights exist lives here: the catalog is read from the server.
  */
 @Component({
-  selector: 'app-rights-checklist',
+  selector: 'adv-rights-checklist',
   templateUrl: './rights-checklist.html',
   styleUrl: './rights-checklist.scss',
 })

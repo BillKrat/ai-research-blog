@@ -13,7 +13,7 @@ import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, Tria
  * them all. Purge is a soft delete on the server like any other delete, so the history stays in the store.
  */
 @Component({
-  selector: 'app-admin-exceptions',
+  selector: 'adv-admin-exceptions',
   imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, EntityGrid],
   templateUrl: './admin-exceptions.html',
   styleUrl: './admin-exceptions.scss',

@@ -4,7 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build ai-blog-research-ui",
+    "build:libs": "ng build core && ng build entity-ui && ng build collaboration && ng build blog-reader && ng build admin",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -31,6 +32,7 @@
     "@angular/build": "^22.2.3",
     "@angular/cli": "^22.2.3",
     "@angular/compiler-cli": "^22.2.3",
+    "@types/node": "^26.6.6",
     "jsdom": "^28.0.0",
     "ng-packagr": "^22.2.0",
     "prettier": "^3.8.1",

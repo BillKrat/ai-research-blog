@@ -9,7 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '@adventures/core';
 
 @Component({
-  selector: 'app-login',
+  selector: 'adv-login',
   imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
   templateUrl: './login.html',
   styleUrl: './login.scss',

@@ -18,7 +18,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  * opened; opened directly (a reload, a bookmark) it falls back to the collection path plus the id.
  */
 @Component({
-  selector: 'app-admin-entity',
+  selector: 'adv-admin-entity',
   imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation, RightsChecklist],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',

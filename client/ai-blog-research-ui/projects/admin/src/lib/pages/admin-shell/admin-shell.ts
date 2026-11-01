@@ -11,7 +11,7 @@ import { TenantService } from '../../services/tenant.service';
  * no role checks.
  */
 @Component({
-  selector: 'app-admin-shell',
+  selector: 'adv-admin-shell',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, MatIconModule],
   templateUrl: './admin-shell.html',
   styleUrl: './admin-shell.scss',
