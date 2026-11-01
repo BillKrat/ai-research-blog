@@ -96,7 +96,7 @@
     }
 
     @if (hasConversation) {
-      <app-conversation [postId]="form.entity.entityId" [base]="conversationBase" [actions]="form.actions ?? []" (changed)="reload()" />
+      <adv-conversation [postId]="form.entity.entityId" [base]="conversationBase" [actions]="form.actions ?? []" (changed)="reload()" />
     }
   }
 </section>

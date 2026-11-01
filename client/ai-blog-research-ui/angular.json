@@ -147,6 +147,32 @@
           }
         }
       }
+    },
+    "collaboration": {
+      "projectType": "library",
+      "root": "projects/collaboration",
+      "sourceRoot": "projects/collaboration/src",
+      "prefix": "adv",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/collaboration/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/collaboration/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/collaboration/tsconfig.spec.json"
+          }
+        }
+      }
     }
   }
 }

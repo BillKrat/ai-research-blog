@@ -7,7 +7,7 @@ import { Component, computed, input } from '@angular/core';
  * state never depends on colour alone.
  */
 @Component({
-  selector: 'app-approval-badge',
+  selector: 'adv-approval-badge',
   template: `<span class="approval-badge" [class]="'approval-badge approval-badge--' + tone()">{{ status() }}</span>`,
   styleUrl: './approval-badge.scss',
 })

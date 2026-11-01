@@ -5,7 +5,8 @@
   "compilerOptions": {
     "paths": {
       "@adventures/core": ["./projects/core/src/public-api.ts"],
-      "@adventures/entity-ui": ["./projects/entity-ui/src/public-api.ts"]
+      "@adventures/entity-ui": ["./projects/entity-ui/src/public-api.ts"],
+      "@adventures/collaboration": ["./projects/collaboration/src/public-api.ts"]
     },
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -42,6 +43,12 @@
     },
     {
       "path": "./projects/entity-ui/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/collaboration/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/collaboration/tsconfig.spec.json"
     }
   ]
 }

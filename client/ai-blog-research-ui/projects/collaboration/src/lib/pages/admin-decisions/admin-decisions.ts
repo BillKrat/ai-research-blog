@@ -11,7 +11,7 @@ import { DecisionEntry, ConversationService } from '../../services/conversation.
  * link to it. A read-only list; a decision is recorded in the Conversation under a post (tick "Record as a decision"). Administrators only.
  */
 @Component({
-  selector: 'app-admin-decisions',
+  selector: 'adv-admin-decisions',
   imports: [DatePipe, RouterLink, MarkdownContent],
   templateUrl: './admin-decisions.html',
   styleUrl: './admin-decisions.scss',

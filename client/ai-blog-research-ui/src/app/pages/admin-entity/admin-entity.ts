@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Conversation } from '../../components/conversation/conversation';
+import { Conversation } from '@adventures/collaboration';
 import { RightsChecklist } from '../../components/rights-checklist/rights-checklist';
 import { EntityForm, LabelPipe, RelationGrid } from '@adventures/entity-ui';
 import { describeApiError, EntityAction, EntityApiService, EntityFormModel } from '@adventures/core';

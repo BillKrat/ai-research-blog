@@ -50,7 +50,7 @@ export const routes: Routes = [
       ...adminCollection('tags', '/api/tags', 'Tags'),
       ...adminCollection('settings', '/api/settings', 'Settings'),
       { path: 'plugins', loadComponent: () => import('./pages/admin-plugins/admin-plugins').then((m) => m.AdminPlugins) },
-      { path: 'decisions', loadComponent: () => import('./pages/admin-decisions/admin-decisions').then((m) => m.AdminDecisions) },
+      { path: 'decisions', loadComponent: () => import('@adventures/collaboration').then((m) => m.AdminDecisions) },
       { path: 'exceptions', loadComponent: () => import('./pages/admin-exceptions/admin-exceptions').then((m) => m.AdminExceptions) },
     ],
   },

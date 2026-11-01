@@ -20,7 +20,7 @@ import { ConversationBase, ConversationEntry, ConversationService } from '../../
  * the server offered for this post (links it supplied), so a post that is not under review simply has no Approve or Change request.
  */
 @Component({
-  selector: 'app-conversation',
+  selector: 'adv-conversation',
   imports: [DatePipe, FormsModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTooltipModule, LabelPipe, MarkdownContent],
   templateUrl: './conversation.html',
   styleUrl: './conversation.scss',
