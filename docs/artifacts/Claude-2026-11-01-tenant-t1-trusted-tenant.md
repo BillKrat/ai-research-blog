@@ -60,3 +60,5 @@ powershell -File docs\Claude-run.ps1 -Branch claude-tenant-scoping
 
 1. **Rollout:** deploy with `Report` (recommended), check the tenant box and the log, then `Enforce`; or enforce straight away once you have checked the tenant records. Recommendation: `Report` first, a day.
 2. **Cache time:** 60 s is the default (`Tenancy:CacheSeconds`); say if you want it shorter for tenant creation in T4.
+
+**Decided by the human (2026-11-01):** both as recommended: deploy with `Report`, check the tenant box and the log, then `Enforce`; the tenant answer stays cached 60 s per host. The same day he filed the backlog item "one app, several domains, and a working default before any domain exists" (temporary SmarterASP addresses, aliases, tenant created on first run), to be built with T4 before beta.
