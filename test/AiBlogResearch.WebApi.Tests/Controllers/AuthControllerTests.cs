@@ -22,7 +22,7 @@ public class AuthControllerTests
     {
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(30);
         var accountService = new FakeUserAccountService(LoginResult.Success("fake-token", expiresAt, mustChangePassword: true));
-        var controller = new AuthController(accountService, BuildConfiguration());
+        var controller = new AuthController(accountService, BuildConfiguration(), NoTenant);
 
         var result = await controller.Token(new TokenRequest("Admin", "Password"));
 
@@ -42,7 +42,7 @@ public class AuthControllerTests
     public async Task Token_ReturnsUnauthorized_WhenCredentialsAreInvalid(string userName, string password)
     {
         var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.InvalidCredentials));
-        var controller = new AuthController(accountService, BuildConfiguration());
+        var controller = new AuthController(accountService, BuildConfiguration(), NoTenant);
 
         var result = await controller.Token(new TokenRequest(userName, password));
 
@@ -57,7 +57,7 @@ public class AuthControllerTests
     public async Task Token_ReturnsBadRequestNotAServerError_WhenCredentialsAreBlank(string? userName, string? password)
     {
         var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.InvalidCredentials));
-        var controller = new AuthController(accountService, BuildConfiguration());
+        var controller = new AuthController(accountService, BuildConfiguration(), NoTenant);
 
         var result = await controller.Token(new TokenRequest(userName, password));
 
@@ -67,11 +67,34 @@ public class AuthControllerTests
         Assert.Null(accountService.LastUsername);
     }
 
+    /// <summary>A request whose host the server matched to no tenant: sign-in keeps using the configured tenant exactly as before.</summary>
+    private static readonly Adventures.WebApi.IRequestTenant NoTenant = Tenant(null, Adventures.Entities.TenantMatch.None);
+
+    private sealed class FixedTenant(Adventures.Entities.CurrentTenant current) : Adventures.WebApi.IRequestTenant
+    {
+        public Adventures.Entities.CurrentTenant Current { get; } = current;
+    }
+
+    private static Adventures.WebApi.IRequestTenant Tenant(string? domain, Adventures.Entities.TenantMatch match) =>
+        new FixedTenant(new Adventures.Entities.CurrentTenant(domain is null ? null : "id", domain, domain, "api.host", match));
+
+    /// <summary>T1: one deployed app serves many domains, so a person signs in to the tenant of the host the server saw, not to one tenant from configuration.</summary>
+    [Fact]
+    public async Task Token_SignsInToTheTenantOfTheRequestHost_WhenTheServerMatchedOne()
+    {
+        var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.InvalidCredentials));
+        var controller = new AuthController(accountService, BuildConfiguration(tenant: "configured.example"), Tenant("Other.example", Adventures.Entities.TenantMatch.Domain));
+
+        await controller.Token(new TokenRequest("Admin", "Password"));
+
+        Assert.Equal("other.example", accountService.LastTenant);
+    }
+
     [Fact]
     public async Task Token_UsesConfiguredTenant_DefaultingToGlobalWebnetWhenUnset()
     {
         var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.InvalidCredentials));
-        var controller = new AuthController(accountService, BuildConfiguration(tenant: null));
+        var controller = new AuthController(accountService, BuildConfiguration(tenant: null), NoTenant);
 
         await controller.Token(new TokenRequest("Admin", "Password"));
 
@@ -82,7 +105,7 @@ public class AuthControllerTests
     public void WhoAmI_ReturnsUnknown_WhenNoAuthenticatedUserIsSet()
     {
         var accountService = new FakeUserAccountService(LoginResult.Failure(LoginFailureReason.InvalidCredentials));
-        var controller = new AuthController(accountService, BuildConfiguration());
+        var controller = new AuthController(accountService, BuildConfiguration(), NoTenant);
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext(),
@@ -97,7 +120,7 @@ public class AuthControllerTests
     private static AuthController ControllerSignedInAs(FakeUserAccountService accountService, string? subject)
     {
         var claims = subject is null ? [] : new[] { new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, subject) };
-        return new AuthController(accountService, BuildConfiguration())
+        return new AuthController(accountService, BuildConfiguration(), NoTenant)
         {
             ControllerContext = new ControllerContext
             {

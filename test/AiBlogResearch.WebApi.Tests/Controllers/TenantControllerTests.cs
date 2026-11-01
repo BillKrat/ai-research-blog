@@ -1,38 +1,28 @@
-using AiBlogResearch.WebApi.Controllers;
 using Adventures.Entities;
+using Adventures.WebApi;
+using AiBlogResearch.WebApi.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace AiBlogResearch.WebApi.Tests.Controllers;
 
 /// <summary>
-/// The site is on a tenant's domain and the API on a subdomain of it, so the browser's Origin names the tenant; the API's own Host is the
-/// fallback for a direct call. The development fallback domain comes from configuration (Tenancy:FallbackDomain), never from the request.
+/// T1: the tenant shown is the one the server decided from the host it saw (<see cref="IRequestTenant"/>). It used to come from the browser's Origin or
+/// Referer, which the caller sets, so it could not be trusted for anything but display; it is now the same trusted tenant everything else uses.
 /// </summary>
 public sealed class TenantControllerTests
 {
-    private sealed class RecordingResolver : ITenantResolver
+    private sealed class FixedTenant(CurrentTenant current) : IRequestTenant
     {
-        public string? Host { get; private set; }
-        public string? Fallback { get; private set; }
-
-        public Task<CurrentTenant> ResolveAsync(string? host, string? fallbackDomain = null, CancellationToken cancellationToken = default)
-        {
-            Host = host;
-            Fallback = fallbackDomain;
-            return Task.FromResult(new CurrentTenant("t1", "DEV Main", "global-webnet.com", host ?? string.Empty, TenantMatch.Domain));
-        }
+        public CurrentTenant Current { get; } = current;
     }
 
-    private static (TenantController Controller, RecordingResolver Resolver) Build(string requestHost, string? origin = null, string? referer = null, string? fallback = null)
+    private static TenantController Build(CurrentTenant current, string? origin = null, string? referer = null)
     {
-        var resolver = new RecordingResolver();
-        var settings = new Dictionary<string, string?> { ["Tenancy:FallbackDomain"] = fallback };
-        var controller = new TenantController(resolver, new ConfigurationBuilder().AddInMemoryCollection(settings).Build());
+        var controller = new TenantController(new FixedTenant(current));
         var context = new DefaultHttpContext();
-        context.Request.Host = new HostString(requestHost);
+        context.Request.Host = new HostString("api.global-webnet.com");
         if (origin is not null)
         {
             context.Request.Headers.Origin = origin;
@@ -44,40 +34,51 @@ public sealed class TenantControllerTests
         }
 
         controller.ControllerContext = new ControllerContext { HttpContext = context };
-        return (controller, resolver);
+        return controller;
+    }
+
+    private static object? Json(IActionResult result, string name)
+    {
+        var value = Assert.IsType<OkObjectResult>(result).Value!;
+        return value.GetType().GetProperty(name)!.GetValue(value);
     }
 
     [Fact]
-    public async Task TheBrowsersOriginNamesTheTenant_NotTheApiHost()
+    public void ReportsTheTenantTheServerResolvedFromTheHost()
     {
-        var (controller, resolver) = Build("api.global-webnet.com", origin: "https://www.adventuresedge.net");
+        var controller = Build(new CurrentTenant("t1", "DEV Main", "global-webnet.com", "api.global-webnet.com", TenantMatch.Domain));
 
-        var result = await controller.Current(CancellationToken.None);
+        var result = controller.Current();
 
-        Assert.IsType<OkObjectResult>(result);
-        Assert.Equal("www.adventuresedge.net", resolver.Host);
+        Assert.Equal("api.global-webnet.com", Json(result, "Host"));
+        Assert.Equal("Domain", Json(result, "Match"));
+        var tenant = Json(result, "Tenant")!;
+        Assert.Equal("global-webnet.com", tenant.GetType().GetProperty("Domain")!.GetValue(tenant));
     }
 
     [Fact]
-    public async Task WithoutAnOrigin_TheRefererIsUsed_ThenTheRequestHost()
+    public void AnOriginOrRefererNamingAnotherTenantChangesNothing()
     {
-        var (withReferer, resolverA) = Build("api.global-webnet.com", referer: "https://adventuresedge.net/admin/users");
-        await withReferer.Current(CancellationToken.None);
-        Assert.Equal("adventuresedge.net", resolverA.Host);
+        var controller = Build(
+            new CurrentTenant("t1", "DEV Main", "global-webnet.com", "api.global-webnet.com", TenantMatch.Domain),
+            origin: "https://www.adventuresedge.net",
+            referer: "https://adventuresedge.net/admin/users");
 
-        var (direct, resolverB) = Build("api.global-webnet.com");
-        await direct.Current(CancellationToken.None);
-        Assert.Equal("api.global-webnet.com", resolverB.Host);
+        var result = controller.Current();
+
+        Assert.Equal("api.global-webnet.com", Json(result, "Host"));
+        var tenant = Json(result, "Tenant")!;
+        Assert.Equal("global-webnet.com", tenant.GetType().GetProperty("Domain")!.GetValue(tenant));
     }
 
     [Fact]
-    public async Task AMalformedOriginIsIgnored_AndTheDevelopmentFallbackComesFromConfigurationOnly()
+    public void AHostThatMatchesNoTenantSaysSo()
     {
-        var (controller, resolver) = Build("localhost:7052", origin: "not a url", fallback: "global-webnet.com");
+        var controller = Build(new CurrentTenant(null, null, null, "unbound.example", TenantMatch.None));
 
-        await controller.Current(CancellationToken.None);
+        var result = controller.Current();
 
-        Assert.Equal("localhost:7052", resolver.Host);
-        Assert.Equal("global-webnet.com", resolver.Fallback);
+        Assert.Equal("None", Json(result, "Match"));
+        Assert.Null(Json(result, "Tenant"));
     }
 }

@@ -171,6 +171,20 @@ public class UsersControllerTests
         Assert.IsType<ConflictObjectResult>(await controller.RemoveRelationChild(BillId, "TenantRoles", "c1", CancellationToken.None));
     }
 
+    /// <summary>T1: a person set up on one tenant's domain gets their sign-in in that tenant, not in the one from configuration.</summary>
+    [Fact]
+    public async Task SetPassword_CreatesTheSignInInTheTenantOfTheRequestHost()
+    {
+        var presenter = new FakeUserPresenter { FormById = BuildForm(BillId, "BillKrat") };
+        var provisioning = new FakeProvisioning();
+        var tenant = new FixedRequestTenant(new CurrentTenant("t2", "Other", "Other.example", "api.other.example", TenantMatch.Domain));
+        var controller = BuildController(presenter, "BillKrat", provisioning: provisioning, requestTenant: tenant);
+
+        await controller.SetPassword(BillId, CancellationToken.None);
+
+        Assert.Equal("other.example", provisioning.LastTenant);
+    }
+
     [Fact]
     public async Task SetPassword_ExplainsWhenTheHostCannotCreateSignIns()
     {
@@ -184,7 +198,7 @@ public class UsersControllerTests
         Assert.Equal(LegacyUserProvisioning.Message, Assert.IsType<ProblemDetails>(problem.Value).Title);
     }
 
-    private static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null, IUserProvisioning? provisioning = null)
+    private static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null, IUserProvisioning? provisioning = null, Adventures.WebApi.IRequestTenant? requestTenant = null)
     {
         var identity = callerUserName is null
             ? new ClaimsIdentity()
@@ -192,6 +206,7 @@ public class UsersControllerTests
 
         return new UsersController(presenter, writer ?? new FakeRelationWriter(), new EntitySchemaOf<User>(UserSchemaWithRelation),
             provisioning ?? new FakeProvisioning(), new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+            requestTenant ?? new FixedRequestTenant(new CurrentTenant(null, null, null, "api.host", TenantMatch.None)),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<UsersController>.Instance)
         {
             ControllerContext = new ControllerContext
@@ -225,6 +240,16 @@ public class UsersControllerTests
 /// <summary>Stands in for the provisioning service: these tests never reach it.</summary>
 internal sealed class FakeProvisioning : IUserProvisioning
 {
-    public Task<ProvisionedLogin> SetInitialPasswordAsync(string tenant, string username, string? email, string? displayName, CancellationToken cancellationToken = default) =>
-        Task.FromResult(new ProvisionedLogin(username, "test-only", AccountCreated: false));
+    public string? LastTenant { get; private set; }
+
+    public Task<ProvisionedLogin> SetInitialPasswordAsync(string tenant, string username, string? email, string? displayName, CancellationToken cancellationToken = default)
+    {
+        LastTenant = tenant;
+        return Task.FromResult(new ProvisionedLogin(username, "test-only", AccountCreated: false));
+    }
+}
+
+internal sealed class FixedRequestTenant(Adventures.Entities.CurrentTenant current) : Adventures.WebApi.IRequestTenant
+{
+    public Adventures.Entities.CurrentTenant Current { get; } = current;
 }

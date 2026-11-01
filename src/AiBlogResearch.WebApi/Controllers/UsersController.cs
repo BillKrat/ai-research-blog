@@ -21,7 +21,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 [RequireRight(Rights.UsersManage)]
 public sealed class UsersController(
     IUserPresenter presenter, IEntityRelationWriter relationWriter, EntitySchemaOf<User> userSchema,
-    IUserProvisioning provisioning, IConfiguration configuration, ILogger<UsersController> logger) : EntityControllerBase<User>
+    IUserProvisioning provisioning, IConfiguration configuration, Adventures.WebApi.IRequestTenant requestTenant, ILogger<UsersController> logger) : EntityControllerBase<User>
 {
     [HttpGet]
     public Task<ActionResult<EntityGridModel>> List([FromQuery] EntityGridQuery query, CancellationToken cancellationToken) =>
@@ -73,7 +73,7 @@ public sealed class UsersController(
             return Problem(title: "This person has no user name, so there is nothing to sign in with.", statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var tenant = Adventures.WebApi.SiteDomain.Tenant(configuration, "global-webnet.com");
+        var tenant = Adventures.WebApi.SiteDomain.Tenant(requestTenant, configuration, "global-webnet.com");
         ProvisionedLogin login;
         try
         {

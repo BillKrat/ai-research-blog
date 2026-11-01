@@ -1,27 +1,23 @@
-using Adventures.Entities;
+using Adventures.WebApi;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AiBlogResearch.WebApi.Controllers;
 
 /// <summary>
-/// Which tenant this visit is for, from the domain it came in on (one deployed app serves every tenant's domain). The site is on the tenant's
-/// domain and this API on a subdomain of it, so the browser's Origin names the tenant; the API's own host is the fallback for a direct call.
-/// Display only: the value comes from a header the caller controls, so nothing may be authorized or scoped by it without more checks.
+/// Which tenant this visit is for: the one the server decided from the host it saw (<see cref="IRequestTenant"/>, set by the tenancy middleware). One
+/// deployed app serves every tenant's domain; the site is on the tenant's domain and this API on a subdomain of it, so the API's own host names the
+/// tenant. Origin and Referer are never read: the caller sets them, and they used to be what this showed.
 /// </summary>
 [ApiController]
 [Route("api/tenant")]
 [Authorize]
-public sealed class TenantController(ITenantResolver tenants, IConfiguration configuration) : ControllerBase
+public sealed class TenantController(IRequestTenant requestTenant) : ControllerBase
 {
     [HttpGet("current")]
-    public async Task<IActionResult> Current(CancellationToken cancellationToken)
+    public IActionResult Current()
     {
-        var host = HostOf(Request.Headers.Origin.ToString()) ?? HostOf(Request.Headers.Referer.ToString()) ?? Request.Host.Value;
-        var current = await tenants.ResolveAsync(host, configuration["Tenancy:FallbackDomain"], cancellationToken);
+        var current = requestTenant.Current;
         return Ok(new { current.Host, Tenant = current.Id is null ? null : new { current.Id, current.Name, current.Domain }, Match = current.Match.ToString() });
     }
-
-    private static string? HostOf(string? url) =>
-        Uri.TryCreate(url, UriKind.Absolute, out var uri) && (uri.Scheme is "http" or "https") ? uri.Authority : null;
 }

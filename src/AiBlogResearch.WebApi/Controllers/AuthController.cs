@@ -20,14 +20,14 @@ public sealed record TokenResponse(string AccessToken, DateTimeOffset ExpiresAtU
 /// </summary>
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(IUserAccountService accountService, IConfiguration configuration) : ControllerBase
+public sealed class AuthController(IUserAccountService accountService, IConfiguration configuration, Adventures.WebApi.IRequestTenant requestTenant) : ControllerBase
 {
     /// <summary>
-    /// Single-tenant today (see <c>Auth:Tenant</c> in configuration, defaulting to
-    /// "global-webnet.com") - <see cref="IUserAccountService.LoginAsync"/> is tenant-scoped for
-    /// when this app supports more than one, but nothing yet needs the client to supply it.
+    /// The tenant a person signs in to: the one the server resolved from the host it saw (T1, see the tenancy middleware), otherwise the configured
+    /// one (<c>Site:Domain</c>, <c>Auth:Tenant</c>, default "global-webnet.com") exactly as before. The token carries it, and a token for another
+    /// tenant is refused on this one's domain.
     /// </summary>
-    private string Tenant => Adventures.WebApi.SiteDomain.Tenant(configuration, "global-webnet.com");
+    private string Tenant => Adventures.WebApi.SiteDomain.Tenant(requestTenant, configuration, "global-webnet.com");
 
     [HttpPost("token")]
     [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Adventures.WebApi.RequestHardening.TokenPolicy)]

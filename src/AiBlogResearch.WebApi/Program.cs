@@ -358,6 +358,8 @@ try
     builder.Services.AddRightsAuthorization();
     builder.Services.AddScoped<IEntityBll<Tenant>>(provider => new EntityBll<Tenant>(provider.GetRequiredService<IEntityDal<Tenant>>()));
     builder.Services.AddScoped<ITenantResolver, TenantResolver>();
+    // T1: the tenant of each request is decided from the host the server saw (Tenancy:Enforcement = Off, Report (default) or Enforce; Tenancy:FallbackDomain only in Development).
+    builder.Services.AddTenancy(builder.Configuration, builder.Environment.IsDevelopment());
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, BlogConstants.Site.SettingSchemaIri), BlogConstants.Site.SettingBaseIri, BlogConstants.Site.SettingTypeIri,
         BlogConstants.Site.DefaultGraph, s => new SiteSetting(s));
@@ -423,6 +425,8 @@ try
     // Without a handler an exception anywhere in the pipeline (authentication and authorization included) would fall
     // through to IIS's own bare error page with nothing logged.
     app.UseExceptionHandler(errorApp => errorApp.Run(UnhandledExceptionHandler.HandleAsync));
+    // After the exception handler and the rate limiter, before authentication: a host that matches no tenant never reaches the controllers when enforcement is on.
+    app.UseTenancy();
 
     if (app.Environment.IsDevelopment())
     {
@@ -432,6 +436,7 @@ try
     app.MapDefaultEndpoints();
 
     app.UseAuthentication();
+    app.UseTenantTokenCheck();
     app.UseAuthorization();
 
     app.MapControllers();
