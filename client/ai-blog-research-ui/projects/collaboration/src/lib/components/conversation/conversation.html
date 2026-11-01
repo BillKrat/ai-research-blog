@@ -42,7 +42,7 @@
       </button>
     }
     @if (base() === 'posts') {
-      <button mat-stroked-button type="button" (click)="addComment()" [matTooltip]="'quickAddComment' | label">
+      <button mat-stroked-button type="button" (click)="addComment()" [disabled]="sending()" [matTooltip]="'quickAddComment' | label">
         <mat-icon>add_comment</mat-icon>
         Add comment
       </button>
@@ -85,9 +85,12 @@
       @if (base() === 'collaboration') {
         <mat-checkbox name="asDecision" [(ngModel)]="asDecision">Record as a decision</mat-checkbox>
       }
-      <button mat-icon-button color="primary" type="submit" [disabled]="sending() || !text.trim()" [matTooltip]="'send' | label" [attr.aria-label]="'send' | label">
-        <mat-icon>send</mat-icon>
-      </button>
+      <!-- Under a post the Add comment button adds the comment; the send icon only appears for the two replies that need it (Approve, Change request). -->
+      @if (base() !== 'posts' || approving() || requestingChange()) {
+        <button mat-icon-button color="primary" type="submit" [disabled]="sending() || !text.trim()" [matTooltip]="'send' | label" [attr.aria-label]="'send' | label">
+          <mat-icon>send</mat-icon>
+        </button>
+      }
     </div>
   </form>
 </section>

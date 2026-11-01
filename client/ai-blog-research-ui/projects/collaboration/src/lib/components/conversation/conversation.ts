@@ -139,6 +139,12 @@ export class Conversation {
     this.requestingChange.set(false);
     this.approving.set(false);
     this.previewing.set(false);
+    // with something already written, this button is the one that adds it; with an empty box it just puts the cursor there
+    if (this.text.trim()) {
+      this.send();
+      return;
+    }
+
     const area = () => (this.host.nativeElement as HTMLElement).querySelector('textarea[name="text"]') as HTMLTextAreaElement | null;
     // the box is hidden while previewing: focus it once it is back
     if (area()) {

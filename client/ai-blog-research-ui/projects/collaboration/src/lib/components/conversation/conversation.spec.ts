@@ -124,6 +124,32 @@ describe('Conversation quick replies', () => {
     expect(document.activeElement).toBe(root.querySelector('textarea[name="text"]'));
   });
 
+  it('Add comment with text in the box posts that comment (it is the button that adds it) and does nothing else', () => {
+    const { component, http, fixture } = setup();
+    component.text = 'Looks good to me';
+
+    component.addComment();
+
+    const post = http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/posts/p1/comments'));
+    expect(post.request.body).toEqual({ text: 'Looks good to me', kind: 'Comment' });
+    http.expectNone((r) => r.url.endsWith('/approve') || r.url.endsWith('/request-changes'));
+    post.flush({ id: 'c9', author: 'Admin', kind: 'Comment', created: '2026-11-01T12:00:00Z', body: 'Looks good to me' });
+    fixture.detectChanges();
+    expect(component.text).toBe('');
+  });
+
+  it('on a post the send icon appears only while an Approve or Change request note is being written; on a collaboration item it is always there', () => {
+    const post = setup();
+    expect(post.root.querySelector('button[type="submit"]')).toBeNull();
+    post.component.approve();
+    post.fixture.detectChanges();
+    expect(post.root.querySelector('button[type="submit"]')).not.toBeNull();
+
+    TestBed.resetTestingModule();
+    const item = setup(true, 'collaboration');
+    expect(item.root.querySelector('button[type="submit"]')).not.toBeNull();
+  });
+
   it('Backlog starts a plain reply that is only a comment: no review action is run', () => {
     const { http, changed, component } = setup();
 
