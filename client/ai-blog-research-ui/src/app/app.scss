@@ -8,6 +8,12 @@
   margin: 0 auto;
   padding: 1.5rem;
 
+  // the admin area uses the whole window, so its menu sits at the left edge and tables have room
+  &--wide {
+    max-width: none;
+    margin: 0;
+  }
+
   &__header {
     display: flex;
     align-items: center;

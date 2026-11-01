@@ -11,6 +11,11 @@
     border-bottom: 1px solid var(--mat-sys-outline-variant);
   }
 
+  // long text (a list of rights with no spaces) wraps inside its cell instead of widening the grid
+  td {
+    overflow-wrap: anywhere;
+  }
+
   th {
     font-weight: 600;
     white-space: nowrap;

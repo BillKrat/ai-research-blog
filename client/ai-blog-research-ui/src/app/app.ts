@@ -33,6 +33,8 @@ export class App implements OnInit, OnDestroy {
   protected readonly title = computed(() => this.site.settings().title);
   protected readonly tagline = computed(() => this.site.settings().tagline);
   protected readonly isDark = signal(true);
+  /** True under /admin: the admin area uses the whole window (menu at the left edge); the public site keeps its reading width. */
+  protected readonly wide = signal(false);
   protected readonly healthState = signal<HealthState>('checking');
   protected readonly healthCheckedAt = signal<string | null>(null);
   /** What failed, for the status badge ("mcp (timeout)"), and the request id that finds it in the logs. */
@@ -76,7 +78,9 @@ export class App implements OnInit, OnDestroy {
     this.site.get().subscribe();
     // leaving the settings screen: read them again, so a title just saved shows without a browser refresh
     let lastUrl = this.router.url;
+    this.wide.set(lastUrl.startsWith('/admin'));
     this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event) => {
+      this.wide.set(event.urlAfterRedirects.startsWith('/admin'));
       if (lastUrl.startsWith('/admin/settings') && !event.urlAfterRedirects.startsWith('/admin/settings')) {
         this.site.refresh();
       }

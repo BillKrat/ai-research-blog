@@ -1,4 +1,4 @@
-﻿<div class="page">
+﻿<div class="page" [class.page--wide]="wide()">
   @if (apiProblem.messages().length > 0) {
     <section class="page__problem" role="alert">
       @for (message of apiProblem.messages(); track $index) {

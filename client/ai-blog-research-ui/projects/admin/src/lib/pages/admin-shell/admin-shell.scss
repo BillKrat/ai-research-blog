@@ -1,6 +1,7 @@
 .admin-shell {
   display: grid;
-  grid-template-columns: 14rem 1fr;
+  // minmax(0, 1fr): a plain 1fr cannot shrink below its widest cell, which pushed the whole page (and the Add button) off the screen
+  grid-template-columns: 14rem minmax(0, 1fr);
   gap: 2rem;
   margin-top: 1.5rem;
 

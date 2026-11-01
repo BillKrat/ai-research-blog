@@ -2,8 +2,36 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { App } from './app';
+
+describe('App layout width', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: '**', children: [] }])],
+    }).compileComponents();
+  });
+
+  it('keeps the reading width on the public site and uses the whole window in the admin area, so the menu sits at the left edge', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    const page = () => (fixture.nativeElement as HTMLElement).querySelector('.page') as HTMLElement;
+
+    await router.navigateByUrl('/posts');
+    fixture.detectChanges();
+    expect(page().classList.contains('page--wide')).toBe(false);
+
+    await router.navigateByUrl('/admin/roles');
+    fixture.detectChanges();
+    expect(page().classList.contains('page--wide')).toBe(true);
+
+    await router.navigateByUrl('/login');
+    fixture.detectChanges();
+    expect(page().classList.contains('page--wide')).toBe(false);
+  });
+});
 
 describe('App', () => {
   beforeEach(async () => {
