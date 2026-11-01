@@ -74,7 +74,16 @@ public sealed class UsersController(
         }
 
         var tenant = Adventures.WebApi.SiteDomain.Tenant(configuration, "global-webnet.com");
-        var login = await provisioning.SetInitialPasswordAsync(tenant, userName, Value("Email"), Value("DisplayName"), cancellationToken);
+        ProvisionedLogin login;
+        try
+        {
+            login = await provisioning.SetInitialPasswordAsync(tenant, userName, Value("Email"), Value("DisplayName"), cancellationToken);
+        }
+        catch (NotSupportedException refusal)
+        {
+            return Problem(title: refusal.Message, statusCode: StatusCodes.Status501NotImplemented);
+        }
+
         logger.LogInformation("Password set for {UserName} (account created: {Created}) by {Administrator}", login.Username, login.AccountCreated, User.Identity?.Name);
         Response.Headers.CacheControl = "no-store";
         return Ok(new { login.Username, login.Password, login.AccountCreated, MustChangeAtFirstSignIn = true });

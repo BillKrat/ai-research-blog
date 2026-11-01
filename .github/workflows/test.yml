@@ -40,6 +40,7 @@ jobs:
       - name: Test the API, the legacy import and the NQuad browser
         run: |
           dotnet test test/AiBlogResearch.WebApi.Tests -c Release
+          dotnet test test/AiBlogResearch.WebApi.HostTests -c Release
           dotnet test test/LegacyImport.Tests -c Release
           dotnet test test/NQuadBrowser.WebApi.Tests -c Release
 

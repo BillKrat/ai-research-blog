@@ -43,6 +43,7 @@
   </Folder>
   <Folder Name="/AIBlogResearch/Tests/">
     <Project Path="test/AiBlogResearch.WebApi.Tests/AiBlogResearch.WebApi.Tests.csproj" />
+    <Project Path="test/AiBlogResearch.WebApi.HostTests/AiBlogResearch.WebApi.HostTests.csproj" />
   </Folder>
   <Folder Name="/MCP/">
     <Project Path="src/McpServer.WebApi/McpServer.WebApi.csproj" />

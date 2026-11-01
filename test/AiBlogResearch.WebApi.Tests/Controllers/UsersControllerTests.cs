@@ -171,14 +171,27 @@ public class UsersControllerTests
         Assert.IsType<ConflictObjectResult>(await controller.RemoveRelationChild(BillId, "TenantRoles", "c1", CancellationToken.None));
     }
 
-    private static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null)
+    [Fact]
+    public async Task SetPassword_ExplainsWhenTheHostCannotCreateSignIns()
+    {
+        var presenter = new FakeUserPresenter { FormById = BuildForm(BillId, "BillKrat") };
+        var controller = BuildController(presenter, "BillKrat", provisioning: new LegacyUserProvisioning());
+
+        var result = await controller.SetPassword(BillId, CancellationToken.None);
+
+        var problem = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status501NotImplemented, problem.StatusCode);
+        Assert.Equal(LegacyUserProvisioning.Message, Assert.IsType<ProblemDetails>(problem.Value).Title);
+    }
+
+    private static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null, IUserProvisioning? provisioning = null)
     {
         var identity = callerUserName is null
             ? new ClaimsIdentity()
             : new ClaimsIdentity([new Claim(ClaimTypes.Name, callerUserName)], authenticationType: "Test");
 
         return new UsersController(presenter, writer ?? new FakeRelationWriter(), new EntitySchemaOf<User>(UserSchemaWithRelation),
-            new FakeProvisioning(), new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+            provisioning ?? new FakeProvisioning(), new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<UsersController>.Instance)
         {
             ControllerContext = new ControllerContext

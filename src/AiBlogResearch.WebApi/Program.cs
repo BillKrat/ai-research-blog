@@ -167,6 +167,7 @@ try
         // the Development environment, a request from this machine). A deployed site cannot satisfy them.
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IRequestOrigin, HttpRequestOrigin>();
+        builder.Services.AddScoped<IUserProvisioning, LegacyUserProvisioning>();
         builder.Services.AddDevLogin(
             enabled: string.Equals(builder.Configuration[DevLoginOptions.SettingName], "true", StringComparison.OrdinalIgnoreCase),
             isDevelopment: builder.Environment.IsDevelopment());
@@ -461,3 +462,6 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+// Lets the test host (WebApplicationFactory) boot the real startup.
+public partial class Program;
