@@ -178,7 +178,7 @@ public sealed class BrowserTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public void The_policy_name_matches_the_role_policy_the_security_library_registers()
     {
-        Assert.Equal(JwtServiceCollectionExtensions.RolePolicyName(NQuadBrowser.WebApi.Controllers.BrowserAuth.AdminRole), NQuadBrowser.WebApi.Controllers.BrowserAuth.Policy);
+        Assert.Equal(NQuadBrowser.WebApi.Controllers.BrowserAuth.Policy, JwtServiceCollectionExtensions.RolePolicyName(NQuadBrowser.WebApi.Controllers.BrowserAuth.AdminRole));
     }
 
     private static string FindRoot()
