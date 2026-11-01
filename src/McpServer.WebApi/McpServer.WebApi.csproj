@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>mcpserver-webapi-3a7c8e1f-2b4d-4f6a-9c0e-5d1b7a9f4e22</UserSecretsId>
+	  <UserSecretsId>35f5242d-e0ef-427b-8901-a1a38c165ac4</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

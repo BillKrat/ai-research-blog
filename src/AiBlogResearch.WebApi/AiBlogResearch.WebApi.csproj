@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>aiblogresearch-webapi-c9b1f4b2-8f3a-4a3a-9d1e-6a6b4d0b3f21</UserSecretsId>
+	  <UserSecretsId>35f5242d-e0ef-427b-8901-a1a38c165ac4</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
