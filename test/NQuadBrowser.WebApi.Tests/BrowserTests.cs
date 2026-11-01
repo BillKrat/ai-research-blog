@@ -48,12 +48,13 @@ public sealed class BrowserTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.Unauthorized, (await Client().GetAsync("/api/browser/types")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await Client("Editor").GetAsync("/api/browser/types")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await Client("Editor").GetAsync("/api/browser/roles")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await Client("Admin").GetAsync("/api/browser/types")).StatusCode); // the role of a signed-in administrator is TenantAdmin
     }
 
     [Fact]
     public async Task An_administrator_sees_the_generic_kinds_and_none_of_a_feature()
     {
-        var types = await Client("Admin").GetFromJsonAsync<List<TypeInfo>>("/api/browser/types");
+        var types = await Client("TenantAdmin").GetFromJsonAsync<List<TypeInfo>>("/api/browser/types");
 
         Assert.NotNull(types);
         var keys = types!.Select(t => t.Key).ToList();
@@ -66,7 +67,7 @@ public sealed class BrowserTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task The_grid_of_a_kind_lists_its_entities_with_the_schema_driven_columns()
     {
-        var response = await Client("Admin").GetAsync("/api/browser/roles");
+        var response = await Client("TenantAdmin").GetAsync("/api/browser/roles");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
@@ -77,13 +78,13 @@ public sealed class BrowserTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task An_unknown_kind_is_not_found()
     {
-        Assert.Equal(HttpStatusCode.NotFound, (await Client("Admin").GetAsync("/api/browser/nothing-like-this")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await Client("TenantAdmin").GetAsync("/api/browser/nothing-like-this")).StatusCode);
     }
 
     [Fact]
     public async Task An_administrator_can_create_edit_and_delete_an_entity()
     {
-        var client = Client("Admin");
+        var client = Client("TenantAdmin");
         var created = await client.PostAsJsonAsync("/api/browser/roles", new { entityId = "", values = new Dictionary<string, string?> { ["Name"] = "Browser test role" } });
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         var form = await created.Content.ReadFromJsonAsync<Form>();

@@ -7,11 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace NQuadBrowser.WebApi.Controllers;
 
-/// <summary>Who may use the browser: the Admin role of a token issued with the shared signing key (the policy name follows <c>JwtServiceCollectionExtensions.RolePolicyName</c>).</summary>
+/// <summary>Who may use the browser: the TenantAdmin role of a token issued with the shared signing key (the policy name follows <c>JwtServiceCollectionExtensions.RolePolicyName</c>).</summary>
 public static class BrowserAuth
 {
-    public const string AdminRole = "Admin";
-    public const string Policy = "Role:" + AdminRole;
+    /// <summary>The role a signed-in administrator's token carries (the legacy tenant administrator, which the main app treats as holding every right).</summary>
+    public const string AdminRole = WellKnownClaims.TenantAdminRole;
+    public const string Policy = WellKnownClaims.TenantAdminPolicy;
 }
 
 /// <summary>What the browser page shows for a kind of entity in its list of kinds.</summary>
@@ -19,7 +20,7 @@ public sealed record BrowserTypeInfo(string Key, string Title, string SchemaIri)
 
 /// <summary>
 /// The generic, schema-driven endpoints behind the browser page: the same grid and form models the main admin uses, for any registered kind
-/// of entity. Signed-in administrators only (the Admin role of a token issued with the shared signing key). One presenter per request over the
+/// of entity. Signed-in administrators only (the TenantAdmin role of a token issued with the shared signing key). One presenter per request over the
 /// kind's own registration; nothing here names a feature.
 /// </summary>
 [ApiController]
