@@ -11,7 +11,7 @@
 | `PotelPaper.pdf` (Taligent MVP, 1996) | whole; the last paragraph of the file is scraped web text with errors and is ignored | Reference |
 | `TwistingTheTriad.PDF` (Bower, McGlashan, 2000) | whole | Reference |
 
-**Not read this session:** AppArch Ch. 4-8 (design process, deployment, styles, quality attributes, communication), 13 (service layer), 15 (web archetype), 17 (rich client). The 2026-10-11 principles doc cites Ch. 15. Read Ch. 17 before the WPF stage and Ch. 13 before any service-interface work, and record the rules here.
+**Not read this session:** AppArch Ch. 4-8 (design process, deployment, styles, quality attributes, communication), 13 (service layer), 15 (web archetype). The 2026-10-11 principles doc cites Ch. 15. Ch. 17 was read for S9 (2026-11-01, rules R20 to R23). Read Ch. 13 before any service-interface work, and record the rules here.
 
 ## 2. Rules, distilled (cite as R-n)
 
@@ -41,6 +41,10 @@
 - **R17.** No source files at a project root; folders are named for what they hold. (human, 2026-10-31)
 - **R18.** Exceptions are caught at layer boundaries, business errors differ from system errors, nothing internal reaches the user. (AppArch 3, 10-12)
 - **R19.** Validate at every trust boundary and again in the Bll. (AppArch 3, 11)
+- **R20.** Rich client: separate presentation logic from the view (view models, commands); the view only binds. (AppArch 17)
+- **R21.** Rich client: business logic that holds sensitive rules stays on its own tier; the client calls it through a message-based, coarse-grained interface, asynchronously, so the UI never blocks. The desktop therefore binds to `IEntityPresenter<T>` and registers a remote one. (AppArch 17; human, 2026-11-01)
+- **R22.** Rich client: sanitise what reaches the person (exception shielding), log unexpected failures where an administrator can find them, and never put a token or password in a message or log. (AppArch 17, 3)
+- **R23.** Rich client: secure the channel (https; plain http only to loopback in development) and hold the token in memory only. (AppArch 17)
 
 ## 3. Target architecture
 
@@ -150,7 +154,7 @@ Sizes: S under half a day, M about a day, L multi-day (my estimate; no stage is 
 | **S6** | `refactor-s6-security` | `Security` core without ASP.NET; `Security.AspNetCore`; `IIdentity` abstraction | Rule 6 green; a console project references Security alone | M (DONE 2026-10-31, awaiting review) |
 | **S7** | `refactor-s7-sql-legacy` | `Adventures.Data.Sql` and `Mode=Legacy\|New` by registration only; read the legacy BlogEngine tables for Posts, Pages, Users, Categories, Tags, Comments; collaboration off in Legacy; SELECT-only against the LocalDB copy first | Same app, flag flipped, legacy blog renders; no Bll/controller changed | L (DONE 2026-10-31, awaiting review; needs a live database check) |
 | **S8** | `refactor-s8-nquad-browser` | NQuad browser app in this repo referencing no Blog project | Reference graph test proves it; browses and edits schemas/entities | M (DONE 2026-10-31, awaiting review) |
-| **S9** | `refactor-s9-wpf` | WPF research app: remote Dal (D3), desktop `IIdentity`, Presenters/ViewModels shared | App signs in, lists and edits an entity | L |
+| **S9** | `refactor-s9-wpf` | WPF desktop client: remote presenter (D3 read one level up, human 2026-11-01), `ApiSession` over `ICurrentPrincipal`, view models shared in `Adventures.Client` | App signs in, lists and edits an entity | L (DONE 2026-11-01, awaiting review; needs a live sign-in check) |
 | **S10** | `refactor-s10-angular-libs` | Package the Angular admin shell, entity form/grid, collaboration and blog reader as reusable workspace libraries; app consumes them | App unchanged to users; client suite green | L |
 | **S11** | in `web-presence` | web-presence repo consumes the libraries and `Adventures.*`; `Adventures.Private.*` extend through registration/plug-ins, no copy-paste | Builds and runs from the shared pieces only | L |
 
@@ -167,3 +171,4 @@ Each stage ends with: suites green in both repos, app running locally, a stage r
 - 2026-10-31 (S6): `Adventures.Security` is the framework-free core; `Adventures.Security.AspNetCore` holds the JwtBearer wiring and policies (namespaces unchanged); `ICurrentPrincipal` (+ `AmbientPrincipal`, `HttpContextPrincipal`) added for non-web hosts; the last architecture ratchet entry is removed; 16 guard tests.
 - 2026-10-31 (S7): `Data:Mode=Legacy` serves posts, pages, categories and tags from the BlogEngine SQL tables (`Adventures.Data.Sql`, `Adventures.Blog.Legacy`, registration only); `IRelationNameSource` for pointer names; collaboration plug-ins off in Legacy; Admin/Password developer sign-in behind four gates (Legacy mode, `Legacy:DevLogin`, Development, local request); 17 guard tests. SQL verified against a scripted executor only.
 - 2026-10-31 (S8): `NQuadBrowser.WebApi` (browse and edit schemas and entities) built from Entities, Data.NQuad, Security and WebApi only; the main API's token signs in (shared Jwt settings, Admin role); a small standalone page; its own page security policy; guard test fails if its reference closure gains Blog, Collaboration, Identity, Postgres, Sql or main-app projects.
+- 2026-11-01 (S9): `Adventures.Client` (sign-in session, `HttpEntityPresenter<T>`, view models, no UI toolkit or ASP.NET) and the WPF app `AiBlogResearch.Desktop`; the seam is the remote presenter, not a remote Dal (rights, validation and the Bll stay on the server); rules R20 to R23 from AppArch ch. 17; the client refuses plain http except to loopback; 3 wire-contract tests run the presenter against the real browser controller.
