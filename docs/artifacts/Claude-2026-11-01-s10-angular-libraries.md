@@ -66,3 +66,11 @@ Then the usual `docs/Claude-run.ps1 -Branch refactor-s10-angular-libs` and click
 
 1. **How `web-presence` consumes these** (S11): `npm pack` tarballs referenced by file path, or the workspace folder linked. No registry: nothing is published, and every library is marked `"private": true` so `npm publish` refuses it (a layering-spec check; removing the flag would be a deliberate act). Recommendation: tarballs by path.
 2. **Scope name `@adventures/*`.** It matches the .NET `Adventures.*`; if you want a different npm scope before anything is published, now is free.
+
+## Change requests from the review run (2026-11-01, all on this branch)
+
+1. **Step 3, post conversation.** Under a post, **Add comment** now adds the comment (an empty box just puts the cursor there); the send icon appears only while an Approve or Change request note is being written; collaboration items are unchanged. The Backlog reply in my test step was my error: it exists on collaboration items only.
+2. **Step 4, Roles list off-screen.** The admin column could not shrink below its widest cell (a Rights list with no spaces), pushing the Add button off the screen. Fixed three ways: `minmax(0, 1fr)`, cells wrap (`overflow-wrap: anywhere`), and the admin area uses the whole window so the menu sits at the left edge (the public site keeps its reading width). Pinned by a layout-contract spec because jsdom cannot measure layout. **Not seen in a real browser with data: yours to confirm.**
+3. **Step 6, home page errors.** With no front page the server answered 404 on every navigation, which the browser logs as a red failed request. It now answers **204 No Content** (server change in the Foundation, test first); the client reads that as no front page. A 404 from an older server still works. This still makes the check on each navigation (so a front page pinned a moment ago appears), it just no longer fails. The other half of step 6, "no response when I clicked nodes with the API stopped", I have not changed: the error banner appears for an unreachable API, so I need to know what you expected to see.
+
+Totals after these: client 165 tests (app 30, core 29, entity-ui 32, collaboration 18, blog-reader 17, admin 39), app API 131, Foundation suite and the other app suites all pass.
