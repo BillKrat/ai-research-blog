@@ -47,6 +47,7 @@
   </Folder>
   <Folder Name="/Desktop/">
     <Project Path="src/AiBlogResearch.Desktop/AiBlogResearch.Desktop.csproj" />
+    <Project Path="test/AiBlogResearch.Desktop.Tests/AiBlogResearch.Desktop.Tests.csproj" />
   </Folder>
   <Folder Name="/MCP/">
     <Project Path="src/McpServer.WebApi/McpServer.WebApi.csproj" />

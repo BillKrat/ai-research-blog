@@ -34,7 +34,7 @@ flowchart LR
 ## Not verified / limits
 
 - **Not run against the live main API.** The sign-in screen has not been used with a real account; the contract is proven in memory against the browser controller, not against `/api/auth/token` and `/api/users`. Your run is the check.
-- No screenshot: nothing here drives the window; the views are untested beyond start-up.
+- **A defect found by the first live run, fixed:** "New" showed a blank window. Cause: I had not created `EntityEditView.xaml.cs`, so the view never loaded its XAML; the build still passed. New `AiBlogResearch.Desktop.Tests` loads the real window on an STA thread and checks that the sign-in, list and edit screens render their controls (red before the fix: 0 buttons on the edit screen; 3 pass now). Still no screenshot of my own: nothing here clicks through the window, so the first full click-through is yours.
 - Only People (`api/users`) is wired. Relations (role assignments), pointer lookups, delete, and the "must change password" flow are not in the desktop yet. The desktop does not offer filtering or sorting.
 - The password lives in a .NET string for the length of a sign-in attempt (a `PasswordBox` cannot bind); it is cleared afterwards but not zeroed in memory.
 - Windows only; not built in CI (CI builds the web projects one by one). Not packaged or signed.
