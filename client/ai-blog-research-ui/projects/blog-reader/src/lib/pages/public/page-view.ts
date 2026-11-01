@@ -36,13 +36,20 @@ export class PageView implements OnInit {
       const source = this.isFront ? this.content.home() : this.content.page(params.get('slug') ?? '');
       source.subscribe({
         next: (page) => {
+          if (page === null && this.isFront) {
+            // no front page is pinned (204): the site opens on the posts, as BlogEngine.NET does
+            this.page.set(null);
+            void this.router.navigateByUrl('/posts', { replaceUrl: true });
+            return;
+          }
+
           this.page.set(page);
           this.isLoading.set(false);
         },
         error: () => {
           this.page.set(null);
           if (this.isFront) {
-            // no front page is pinned: the site opens on the posts, as BlogEngine.NET does
+            // an older server answers 404 for "no front page": same outcome
             void this.router.navigateByUrl('/posts', { replaceUrl: true });
             return;
           }

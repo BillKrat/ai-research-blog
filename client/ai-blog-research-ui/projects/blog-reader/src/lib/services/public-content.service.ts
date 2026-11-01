@@ -81,9 +81,9 @@ export class PublicContentService {
     return this.http.get<PublicPage>(`${this.base}/pages/${encodeURIComponent(slug)}`);
   }
 
-  /** The front page; the server answers 404 when none is set. */
-  home(): Observable<PublicPage> {
-    return this.http.get<PublicPage>(`${this.base}/home`);
+  /** The front page, or null when none is pinned (the server answers 204 No Content, which is normal and logs nothing in the browser). */
+  home(): Observable<PublicPage | null> {
+    return this.http.get<PublicPage | null>(`${this.base}/home`);
   }
 
   menu(): Observable<PublicMenuItem[]> {

@@ -150,6 +150,27 @@ describe('Public site', () => {
     expect(navigate).toHaveBeenCalledWith('/posts', { replaceUrl: true });
   });
 
+  it('a site with no front page answers 204: the nav shows no Home link and the home address goes to the posts (no failed request)', () => {
+    const none = { status: 204, statusText: 'No Content' };
+
+    const navHttp = configure(routeStub({}));
+    const nav = TestBed.createComponent(SiteNav);
+    nav.detectChanges();
+    navHttp.expectOne((r) => r.url.endsWith('/api/public/menu')).flush([]);
+    navHttp.expectOne((r) => r.url.endsWith('/api/public/home')).flush(null, none);
+    nav.detectChanges();
+    expect(Array.from((nav.nativeElement as HTMLElement).querySelectorAll('a')).map((a) => a.textContent?.trim())).toEqual(['Posts']);
+
+    TestBed.resetTestingModule();
+    const http = configure(routeStub({}, { front: true }));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(PageView);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/public/home')).flush(null, none);
+
+    expect(navigate).toHaveBeenCalledWith('/posts', { replaceUrl: true });
+  });
+
   it('SiteNav has no Home link when no front page is pinned', () => {
     const http = configure(routeStub({}));
     const fixture = TestBed.createComponent(SiteNav);

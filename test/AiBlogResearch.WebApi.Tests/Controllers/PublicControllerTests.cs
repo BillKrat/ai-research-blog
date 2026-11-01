@@ -128,4 +128,18 @@ public sealed class PublicControllerTests
         Assert.False(content.PostsIncludeDrafts);
         Assert.False(content.PageIncludeDrafts);
     }
+
+    /// <summary>
+    /// A site with no front page is normal, not an error: the client asks on every navigation, and a 404 shows as a red failed request in the browser each time.
+    /// So the answer is 204 No Content ("nothing pinned"), which the client reads as no front page and the browser does not log.
+    /// </summary>
+    [Fact]
+    public async Task Home_WithNoFrontPage_IsNoContent_NotNotFound()
+    {
+        var (controller, _, _) = Build(signedIn: false, policyPasses: false);
+
+        var result = await controller.Home(CancellationToken.None);
+
+        Assert.IsType<NoContentResult>(result.Result);
+    }
 }

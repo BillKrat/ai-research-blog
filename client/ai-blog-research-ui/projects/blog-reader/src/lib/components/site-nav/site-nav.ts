@@ -44,7 +44,7 @@ export class SiteNav implements OnInit {
       error: () => this.items.set([]),
     });
     this.content.home().subscribe({
-      next: () => this.hasHome.set(true),
+      next: (page) => this.hasHome.set(page !== null),
       error: () => this.hasHome.set(false),
     });
   }
