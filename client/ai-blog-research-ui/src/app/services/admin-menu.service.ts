@@ -1,7 +1,7 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { API_BASE_URL } from '../api-base-url';
+import { API_BASE_URL } from '@adventures/core';
 
 /** One menu entry as the server sends it: a screen that is not built yet has available false and no route. */
 export interface AdminMenuItem {

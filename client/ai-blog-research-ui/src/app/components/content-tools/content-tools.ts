@@ -4,9 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
-import { describeApiError } from '../../models/api-error';
-import { AuthService } from '../../services/auth.service';
-import { EntityApiService } from '../../services/entity-api.service';
+import { AuthService, describeApiError, EntityApiService } from '@adventures/core';
 import { ProfileService } from '../../services/profile.service';
 
 /**

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { API_BASE_URL } from '../api-base-url';
+import { API_BASE_URL } from '@adventures/core';
 
 /** The tenant this visit is for, as the server worked it out from the domain: Domain (a real match), Fallback (a development stand-in) or None. */
 export interface CurrentTenant {

@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { API_BASE_URL } from '../api-base-url';
+import { API_BASE_URL } from '@adventures/core';
 
 /** A built-in plug-in and whether it is on. */
 export interface PluginState {

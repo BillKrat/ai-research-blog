@@ -2,8 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, OnDestroy, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { API_BASE_URL } from '../api-base-url';
-import { EntityGridModel } from '../models/entity-form.model';
+import { API_BASE_URL, EntityGridModel } from '@adventures/core';
 
 export interface TriageFinding {
   title: string;

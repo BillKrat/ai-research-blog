@@ -6,8 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LabelPipe } from '../../i18n/labels';
 import { EntityGrid } from '../../components/entity-grid/entity-grid';
-import { describeApiError } from '../../models/api-error';
-import { EntityDataModel, EntityGridModel } from '../../models/entity-form.model';
+import { describeApiError, EntityDataModel, EntityGridModel } from '@adventures/core';
 import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
 
 /**

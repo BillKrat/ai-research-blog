@@ -10,9 +10,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { SiteNav } from './components/site-nav/site-nav';
 import { AdminExceptionsService } from './services/admin-exceptions.service';
 import { AdminMenuService } from './services/admin-menu.service';
-import { AuthService } from './services/auth.service';
+import { ApiProblemService, AuthService } from '@adventures/core';
 import { SiteService } from './services/site.service';
-import { ApiProblemService } from './services/api-problem.service';
 import { HealthResponse, HealthService, describeFailures } from './services/health.service';
 
 type HealthState = 'checking' | 'healthy' | 'degraded' | 'unhealthy' | 'unreachable';

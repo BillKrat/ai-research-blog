@@ -2,7 +2,7 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { EntityGridModel } from '../../models/entity-form.model';
+import { EntityGridModel } from '@adventures/core';
 import { EntityGrid, GridRequest } from './entity-grid';
 
 function model(overrides: Partial<EntityGridModel> = {}): EntityGridModel {

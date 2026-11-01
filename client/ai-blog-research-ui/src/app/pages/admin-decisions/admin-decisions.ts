@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MarkdownContent } from '../../components/markdown-content/markdown-content';
-import { describeApiError } from '../../models/api-error';
+import { describeApiError } from '@adventures/core';
 import { DecisionEntry, ConversationService } from '../../services/conversation.service';
 
 /**

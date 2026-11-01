@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { API_BASE_URL } from '../api-base-url';
+import { API_BASE_URL } from '@adventures/core';
 
 /** One right of the catalog: its stable name and what it lets a person do. */
 export interface RightInfo {

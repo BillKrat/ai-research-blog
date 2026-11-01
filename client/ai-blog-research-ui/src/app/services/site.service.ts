@@ -2,7 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, of, shareReplay, tap } from 'rxjs';
-import { API_BASE_URL } from '../api-base-url';
+import { API_BASE_URL } from '@adventures/core';
 
 /** What the browser needs of the site settings (an administrator edits them under Admin > Settings). */
 export interface SiteSettings {

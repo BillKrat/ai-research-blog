@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '@adventures/core';
 import { Login } from './login';
 
 describe('Login return', () => {

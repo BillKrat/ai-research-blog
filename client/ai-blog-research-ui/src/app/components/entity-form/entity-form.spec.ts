@@ -5,7 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { EntityForm } from './entity-form';
-import { EntityFormModel } from '../../models/entity-form.model';
+import { EntityFormModel } from '@adventures/core';
 
 function buildModel(): EntityFormModel {
   return {

@@ -1,6 +1,6 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { describeApiError } from '../../models/api-error';
+import { describeApiError } from '@adventures/core';
 import { AdminMenuService } from '../../services/admin-menu.service';
 import { PluginState, PluginsService } from '../../services/plugins.service';
 

@@ -8,11 +8,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MarkdownContent } from '../markdown-content/markdown-content';
-import { EntityFieldSchema, EntityFormModel, SUPPORTED_CONTRACT_VERSION } from '../../models/entity-form.model';
+import { describeApiError, EntityApiService, EntityFieldSchema, EntityFormModel, LookupOption, MediaService, SUPPORTED_CONTRACT_VERSION } from '@adventures/core';
 import { LabelPipe } from '../../i18n/labels';
-import { describeApiError } from '../../models/api-error';
-import { EntityApiService, LookupOption } from '../../services/entity-api.service';
-import { MediaService } from '../../services/media.service';
 
 /** How a field is drawn; decided from the server-supplied type name, never from the entity. */
 export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'refs' | 'markdown' | 'html' | 'choice';

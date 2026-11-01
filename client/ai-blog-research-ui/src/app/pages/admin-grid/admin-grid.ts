@@ -7,9 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap, throwError } from 'rxjs';
 import { EntityGrid, GridRequest } from '../../components/entity-grid/entity-grid';
 import { LabelPipe } from '../../i18n/labels';
-import { describeApiError } from '../../models/api-error';
-import { EntityGridModel } from '../../models/entity-form.model';
-import { EntityApiService } from '../../services/entity-api.service';
+import { describeApiError, EntityApiService, EntityGridModel } from '@adventures/core';
 
 /**
  * One admin list screen for every entity collection: the route says which (data: collection and title), the server says

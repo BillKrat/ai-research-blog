@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
-import { describeApiError } from '../../models/api-error';
+import { describeApiError } from '@adventures/core';
 import { RightInfo, RolesApiService } from '../../services/roles-api.service';
 
 /**

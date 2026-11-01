@@ -2,8 +2,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { API_BASE_URL } from '../api-base-url';
-import { EntityDataModel, EntityFormModel } from '../models/entity-form.model';
+import { API_BASE_URL, EntityDataModel, EntityFormModel } from '@adventures/core';
 
 /** One thing the signed-in person may do, with what it allows. */
 export interface MyRight {

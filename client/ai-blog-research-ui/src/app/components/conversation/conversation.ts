@@ -7,11 +7,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LabelPipe } from '../../i18n/labels';
-import { describeApiError } from '../../models/api-error';
-import { EntityAction } from '../../models/entity-form.model';
+import { describeApiError, EntityAction, EntityApiService, MediaService } from '@adventures/core';
 import { ConversationBase, ConversationEntry, ConversationService } from '../../services/conversation.service';
-import { EntityApiService } from '../../services/entity-api.service';
-import { MediaService } from '../../services/media.service';
 import { MarkdownContent } from '../markdown-content/markdown-content';
 
 /**

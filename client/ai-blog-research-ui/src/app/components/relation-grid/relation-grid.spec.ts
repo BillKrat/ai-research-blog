@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { EntityRelationModel } from '../../models/entity-form.model';
+import { EntityRelationModel } from '@adventures/core';
 import { RelationGrid } from './relation-grid';
 
 function relation(overrides: { editable?: boolean } = {}): EntityRelationModel {

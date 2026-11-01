@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LabelPipe } from '../../i18n/labels';
-import { EntityFieldSchema, EntityGridModel } from '../../models/entity-form.model';
+import { EntityFieldSchema, EntityGridModel } from '@adventures/core';
 
 /** What the user asked of the grid; the host turns it into a request (the grid never fetches anything). */
 export type GridRequest =

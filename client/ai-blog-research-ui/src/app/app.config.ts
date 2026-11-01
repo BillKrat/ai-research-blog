@@ -5,13 +5,9 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { provideMarkdown } from 'ngx-markdown';
 import { routes } from './app.routes';
-import { API_BASE_URL } from './api-base-url';
+import { API_BASE_URL, apiProblemInterceptor, authInterceptor, ClientErrorHandler, correlationInterceptor } from '@adventures/core';
 import { environment } from '../environments/environment';
-import { authInterceptor } from './interceptors/auth.interceptor';
-import { ClientErrorHandler } from './services/client-error-handler';
-import { correlationInterceptor } from './interceptors/correlation.interceptor';
 import { serverErrorInterceptor } from './interceptors/server-error.interceptor';
-import { apiProblemInterceptor } from './interceptors/api-problem.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [

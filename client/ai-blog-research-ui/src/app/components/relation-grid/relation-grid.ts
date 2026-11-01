@@ -5,9 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LabelPipe } from '../../i18n/labels';
 import { Observable } from 'rxjs';
-import { describeApiError } from '../../models/api-error';
-import { EntityDataModel, EntityFieldSchema, EntityRelationModel } from '../../models/entity-form.model';
-import { EntityApiService, LookupOption } from '../../services/entity-api.service';
+import { describeApiError, EntityApiService, EntityDataModel, EntityFieldSchema, EntityRelationModel, LookupOption } from '@adventures/core';
 import { EntityGrid } from '../entity-grid/entity-grid';
 
 /**

@@ -9,9 +9,7 @@ import { RightsChecklist } from '../../components/rights-checklist/rights-checkl
 import { EntityForm } from '../../components/entity-form/entity-form';
 import { RelationGrid } from '../../components/relation-grid/relation-grid';
 import { LabelPipe } from '../../i18n/labels';
-import { describeApiError } from '../../models/api-error';
-import { EntityAction, EntityFormModel } from '../../models/entity-form.model';
-import { EntityApiService } from '../../services/entity-api.service';
+import { describeApiError, EntityAction, EntityApiService, EntityFormModel } from '@adventures/core';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
