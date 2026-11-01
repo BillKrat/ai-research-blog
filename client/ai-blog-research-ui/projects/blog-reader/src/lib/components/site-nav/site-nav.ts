@@ -13,7 +13,7 @@ import { PublicContentService, PublicMenuItem } from '../../services/public-cont
  * show up the next time the visitor (or the author) moves anywhere, not only after a browser refresh.
  */
 @Component({
-  selector: 'app-site-nav',
+  selector: 'adv-site-nav',
   imports: [RouterLink, RouterLinkActive, DraftBadge],
   templateUrl: './site-nav.html',
   styleUrl: './site-nav.scss',

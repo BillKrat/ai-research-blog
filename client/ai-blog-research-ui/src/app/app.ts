@@ -7,11 +7,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
-import { SiteNav } from './components/site-nav/site-nav';
+import { SiteNav, SiteService } from '@adventures/blog-reader';
 import { AdminExceptionsService } from './services/admin-exceptions.service';
 import { AdminMenuService } from './services/admin-menu.service';
 import { ApiProblemService, AuthService } from '@adventures/core';
-import { SiteService } from './services/site.service';
 import { HealthResponse, HealthService, describeFailures } from './services/health.service';
 
 type HealthState = 'checking' | 'healthy' | 'degraded' | 'unhealthy' | 'unreachable';

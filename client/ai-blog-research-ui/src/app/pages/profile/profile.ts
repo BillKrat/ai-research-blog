@@ -8,8 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { EntityForm, LabelPipe } from '@adventures/entity-ui';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { AuthService, describeApiError, EntityDataModel, EntityFormModel } from '@adventures/core';
-import { MyRight, ProfileService } from '../../services/profile.service';
+import { AuthService, describeApiError, EntityDataModel, EntityFormModel, MyRight, ProfileService } from '@adventures/core';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 type DeleteState = 'idle' | 'deleting' | 'error';

@@ -6,7 +6,8 @@
     "paths": {
       "@adventures/core": ["./projects/core/src/public-api.ts"],
       "@adventures/entity-ui": ["./projects/entity-ui/src/public-api.ts"],
-      "@adventures/collaboration": ["./projects/collaboration/src/public-api.ts"]
+      "@adventures/collaboration": ["./projects/collaboration/src/public-api.ts"],
+      "@adventures/blog-reader": ["./projects/blog-reader/src/public-api.ts"]
     },
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -49,6 +50,12 @@
     },
     {
       "path": "./projects/collaboration/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/blog-reader/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/blog-reader/tsconfig.spec.json"
     }
   ]
 }

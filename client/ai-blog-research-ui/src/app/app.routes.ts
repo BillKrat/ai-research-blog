@@ -21,12 +21,12 @@ const adminCollection = (path: string, collection: string, title: string): Route
 
 export const routes: Routes = [
   // The public site (anonymous): home (the front page, else a welcome), posts, one post, one page, a category, a tag.
-  { path: '', pathMatch: 'full', loadComponent: () => import('./pages/public/page-view').then((m) => m.PageView), data: { front: true } },
-  { path: 'posts', loadComponent: () => import('./pages/public/post-list').then((m) => m.PostList), data: { kind: 'all' } },
-  { path: 'post/:slug', loadComponent: () => import('./pages/public/post-view').then((m) => m.PostView) },
-  { path: 'page/:slug', loadComponent: () => import('./pages/public/page-view').then((m) => m.PageView) },
-  { path: 'category/:name', loadComponent: () => import('./pages/public/post-list').then((m) => m.PostList), data: { kind: 'category' } },
-  { path: 'tag/:name', loadComponent: () => import('./pages/public/post-list').then((m) => m.PostList), data: { kind: 'tag' } },
+  { path: '', pathMatch: 'full', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PageView), data: { front: true } },
+  { path: 'posts', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'all' } },
+  { path: 'post/:slug', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostView) },
+  { path: 'page/:slug', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PageView) },
+  { path: 'category/:name', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'category' } },
+  { path: 'tag/:name', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'tag' } },
   { path: 'login', loadComponent: () => import('./pages/login/login').then((m) => m.Login) },
   {
     path: 'profile',

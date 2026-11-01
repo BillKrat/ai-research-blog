@@ -5,7 +5,7 @@
     <h2>Not found</h2>
     <p>This post does not exist or is not published. <a routerLink="/posts">Back to the posts</a>.</p>
   } @else if (post(); as result) {
-    <h2>{{ result.summary.title }}@if (result.summary.isDraft) {<app-draft-badge />}@if (result.summary.approval) {<adv-approval-badge [status]="result.summary.approval" />}</h2>
+    <h2>{{ result.summary.title }}@if (result.summary.isDraft) {<adv-draft-badge />}@if (result.summary.approval) {<adv-approval-badge [status]="result.summary.approval" />}</h2>
     <p class="public__meta">
       <span>
         @if (result.summary.datePublished) {
@@ -15,7 +15,7 @@
           by {{ result.summary.author }}
         }
       </span>
-      <app-content-tools kind="posts" [slug]="result.summary.slug" />
+      <adv-content-tools kind="posts" [slug]="result.summary.slug" />
     </p>
     <adv-markdown-content [markdown]="result.content" />
     <p class="public__chips">

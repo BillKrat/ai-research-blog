@@ -15,3 +15,4 @@ export * from './lib/interceptors/api-problem.interceptor';
 export * from './lib/interceptors/auth.interceptor';
 export * from './lib/interceptors/correlation.interceptor';
 export * from './lib/guards/auth.guard';
+export * from './lib/services/profile.service';

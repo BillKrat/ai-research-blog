@@ -7,7 +7,7 @@ import { LabelPipe } from '@adventures/entity-ui';
  * (the reader asks with the same token as the admin), so this badge never appears for a visitor.
  */
 @Component({
-  selector: 'app-draft-badge',
+  selector: 'adv-draft-badge',
   imports: [LabelPipe],
   template: `<span class="draft-badge" [attr.title]="'draftNote' | label">{{ 'draft' | label }}</span>`,
   styleUrl: './draft-badge.scss',

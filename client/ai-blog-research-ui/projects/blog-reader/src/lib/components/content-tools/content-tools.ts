@@ -4,8 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
-import { AuthService, describeApiError, EntityApiService } from '@adventures/core';
-import { ProfileService } from '../../services/profile.service';
+import { AuthService, describeApiError, EntityApiService, ProfileService } from '@adventures/core';
 
 /**
  * Add, Edit and Delete for the post or page a signed-in user is reading. Anonymous visitors see nothing. The public API carries
@@ -14,7 +13,7 @@ import { ProfileService } from '../../services/profile.service';
  * delete; a post needs create, edit any and delete any. The right to edit only your own posts is not enough for this post.
  */
 @Component({
-  selector: 'app-content-tools',
+  selector: 'adv-content-tools',
   imports: [MatButtonModule, MatIconModule, MatTooltipModule],
   templateUrl: './content-tools.html',
   styleUrl: './content-tools.scss',
