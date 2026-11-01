@@ -2,6 +2,7 @@
   "name": "@adventures/collaboration",
   "version": "0.1.0",
   "license": "BUSL-1.1",
+  "private": true,
   "peerDependencies": {
     "@adventures/core": "^0.1.0",
     "@adventures/entity-ui": "^0.1.0",

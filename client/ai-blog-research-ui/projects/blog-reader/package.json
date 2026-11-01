@@ -2,6 +2,7 @@
   "name": "@adventures/blog-reader",
   "version": "0.1.0",
   "license": "BUSL-1.1",
+  "private": true,
   "peerDependencies": {
     "@adventures/collaboration": "^0.1.0",
     "@adventures/core": "^0.1.0",

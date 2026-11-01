@@ -2,6 +2,7 @@
   "name": "@adventures/core",
   "version": "0.1.0",
   "license": "BUSL-1.1",
+  "private": true,
   "peerDependencies": {
     "@angular/common": "^22.2.0",
     "@angular/core": "^22.2.0",

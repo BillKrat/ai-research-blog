@@ -66,6 +66,11 @@ describe('client library layering', () => {
         expect(offences).toEqual([]);
       });
 
+      it('is marked private, so npm publish refuses it (nothing here is published; publishing would be a deliberate act)', () => {
+        const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { private?: boolean };
+        expect(manifest.private).toBe(true);
+      });
+
       it('declares the libraries it uses as peer dependencies, and no others', () => {
         const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { peerDependencies?: Record<string, string> };
         const declared = Object.keys(manifest.peerDependencies ?? {})

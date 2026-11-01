@@ -47,7 +47,7 @@ flowchart BT
 ## Not verified / limits
 
 - **No signed-in click-through.** The dev boot had no API, so I did not use the admin screens, the conversation, or the public site with data. The suites cover them component by component, and the page content is unchanged, but your run is the real check.
-- **The libraries are not published.** Nothing goes to npm. They are consumed from source by path in this workspace. How `web-presence` (S11) consumes them is an open decision (below).
+- **The libraries are not published and cannot be by accident.** Nothing goes to npm; each is `"private": true`. They are consumed from source by path in this workspace. How `web-presence` (S11) consumes them is an open decision (below).
 - **Not deployed yet.** Merging to main starts the Angular deploy (`client/**` changed); `Claude-verify.ps1` will check the bundle name afterwards.
 - Library versions are all `0.1.0` and peers are caret ranges; there is no release process yet.
 - The routes (which collections appear and their titles) still live in the app; the libraries supply screens, not a route table.
@@ -64,5 +64,5 @@ Then the usual `docs/Claude-run.ps1 -Branch refactor-s10-angular-libs` and click
 
 ## Decisions for you
 
-1. **How `web-presence` consumes these** (S11): (a) a private npm registry or GitHub Packages, (b) `npm pack` tarballs referenced by file path, (c) the workspace folder copied or linked. Recommendation: (b) for now, (a) once a second app is real.
+1. **How `web-presence` consumes these** (S11): `npm pack` tarballs referenced by file path, or the workspace folder linked. No registry: nothing is published, and every library is marked `"private": true` so `npm publish` refuses it (a layering-spec check; removing the flag would be a deliberate act). Recommendation: tarballs by path.
 2. **Scope name `@adventures/*`.** It matches the .NET `Adventures.*`; if you want a different npm scope before anything is published, now is free.
