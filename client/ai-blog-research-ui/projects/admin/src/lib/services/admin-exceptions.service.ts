@@ -1,8 +1,8 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, OnDestroy, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { API_BASE_URL, EntityGridModel } from '@adventures/core';
+import { API_BASE_URL, EntityGridModel, REQUEST_TIMEOUT_MS } from '@adventures/core';
 
 export interface TriageFinding {
   title: string;
@@ -94,6 +94,8 @@ export class AdminExceptionsService implements OnDestroy {
     return this.http.post<AiTriageResult>(
       `${this.apiUrl}/api/admin/diagnostics/${encodeURIComponent(correlationId)}/ai-triage`,
       {},
+      // the server allows the model up to 90 seconds; the ordinary limit would cut it off
+      { context: new HttpContext().set(REQUEST_TIMEOUT_MS, 120_000) },
     );
   }
 

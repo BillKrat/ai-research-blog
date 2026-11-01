@@ -19,6 +19,21 @@ describe('ApiProblemService', () => {
     expect(s.messages()[1]).toContain('usersecret');
   });
 
+  it('knows the API is unreachable after a no-response failure or a timeout, and not once it answers again', () => {
+    const s = service();
+    expect(s.unreachable()).toBe(false);
+
+    s.reportHttp(new HttpErrorResponse({ status: 0, statusText: 'Timeout' }));
+    expect(s.unreachable()).toBe(true);
+
+    s.clear();
+    expect(s.unreachable()).toBe(false);
+
+    s.reportHttp(new HttpErrorResponse({ status: 0 }));
+    s.reportHttp(new HttpErrorResponse({ status: 500 }));
+    expect(s.unreachable()).toBe(false);
+  });
+
   it('says the API is not answering when there was no response at all', () => {
     const s = service();
     s.reportHttp(new HttpErrorResponse({ status: 0 }));

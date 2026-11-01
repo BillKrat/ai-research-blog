@@ -2,6 +2,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { REQUEST_TIMEOUT_MS } from '@adventures/core';
 import { AdminExceptionsService } from './admin-exceptions.service';
 
 describe('AdminExceptionsService', () => {
@@ -48,6 +49,14 @@ it('sets the status of a kind of failure with a PUT', () => {    service.setSign
     const request = controller.expectOne((r) => r.url.endsWith('/api/admin/diagnostics/abc-123/triage'));
     expect(request.request.method).toBe('GET');
     request.flush({ correlationId: 'abc-123', verdict: 'Recovered', summary: '', findings: [], nextSteps: [], handOffCommand: '' });
+  });
+
+  it('allows an AI triage far longer than an ordinary call (the server allows it up to 90 s), so the default limit does not cut it off', () => {
+    service.askClaude('abc-123').subscribe();
+
+    const request = controller.expectOne((r) => r.url.endsWith('/api/admin/diagnostics/abc-123/ai-triage'));
+    expect(request.request.context.get(REQUEST_TIMEOUT_MS)).toBeGreaterThanOrEqual(120_000);
+    request.flush({});
   });
 
   it('asks Claude with a POST, never a GET (it costs money)', () => {

@@ -35,7 +35,9 @@ export class App implements OnInit, OnDestroy {
   protected readonly isDark = signal(true);
   /** True under /admin: the admin area uses the whole window (menu at the left edge); the public site keeps its reading width. */
   protected readonly wide = signal(false);
-  protected readonly healthState = signal<HealthState>('checking');
+  private readonly measuredHealth = signal<HealthState>('checking');
+  /** What the badge shows: the last health check, unless a call to the API has just gone unanswered (then "unreachable" at once, until it answers again). */
+  protected readonly healthState = computed<HealthState>(() => (this.apiProblem.unreachable() ? 'unreachable' : this.measuredHealth()));
   protected readonly healthCheckedAt = signal<string | null>(null);
   /** What failed, for the status badge ("mcp (timeout)"), and the request id that finds it in the logs. */
   protected readonly healthProblem = signal<string>('');
@@ -105,7 +107,7 @@ export class App implements OnInit, OnDestroy {
         if (error?.status === 503 && error.error?.status) {
           this.showHealth(error.error as HealthResponse);
         } else {
-          this.healthState.set('unreachable');
+          this.measuredHealth.set('unreachable');
           this.healthProblem.set('');
           this.healthTrace.set(null);
         }
@@ -115,7 +117,7 @@ export class App implements OnInit, OnDestroy {
 
   private showHealth(res: HealthResponse): void {
     const status = res.status?.toLowerCase();
-    this.healthState.set(status === 'unhealthy' ? 'unhealthy' : status === 'degraded' ? 'degraded' : 'healthy');
+    this.measuredHealth.set(status === 'unhealthy' ? 'unhealthy' : status === 'degraded' ? 'degraded' : 'healthy');
     this.healthCheckedAt.set(new Date(res.timestampUtc).toLocaleTimeString());
     this.healthProblem.set(describeFailures(res));
     this.healthTrace.set(res.correlationId ?? null);

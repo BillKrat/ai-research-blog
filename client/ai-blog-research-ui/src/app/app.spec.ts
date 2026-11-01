@@ -1,8 +1,9 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { ApiProblemService } from '@adventures/core';
 import { App } from './app';
 
 describe('App layout width', () => {
@@ -30,6 +31,34 @@ describe('App layout width', () => {
     await router.navigateByUrl('/login');
     fixture.detectChanges();
     expect(page().classList.contains('page--wide')).toBe(false);
+  });
+});
+
+describe('App health badge follows an unanswered API', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+  });
+
+  it('turns to "unreachable" as soon as any call to the API goes unanswered, and back when it answers again (no waiting for the next health check)', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.match((r) => r.url.endsWith('/api/health'))[0].flush({ status: 'Healthy', timestampUtc: new Date().toISOString() });
+    fixture.detectChanges();
+    // the badge itself is shown to administrators only; the state it draws from is what matters here
+    const badge = () => (fixture.componentInstance as unknown as { healthState(): string }).healthState();
+    expect(badge()).toBe('healthy');
+
+    TestBed.inject(ApiProblemService).reportHttp(new HttpErrorResponse({ status: 0, statusText: 'Timeout' }));
+    fixture.detectChanges();
+    expect(badge()).toBe('unreachable');
+
+    TestBed.inject(ApiProblemService).clear();
+    fixture.detectChanges();
+    expect(badge()).toBe('healthy');
   });
 });
 

@@ -19,11 +19,16 @@ export class ApiProblemService {
   /** The sentences to show, empty when everything is fine. */
   readonly messages = signal<string[]>([]);
 
+  /** True from the moment a call to the API went unanswered (refused, or timed out) until the API answers again; the header badge follows it at once. */
+  readonly unreachable = signal(false);
+
   /** Records an HTTP failure when it is the API's own (unreachable or a 5xx). Anything else is left to the screen that asked. */
   reportHttp(error: unknown): void {
     if (!(error instanceof HttpErrorResponse) || (error.status !== 0 && error.status < 500)) {
       return;
     }
+
+    this.unreachable.set(error.status === 0);
 
     const body = error.error as StartupProblemBody | null;
     if (error.status === 503 && body && typeof body === 'object' && Array.isArray(body.problems)) {
@@ -49,6 +54,7 @@ export class ApiProblemService {
 
   /** The API answered: whatever was shown before no longer holds. */
   clear(): void {
+    this.unreachable.set(false);
     if (this.messages().length > 0) {
       this.messages.set([]);
     }
