@@ -6,7 +6,7 @@
   @if (relation.grid.rows.length === 0) {
     <p class="relation-grid__hint">None.</p>
   } @else {
-    <app-entity-grid [model]="relation.grid" [rowTools]="canRemove ? rowTools : undefined" />
+    <adv-entity-grid [model]="relation.grid" [rowTools]="canRemove ? rowTools : undefined" />
   }
 
   @if (canAdd) {

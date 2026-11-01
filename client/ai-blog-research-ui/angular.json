@@ -121,6 +121,32 @@
           }
         }
       }
+    },
+    "entity-ui": {
+      "projectType": "library",
+      "root": "projects/entity-ui",
+      "sourceRoot": "projects/entity-ui/src",
+      "prefix": "adv",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/entity-ui/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/entity-ui/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/entity-ui/tsconfig.spec.json"
+          }
+        }
+      }
     }
   }
 }

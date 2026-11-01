@@ -25,7 +25,7 @@ export type GridRequest =
  * Knows nothing about what a row is, so each new grid (users, roles, posts) needs no new component.
  */
 @Component({
-  selector: 'app-entity-grid',
+  selector: 'adv-entity-grid',
   imports: [NgTemplateOutlet, RouterLink, MatSlideToggleModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './entity-grid.html',
   styleUrl: './entity-grid.scss',

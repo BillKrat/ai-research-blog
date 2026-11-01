@@ -35,7 +35,7 @@
     @if (grid.rows.length === 0) {
       <p>{{ includePurged() ? 'No exceptions recorded.' : 'No active exceptions.' }}</p>
     } @else {
-      <app-entity-grid [model]="grid" [rowTools]="rowTools" />
+      <adv-entity-grid [model]="grid" [rowTools]="rowTools" />
     }
   }
   @if (signatures().length > 0) {

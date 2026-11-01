@@ -8,7 +8,7 @@
   @if (isLoading()) {
     <p>Loading...</p>
   } @else if (model(); as form) {
-    <app-entity-form [model]="form" (save)="onSave($event)">
+    <adv-entity-form [model]="form" (save)="onSave($event)">
       <div formToolbar class="admin-entity__top">
       <div class="admin-entity__toolbar" role="toolbar" aria-label="Actions">
         <button mat-icon-button type="button" (click)="back()" [matTooltip]="'back' | label" [attr.aria-label]="'back' | label">
@@ -84,11 +84,11 @@
         </div>
       }
       </div>
-    </app-entity-form>
+    </adv-entity-form>
 
     @for (relation of form.relations ?? []; track relation.name) {
       <h3>{{ relation.label }}</h3>
-      <app-relation-grid [relation]="relation" (changed)="reload()" (pendingChange)="setPending(relation.name, $event)" />
+      <adv-relation-grid [relation]="relation" (changed)="reload()" (pendingChange)="setPending(relation.name, $event)" />
     }
 
     @if (hasRightsChecklist) {

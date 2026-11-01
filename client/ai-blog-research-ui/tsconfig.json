@@ -4,7 +4,8 @@
   "compileOnSave": false,
   "compilerOptions": {
     "paths": {
-      "@adventures/core": ["./projects/core/src/public-api.ts"]
+      "@adventures/core": ["./projects/core/src/public-api.ts"],
+      "@adventures/entity-ui": ["./projects/entity-ui/src/public-api.ts"]
     },
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -35,6 +36,12 @@
     },
     {
       "path": "./projects/core/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/entity-ui/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/entity-ui/tsconfig.spec.json"
     }
   ]
 }

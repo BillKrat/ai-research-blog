@@ -10,6 +10,6 @@
     }
     <h2>{{ result.title }}@if (result.isDraft) {<app-draft-badge />}</h2>
     <p class="public__meta public__meta--tools"><app-content-tools kind="pages" [slug]="result.slug" /></p>
-    <app-markdown-content [markdown]="result.content" />
+    <adv-markdown-content [markdown]="result.content" />
   }
 </article>

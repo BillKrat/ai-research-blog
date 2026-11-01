@@ -4,7 +4,7 @@
   @if (isLoading()) {
     <p>Loading profile...</p>
   } @else if (model()) {
-    <app-entity-form [model]="model()!" (save)="onSave($event)">
+    <adv-entity-form [model]="model()!" (save)="onSave($event)">
       @switch (saveState()) {
         @case ('saved') {
           <p class="profile__status profile__status--success" role="status">Saved.</p>
@@ -26,7 +26,7 @@
           <mat-icon>save</mat-icon>
         </button>
       }
-    </app-entity-form>
+    </adv-entity-form>
 
     <form class="profile__password" [formGroup]="passwordForm" (ngSubmit)="changePassword()">
       <h3>Change password</h3>

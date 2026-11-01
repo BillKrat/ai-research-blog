@@ -3,7 +3,7 @@ import { DraftBadge } from '../../components/draft-badge/draft-badge';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContentTools } from '../../components/content-tools/content-tools';
-import { MarkdownContent } from '../../components/markdown-content/markdown-content';
+import { MarkdownContent } from '@adventures/entity-ui';
 import { PublicContentService, PublicPage } from '../../services/public-content.service';
 
 /**

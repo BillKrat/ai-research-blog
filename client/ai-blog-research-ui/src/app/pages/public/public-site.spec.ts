@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { provideMarkdown } from 'ngx-markdown';
 import { BehaviorSubject } from 'rxjs';
-import { MarkdownContent } from '../../components/markdown-content/markdown-content';
+import { MarkdownContent } from '@adventures/entity-ui';
 import { SiteNav } from '../../components/site-nav/site-nav';
 import { PageView } from './page-view';
 import { PostList } from './post-list';

@@ -17,7 +17,7 @@
       </span>
       <app-content-tools kind="posts" [slug]="result.summary.slug" />
     </p>
-    <app-markdown-content [markdown]="result.content" />
+    <adv-markdown-content [markdown]="result.content" />
     <p class="public__chips">
       @for (category of result.summary.categories; track category) {
         <a [routerLink]="['/category', category]">{{ category }}</a>

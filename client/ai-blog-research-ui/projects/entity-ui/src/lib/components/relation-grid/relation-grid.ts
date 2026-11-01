@@ -15,7 +15,7 @@ import { EntityGrid } from '../entity-grid/entity-grid';
  * what a child is lives here. Each change goes to the child own endpoint; afterwards the host reloads the parent.
  */
 @Component({
-  selector: 'app-relation-grid',
+  selector: 'adv-relation-grid',
   imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, EntityGrid],
   templateUrl: './relation-grid.html',
   styleUrl: './relation-grid.scss',

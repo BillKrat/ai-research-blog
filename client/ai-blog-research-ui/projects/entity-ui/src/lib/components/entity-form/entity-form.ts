@@ -23,7 +23,7 @@ export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'ref
  * refused, not guessed at. isRequired is a visual hint (the required marker); the server validates.
  */
 @Component({
-  selector: 'app-entity-form',
+  selector: 'adv-entity-form',
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MarkdownContent],
   templateUrl: './entity-form.html',
   styleUrl: './entity-form.scss',
@@ -171,7 +171,7 @@ export class EntityForm implements OnChanges {
     return String(this.form.controls[field.name]?.value ?? '');
   }
 
-  /** The preview of an HTML field; Angular sanitises it when it is bound as HTML. (Markdown is previewed by app-markdown-content.) */
+  /** The preview of an HTML field; Angular sanitises it when it is bound as HTML. (Markdown is previewed by adv-markdown-content.) */
   protected previewOf(field: EntityFieldSchema): string {
     return this.textOf(field);
   }

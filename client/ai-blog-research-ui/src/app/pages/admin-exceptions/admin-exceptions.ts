@@ -4,8 +4,7 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { LabelPipe } from '../../i18n/labels';
-import { EntityGrid } from '../../components/entity-grid/entity-grid';
+import { EntityGrid, LabelPipe } from '@adventures/entity-ui';
 import { describeApiError, EntityDataModel, EntityGridModel } from '@adventures/core';
 import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
 

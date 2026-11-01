@@ -5,8 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap, throwError } from 'rxjs';
-import { EntityGrid, GridRequest } from '../../components/entity-grid/entity-grid';
-import { LabelPipe } from '../../i18n/labels';
+import { EntityGrid, GridRequest, LabelPipe } from '@adventures/entity-ui';
 import { describeApiError, EntityApiService, EntityGridModel } from '@adventures/core';
 
 /**

@@ -18,7 +18,7 @@
             under <a [routerLink]="[decision.source === 'collaboration' ? '/admin/collaboration' : '/admin/posts', decision.postId]">{{ decision.postTitle }}</a>
           </span>
         </header>
-        <app-markdown-content [markdown]="decision.body" />
+        <adv-markdown-content [markdown]="decision.body" />
       </article>
     } @empty {
       @if (errors().length === 0) {

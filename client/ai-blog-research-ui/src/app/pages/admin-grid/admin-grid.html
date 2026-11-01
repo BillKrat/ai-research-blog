@@ -29,7 +29,7 @@
     @if (grid.rows.length === 0) {
       <p>{{ selectedFilterValue() ? 'Nothing matches this filter.' : 'Nothing here yet.' }}</p>
     } @else {
-      <app-entity-grid [model]="grid" [toggleFields]="['IsPublished']" toggleLockedField="RevisionOf" [viewBase]="viewBase" (request)="onRequest($event)" />
+      <adv-entity-grid [model]="grid" [toggleFields]="['IsPublished']" toggleLockedField="RevisionOf" [viewBase]="viewBase" (request)="onRequest($event)" />
     }
   }
 </section>

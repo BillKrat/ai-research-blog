@@ -5,7 +5,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContentTools } from '../../components/content-tools/content-tools';
-import { MarkdownContent } from '../../components/markdown-content/markdown-content';
+import { MarkdownContent } from '@adventures/entity-ui';
 import { PublicContentService, PublicPost } from '../../services/public-content.service';
 
 /** One published post: title, who and when, its categories and tags as links, and the rendered Markdown. A draft or unknown slug is a 404. */

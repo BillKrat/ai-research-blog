@@ -76,7 +76,7 @@
               <p class="entity-form__error" role="alert">{{ message }}</p>
             }
             @if (previewing()[field.name]) {
-              <div class="entity-form__preview"><app-markdown-content [markdown]="textOf(field)" /></div>
+              <div class="entity-form__preview"><adv-markdown-content [markdown]="textOf(field)" /></div>
             } @else {
               <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)" [attr.data-field]="field.name"></textarea>
             }

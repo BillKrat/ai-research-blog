@@ -6,9 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Conversation } from '../../components/conversation/conversation';
 import { RightsChecklist } from '../../components/rights-checklist/rights-checklist';
-import { EntityForm } from '../../components/entity-form/entity-form';
-import { RelationGrid } from '../../components/relation-grid/relation-grid';
-import { LabelPipe } from '../../i18n/labels';
+import { EntityForm, LabelPipe, RelationGrid } from '@adventures/entity-ui';
 import { describeApiError, EntityAction, EntityApiService, EntityFormModel } from '@adventures/core';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';

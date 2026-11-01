@@ -6,10 +6,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { LabelPipe } from '../../i18n/labels';
+import { LabelPipe, MarkdownContent } from '@adventures/entity-ui';
 import { describeApiError, EntityAction, EntityApiService, MediaService } from '@adventures/core';
 import { ConversationBase, ConversationEntry, ConversationService } from '../../services/conversation.service';
-import { MarkdownContent } from '../markdown-content/markdown-content';
 
 /**
  * The conversation under a post: the questions, answers and decisions, oldest first, and a box to add to them. It is the durable

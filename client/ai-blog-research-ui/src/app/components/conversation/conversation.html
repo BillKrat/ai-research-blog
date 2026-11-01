@@ -14,7 +14,7 @@
           <span class="conversation__decision">Decision</span>
         }
       </header>
-      <app-markdown-content [markdown]="entry.body" />
+      <adv-markdown-content [markdown]="entry.body" />
     </article>
   } @empty {
     <p class="conversation__none">Nothing said yet.</p>
@@ -77,7 +77,7 @@
 
   <form class="conversation__add" (ngSubmit)="send()">
     @if (previewing()) {
-      <div class="conversation__preview"><app-markdown-content [markdown]="text" /></div>
+      <div class="conversation__preview"><adv-markdown-content [markdown]="text" /></div>
     } @else {
       <textarea name="text" rows="3" [(ngModel)]="text" aria-label="Add to the conversation" placeholder="Answer, ask, or record a decision (Markdown)"></textarea>
     }

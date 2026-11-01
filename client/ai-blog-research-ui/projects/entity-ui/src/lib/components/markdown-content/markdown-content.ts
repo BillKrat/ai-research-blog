@@ -12,7 +12,7 @@ const MERMAID_FENCE = /^\s{0,3}(```|~~~)\s*mermaid\b/im;
  * level in the theme that is active when the post is shown. A diagram that does not parse shows Mermaid's own error drawing.
  */
 @Component({
-  selector: 'app-markdown-content',
+  selector: 'adv-markdown-content',
   imports: [MarkdownComponent],
   template: `@if (ready()) {
     <markdown class="markdown" [data]="source()" [mermaid]="hasDiagram()" [mermaidOptions]="options()" />

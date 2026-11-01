@@ -5,11 +5,10 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { LabelPipe } from '../../i18n/labels';
+import { EntityForm, LabelPipe } from '@adventures/entity-ui';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AuthService, describeApiError, EntityDataModel, EntityFormModel } from '@adventures/core';
-import { EntityForm } from '../../components/entity-form/entity-form';
 import { MyRight, ProfileService } from '../../services/profile.service';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
