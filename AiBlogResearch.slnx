@@ -45,6 +45,9 @@
     <Project Path="test/AiBlogResearch.WebApi.Tests/AiBlogResearch.WebApi.Tests.csproj" />
     <Project Path="test/AiBlogResearch.WebApi.HostTests/AiBlogResearch.WebApi.HostTests.csproj" />
   </Folder>
+  <Folder Name="/Desktop/">
+    <Project Path="src/AiBlogResearch.Desktop/AiBlogResearch.Desktop.csproj" />
+  </Folder>
   <Folder Name="/MCP/">
     <Project Path="src/McpServer.WebApi/McpServer.WebApi.csproj" />
     <Project Path="src/NQuadBrowser.WebApi/NQuadBrowser.WebApi.csproj" />

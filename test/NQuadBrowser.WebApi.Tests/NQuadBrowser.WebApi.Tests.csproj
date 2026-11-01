@@ -17,6 +17,7 @@
 
   <ItemGroup>
 	<ProjectReference Include="..\..\src\NQuadBrowser.WebApi\NQuadBrowser.WebApi.csproj" />
+	<ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Client\Adventures.Client.csproj" />
   </ItemGroup>
 
   <ItemGroup>
