@@ -19,7 +19,7 @@ depending on expensive identity, data or AI service providers.
   learn from, to start your own, and to run your own site.
 
 It is also an early-stage replacement for [AdventuresOnTheEdge.net](https://AdventuresOnTheEdge.net),
-currently powered by a legacy private [BlogEngine.NET fork](https://github.com/BillKrat/BlogAI).
+currently powered by a legacy forked project [BlogEngine.NET fork](https://github.com/BillKrat/BlogAI).
 
 - [AGENTS.md](AGENTS.md) — AI context index: repo state, per-AI sections, docs index
 
