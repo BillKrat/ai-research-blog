@@ -340,7 +340,7 @@ try
     static void AddContentEntity<TEntity>(
         IServiceCollection services, IReadOnlyList<NQuad> quads, string schemaIri, string baseIri, string typeIri, Func<EntitySchema, TEntity> factory)
         where TEntity : DynamicEntity =>
-        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, BlogConstants.Content.DefaultGraph, factory);
+        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, BlogConstants.Content.DefaultGraph, factory, tenantScoped: true);
 
     AddContentEntity(builder.Services, userQuads, BlogConstants.Content.PageSchemaIri, BlogConstants.Content.PageBaseIri, BlogConstants.Content.PageTypeIri, s => new Page(s));
     AddContentEntity(builder.Services, userQuads, BlogConstants.Content.PostSchemaIri, BlogConstants.Content.PostBaseIri, BlogConstants.Content.PostTypeIri, s => new Post(s));
@@ -349,7 +349,7 @@ try
     AddContentEntity(builder.Services, userQuads, CollaborationConstants.CommentSchemaIri, CollaborationConstants.CommentBaseIri, CollaborationConstants.CommentTypeIri, s => new Comment(s));
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, CollaborationConstants.SchemaIri), CollaborationConstants.BaseIri, CollaborationConstants.TypeIri,
-        CollaborationConstants.DefaultGraph, s => new CollaborationItem(s));
+        CollaborationConstants.DefaultGraph, s => new CollaborationItem(s), tenantScoped: true);
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, PluginConstants.SchemaIri), PluginConstants.BaseIri, PluginConstants.TypeIri,
         CollaborationConstants.DefaultGraph, s => new Plugin(s));
@@ -360,9 +360,11 @@ try
     builder.Services.AddScoped<ITenantResolver, TenantResolver>();
     // T1: the tenant of each request is decided from the host the server saw (Tenancy:Enforcement = Off, Report (default) or Enforce; Tenancy:FallbackDomain only in Development).
     builder.Services.AddTenancy(builder.Configuration, builder.Environment.IsDevelopment());
+    // T2: posts, pages, categories, tags, comments, collaboration items and site settings live in the request tenant's graph (Tenancy:PrimaryTenantId keeps today's graphs; unset = scoping off).
+    builder.Services.AddScoped<IGraphScope, RequestGraphScope>();
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, BlogConstants.Site.SettingSchemaIri), BlogConstants.Site.SettingBaseIri, BlogConstants.Site.SettingTypeIri,
-        BlogConstants.Site.DefaultGraph, s => new SiteSetting(s));
+        BlogConstants.Site.DefaultGraph, s => new SiteSetting(s), tenantScoped: true);
     builder.Services.AddBlog();
     builder.Services.AddCollaboration();
     builder.Services.AddNQuadRelations();
