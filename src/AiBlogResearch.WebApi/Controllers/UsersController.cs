@@ -20,7 +20,7 @@ namespace AiBlogResearch.WebApi.Controllers;
 [Route("api/users")]
 [RequireRight(Rights.UsersManage)]
 public sealed class UsersController(
-    IUserPresenter presenter, IEntityRelationWriter relationWriter, EntitySchemaOf<User> userSchema,
+    ITenantUserPresenter presenter, IEntityRelationWriter relationWriter, EntitySchemaOf<User> userSchema, IUserMembership membership, ITenantContext tenantContext, IEntityRelationProvider relations,
     IUserProvisioning provisioning, IConfiguration configuration, Adventures.WebApi.IRequestTenant requestTenant, ILogger<UsersController> logger) : EntityControllerBase<User>
 {
     [HttpGet]
@@ -73,6 +73,12 @@ public sealed class UsersController(
             return Problem(title: "This person has no user name, so there is nothing to sign in with.", statusCode: StatusCodes.Status400BadRequest);
         }
 
+        // A person of several tenants has one sign-in for all of them: resetting it from one tenant would let that tenant's administrator sign in as them everywhere.
+        if ((await membership.TenantIdsOfAsync(id, cancellationToken)).Any(other => !string.Equals(other, tenantContext.TenantId, StringComparison.Ordinal)))
+        {
+            return Problem(title: "This person also belongs to another tenant, so their password cannot be reset from here: it would change their sign-in for every tenant.", statusCode: StatusCodes.Status409Conflict);
+        }
+
         var tenant = Adventures.WebApi.SiteDomain.Tenant(requestTenant, configuration, "global-webnet.com");
         ProvisionedLogin login;
         try
@@ -91,12 +97,58 @@ public sealed class UsersController(
 
     /// <summary>Adds a role assignment (or any child of a declared relation) to the user: each child is saved through its own endpoint and rules, never as part of the user.</summary>
     [HttpPost("{id}/relations/{relationName}")]
-    public Task<IActionResult> AddRelationChild(string id, string relationName, [FromBody] EntityDataModel request, CancellationToken cancellationToken) =>
-        AddRelationChildAsync(relationWriter, userSchema.Schema, id, relationName, request, cancellationToken);
+    public async Task<IActionResult> AddRelationChild(string id, string relationName, [FromBody] EntityDataModel request, CancellationToken cancellationToken)
+    {
+        if (!(await membership.MemberIdsAsync(tenantContext.TenantId, cancellationToken)).Contains(id))
+        {
+            return NotFound();
+        }
+
+        // An assignment may only be made inside the administrator's own tenant: the tenant (or the organisation's tenant) in the request is checked, never trusted.
+        if (!await AssignmentIsHereAsync(relationName, request.Values, cancellationToken))
+        {
+            return Problem(title: "A role can only be assigned inside your own tenant.", statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        return await AddRelationChildAsync(relationWriter, userSchema.Schema, id, relationName, request, cancellationToken);
+    }
 
     [HttpDelete("{id}/relations/{relationName}/{childId}")]
-    public Task<IActionResult> RemoveRelationChild(string id, string relationName, string childId, CancellationToken cancellationToken) =>
-        RemoveRelationChildAsync(relationWriter, userSchema.Schema, id, relationName, childId, cancellationToken);
+    public async Task<IActionResult> RemoveRelationChild(string id, string relationName, string childId, CancellationToken cancellationToken)
+    {
+        if (!(await membership.MemberIdsAsync(tenantContext.TenantId, cancellationToken)).Contains(id))
+        {
+            return NotFound();
+        }
+
+        // Only an assignment of this tenant can be removed here: a person of several tenants keeps the roles they hold elsewhere.
+        var assignments = await relations.GetRelationsAsync(userSchema.Schema, id, editable: false, cancellationToken);
+        var child = assignments.Where(r => r.Name.Equals(relationName, StringComparison.OrdinalIgnoreCase)).SelectMany(r => r.Grid.Rows)
+            .FirstOrDefault(row => string.Equals(row.EntityId, childId, StringComparison.Ordinal));
+        if (child is null || !await AssignmentIsHereAsync(relationName, child.Values, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        return await RemoveRelationChildAsync(relationWriter, userSchema.Schema, id, relationName, childId, cancellationToken);
+    }
+
+    /// <summary>True when a tenant-role or organisation-role assignment belongs to the current tenant (other relations are not tenant assignments and pass).</summary>
+    private async Task<bool> AssignmentIsHereAsync(string relationName, IReadOnlyDictionary<string, string?> values, CancellationToken cancellationToken)
+    {
+        string? Value(string name) => values.FirstOrDefault(pair => string.Equals(pair.Key, name, StringComparison.OrdinalIgnoreCase)).Value;
+        if (relationName.Equals("TenantRoles", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Equals(Value("Tenant"), tenantContext.TenantId, StringComparison.Ordinal);
+        }
+
+        if (relationName.Equals("OrganizationRoles", StringComparison.OrdinalIgnoreCase))
+        {
+            return Value("Organization") is { Length: > 0 } organisation && await membership.OrganisationInTenantAsync(organisation, tenantContext.TenantId, cancellationToken);
+        }
+
+        return true;
+    }
 
     [HttpPost]
     public Task<ActionResult<EntityFormModel>> Create([FromBody] EntityDataModel request, CancellationToken cancellationToken) =>

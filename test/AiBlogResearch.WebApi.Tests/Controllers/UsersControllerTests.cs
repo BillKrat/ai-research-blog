@@ -127,7 +127,7 @@ public class UsersControllerTests
     {
         var writer = new FakeRelationWriter();
         var controller = BuildController(new FakeUserPresenter(), "BillKrat", writer);
-        var request = new EntityDataModel(string.Empty, new Dictionary<string, string?> { ["Role"] = "r1" });
+        var request = new EntityDataModel(string.Empty, new Dictionary<string, string?> { ["Role"] = "r1", ["Tenant"] = "t1" });
 
         var result = await controller.AddRelationChild(BillId, "TenantRoles", request, CancellationToken.None);
 
@@ -140,7 +140,7 @@ public class UsersControllerTests
     {
         var writer = new FakeRelationWriter();
         var controller = BuildController(new FakeUserPresenter(), "BillKrat", writer);
-        var request = new EntityDataModel(string.Empty, new Dictionary<string, string?>());
+        var request = new EntityDataModel(string.Empty, new Dictionary<string, string?> { ["Tenant"] = "t1" });
 
         Assert.IsType<NotFoundResult>(await controller.AddRelationChild(BillId, "NoSuchRelation", request, CancellationToken.None));
         Assert.Null(writer.LastAdd);
@@ -159,7 +159,7 @@ public class UsersControllerTests
     public async Task RemoveRelationChild_Returns204_404_OrConflictForTheLastAdministrator()
     {
         var writer = new FakeRelationWriter();
-        var controller = BuildController(new FakeUserPresenter(), "BillKrat", writer);
+        var controller = BuildController(new FakeUserPresenter(), "BillKrat", writer, relations: new FakeRelations { Rows = { ("TenantRoles", "c1", new Dictionary<string, string?> { ["Tenant"] = "t1" }) } });
 
         Assert.IsType<NoContentResult>(await controller.RemoveRelationChild(BillId, "TenantRoles", "c1", CancellationToken.None));
         Assert.Equal((BillId, "TenantRoles", "c1"), writer.LastRemove);
@@ -198,13 +198,13 @@ public class UsersControllerTests
         Assert.Equal(LegacyUserProvisioning.Message, Assert.IsType<ProblemDetails>(problem.Value).Title);
     }
 
-    private static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null, IUserProvisioning? provisioning = null, Adventures.WebApi.IRequestTenant? requestTenant = null)
+    private static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null, IUserProvisioning? provisioning = null, Adventures.WebApi.IRequestTenant? requestTenant = null, FakeMembership? membership = null, FakeRelations? relations = null)
     {
         var identity = callerUserName is null
             ? new ClaimsIdentity()
             : new ClaimsIdentity([new Claim(ClaimTypes.Name, callerUserName)], authenticationType: "Test");
 
-        return new UsersController(presenter, writer ?? new FakeRelationWriter(), new EntitySchemaOf<User>(UserSchemaWithRelation),
+        return new UsersController(presenter, writer ?? new FakeRelationWriter(), new EntitySchemaOf<User>(UserSchemaWithRelation), membership ?? new FakeMembership(), new FixedTenantContext("t1"), relations ?? new FakeRelations(),
             provisioning ?? new FakeProvisioning(), new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
             requestTenant ?? new FixedRequestTenant(new CurrentTenant(null, null, null, "api.host", TenantMatch.None)),
             Microsoft.Extensions.Logging.Abstractions.NullLogger<UsersController>.Instance)
@@ -252,4 +252,142 @@ internal sealed class FakeProvisioning : IUserProvisioning
 internal sealed class FixedRequestTenant(Adventures.Entities.CurrentTenant current) : Adventures.WebApi.IRequestTenant
 {
     public Adventures.Entities.CurrentTenant Current { get; } = current;
+}
+
+internal sealed class FixedTenantContext(string id) : ITenantContext
+{
+    public string TenantId { get; } = id;
+}
+
+/// <summary>Everybody is a member of tenant t1 unless the test says who else belongs where.</summary>
+internal sealed class FakeMembership : IUserMembership
+{
+    public HashSet<string>? Members { get; init; }
+
+    public Dictionary<string, HashSet<string>> Tenants { get; init; } = [];
+
+    public HashSet<string> OrganisationsHere { get; init; } = [];
+
+    public Task<IReadOnlySet<string>> MemberIdsAsync(string tenantId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlySet<string>>(Members ?? new HashSet<string> { "user-bill", "user-claude" });
+
+    public Task<IReadOnlySet<string>> TenantIdsOfAsync(string userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlySet<string>>(Tenants.TryGetValue(userId, out var set) ? set : ["t1"]);
+
+    public Task AddMemberAsync(string userId, string tenantId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task<bool> OrganisationInTenantAsync(string organisationId, string tenantId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(OrganisationsHere.Contains(organisationId));
+}
+
+/// <summary>Returns the assignments a test lists (relation name, child id, values).</summary>
+internal sealed class FakeRelations : IEntityRelationProvider
+{
+    public List<(string Relation, string ChildId, Dictionary<string, string?> Values)> Rows { get; } = [];
+
+    public Task<IReadOnlyList<EntityRelationModel>> GetRelationsAsync(EntitySchema parentSchema, string parentEntityId, bool editable = false, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<EntityRelationModel>>(Rows.GroupBy(r => r.Relation).Select(g => new EntityRelationModel(
+            g.Key, g.Key, new EntityGridModel(null!, g.Select(r => new EntityDataModel(r.ChildId, r.Values)).ToList()))).ToList());
+
+    public Task<IReadOnlyList<RelationOption>> GetOptionsAsync(string schemaIri, string? excludeId = null, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<RelationOption>>([]);
+
+    public Task<IReadOnlyList<EntityDataModel>> ResolveDisplayAsync(EntitySchema schema, IReadOnlyList<EntityDataModel> rows, CancellationToken cancellationToken = default) =>
+        Task.FromResult(rows);
+}
+
+/// <summary>T3b: what an administrator of one tenant may do to people and assignments, with another tenant in the picture.</summary>
+public sealed class UsersTenantTests
+{
+    private static UsersController Controller(FakeUserPresenter presenter, FakeMembership membership, FakeRelationWriter writer, FakeRelations? relations = null, IUserProvisioning? provisioning = null) =>
+        new(presenter, writer, new EntitySchemaOf<User>(EntitySchema.Create(
+                "urn:test:User", [new EntitySchemaField("urn:test:User", "f1", "UserName", "String", "urn:p:name")],
+                [new EntityRelationDefinition("TenantRoles", "Tenant roles", "urn:test:Assignment", "urn:p:has")])),
+            membership, new FixedTenantContext("t1"), relations ?? new FakeRelations(), provisioning ?? new FakeProvisioning(),
+            new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
+            new FixedRequestTenant(new CurrentTenant("t1", "n", "t1.test", "api.t1.test", TenantMatch.Domain)),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<UsersController>.Instance)
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
+        };
+
+    private static EntityDataModel Assignment(string relation, string value) =>
+        new(string.Empty, new Dictionary<string, string?> { [relation] = value, ["Role"] = "r1" });
+
+    [Fact]
+    public async Task APersonOfAnotherTenantCannotGetAnAssignmentAdded_OrRemoved()
+    {
+        var writer = new FakeRelationWriter();
+        var controller = Controller(new FakeUserPresenter(), new FakeMembership { Members = ["mine"] }, writer);
+
+        Assert.IsType<NotFoundResult>(await controller.AddRelationChild("theirs", "TenantRoles", Assignment("Tenant", "t1"), CancellationToken.None));
+        Assert.IsType<NotFoundResult>(await controller.RemoveRelationChild("theirs", "TenantRoles", "c1", CancellationToken.None));
+        Assert.Null(writer.LastAdd);
+        Assert.Null(writer.LastRemove);
+    }
+
+    [Fact]
+    public async Task AnAssignmentCannotNameAnotherTenant()
+    {
+        var writer = new FakeRelationWriter();
+        var controller = Controller(new FakeUserPresenter(), new FakeMembership { Members = ["mine"] }, writer);
+
+        var refused = await controller.AddRelationChild("mine", "TenantRoles", Assignment("Tenant", "t2"), CancellationToken.None);
+        var allowed = await controller.AddRelationChild("mine", "TenantRoles", Assignment("Tenant", "t1"), CancellationToken.None);
+
+        Assert.Equal(403, Assert.IsType<ObjectResult>(refused).StatusCode);
+        Assert.Equal(201, Assert.IsType<ObjectResult>(allowed).StatusCode);
+    }
+
+    [Fact]
+    public async Task AnOrganisationAssignmentMustNameAnOrganisationOfThisTenant()
+    {
+        var writer = new FakeRelationWriter();
+        var controller = Controller(new FakeUserPresenter(), new FakeMembership { Members = ["mine"], OrganisationsHere = ["org-here"] }, writer);
+
+        var elsewhere = await controller.AddRelationChild("mine", "OrganizationRoles", Assignment("Organization", "org-there"), CancellationToken.None);
+        var here = await controller.AddRelationChild("mine", "OrganizationRoles", Assignment("Organization", "org-here"), CancellationToken.None);
+
+        Assert.Equal(403, Assert.IsType<ObjectResult>(elsewhere).StatusCode);
+        Assert.NotEqual(403, (here as ObjectResult)?.StatusCode ?? 0);
+    }
+
+    [Fact]
+    public async Task OnlyAnAssignmentOfThisTenantCanBeRemoved_APersonKeepsTheRolesTheyHoldElsewhere()
+    {
+        var writer = new FakeRelationWriter();
+        var relations = new FakeRelations
+        {
+            Rows =
+            {
+                ("TenantRoles", "mine-row", new Dictionary<string, string?> { ["Tenant"] = "t1" }),
+                ("TenantRoles", "theirs-row", new Dictionary<string, string?> { ["Tenant"] = "t2" }),
+            },
+        };
+        var controller = Controller(new FakeUserPresenter(), new FakeMembership { Members = ["both"] }, writer, relations);
+
+        Assert.IsType<NotFoundResult>(await controller.RemoveRelationChild("both", "TenantRoles", "theirs-row", CancellationToken.None));
+        Assert.Null(writer.LastRemove);
+        Assert.IsType<NoContentResult>(await controller.RemoveRelationChild("both", "TenantRoles", "mine-row", CancellationToken.None));
+        Assert.Equal(("both", "TenantRoles", "mine-row"), writer.LastRemove);
+    }
+
+    [Fact]
+    public async Task APasswordCannotBeResetFromHereForAPersonOfAnotherTenantToo()
+    {
+        var provisioning = new FakeProvisioning();
+        var presenter = new FakeUserPresenter { FormById = BuildForm("both", "shared-person") };
+        var membership = new FakeMembership { Members = ["both", "solo"], Tenants = { ["both"] = ["t1", "t2"] } };
+        var controller = Controller(presenter, membership, new FakeRelationWriter(), provisioning: provisioning);
+
+        var refused = await controller.SetPassword("both", CancellationToken.None);
+
+        Assert.Equal(409, Assert.IsType<ObjectResult>(refused).StatusCode);
+        Assert.Null(provisioning.LastTenant);
+    }
+
+    private static EntityFormModel BuildForm(string id, string userName) =>
+        new(
+            new EntitySchemaModel("https://global-webnet.com/schema/User", [new EntityFieldSchema("UserName", "String", IsRequired: true)]),
+            new EntityDataModel(id, new Dictionary<string, string?> { ["UserName"] = userName }));
 }

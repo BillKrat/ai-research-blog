@@ -9,8 +9,10 @@ namespace AiBlogResearch.WebApi;
 /// and no shared fallback, so a host with no tenant gets <see cref="TenantRequiredException"/> (a 404) instead of anyone's content. Nothing here reads a header
 /// the caller controls.
 /// </summary>
-public sealed class RequestGraphScope(IRequestTenant requestTenant) : IGraphScope
+public sealed class RequestGraphScope(IRequestTenant requestTenant) : IGraphScope, ITenantContext
 {
+    public string TenantId => TenantKey;
+
     public string TenantKey =>
         requestTenant.Current.Id is { Length: > 0 } id && !string.IsNullOrWhiteSpace(id) ? id : throw new TenantRequiredException();
 }

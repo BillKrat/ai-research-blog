@@ -366,6 +366,11 @@ try
     builder.Services.AddTenancy(builder.Configuration, builder.Environment.IsDevelopment());
     // T2: posts, pages, categories, tags, comments, collaboration items and site settings live in the request tenant's own graph; every tenant is equal and a host with no tenant sees none of it.
     builder.Services.AddScoped<IGraphScope, RequestGraphScope>();
+    // T3b: the people screen shows and changes only members of the request tenant; sign-in and the profile keep the plain, global IUserBll.
+    builder.Services.AddScoped<ITenantContext, RequestGraphScope>();
+    builder.Services.AddNQuadUserMembership();
+    builder.Services.AddScoped<TenantScopedUserBll>();
+    builder.Services.AddScoped<ITenantUserPresenter, TenantUserPresenter>();
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, BlogConstants.Site.SettingSchemaIri), BlogConstants.Site.SettingBaseIri, BlogConstants.Site.SettingTypeIri,
         BlogConstants.Site.DefaultGraph, s => new SiteSetting(s), tenantScoped: true);

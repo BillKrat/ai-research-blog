@@ -4,7 +4,7 @@ using Adventures.Entities;
 namespace AiBlogResearch.WebApi.Tests.Controllers;
 
 /// <summary>Shared test double for <see cref="IUserPresenter"/>, used by both ProfileControllerTests and UsersControllerTests.</summary>
-internal sealed class FakeUserPresenter : IUserPresenter
+internal sealed class FakeUserPresenter : ITenantUserPresenter
 {
     public EntityFormModel? FormByUserName { get; set; }
 

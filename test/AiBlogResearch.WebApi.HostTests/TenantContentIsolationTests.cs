@@ -114,4 +114,47 @@ public sealed class TenantContentIsolationTests
     }
 
     private sealed record Entry(string BaseIri, string Graph);
+
+    [Fact]
+    public void TheUsersScreenGetsTheTenantScopedPresenter_WhileSignInAndTheProfileKeepTheGlobalOne()
+    {
+        using var factory = Host();
+        using var scope = factory.Services.CreateScope();
+
+        Assert.IsType<TenantUserPresenter>(scope.ServiceProvider.GetRequiredService<ITenantUserPresenter>());
+        Assert.IsType<UserPresenter>(scope.ServiceProvider.GetRequiredService<IUserPresenter>());
+        Assert.IsType<UserBll>(scope.ServiceProvider.GetRequiredService<IUserBll>());
+    }
+
+    [Fact]
+    public async Task APersonAddedForOneTenantIsNotListedForAnother_ThroughTheHostsOwnServices()
+    {
+        using var factory = Host();
+        var store = factory.Services.GetRequiredService<INQuadStore>();
+        using (var scope = factory.Services.CreateScope())
+        {
+            var membership = scope.ServiceProvider.GetRequiredService<IUserMembership>();
+            var users = scope.ServiceProvider.GetRequiredService<IUserBll>();
+            var userSchema = scope.ServiceProvider.GetRequiredService<EntitySchemaOf<User>>().Schema;
+            var person = new User(userSchema);
+            var id = Guid.NewGuid().ToString();
+            person.Set(DynamicEntity.EntityIdPropertyName, id, id);
+            person.Set("UserName", Guid.NewGuid().ToString(), "test-acme-person");
+            await users.CreateAsync(person);
+            await membership.AddMemberAsync(id, "acme-id");
+        }
+
+        var memberNames = await new TenantScopedUserBll(
+            factory.Services.CreateScope().ServiceProvider.GetRequiredService<IUserBll>(),
+            factory.Services.CreateScope().ServiceProvider.GetRequiredService<IUserMembership>(),
+            new Fixed2("other-id")).ListAsync();
+
+        Assert.DoesNotContain(memberNames, u => u.GetValue("UserName") is "test-acme-person");
+        Assert.True(await store.CountAsync() > 0);
+    }
+
+    private sealed class Fixed2(string id) : ITenantContext
+    {
+        public string TenantId { get; } = id;
+    }
 }
