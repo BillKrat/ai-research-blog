@@ -256,6 +256,9 @@ try
     // The rights of the Admin, Editor, Reviewer and Developer roles (a Rights field on Role and its default values).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-018-role-rights.nq"), "018-role-rights");
+    // The Platform role (only the platform.manage right, assigned by hand on Admin > Users; no other role holds it).
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-019-platform-role.nq"), "019-platform-role");
     // The on/off state of the built-in plug-ins (a plug-in with no stored state is on).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-016-plugins.nq"), PluginConstants.SeedName);
@@ -357,6 +360,7 @@ try
     builder.Services.AddScoped<IRoleRightsEditor, RoleRightsEditor>();
     builder.Services.AddRightsAuthorization();
     builder.Services.AddScoped<IEntityBll<Tenant>>(provider => new EntityBll<Tenant>(provider.GetRequiredService<IEntityDal<Tenant>>()));
+    builder.Services.AddScoped<IEntityBll<Organization>>(provider => new EntityBll<Organization>(provider.GetRequiredService<IEntityDal<Organization>>()));
     builder.Services.AddScoped<ITenantResolver, TenantResolver>();
     // T1: the tenant of each request is decided from the host the server saw (Tenancy:Enforcement = Off, Report (default) or Enforce; Tenancy:FallbackDomain only in Development).
     builder.Services.AddTenancy(builder.Configuration, builder.Environment.IsDevelopment());

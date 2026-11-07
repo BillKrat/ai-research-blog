@@ -117,11 +117,10 @@ public sealed class AuthController(IUserAccountService accountService, IConfigur
     /// </summary>
     [HttpGet("rights")]
     [Authorize]
-    public async Task<IActionResult> MyRights([FromServices] IRightsResolver resolver, CancellationToken cancellationToken)
+    public async Task<IActionResult> MyRights([FromServices] Adventures.WebApi.IRightsAuthorizer authorizer, CancellationToken cancellationToken)
     {
-        var roles = User.FindAll(c => c.Type is Adventures.Security.WellKnownClaims.Roles or System.Security.Claims.ClaimTypes.Role)
-            .SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries));
-        var granted = await resolver.ResolveAsync(User.Identity?.Name ?? string.Empty, roles, cancellationToken);
+        // The same answer the routes use: the rights in this request's tenant.
+        var granted = await authorizer.RightsOfAsync(User, cancellationToken);
         return Ok(new
         {
             UserName = User.Identity?.Name,

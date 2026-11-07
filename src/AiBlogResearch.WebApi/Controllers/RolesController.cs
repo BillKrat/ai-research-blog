@@ -29,10 +29,12 @@ public sealed class RolesController(IEntityPresenter<Role> presenter, IRoleRight
     public IActionResult RightsCatalog() => Ok(Rights.Catalog);
 
     /// <summary>
-    /// Replaces what a role allows. The acting person is the signed-in one, so the editor can refuse a change that
+    /// Replaces what a role allows. A role is defined once for the whole platform, so changing it needs the platform right, not a tenant one (one tenant's administrator must not
+    /// change what another tenant's people may do). The acting person is the signed-in one, so the editor can refuse a change that
     /// would take away their own ability to manage users and roles (409) or leave nobody with it (409).
     /// </summary>
     [HttpPut("{id}/rights")]
+    [RequireRight(Rights.PlatformManage)]
     public Task<IActionResult> SetRights(string id, [FromBody] RoleRightsRequest request, CancellationToken cancellationToken) =>
         GuardedAsync(async () =>
         {
