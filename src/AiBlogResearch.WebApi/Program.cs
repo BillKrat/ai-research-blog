@@ -360,7 +360,7 @@ try
     builder.Services.AddScoped<ITenantResolver, TenantResolver>();
     // T1: the tenant of each request is decided from the host the server saw (Tenancy:Enforcement = Off, Report (default) or Enforce; Tenancy:FallbackDomain only in Development).
     builder.Services.AddTenancy(builder.Configuration, builder.Environment.IsDevelopment());
-    // T2: posts, pages, categories, tags, comments, collaboration items and site settings live in the request tenant's graph (Tenancy:PrimaryTenantId keeps today's graphs; unset = scoping off).
+    // T2: posts, pages, categories, tags, comments, collaboration items and site settings live in the request tenant's own graph; every tenant is equal and a host with no tenant sees none of it.
     builder.Services.AddScoped<IGraphScope, RequestGraphScope>();
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, BlogConstants.Site.SettingSchemaIri), BlogConstants.Site.SettingBaseIri, BlogConstants.Site.SettingTypeIri,

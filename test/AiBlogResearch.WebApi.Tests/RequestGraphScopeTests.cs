@@ -2,12 +2,11 @@ using Adventures.Data.NQuad;
 using Adventures.Entities;
 using Adventures.WebApi;
 using AiBlogResearch.WebApi;
-using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace AiBlogResearch.WebApi.Tests;
 
-/// <summary>T2: which tenant's graph a request uses, decided from the tenant the server resolved from the host (never from anything the caller sends).</summary>
+/// <summary>T2: which tenant's graph a request uses, decided from the tenant the server resolved from the host (never from anything the caller sends). Every tenant has its own graph.</summary>
 public sealed class RequestGraphScopeTests
 {
     private sealed class Fixed(CurrentTenant current) : IRequestTenant
@@ -15,41 +14,26 @@ public sealed class RequestGraphScopeTests
         public CurrentTenant Current { get; } = current;
     }
 
-    private static IGraphScope Scope(string? tenantId, string? primary, TenantMatch match = TenantMatch.Domain) =>
-        new RequestGraphScope(
-            new Fixed(new CurrentTenant(tenantId, "n", "example.com", "example.com", match)),
-            Options.Create(new TenancyOptions { PrimaryTenantId = primary }));
+    private static IGraphScope Scope(string? tenantId, TenantMatch match = TenantMatch.Domain) =>
+        new RequestGraphScope(new Fixed(new CurrentTenant(tenantId, "n", "example.com", "example.com", match)));
 
     [Fact]
-    public void The_primary_tenant_keeps_todays_graphs()
+    public void The_key_is_the_resolved_tenants_id()
     {
-        Assert.Null(Scope("t-1", primary: "t-1").TenantKey);
+        Assert.Equal("t-1", Scope("t-1").TenantKey);
+        Assert.Equal("t-2", Scope("t-2").TenantKey);
     }
 
     [Fact]
-    public void Another_tenant_is_keyed_by_its_id()
+    public void The_development_fallback_tenant_is_a_tenant_like_any_other()
     {
-        Assert.Equal("t-2", Scope("t-2", primary: "t-1").TenantKey);
+        Assert.Equal("t-1", Scope("t-1", TenantMatch.Fallback).TenantKey);
     }
 
     [Fact]
-    public void With_no_primary_configured_scoping_is_off_and_nothing_changes()
+    public void A_request_with_no_resolved_tenant_has_no_graph_and_never_falls_into_another()
     {
-        Assert.Null(Scope("t-2", primary: null).TenantKey);
-        Assert.Null(Scope("t-2", primary: " ").TenantKey);
-    }
-
-    [Fact]
-    public void A_request_with_no_resolved_tenant_uses_the_primary_graphs()
-    {
-        // Tenancy:Enforcement=Enforce refuses an unknown host before any repository is touched; under Report it is served as the primary tenant.
-        Assert.Null(Scope(null, primary: "t-1", TenantMatch.None).TenantKey);
-    }
-
-    [Fact]
-    public void The_primary_id_is_compared_exactly_not_by_prefix_or_case_tricks()
-    {
-        Assert.Equal("t-10", Scope("t-10", primary: "t-1").TenantKey);
-        Assert.Equal("T-1", Scope("T-1", primary: "t-1").TenantKey);
+        Assert.Throws<TenantRequiredException>(() => Scope(null, TenantMatch.None).TenantKey);
+        Assert.Throws<TenantRequiredException>(() => Scope(" ", TenantMatch.None).TenantKey);
     }
 }
