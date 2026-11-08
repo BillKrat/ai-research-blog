@@ -44,6 +44,44 @@ public sealed class TenantAliasEndpointsTests
         Assert.IsType<NotFoundResult>(await Controller().AddAlias("nope", new AliasRequest("temp.example"), aliases, CancellationToken.None));
     }
 
+    private sealed class Acting(params TenantHostInfo[] allowed) : IActingTenants
+    {
+        public string? AskedFor;
+
+        public Task<IReadOnlyList<TenantHostInfo>> ForAsync(string userName, CancellationToken cancellationToken = default)
+        {
+            AskedFor = userName;
+            return Task.FromResult<IReadOnlyList<TenantHostInfo>>(allowed);
+        }
+
+        public Task<TenantHostInfo?> AllowedAsync(string userName, string tenantId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(allowed.FirstOrDefault(t => t.Id == tenantId));
+    }
+
+    [Fact]
+    public async Task TheSwitcherListIsTheSignedInPersonsTenants_WithTheOneNowActedIn()
+    {
+        var controller = new TenantController(new FixedRequestTenant(new CurrentTenant("t2", "Two", "two.test", "h", TenantMatch.Acting)));
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity([new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, "Admin")], "Test")) },
+        };
+        var acting = new Acting(new TenantHostInfo("t1", "One", "one.test", []), new TenantHostInfo("t2", "Two", "two.test", []));
+
+        var ok = Assert.IsType<OkObjectResult>(await controller.Mine(acting, CancellationToken.None));
+
+        Assert.Equal("Admin", acting.AskedFor);
+        Assert.Equal("t2", ok.Value!.GetType().GetProperty("ActingId")!.GetValue(ok.Value));
+        Assert.Equal(2, ((IReadOnlyList<TenantHostInfo>)ok.Value.GetType().GetProperty("Tenants")!.GetValue(ok.Value)!).Count);
+    }
+
+    [Fact]
+    public void TheSwitcherListNeedsASignedInPerson_NotAnyParticularRight()
+    {
+        Assert.Empty(typeof(TenantController).GetMethod(nameof(TenantController.Mine))!.GetCustomAttributes(typeof(RequireRightAttribute), inherit: true));
+        Assert.NotEmpty(typeof(TenantController).GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute), inherit: true));
+    }
+
     [Fact]
     public async Task ARefusedHostNameIsAConflictWithTheReason()
     {

@@ -359,6 +359,8 @@ try
     // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
     builder.Services.AddNQuadPlatformAdministrators();
     builder.Services.AddScoped<ITenantAliasEditor, TenantAliasEditor>();
+    // The tenant switcher: a person acts in the tenants they belong to (a platform administrator in every one); the X-Acting-Tenant header is checked on every request.
+    builder.Services.AddScoped<IActingTenants, ActingTenants>();
     builder.Services.AddScoped<IRightsResolver, RightsResolver>();
     builder.Services.AddScoped<IRoleRightsEditor, RoleRightsEditor>();
     builder.Services.AddRightsAuthorization();
@@ -457,6 +459,7 @@ try
 
     app.UseAuthentication();
     app.UseTenantTokenCheck();
+    app.UseActingTenant();
     app.UseAuthorization();
 
     app.MapControllers();

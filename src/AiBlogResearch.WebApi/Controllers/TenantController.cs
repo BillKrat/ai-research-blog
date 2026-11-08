@@ -23,6 +23,14 @@ public sealed class TenantController(IRequestTenant requestTenant) : ApiControll
         return Ok(new { current.Host, Tenant = current.Id is null ? null : new { current.Id, current.Name, current.Domain }, Match = current.Match.ToString() });
     }
 
+    /// <summary>
+    /// The tenants the signed-in person may act in (the switcher's list): those they belong to, or every tenant for a platform administrator. Choosing one is the
+    /// <c>X-Acting-Tenant</c> header on later requests, which the server checks again each time.
+    /// </summary>
+    [HttpGet("mine")]
+    public async Task<IActionResult> Mine([FromServices] IActingTenants acting, CancellationToken cancellationToken) =>
+        Ok(new { ActingId = requestTenant.Current.Id, Tenants = await acting.ForAsync(User.Identity?.Name ?? string.Empty, cancellationToken) });
+
     /// <summary>Every tenant with the host names that reach it (its domain and its aliases).</summary>
     [HttpGet("hosts")]
     [RequireRight(Rights.PlatformManage)]
