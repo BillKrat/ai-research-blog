@@ -5,7 +5,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { provideMarkdown } from 'ngx-markdown';
 import { routes } from './app.routes';
-import { API_BASE_URL, apiProblemInterceptor, authInterceptor, ClientErrorHandler, correlationInterceptor, timeoutInterceptor } from '@adventures/core';
+import { API_BASE_URL, apiProblemInterceptor, authInterceptor, actingTenantInterceptor, ClientErrorHandler, correlationInterceptor, timeoutInterceptor } from '@adventures/core';
 import { environment } from '../environments/environment';
 import { serverErrorInterceptor } from '@adventures/admin';
 
@@ -15,7 +15,7 @@ export const appConfig: ApplicationConfig = {
     { provide: API_BASE_URL, useValue: environment.apiUrl },
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([correlationInterceptor, authInterceptor, serverErrorInterceptor, apiProblemInterceptor, timeoutInterceptor])),
+    provideHttpClient(withInterceptors([correlationInterceptor, authInterceptor, actingTenantInterceptor, serverErrorInterceptor, apiProblemInterceptor, timeoutInterceptor])),
     provideAnimationsAsync(),
     { provide: ErrorHandler, useClass: ClientErrorHandler },
     provideMarkdown(),

@@ -6,6 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Conversation } from '@adventures/collaboration';
 import { RightsChecklist } from '../../components/rights-checklist/rights-checklist';
+import { PlatformSwitch } from '../../components/platform-switch/platform-switch';
 import { EntityForm, LabelPipe, RelationGrid } from '@adventures/entity-ui';
 import { describeApiError, EntityAction, EntityApiService, EntityFormModel } from '@adventures/core';
 
@@ -19,7 +20,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  */
 @Component({
   selector: 'adv-admin-entity',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation, RightsChecklist],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation, RightsChecklist, PlatformSwitch],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',
 })
@@ -104,6 +105,11 @@ export class AdminEntity implements OnInit {
   /** A saved role shows its rights as a checklist under the form (the roles endpoint is itself behind the roles.manage right). */
   protected get hasRightsChecklist(): boolean {
     return this.collection === '/api/roles' && !this.isNew() && !!this.model()?.entity.entityId;
+  }
+
+  /** A saved person shows the Platform administrator switch under the form (the server decides who may change it). */
+  protected get hasPlatformSwitch(): boolean {
+    return this.collection === '/api/users' && !this.isNew() && !!this.model()?.entity.entityId;
   }
 
   /** The page of this entry on the public site (a saved post or page with a slug), opened in a new tab; null for anything else. */

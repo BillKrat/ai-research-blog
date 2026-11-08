@@ -11,6 +11,7 @@ export * from './lib/services/roles-api.service';
 export * from './lib/services/tenant.service';
 export * from './lib/interceptors/server-error.interceptor';
 export * from './lib/components/rights-checklist/rights-checklist';
+export * from './lib/components/platform-switch/platform-switch';
 export * from './lib/pages/admin-shell/admin-shell';
 export * from './lib/pages/admin-grid/admin-grid';
 export * from './lib/pages/admin-entity/admin-entity';

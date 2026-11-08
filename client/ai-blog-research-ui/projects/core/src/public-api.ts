@@ -17,3 +17,5 @@ export * from './lib/interceptors/correlation.interceptor';
 export * from './lib/guards/auth.guard';
 export * from './lib/services/profile.service';
 export * from './lib/interceptors/timeout.interceptor';
+export * from './lib/interceptors/acting-tenant.interceptor';
+export * from './lib/services/acting-tenant.service';

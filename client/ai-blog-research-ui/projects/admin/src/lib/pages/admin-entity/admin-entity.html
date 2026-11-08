@@ -91,6 +91,10 @@
       <adv-relation-grid [relation]="relation" (changed)="reload()" (pendingChange)="setPending(relation.name, $event)" />
     }
 
+    @if (hasPlatformSwitch) {
+      <adv-platform-switch [userId]="form.entity.entityId" />
+    }
+
     @if (hasRightsChecklist) {
       <adv-rights-checklist [roleId]="form.entity.entityId" [rights]="form.entity.values['Rights'] ?? ''" (saved)="reload()" />
     }

@@ -22,9 +22,27 @@ export class AdminShell implements OnInit {
 
   protected readonly menu = this.menuService.menu;
   protected readonly tenant = this.tenantService.current;
+  protected readonly tenants = this.tenantService.mine;
+  protected readonly allTenants = this.tenantService.all;
+  protected readonly isPlatform = this.tenantService.isPlatform;
+  protected readonly problem = this.tenantService.problem;
 
   ngOnInit(): void {
     this.menuService.load();
     this.tenantService.load();
+  }
+
+  /** Work in another tenant: the choice is remembered and the page reloads, so every screen shows what that tenant holds. */
+  protected choose(tenantId: string): void {
+    this.tenantService.choose(tenantId);
+  }
+
+  /** Make this host reach the tenant (platform administrators only; the server checks). */
+  protected mirror(host: string, tenantId: string): void {
+    this.tenantService.addAlias(tenantId, host);
+  }
+
+  protected removeAlias(tenantId: string, alias: string): void {
+    this.tenantService.removeAlias(tenantId, alias);
   }
 }

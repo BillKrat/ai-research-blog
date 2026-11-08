@@ -1,19 +1,62 @@
 <div class="admin-shell">
   <nav class="admin-shell__nav" aria-label="Admin">
     @if (tenant(); as current) {
-      <p class="admin-shell__tenant" role="status">
+      <div class="admin-shell__tenant" role="status">
         <mat-icon aria-hidden="true">domain</mat-icon>
-        @if (current.tenant) {
-          <span>
-            <strong>{{ current.tenant.name }}</strong> ({{ current.tenant.domain }})
-            @if (current.match === 'Fallback') {
-              <br /><small>development: {{ current.host }} matches no tenant</small>
-            }
-          </span>
-        } @else {
-          <span>No tenant for {{ current.host }}</span>
-        }
-      </p>
+        <div class="admin-shell__tenant-body">
+          @if (current.tenant) {
+            <span>
+              <strong>{{ current.tenant.name }}</strong> ({{ current.tenant.domain }})
+              @if (current.match === 'Fallback') {
+                <br /><small>development: {{ current.host }} matches no tenant</small>
+              }
+              @if (current.match === 'Acting') {
+                <br /><small>working here from {{ current.host }}</small>
+              }
+            </span>
+          } @else {
+            <span>No tenant for {{ current.host }}</span>
+          }
+          @if (tenants().length > 1) {
+            <label class="admin-shell__switch">
+              Work in
+              <select #switcher aria-label="Work in tenant" (change)="choose(switcher.value)">
+                @for (option of tenants(); track option.id) {
+                  <option [value]="option.id" [selected]="option.id === current.tenant?.id">{{ option.name }}</option>
+                }
+              </select>
+            </label>
+          }
+        </div>
+      </div>
+      @if (isPlatform()) {
+        <details class="admin-shell__hosts">
+          <summary>Host names</summary>
+          @for (entry of allTenants(); track entry.id) {
+            <p>
+              <strong>{{ entry.name }}</strong>: {{ entry.domain }}
+              @for (alias of entry.aliases; track alias) {
+                <span class="admin-shell__alias">
+                  {{ alias }}
+                  <button type="button" class="admin-shell__alias-remove" [attr.aria-label]="'Remove ' + alias" (click)="removeAlias(entry.id, alias)">&times;</button>
+                </span>
+              }
+            </p>
+          }
+          <label>
+            Make {{ current.host }} mirror
+            <select #mirrorTarget aria-label="Tenant to mirror">
+              @for (entry of allTenants(); track entry.id) {
+                <option [value]="entry.id" [selected]="entry.id === current.tenant?.id">{{ entry.name }}</option>
+              }
+            </select>
+          </label>
+          <button type="button" class="admin-shell__mirror" (click)="mirror(current.host, mirrorTarget.value)">Mirror</button>
+          @if (problem()) {
+            <p class="admin-shell__problem" role="alert">{{ problem() }}</p>
+          }
+        </details>
+      }
     }
     @for (section of menu().sections; track section.id) {
       <section class="admin-shell__section">

@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { ActingTenantService } from '@adventures/core';
 import { AdminShell } from './admin-shell';
 
 describe('AdminShell', () => {
@@ -76,6 +77,75 @@ describe('AdminShell', () => {
     expect(badge.textContent).toContain('DEV Main');
     expect(badge.textContent).toContain('development');
     expect(badge.textContent).toContain('localhost:4200');
+  });
+
+  function renderSwitcher(rights: string[]): { root: HTMLElement; http: HttpTestingController; fixture: ReturnType<typeof TestBed.createComponent<AdminShell>> } {
+    const fixture = TestBed.createComponent(AdminShell);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.url.endsWith('/api/admin/menu')).flush({ sections: [] });
+    http.expectOne((r) => r.url.endsWith('/api/tenant/current')).flush({ host: 'localhost:7052', tenant: { id: 't1', name: 'DEV Main', domain: 'global-webnet.com' }, match: 'Fallback' });
+    http
+      .expectOne((r) => r.url.endsWith('/api/tenant/mine'))
+      .flush({
+        actingId: 't1',
+        tenants: [
+          { id: 't1', name: 'DEV Main', domain: 'global-webnet.com', aliases: [] },
+          { id: 't2', name: 'Adventures Edge', domain: 'adventuresEdge.net', aliases: [] },
+        ],
+      });
+    http.expectOne((r) => r.url.endsWith('/api/auth/rights')).flush({ userName: 'Admin', rights: rights.map((name) => ({ name, description: '' })) });
+    if (rights.includes('platform.manage')) {
+      http
+        .expectOne((r) => r.url.endsWith('/api/tenant/hosts'))
+        .flush([
+          { id: 't1', name: 'DEV Main', domain: 'global-webnet.com', aliases: ['temp.example'] },
+          { id: 't2', name: 'Adventures Edge', domain: 'adventuresEdge.net', aliases: [] },
+        ]);
+    }
+    fixture.detectChanges();
+    return { root: fixture.nativeElement as HTMLElement, http, fixture };
+  }
+
+  it('offers the tenants the person may work in, with the current one selected', () => {
+    const { root } = renderSwitcher(['admin.access']);
+
+    const options = Array.from(root.querySelectorAll('select[aria-label="Work in tenant"] option')) as HTMLOptionElement[];
+    expect(options.map((o) => o.textContent?.trim())).toEqual(['DEV Main', 'Adventures Edge']);
+    expect(options[0].selected).toBe(true);
+    expect(root.querySelector('.admin-shell__hosts')).toBeNull();
+  });
+
+  it('remembers the choice and reloads when another tenant is picked', () => {
+    const { root, fixture } = renderSwitcher(['admin.access']);
+    const acting = TestBed.inject(ActingTenantService);
+    const reload = vi.spyOn(acting, 'reload').mockImplementation(() => undefined);
+    const select = root.querySelector('select[aria-label="Work in tenant"]') as HTMLSelectElement;
+
+    select.value = 't2';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(acting.id()).toBe('t2');
+    expect(reload).toHaveBeenCalled();
+    acting.choose(null);
+  });
+
+  it('shows host names to a platform administrator and adds the current host to the chosen tenant', () => {
+    const { root, http, fixture } = renderSwitcher(['admin.access', 'platform.manage']);
+
+    expect(root.querySelector('.admin-shell__hosts')?.textContent).toContain('temp.example');
+    const select = root.querySelector('select[aria-label="Tenant to mirror"]') as HTMLSelectElement;
+    select.value = 't2';
+    select.dispatchEvent(new Event('change'));
+    (root.querySelector('.admin-shell__mirror') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const put = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/tenant/t2/aliases'));
+    expect(put.request.body).toEqual({ host: 'localhost:7052' });
+    put.flush('localhost already reaches another tenant.', { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+    expect(root.querySelector('.admin-shell__problem')?.textContent).toContain('already reaches another tenant');
   });
 
   it('says no tenant matches the domain, naming the domain, instead of showing nothing', () => {
