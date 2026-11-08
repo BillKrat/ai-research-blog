@@ -256,9 +256,6 @@ try
     // The rights of the Admin, Editor, Reviewer and Developer roles (a Rights field on Role and its default values).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-018-role-rights.nq"), "018-role-rights");
-    // The Platform role (only the platform.manage right, assigned by hand on Admin > Users; no other role holds it).
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-019-platform-role.nq"), "019-platform-role");
     // The on/off state of the built-in plug-ins (a plug-in with no stored state is on).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-016-plugins.nq"), PluginConstants.SeedName);
@@ -356,6 +353,8 @@ try
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, PluginConstants.SchemaIri), PluginConstants.BaseIri, PluginConstants.TypeIri,
         CollaborationConstants.DefaultGraph, s => new Plugin(s));
+    // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
+    builder.Services.AddNQuadPlatformAdministrators();
     builder.Services.AddScoped<IRightsResolver, RightsResolver>();
     builder.Services.AddScoped<IRoleRightsEditor, RoleRightsEditor>();
     builder.Services.AddRightsAuthorization();
@@ -407,6 +406,12 @@ try
         if (upgraded > 0)
         {
             Log.Information("Upgraded the default rights of {Count} role(s).", upgraded);
+        }
+
+        // When nobody is a platform administrator yet, Admin becomes one (never again once someone holds it, so a person switched off on purpose stays off).
+        if (await upgradeScope.ServiceProvider.GetRequiredService<PlatformAdministratorBll>().EnsureFirstAsync())
+        {
+            Log.Information("{UserName} is now the platform administrator (nobody held the switch).", PlatformAdministratorBll.FirstAdministratorUserName);
         }
     }
 

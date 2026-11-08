@@ -117,7 +117,7 @@ public class UsersControllerTests
         Assert.IsType<UnauthorizedResult>(result);
     }
 
-    private static readonly EntitySchema UserSchemaWithRelation = EntitySchema.Create(
+    internal static readonly EntitySchema UserSchemaWithRelation = EntitySchema.Create(
         "urn:test:User",
         [new EntitySchemaField("urn:test:User", "f1", "UserName", "String", "urn:p:name")],
         [new EntityRelationDefinition("TenantRoles", "Tenant roles", "urn:test:Assignment", "urn:p:has")]);
@@ -198,7 +198,7 @@ public class UsersControllerTests
         Assert.Equal(LegacyUserProvisioning.Message, Assert.IsType<ProblemDetails>(problem.Value).Title);
     }
 
-    private static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null, IUserProvisioning? provisioning = null, Adventures.WebApi.IRequestTenant? requestTenant = null, FakeMembership? membership = null, FakeRelations? relations = null)
+    internal static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null, IUserProvisioning? provisioning = null, Adventures.WebApi.IRequestTenant? requestTenant = null, FakeMembership? membership = null, FakeRelations? relations = null)
     {
         var identity = callerUserName is null
             ? new ClaimsIdentity()

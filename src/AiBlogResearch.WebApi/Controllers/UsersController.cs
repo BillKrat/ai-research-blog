@@ -95,6 +95,41 @@ public sealed class UsersController(
         return Ok(new { login.Username, login.Password, login.AccountCreated, MustChangeAtFirstSignIn = true });
     }
 
+    /// <summary>Whether the person is a platform administrator, and whether the caller may change it (only a platform administrator may). The switch is the person's, not this tenant's.</summary>
+    [HttpGet("{id}/platform")]
+    public async Task<IActionResult> GetPlatform(
+        string id, [FromServices] IPlatformAdministrators platform, [FromServices] IRightsAuthorizer authorizer, CancellationToken cancellationToken)
+    {
+        if (!(await membership.MemberIdsAsync(tenantContext.TenantId, cancellationToken)).Contains(id))
+        {
+            return NotFound();
+        }
+
+        return Ok(new PlatformState(
+            await platform.IsAsync(id, cancellationToken), await authorizer.IsAllowedAsync(User, Rights.PlatformManage, cancellationToken)));
+    }
+
+    /// <summary>
+    /// Switches the person on or off as a platform administrator. Needs the platform right itself (a tenant administrator cannot grant it, threat: self-granted platform power),
+    /// and the last platform administrator cannot be switched off (409).
+    /// </summary>
+    [HttpPut("{id}/platform")]
+    [RequireRight(Rights.PlatformManage)]
+    public async Task<IActionResult> SetPlatform(string id, [FromBody] PlatformRequest request, [FromServices] PlatformAdministratorBll bll, CancellationToken cancellationToken)
+    {
+        if (!(await membership.MemberIdsAsync(tenantContext.TenantId, cancellationToken)).Contains(id))
+        {
+            return NotFound();
+        }
+
+        return await GuardedAsync(async () =>
+        {
+            var found = await bll.SetAsync(id, request.On, User.Identity?.Name ?? string.Empty, cancellationToken);
+            logger.LogInformation("Platform administrator switch for {UserId} set to {On} by {Administrator}", id, request.On, User.Identity?.Name);
+            return found ? NoContent() : NotFound();
+        });
+    }
+
     /// <summary>Adds a role assignment (or any child of a declared relation) to the user: each child is saved through its own endpoint and rules, never as part of the user.</summary>
     [HttpPost("{id}/relations/{relationName}")]
     public async Task<IActionResult> AddRelationChild(string id, string relationName, [FromBody] EntityDataModel request, CancellationToken cancellationToken)
@@ -186,3 +221,9 @@ public sealed class UsersController(
         return form?.Entity.EntityId;
     }
 }
+
+/// <summary>The platform administrator switch of a person, and whether the caller may change it.</summary>
+public sealed record PlatformState(bool IsPlatformAdministrator, bool CanChange);
+
+/// <summary>The new state of the switch.</summary>
+public sealed record PlatformRequest(bool On);

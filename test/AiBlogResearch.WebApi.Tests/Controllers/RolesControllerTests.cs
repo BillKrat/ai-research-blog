@@ -61,12 +61,13 @@ public sealed class RolesControllerTests
     }
 
     [Fact]
-    public void TheCatalogListsEveryRightWithItsDescription()
+    public void TheCatalogListsEveryRoleRightWithItsDescription_ButNotThePlatformRight()
     {
         var (controller, _) = Build();
 
-        var catalog = Assert.IsAssignableFrom<IReadOnlyList<Right>>(Assert.IsType<OkObjectResult>(controller.RightsCatalog()).Value);
+        var catalog = Assert.IsAssignableFrom<IEnumerable<Right>>(Assert.IsType<OkObjectResult>(controller.RightsCatalog()).Value).ToList();
 
-        Assert.Equal(Rights.Catalog.Count, catalog.Count);
+        Assert.Equal(Rights.Catalog.Count - 1, catalog.Count);
+        Assert.DoesNotContain(catalog, right => right.Name == Rights.PlatformManage);
     }
 }

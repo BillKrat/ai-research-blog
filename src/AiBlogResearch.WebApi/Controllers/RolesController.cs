@@ -26,7 +26,7 @@ public sealed class RolesController(IEntityPresenter<Role> presenter, IRoleRight
 
     /// <summary>Every right with its description: the checklist the role editor shows.</summary>
     [HttpGet("rights-catalog")]
-    public IActionResult RightsCatalog() => Ok(Rights.Catalog);
+    public IActionResult RightsCatalog() => Ok(Rights.Catalog.Where(right => right.Name != Rights.PlatformManage));
 
     /// <summary>
     /// Replaces what a role allows. A role is defined once for the whole platform, so changing it needs the platform right, not a tenant one (one tenant's administrator must not
