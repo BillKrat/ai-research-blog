@@ -256,6 +256,9 @@ try
     // The rights of the Admin, Editor, Reviewer and Developer roles (a Rights field on Role and its default values).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-018-role-rights.nq"), "018-role-rights");
+    // Host aliases: the Aliases field on the tenant (which host names reach which tenant; changed only by a platform administrator).
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-020-tenant-aliases.nq"), "020-tenant-aliases");
     // The on/off state of the built-in plug-ins (a plug-in with no stored state is on).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-016-plugins.nq"), PluginConstants.SeedName);
@@ -355,6 +358,7 @@ try
         CollaborationConstants.DefaultGraph, s => new Plugin(s));
     // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
     builder.Services.AddNQuadPlatformAdministrators();
+    builder.Services.AddScoped<ITenantAliasEditor, TenantAliasEditor>();
     builder.Services.AddScoped<IRightsResolver, RightsResolver>();
     builder.Services.AddScoped<IRoleRightsEditor, RoleRightsEditor>();
     builder.Services.AddRightsAuthorization();
