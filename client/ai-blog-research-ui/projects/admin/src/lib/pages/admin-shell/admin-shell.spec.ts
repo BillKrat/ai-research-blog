@@ -79,7 +79,7 @@ describe('AdminShell', () => {
     expect(badge.textContent).toContain('localhost:4200');
   });
 
-  function renderSwitcher(rights: string[]): { root: HTMLElement; http: HttpTestingController; fixture: ReturnType<typeof TestBed.createComponent<AdminShell>> } {
+  function renderSwitcher(rights: string[], hostAlias?: string): { root: HTMLElement; http: HttpTestingController; fixture: ReturnType<typeof TestBed.createComponent<AdminShell>> } {
     const fixture = TestBed.createComponent(AdminShell);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
@@ -99,7 +99,7 @@ describe('AdminShell', () => {
       http
         .expectOne((r) => r.url.endsWith('/api/tenant/hosts'))
         .flush([
-          { id: 't1', name: 'DEV Main', domain: 'global-webnet.com', aliases: ['temp.example'] },
+          { id: 't1', name: 'DEV Main', domain: 'global-webnet.com', aliases: hostAlias ? ['temp.example', hostAlias] : ['temp.example'] },
           { id: 't2', name: 'Adventures Edge', domain: 'adventuresEdge.net', aliases: [] },
         ]);
     }
@@ -146,6 +146,31 @@ describe('AdminShell', () => {
     put.flush('localhost already reaches another tenant.', { status: 409, statusText: 'Conflict' });
     fixture.detectChanges();
     expect(root.querySelector('.admin-shell__problem')?.textContent).toContain('already reaches another tenant');
+  });
+
+  it('takes the host back to its default: Default removes the alias from the tenant that mirrors it', () => {
+    const { root, http, fixture } = renderSwitcher(['admin.access', 'platform.manage'], 'localhost');
+
+    const select = root.querySelector('select[aria-label="Tenant to mirror"]') as HTMLSelectElement;
+    select.value = '';
+    select.dispatchEvent(new Event('change'));
+    (root.querySelector('.admin-shell__mirror') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const removal = http.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/api/tenant/t1/aliases/localhost'));
+    removal.flush([]);
+  });
+
+  it('says so when Default is applied to a host that mirrors nothing', () => {
+    const { root, fixture } = renderSwitcher(['admin.access', 'platform.manage']);
+
+    const select = root.querySelector('select[aria-label="Tenant to mirror"]') as HTMLSelectElement;
+    select.value = '';
+    select.dispatchEvent(new Event('change'));
+    (root.querySelector('.admin-shell__mirror') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(root.querySelector('.admin-shell__problem')?.textContent).toContain('is not mirroring any tenant');
   });
 
   it('says no tenant matches the domain, naming the domain, instead of showing nothing', () => {

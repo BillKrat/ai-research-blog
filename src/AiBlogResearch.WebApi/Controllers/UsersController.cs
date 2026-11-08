@@ -19,13 +19,36 @@ namespace AiBlogResearch.WebApi.Controllers;
 [ApiController]
 [Route("api/users")]
 [RequireRight(Rights.UsersManage)]
+[ServiceFilter(typeof(PlatformUserVisibilityFilter))]
 public sealed class UsersController(
     ITenantUserPresenter presenter, IEntityRelationWriter relationWriter, EntitySchemaOf<User> userSchema, IUserMembership membership, ITenantContext tenantContext, IEntityRelationProvider relations,
-    IUserProvisioning provisioning, IConfiguration configuration, Adventures.WebApi.IRequestTenant requestTenant, ILogger<UsersController> logger) : EntityControllerBase<User>
+    IUserProvisioning provisioning, IConfiguration configuration, Adventures.WebApi.IRequestTenant requestTenant, ILogger<UsersController> logger, UserVisibility? visibility = null)
+    : EntityControllerBase<User>
 {
+    /// <summary>
+    /// The people of this tenant. A platform administrator may ask for everyone (<c>filter=Scope&amp;filterValue=Everyone</c>) to find a person of another tenant and give them a role here;
+    /// anyone else asking is simply given this tenant's people.
+    /// </summary>
     [HttpGet]
-    public Task<ActionResult<EntityGridModel>> List([FromQuery] EntityGridQuery query, CancellationToken cancellationToken) =>
-        GridAsync(presenter, query, cancellationToken);
+    public async Task<ActionResult<EntityGridModel>> List([FromQuery] EntityGridQuery query, CancellationToken cancellationToken)
+    {
+        var scoped = string.Equals(query.Filter, ScopeFilter, StringComparison.Ordinal);
+        var grid = await presenter.GetGridAsync(scoped ? query with { Filter = null, FilterValue = null } : query, cancellationToken);
+        if (scoped && visibility?.SeeEveryone == true && grid.Paging is { } paging)
+        {
+            grid = grid with { Paging = paging with { Filter = ScopeFilter, FilterValue = EveryoneValue } };
+        }
+
+        return Ok(grid.WithLinks(BuildGridLinks(grid, Request.Path.Value ?? string.Empty)));
+    }
+
+    public const string ScopeFilter = "Scope";
+
+    public const string EveryoneValue = "Everyone";
+
+    /// <summary>A person of this tenant, or anyone when the platform administrator has been allowed to see everyone for this request.</summary>
+    private async Task<bool> IsVisibleAsync(string id, CancellationToken cancellationToken) =>
+        visibility?.SeeEveryone == true || (await membership.MemberIdsAsync(tenantContext.TenantId, cancellationToken)).Contains(id);
 
     /// <summary>The blank form for adding a person (the user name is typed here and fixed afterwards).</summary>
     [HttpGet("new")]
@@ -100,7 +123,7 @@ public sealed class UsersController(
     public async Task<IActionResult> GetPlatform(
         string id, [FromServices] IPlatformAdministrators platform, [FromServices] IRightsAuthorizer authorizer, CancellationToken cancellationToken)
     {
-        if (!(await membership.MemberIdsAsync(tenantContext.TenantId, cancellationToken)).Contains(id))
+        if (!await IsVisibleAsync(id, cancellationToken))
         {
             return NotFound();
         }
@@ -117,7 +140,7 @@ public sealed class UsersController(
     [RequireRight(Rights.PlatformManage)]
     public async Task<IActionResult> SetPlatform(string id, [FromBody] PlatformRequest request, [FromServices] PlatformAdministratorBll bll, CancellationToken cancellationToken)
     {
-        if (!(await membership.MemberIdsAsync(tenantContext.TenantId, cancellationToken)).Contains(id))
+        if (!await IsVisibleAsync(id, cancellationToken))
         {
             return NotFound();
         }
@@ -134,7 +157,7 @@ public sealed class UsersController(
     [HttpPost("{id}/relations/{relationName}")]
     public async Task<IActionResult> AddRelationChild(string id, string relationName, [FromBody] EntityDataModel request, CancellationToken cancellationToken)
     {
-        if (!(await membership.MemberIdsAsync(tenantContext.TenantId, cancellationToken)).Contains(id))
+        if (!await IsVisibleAsync(id, cancellationToken))
         {
             return NotFound();
         }
@@ -151,7 +174,7 @@ public sealed class UsersController(
     [HttpDelete("{id}/relations/{relationName}/{childId}")]
     public async Task<IActionResult> RemoveRelationChild(string id, string relationName, string childId, CancellationToken cancellationToken)
     {
-        if (!(await membership.MemberIdsAsync(tenantContext.TenantId, cancellationToken)).Contains(id))
+        if (!await IsVisibleAsync(id, cancellationToken))
         {
             return NotFound();
         }

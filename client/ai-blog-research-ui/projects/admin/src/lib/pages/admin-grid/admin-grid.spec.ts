@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TenantService } from '../../services/tenant.service';
 import { AdminGrid } from './admin-grid';
 
 describe('AdminGrid filter', () => {
@@ -46,5 +47,54 @@ describe('AdminGrid filter', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Nothing matches this filter.');
     expect((fixture.nativeElement as HTMLElement).querySelector('select[aria-label="Filter by Kind"]')).not.toBeNull();
+  });
+});
+
+describe('AdminGrid everyone toggle', () => {
+  function setup(platform: boolean, collection: string) {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: ActivatedRoute, useValue: { snapshot: { data: { collection, title: 'Users' } } } },
+        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+      ],
+    });
+    const tenants = TestBed.inject(TenantService);
+    const http = TestBed.inject(HttpTestingController);
+    if (platform) {
+      tenants.load();
+      http.match(() => true).forEach((r) => {
+        if (r.request.url.endsWith('/api/auth/rights')) {
+          r.flush({ userName: 'Admin', rights: [{ name: 'platform.manage', description: '' }] });
+        }
+      });
+    }
+    const fixture = TestBed.createComponent(AdminGrid);
+    fixture.detectChanges();
+    return { fixture, http };
+  }
+
+  const empty = { schema: { schemaIri: 'https://x/User', fields: [] }, rows: [], paging: null, links: { self: '/api/users', rows: {} } };
+
+  it('lets a platform administrator list everyone on the Users screen, and asks the server with the scope filter', () => {
+    const { fixture, http } = setup(true, '/api/users');
+    http.expectOne((r) => r.url.endsWith('/api/users') && !r.params.has('filter')).flush(empty);
+    http.match((r) => r.url.endsWith('/api/tenant/hosts')).forEach((r) => r.flush([]));
+    fixture.detectChanges();
+
+    const box = (fixture.nativeElement as HTMLElement).querySelector('input[aria-label="Show everyone, all tenants"]') as HTMLInputElement;
+    expect(box).not.toBeNull();
+    box.checked = true;
+    box.dispatchEvent(new Event('change'));
+
+    http.expectOne((r) => r.params.get('filter') === 'Scope' && r.params.get('filterValue') === 'Everyone').flush(empty);
+  });
+
+  it('shows no toggle to anyone else, nor on another screen', () => {
+    const plain = setup(false, '/api/users');
+    plain.http.expectOne((r) => r.url.endsWith('/api/users')).flush(empty);
+    plain.fixture.detectChanges();
+    expect((plain.fixture.nativeElement as HTMLElement).querySelector('input[aria-label="Show everyone, all tenants"]')).toBeNull();
   });
 });

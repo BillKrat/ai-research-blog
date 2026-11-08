@@ -12,6 +12,12 @@
         </select>
       </label>
     }
+    @if (canShowEveryone) {
+      <label class="admin-grid__filter">
+        <input type="checkbox" [checked]="showEveryone()" (change)="onEveryone($any($event.target).checked)" aria-label="Show everyone, all tenants" />
+        <span>Everyone (all tenants)</span>
+      </label>
+    }
     @if (canCreate) {
       <button mat-icon-button type="button" class="admin-grid__new" (click)="create()" [matTooltip]="'new' | label" [attr.aria-label]="'new' | label">
         <mat-icon>add</mat-icon>

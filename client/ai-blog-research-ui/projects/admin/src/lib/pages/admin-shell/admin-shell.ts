@@ -39,6 +39,12 @@ export class AdminShell implements OnInit {
 
   /** Make this host reach the tenant (platform administrators only; the server checks). */
   protected mirror(host: string, tenantId: string): void {
+    if (tenantId === '') {
+      // "Default": the host goes back to reaching whatever its own name reaches (no alias)
+      this.tenantService.resetAlias(host);
+      return;
+    }
+
     this.tenantService.addAlias(tenantId, host);
   }
 

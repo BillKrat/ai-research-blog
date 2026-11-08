@@ -7,6 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap, throwError } from 'rxjs';
 import { EntityGrid, GridRequest, LabelPipe } from '@adventures/entity-ui';
 import { describeApiError, EntityApiService, EntityGridModel } from '@adventures/core';
+import { TenantService } from '../../services/tenant.service';
 
 /**
  * One admin list screen for every entity collection: the route says which (data: collection and title), the server says
@@ -24,11 +25,13 @@ export class AdminGrid implements OnInit {
   private readonly api = inject(EntityApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly tenantService = inject(TenantService);
 
   protected readonly title = signal('');
   protected readonly model = signal<EntityGridModel | null>(null);
   protected readonly isLoading = signal(true);
   protected readonly errors = signal<string[]>([]);
+  protected readonly showEveryone = signal(false);
 
   private collection = '';
 
@@ -42,6 +45,22 @@ export class AdminGrid implements OnInit {
   /** The public route prefix of this collection (posts and pages have a page on the site), or null. */
   protected get viewBase(): string | null {
     return this.collection === '/api/posts' ? '/post' : this.collection === '/api/pages' ? '/page' : null;
+  }
+
+  /** A platform administrator can list the people of every tenant on the Users screen, to find one and give them a role in the tenant being worked in. */
+  protected get canShowEveryone(): boolean {
+    return this.collection === '/api/users' && this.tenantService.isPlatform();
+  }
+
+  protected onEveryone(everyone: boolean): void {
+    this.showEveryone.set(everyone);
+    this.load(
+      this.api.grid(this.collection, {
+        pageSize: this.model()?.paging?.pageSize,
+        filter: everyone ? 'Scope' : null,
+        filterValue: everyone ? 'Everyone' : '',
+      }),
+    );
   }
 
   protected get canCreate(): boolean {

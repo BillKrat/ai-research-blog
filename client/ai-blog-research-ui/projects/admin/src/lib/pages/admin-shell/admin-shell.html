@@ -46,12 +46,13 @@
           <label>
             Make {{ current.host }} mirror
             <select #mirrorTarget aria-label="Tenant to mirror">
+              <option value="">Default (stop mirroring)</option>
               @for (entry of allTenants(); track entry.id) {
                 <option [value]="entry.id" [selected]="entry.id === current.tenant?.id">{{ entry.name }}</option>
               }
             </select>
           </label>
-          <button type="button" class="admin-shell__mirror" (click)="mirror(current.host, mirrorTarget.value)">Mirror</button>
+          <button type="button" class="admin-shell__mirror" (click)="mirror(current.host, mirrorTarget.value)">Apply</button>
           @if (problem()) {
             <p class="admin-shell__problem" role="alert">{{ problem() }}</p>
           }

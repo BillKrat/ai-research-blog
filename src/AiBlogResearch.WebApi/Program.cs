@@ -374,6 +374,8 @@ try
     // T3b: the people screen shows and changes only members of the request tenant; sign-in and the profile keep the plain, global IUserBll.
     builder.Services.AddScoped<ITenantContext, RequestGraphScope>();
     builder.Services.AddNQuadUserMembership();
+    builder.Services.AddScoped<UserVisibility>();
+    builder.Services.AddScoped<AiBlogResearch.WebApi.Controllers.PlatformUserVisibilityFilter>();
     builder.Services.AddScoped<TenantScopedUserBll>();
     builder.Services.AddScoped<ITenantUserPresenter, TenantUserPresenter>();
     builder.Services.AddNQuadEntityRepository(

@@ -198,7 +198,7 @@ public class UsersControllerTests
         Assert.Equal(LegacyUserProvisioning.Message, Assert.IsType<ProblemDetails>(problem.Value).Title);
     }
 
-    internal static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null, IUserProvisioning? provisioning = null, Adventures.WebApi.IRequestTenant? requestTenant = null, FakeMembership? membership = null, FakeRelations? relations = null)
+    internal static UsersController BuildController(FakeUserPresenter presenter, string? callerUserName, FakeRelationWriter? writer = null, IUserProvisioning? provisioning = null, Adventures.WebApi.IRequestTenant? requestTenant = null, FakeMembership? membership = null, FakeRelations? relations = null, UserVisibility? visibility = null)
     {
         var identity = callerUserName is null
             ? new ClaimsIdentity()
@@ -207,7 +207,7 @@ public class UsersControllerTests
         return new UsersController(presenter, writer ?? new FakeRelationWriter(), new EntitySchemaOf<User>(UserSchemaWithRelation), membership ?? new FakeMembership(), new FixedTenantContext("t1"), relations ?? new FakeRelations(),
             provisioning ?? new FakeProvisioning(), new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
             requestTenant ?? new FixedRequestTenant(new CurrentTenant(null, null, null, "api.host", TenantMatch.None)),
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<UsersController>.Instance)
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<UsersController>.Instance, visibility)
         {
             ControllerContext = new ControllerContext
             {

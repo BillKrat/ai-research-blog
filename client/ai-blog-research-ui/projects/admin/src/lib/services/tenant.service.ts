@@ -84,6 +84,17 @@ export class TenantService {
     });
   }
 
+  /** Takes this host back to its default: removes it from whichever tenant mirrors it. Says so when it mirrors none. */
+  resetAlias(host: string): void {
+    const name = host.replace(/^[a-z]+:\/\//i, '').split(/[/:?#]/)[0].toLowerCase();
+    const owner = this._all().find((tenant) => tenant.aliases.includes(name));
+    if (owner) {
+      this.removeAlias(owner.id, name);
+    } else {
+      this._problem.set(`${name} is not mirroring any tenant.`);
+    }
+  }
+
   removeAlias(tenantId: string, host: string): void {
     this._problem.set('');
     this.http.delete<string[]>(`${this.apiUrl}/api/tenant/${encodeURIComponent(tenantId)}/aliases/${encodeURIComponent(host)}`).subscribe({
