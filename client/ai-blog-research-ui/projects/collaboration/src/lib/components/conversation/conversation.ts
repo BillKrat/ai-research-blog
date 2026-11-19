@@ -44,7 +44,44 @@ export class Conversation {
   protected readonly entries = signal<ConversationEntry[]>([]);
   protected readonly errors = signal<string[]>([]);
   protected readonly sending = signal(false);
-  protected text = '';
+  private reply = '';
+
+  /**
+   * The reply being written. It is kept in the browser for this item (a per-viewer convenience, never sent anywhere), so leaving the page
+   * or reloading loses nothing, and forgotten when the box is emptied or the reply is sent. A browser that refuses storage just works without it.
+   */
+  protected get text(): string {
+    return this.reply;
+  }
+
+  protected set text(value: string) {
+    this.reply = value;
+    this.saveDraft(value);
+  }
+
+  private draftKey(): string {
+    return `adv.reply-draft.${this.base()}.${this.postId()}`;
+  }
+
+  private saveDraft(value: string): void {
+    try {
+      if (value === '') {
+        localStorage.removeItem(this.draftKey());
+      } else {
+        localStorage.setItem(this.draftKey(), value);
+      }
+    } catch {
+      // storage is a convenience only
+    }
+  }
+
+  private restoreDraft(): void {
+    try {
+      this.reply = localStorage.getItem(this.draftKey()) ?? '';
+    } catch {
+      this.reply = '';
+    }
+  }
   protected asDecision = false;
   protected requestingChange = signal(false);
   protected approving = signal(false);
@@ -213,6 +250,7 @@ export class Conversation {
   }
 
   private load(postId: string): void {
+    this.restoreDraft();
     this.errors.set([]);
     this.conversation.list(postId, this.base()).subscribe({
       next: (all) => this.entries.set(all),

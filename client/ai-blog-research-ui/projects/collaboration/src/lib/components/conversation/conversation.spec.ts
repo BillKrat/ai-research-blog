@@ -292,3 +292,88 @@ describe('Conversation reply box', () => {
     expect(changed).toHaveBeenCalled();
   });
 });
+describe('Conversation unsent reply', () => {
+  const key = 'adv.reply-draft.posts.p1';
+
+  const store = new Map<string, string>();
+  const fake: Storage = {
+    get length() {
+      return store.size;
+    },
+    clear: () => store.clear(),
+    getItem: (k) => store.get(k) ?? null,
+    key: (i) => [...store.keys()][i] ?? null,
+    removeItem: (k) => void store.delete(k),
+    setItem: (k, v) => void store.set(k, String(v)),
+  };
+
+  beforeEach(() => {
+    store.clear();
+    vi.stubGlobal('localStorage', fake);
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function open(postId = 'p1') {
+    const fixture = TestBed.createComponent(Conversation);
+    fixture.componentRef.setInput('postId', postId);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.method === 'GET').flush([]);
+    fixture.detectChanges();
+    return { fixture, http, component: fixture.componentInstance as unknown as { text: string; send(): void } };
+  }
+
+  it('keeps what is typed in the browser and restores it when the item is opened again', () => {
+    const first = open();
+    first.component.text = 'half a thought';
+    expect(localStorage.getItem(key)).toBe('half a thought');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
+
+    const again = open();
+
+    expect(again.component.text).toBe('half a thought');
+  });
+
+  it('keeps a draft per item, so one item never shows the words meant for another', () => {
+    open().component.text = 'for p1';
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
+
+    expect(open('p2').component.text).toBe('');
+  });
+
+  it('forgets the draft once the reply is sent, and when the box is emptied', () => {
+    const { http, component, fixture } = open();
+    component.text = 'sent soon';
+    component.send();
+    http.expectOne((r) => r.method === 'POST').flush({ id: 'c1', author: 'Admin', kind: 'Comment', created: '2026-11-19T10:00:00Z', body: 'sent soon' });
+    fixture.detectChanges();
+
+    expect(localStorage.getItem(key)).toBeNull();
+
+    component.text = 'again';
+    component.text = '';
+    expect(localStorage.getItem(key)).toBeNull();
+  });
+
+  it('works when the browser refuses storage', () => {
+    const blocked = vi.spyOn(fake, 'getItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    vi.spyOn(fake, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+
+    const { component } = open();
+    component.text = 'still works';
+
+    expect(component.text).toBe('still works');
+    blocked.mockRestore();
+    vi.restoreAllMocks();
+  });
+});
