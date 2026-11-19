@@ -15,6 +15,7 @@ using Serilog;
 using Adventures.Blog;
 using Adventures.Blog.Legacy;
 using Adventures.Blog.WebApi;
+using Adventures.Collaboration.WebApi;
 using Adventures.Blog.Postgres;
 using Adventures.Collaboration;
 using Adventures.MEF;
@@ -102,7 +103,8 @@ try
     });
 
     builder.Services.AddControllers()
-        .AddBlogControllers();
+        .AddBlogControllers()
+        .AddCollaborationControllers();
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
 

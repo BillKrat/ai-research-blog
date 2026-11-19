@@ -3,6 +3,7 @@
     <Project Path="../Adventures.Foundation/src/Adventures.Common/Adventures.Common.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Ioc/Adventures.Ioc.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Collaboration/Adventures.Collaboration.csproj" />
+    <Project Path="../Adventures.Foundation/src/Adventures.Collaboration.WebApi/Adventures.Collaboration.WebApi.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.MEF/Adventures.MEF.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Blog/Adventures.Blog.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Blog.Postgres/Adventures.Blog.Postgres.csproj" />

@@ -1,3 +1,4 @@
+using Adventures.Collaboration.WebApi;
 using System.Reflection;
 using AiBlogResearch.WebApi.Controllers;
 using Microsoft.AspNetCore.Authorization;
