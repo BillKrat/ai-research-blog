@@ -32,6 +32,7 @@ public sealed class RouteRightsGuardTests
         [nameof(RuntimeController)] = "one anonymous fact for the page: whether this is a local run on the live store; no dependencies",
         [nameof(PublicController)] = "the public read side",
         [nameof(SiteController)] = "public site settings",
+        [nameof(FeedController)] = "the public RSS feed: published posts only, no drafts, no author, no ids",
         [nameof(PublicCommentsController)] = "anonymous: the approved comments of a post and the rate-limited comment form (new comments wait for approval)",
         [nameof(ProfileController)] = "the signed-in person edits their own profile",
         [nameof(TenantController)] = "which tenant the domain names; display only",

@@ -98,3 +98,21 @@ describe('App', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.page__live')).toBeNull();
   });
 });
+
+describe('App RSS link', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+  });
+
+  it('offers the feed in the header, pointing at the public feed endpoint of the API', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a[aria-label="RSS feed"]') as HTMLAnchorElement | null;
+    expect(link).not.toBeNull();
+    expect(link!.getAttribute('href')).toMatch(/\/api\/public\/feed$/);
+  });
+});

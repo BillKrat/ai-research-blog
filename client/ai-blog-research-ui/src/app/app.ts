@@ -9,7 +9,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { SiteNav, SiteService } from '@adventures/blog-reader';
 import { AdminExceptionsService, AdminMenuService, HealthService } from '@adventures/admin';
-import { ApiProblemService, AuthService } from '@adventures/core';
+import { API_BASE_URL, ApiProblemService, AuthService } from '@adventures/core';
 
 
 @Component({
@@ -26,6 +26,8 @@ export class App implements OnInit {
 
   private readonly site = inject(SiteService);
   protected readonly apiProblem = inject(ApiProblemService);
+  /** The RSS feed lives on the API (the site is static files); its links point at this site, decided server-side from the tenant. */
+  protected readonly feedUrl = `${inject(API_BASE_URL)}/api/public/feed`;
   private readonly documentTitle = inject(Title);
 
   /** The site title, from the settings an administrator edits (the default until they are read). */
