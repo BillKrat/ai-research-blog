@@ -7,3 +7,4 @@ export * from './lib/services/conversation.service';
 export * from './lib/components/conversation/conversation';
 export * from './lib/components/approval-badge/approval-badge';
 export * from './lib/pages/admin-decisions/admin-decisions';
+export * from './lib/pages/test-steps-popout/test-steps-popout';

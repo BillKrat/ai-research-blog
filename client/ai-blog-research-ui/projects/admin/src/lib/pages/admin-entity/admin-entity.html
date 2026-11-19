@@ -8,8 +8,8 @@
   @if (isLoading()) {
     <p>Loading...</p>
   } @else if (model(); as form) {
-    <adv-entity-form [model]="form" (save)="onSave($event)">
-      <div formToolbar class="admin-entity__top">
+    <!-- The same buttons sit above the form and again at the end of the page (a long conversation scrolls Save out of sight). The bottom bar is outside the form, so its Save asks the form to submit. -->
+    <ng-template #actionBar let-atEnd>
       <div class="admin-entity__toolbar" role="toolbar" aria-label="Actions">
         <button mat-icon-button type="button" (click)="back()" [matTooltip]="'back' | label" [attr.aria-label]="'back' | label">
           <mat-icon>arrow_back</mat-icon>
@@ -18,7 +18,8 @@
           <button
             mat-icon-button
             color="primary"
-            type="submit"
+            [type]="atEnd ? 'button' : 'submit'"
+            (click)="atEnd && entityForm.submit()"
             [disabled]="saveState() === 'saving'"
             [matTooltip]="(saveState() === 'saving' ? 'saving' : 'save') | label"
             [attr.aria-label]="'save' | label"
@@ -42,6 +43,11 @@
             <mat-icon>preview</mat-icon>
           </a>
         }
+        @if (hasConversation && conversationBase === 'collaboration') {
+          <button mat-icon-button type="button" (click)="popOutSteps()" [matTooltip]="'popOutSteps' | label" [attr.aria-label]="'popOutSteps' | label">
+            <mat-icon>open_in_new</mat-icon>
+          </button>
+        }
         @for (action of form.actions ?? []; track action.name) {
           <button mat-icon-button type="button" (click)="runAction(action)" [matTooltip]="action.label" [attr.aria-label]="action.label">
             <mat-icon>{{ iconOf(action) }}</mat-icon>
@@ -58,6 +64,11 @@
           }
         }
       </div>
+    </ng-template>
+
+    <adv-entity-form #entityForm [model]="form" (save)="onSave($event)">
+      <div formToolbar class="admin-entity__top">
+      <ng-container [ngTemplateOutlet]="actionBar" [ngTemplateOutletContext]="{ $implicit: false }" />
 
       @if (oneTimeLogin(); as login) {
         <section class="admin-entity__onetime" role="status">
@@ -102,5 +113,9 @@
     @if (hasConversation) {
       <adv-conversation [postId]="form.entity.entityId" [base]="conversationBase" [actions]="form.actions ?? []" (changed)="reload()" />
     }
+
+    <div class="admin-entity__bottom">
+      <ng-container [ngTemplateOutlet]="actionBar" [ngTemplateOutletContext]="{ $implicit: true }" />
+    </div>
   }
 </section>

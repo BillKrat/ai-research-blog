@@ -46,6 +46,7 @@ export const LABELS = {
   send: 'Send',
   unpublish: 'Unpublish',
   view: 'View on the site',
+  popOutSteps: 'Open the test steps in their own window',
   saving: 'Saving...',
   working: 'Working...',
 } as const;

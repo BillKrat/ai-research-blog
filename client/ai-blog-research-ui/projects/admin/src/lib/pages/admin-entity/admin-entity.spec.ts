@@ -95,9 +95,27 @@ describe('AdminEntity', () => {
       actions: [{ name: 'publish', label: 'Publish', link: '/api/posts/p2/publish' }],
     });
     fixture.detectChanges();
-    const eyes = (fixture.nativeElement as HTMLElement).querySelectorAll('button[aria-label="Publish"]');
+    const eyes = (fixture.nativeElement as HTMLElement).querySelectorAll('.admin-entity__top button[aria-label="Publish"]');
 
     expect(eyes.length).toBe(1);   // the server action only, not a second button
+  });
+
+  it('repeats the action buttons at the end of the page, and the bottom Save saves the same form', () => {
+    const { params, http, fixture } = setup();
+    http.expectOne((r) => r.url.endsWith('/api/pages/new')).flush(blank);
+    params.next(convertToParamMap({ id: 'p1' }));
+    http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/pages/p1')).flush({ ...blank, entity: { entityId: 'p1', values: { Title: 'Home' } } });
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const bars = root.querySelectorAll('[role="toolbar"]');
+    expect(bars.length).toBe(2);
+    expect(bars[1].querySelectorAll('button').length).toBe(bars[0].querySelectorAll('button').length);
+
+    (bars[1].querySelector('button[aria-label="Save"]') as HTMLButtonElement).click();
+    const put = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/pages/p1'));
+    expect(put.request.body.values.Title).toBe('Home');
+    http.expectNone((r) => r.method === 'POST');
   });
 
   it('goes back to the list when an action such as Apply revision removes the entry (the refresh answers 404)', () => {

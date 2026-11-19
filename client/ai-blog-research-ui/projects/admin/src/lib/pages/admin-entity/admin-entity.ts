@@ -1,4 +1,5 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,7 +21,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  */
 @Component({
   selector: 'adv-admin-entity',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation, RightsChecklist, PlatformSwitch],
+  imports: [NgTemplateOutlet, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation, RightsChecklist, PlatformSwitch],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',
 })
@@ -100,6 +101,14 @@ export class AdminEntity implements OnInit {
 
   protected get conversationBase(): 'posts' | 'collaboration' {
     return this.collection === '/api/collaboration' ? 'collaboration' : 'posts';
+  }
+
+  /** Opens this item's Test steps in a window of their own (same origin, so the sign-in carries over), to keep on another monitor. */
+  protected popOutSteps(): void {
+    const id = this.model()?.entity.entityId;
+    if (id) {
+      window.open(`/steps/${encodeURIComponent(id)}`, '_blank');
+    }
   }
 
   /** A saved role shows its rights as a checklist under the form (the roles endpoint is itself behind the roles.manage right). */

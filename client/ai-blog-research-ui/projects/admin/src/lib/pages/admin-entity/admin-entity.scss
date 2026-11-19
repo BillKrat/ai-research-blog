@@ -24,6 +24,12 @@
     margin-bottom: 1rem;
   }
 
+  // The same actions repeated after the conversation, so nobody scrolls back up to save.
+  &__bottom {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--mat-sys-outline-variant, rgba(128, 128, 128, 0.3));
+  }
+
   &__toolbar {
     display: flex;
     justify-content: flex-end;

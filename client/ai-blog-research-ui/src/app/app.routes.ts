@@ -34,6 +34,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    // The Test steps of one collaboration item on a bare page, for the pop-out window (no admin frame).
+    path: 'steps/:id',
+    loadComponent: () => import('@adventures/collaboration').then((m) => m.TestStepsPopout),
+    canActivate: [authGuard],
+  },
+  {
     // The admin area: the frame renders the server-supplied menu; every screen inside is administrators only on the server
     // (403 otherwise), the guard only keeps anonymous visitors on the sign-in page.
     path: 'admin',
