@@ -49,4 +49,13 @@ describe('AdminDashboard', () => {
 
     expect((fixture.nativeElement as HTMLElement).querySelector('.dashboard__problem')?.textContent).toContain('could not be loaded');
   });
+
+  it('carries the API health pill, so the health check runs here and not while the menu loads', () => {
+    const fixture = TestBed.createComponent(AdminDashboard);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('adv-health-pill')).not.toBeNull();
+    expect(http.match((r) => r.url.endsWith('/api/health/detail')).length).toBe(1);
+  });
 });

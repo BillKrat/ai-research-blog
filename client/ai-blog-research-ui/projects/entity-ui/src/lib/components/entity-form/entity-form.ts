@@ -118,11 +118,11 @@ export class EntityForm implements OnChanges {
     this.form.controls[name].markAsDirty();
   }
 
-  /** Which Markdown fields are shown in the Visual (WYSIWYG) editor instead of the Markdown text. */
-  protected readonly visual = signal<Record<string, boolean>>({});
+  /** Which Markdown fields the person switched to the Markdown text. A Markdown field opens in the Editor (what most people expect). */
+  protected readonly source = signal<Record<string, boolean>>({});
 
-  protected toggleVisual(name: string): void {
-    this.visual.update((current) => ({ ...current, [name]: !current[name] }));
+  protected toggleSource(name: string): void {
+    this.source.update((current) => ({ ...current, [name]: !current[name] }));
   }
 
   /** The Visual editor changed something: the field now holds the Markdown it produced. */

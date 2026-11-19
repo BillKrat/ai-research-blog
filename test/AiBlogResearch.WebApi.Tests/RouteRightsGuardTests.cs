@@ -26,6 +26,7 @@ public sealed class RouteRightsGuardTests
         [nameof(M2MAuthController)] = "machine token endpoint, authenticated by the client secret",
         [nameof(ClientErrorsController)] = "anonymous browser error reports, capped",
         [nameof(HealthController)] = "health check",
+        [nameof(RuntimeController)] = "one anonymous fact for the page: whether this is a local run on the live store; no dependencies",
         [nameof(PublicController)] = "the public read side",
         [nameof(SiteController)] = "public site settings",
         [nameof(PublicCommentsController)] = "anonymous: the approved comments of a post and the rate-limited comment form (new comments wait for approval)",

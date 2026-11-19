@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { DashboardModel, DashboardService } from '../../services/dashboard.service';
 import { TenantPanel } from '../../components/tenant-panel/tenant-panel';
+import { HealthPill } from '../../components/health-pill/health-pill';
 
 /**
  * The admin Dashboard (the legacy BlogEngine dashboard, trimmed for the beta): the tenant being administered and its host names,
@@ -10,7 +11,7 @@ import { TenantPanel } from '../../components/tenant-panel/tenant-panel';
  */
 @Component({
   selector: 'adv-admin-dashboard',
-  imports: [RouterLink, MatIconModule, TenantPanel],
+  imports: [RouterLink, MatIconModule, TenantPanel, HealthPill],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.scss',
 })

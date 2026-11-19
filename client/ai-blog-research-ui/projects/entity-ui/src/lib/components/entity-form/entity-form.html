@@ -57,10 +57,10 @@
             <div class="entity-form__rich-head">
               <span>{{ labelOf(field) }} (Markdown)</span>
               <span class="entity-form__rich-tools">
-                <button type="button" (click)="toggleVisual(field.name)">{{ visual()[field.name] ? 'Markdown' : 'Editor' }}</button>
+                <button type="button" (click)="toggleSource(field.name)">{{ source()[field.name] ? 'Editor' : 'Markdown' }}</button>
               </span>
             </div>
-            @if (visual()[field.name]) {
+            @if (!source()[field.name]) {
               @defer (on immediate) {
                 <adv-visual-editor [markdown]="textOf(field)" [label]="labelOf(field)" (markdownChange)="setMarkdown(field.name, $event)" />
               } @placeholder {

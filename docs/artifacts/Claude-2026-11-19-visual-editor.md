@@ -42,3 +42,7 @@ The conversation reply box still uses the plain Markdown box (the Visual view co
 ## Changed after the human review (2026-11-19)
 
 The Preview and Edit button and the Insert image button are gone from Markdown fields (the editor has its own picture button), and the switch now reads **Editor** / **Markdown**. The Editor surface can be resized with the drag handle in its bottom-right corner, like the Markdown text box. A Markdown diagram (Mermaid) now shows as a code block in the Editor and is drawn on the site itself.
+
+## Changed after the second review (2026-11-19)
+
+Markdown fields now **open in the Editor** (the switch reads Markdown and Editor); the Editor role holds `comments.moderate`; deleting, approving or unapproving a comment refreshes the menu badge; the API health pill moved to the Dashboard (the page asks a cheap `/api/runtime` question for the LIVE DATA banner instead of running the health check at start-up); Admin > Exceptions can drill into a kind of failure from the Kinds of failure table.

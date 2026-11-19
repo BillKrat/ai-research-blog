@@ -1,9 +1,8 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { ApiProblemService } from '@adventures/core';
 import { App } from './app';
 
 describe('App layout width', () => {
@@ -34,7 +33,7 @@ describe('App layout width', () => {
   });
 });
 
-describe('App health badge follows an unanswered API', () => {
+describe('App start-up', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
@@ -42,23 +41,20 @@ describe('App health badge follows an unanswered API', () => {
     }).compileComponents();
   });
 
-  it('turns to "unreachable" as soon as any call to the API goes unanswered, and back when it answers again (no waiting for the next health check)', () => {
+  it('does not run the health check (it probes the database and the MCP server): it only asks the cheap runtime question', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    http.match((r) => r.url.endsWith('/api/health'))[0].flush({ status: 'Healthy', timestampUtc: new Date().toISOString() });
-    fixture.detectChanges();
-    // the badge itself is shown to administrators only; the state it draws from is what matters here
-    const badge = () => (fixture.componentInstance as unknown as { healthState(): string }).healthState();
-    expect(badge()).toBe('healthy');
 
-    TestBed.inject(ApiProblemService).reportHttp(new HttpErrorResponse({ status: 0, statusText: 'Timeout' }));
-    fixture.detectChanges();
-    expect(badge()).toBe('unreachable');
+    http.expectNone((r) => r.url.includes('/api/health'));
+    expect(http.match((r) => r.url.endsWith('/api/runtime')).length).toBe(1);
+  });
 
-    TestBed.inject(ApiProblemService).clear();
+  it('shows no health pill in the header (it is on the Dashboard)', () => {
+    const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    expect(badge()).toBe('healthy');
+
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('API:');
   });
 });
 
@@ -87,16 +83,16 @@ describe('App', () => {
   it('shows a LIVE DATA banner only when the API says it is a local run on the live store', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    TestBed.inject(HttpTestingController).match((r) => r.url.endsWith('/api/health'))[0].flush({ status: 'Healthy', timestampUtc: new Date().toISOString(), liveData: true });
+    TestBed.inject(HttpTestingController).match((r) => r.url.endsWith('/api/runtime'))[0].flush({ liveData: true });
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('.page__live')?.textContent).toContain('LIVE DATA');
   });
 
-  it('shows no banner for an ordinary health answer', () => {
+  it('shows no banner for an ordinary run', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    TestBed.inject(HttpTestingController).match((r) => r.url.endsWith('/api/health'))[0].flush({ status: 'Healthy', timestampUtc: new Date().toISOString() });
+    TestBed.inject(HttpTestingController).match((r) => r.url.endsWith('/api/runtime'))[0].flush({ liveData: false });
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('.page__live')).toBeNull();

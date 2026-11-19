@@ -30,10 +30,20 @@ export function describeFailures(health: Pick<HealthResponse, 'dependencies'>): 
     .join(', ');
 }
 
+/** The one cheap fact about how the API is running (no dependency is probed): whether it is a local run on the live store. */
+export interface RuntimeInfo {
+  liveData: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class HealthService {
   private readonly apiUrl = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
+
+  /** Asks the cheap runtime question (the red LIVE DATA banner); unlike the health check it touches no dependency. */
+  runtime(): Observable<RuntimeInfo> {
+    return this.http.get<RuntimeInfo>(`${this.apiUrl}/api/runtime`);
+  }
 
   /**
    * The anonymous answer is only status and time. A signed-in person asks for the detail first (dependencies, trace id); a person

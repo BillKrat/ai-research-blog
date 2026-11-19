@@ -5,7 +5,14 @@
     <p class="admin-exceptions__error" role="alert">{{ message }}</p>
   }
 
-  <h3>Occurrences</h3>
+  <h3 class="admin-exceptions__occurrences">Occurrences</h3>
+
+  @if (drilled(); as kind) {
+    <p class="admin-exceptions__filter" role="status">
+      Showing the {{ model()?.rows?.length ?? 0 }} occurrences of <strong>{{ kind.exceptionType }}</strong>: {{ kind.messagePattern }}
+      <button type="button" (click)="showAll()">Show all</button>
+    </p>
+  }
 
   <div class="admin-exceptions__actions">
     <button mat-icon-button color="primary" type="button" (click)="ok()" [matTooltip]="'ok' | label" [attr.aria-label]="'ok' | label">
@@ -33,14 +40,14 @@
     <p>Loading exceptions...</p>
   } @else if (model(); as grid) {
     @if (grid.rows.length === 0) {
-      <p>{{ includePurged() ? 'No exceptions recorded.' : 'No active exceptions.' }}</p>
+      <p>{{ drilled() ? 'No occurrences of this kind are listed.' : includePurged() ? 'No exceptions recorded.' : 'No active exceptions.' }}</p>
     } @else {
       <adv-entity-grid [model]="grid" [rowTools]="rowTools" />
     }
   }
   @if (signatures().length > 0) {
     <h3>Kinds of failure</h3>
-    <p class="admin-exceptions__hint">Repeats of the same exception are grouped. Match a row above to a kind by its SignatureId.</p>
+    <p class="admin-exceptions__hint">Repeats of the same exception are grouped. Press a count to list just that kind above.</p>
     <table class="admin-exceptions__kinds">
       <thead>
         <tr>
@@ -55,7 +62,15 @@
       <tbody>
         @for (kind of signatures(); track kind.id) {
           <tr>
-            <td class="admin-exceptions__count">{{ kind.occurrenceCount }}</td>
+            <td class="admin-exceptions__count">
+              <button
+                type="button"
+                class="admin-exceptions__drill"
+                [attr.aria-label]="'Show the ' + kind.occurrenceCount + ' occurrences of ' + kind.exceptionType"
+                title="Show these occurrences"
+                (click)="drill(kind)"
+              >{{ kind.occurrenceCount }}</button>
+            </td>
             <td>{{ kind.exceptionType }}</td>
             <td>{{ kind.messagePattern }}</td>
             <td>{{ kind.topFrame }}</td>

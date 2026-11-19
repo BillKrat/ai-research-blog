@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommentAction, CommentsAdminService, ModerationComment } from '../../services/comments-admin.service';
+import { AdminMenuService } from '../../services/admin-menu.service';
 
 /**
  * The Comments page (the legacy BlogEngine one, trimmed for the beta): what readers wrote under posts, filtered by Pending or Approved,
@@ -15,6 +16,7 @@ import { CommentAction, CommentsAdminService, ModerationComment } from '../../se
 })
 export class AdminComments implements OnInit {
   private readonly service = inject(CommentsAdminService);
+  private readonly menu = inject(AdminMenuService);
 
   protected readonly comments = signal<ModerationComment[]>([]);
   protected readonly selected = signal<ReadonlySet<string>>(new Set());
@@ -56,7 +58,11 @@ export class AdminComments implements OnInit {
 
     this.problem.set('');
     this.service.process(action, ids).subscribe({
-      next: () => this.load(),
+      next: () => {
+        // the waiting-for-approval badge on the menu counts these comments
+        this.menu.load();
+        this.load();
+      },
       error: () => this.problem.set('That did not work. Please try again.'),
     });
   }

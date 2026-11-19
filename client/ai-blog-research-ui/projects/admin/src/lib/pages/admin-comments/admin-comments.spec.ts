@@ -79,7 +79,24 @@ describe('AdminComments', () => {
     expect(post.request.body).toEqual({ action: 'delete', ids: ['c2'] });
     expect(confirm).toHaveBeenCalledTimes(2);
     post.flush({ changed: 1 });
-    http.expectOne((r) => r.method === 'GET').flush([rows[0]]);
+    http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/comments')).flush([rows[0]]);
+  });
+
+  it('refreshes the menu counts after approving, unapproving or deleting, so the waiting badge never goes stale', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    for (const [selector, action] of [['approve', 'approve'], ['unapprove', 'unapprove'], ['delete', 'delete']] as const) {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ imports: [AdminComments], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
+      const { fixture, http, root } = render();
+      (root.querySelector('input[aria-label="Select Pat"]') as HTMLInputElement).click();
+      fixture.detectChanges();
+
+      (root.querySelector(`button.comments-admin__${selector}`) as HTMLButtonElement).click();
+      http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/comments/process') && r.body.action === action).flush({ changed: 1 });
+
+      http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/admin/menu')).flush({ sections: [] });
+      http.expectOne((r) => r.method === 'GET' && r.url.endsWith('/api/comments')).flush([]);
+    }
   });
 
   it('keeps the buttons off until something is ticked', () => {

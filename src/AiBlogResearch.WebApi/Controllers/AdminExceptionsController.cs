@@ -31,10 +31,16 @@ public sealed class AdminExceptionsController(IExceptionLogPresenter presenter, 
         Ok(await signatures.ListSummariesAsync(cancellationToken));
 
 /// <summary>An administrator's triage of one kind of failure: Acknowledged (being handled), Fixed, or back to New. A Fixed kind that recurs becomes Regressed by itself.</summary>    [HttpPut("signatures/{signatureId}/status")]    public async Task<IActionResult> SetStatus(string signatureId, [FromBody] SignatureStatusChange change, CancellationToken cancellationToken)    {        if (!ExceptionSignatureStatus.Settable.Contains(change.Status ?? string.Empty, StringComparer.Ordinal))        {            return BadRequest(new { title = $"Status must be one of: {string.Join(", ", ExceptionSignatureStatus.Settable)}." });        }        return await signatures.SetStatusAsync(signatureId, change.Status!, cancellationToken) ? NoContent() : NotFound();    }
-    /// <summary>The active exceptions, newest first; <c>?includePurged=true</c> adds the purged ones (soft deleted, each marked in its State column).</summary>
+    /// <summary>
+    /// The active exceptions, newest first; <c>?includePurged=true</c> adds the purged ones (soft deleted, each marked in its State column);
+    /// <c>?signature=&lt;id&gt;</c> drills into one kind of failure (see Kinds of failure) and lists only its occurrences.
+    /// </summary>
     [HttpGet]
-    public async Task<ActionResult<EntityGridModel>> Grid([FromQuery] bool includePurged = false, CancellationToken cancellationToken = default) =>
-        Ok(includePurged ? await presenter.GetHistoryGridAsync(cancellationToken) : await presenter.GetGridAsync(cancellationToken));
+    public async Task<ActionResult<EntityGridModel>> Grid(
+        [FromQuery] bool includePurged = false, [FromQuery] string? signature = null, CancellationToken cancellationToken = default) =>
+        Ok(!string.IsNullOrWhiteSpace(signature)
+            ? await presenter.GetSignatureGridAsync(signature, includePurged, cancellationToken)
+            : includePurged ? await presenter.GetHistoryGridAsync(cancellationToken) : await presenter.GetGridAsync(cancellationToken));
 
     [HttpGet("count")]
     public async Task<ActionResult<ExceptionCount>> Count(CancellationToken cancellationToken) =>

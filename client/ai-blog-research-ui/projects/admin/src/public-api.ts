@@ -18,6 +18,7 @@ export * from './lib/pages/admin-entity/admin-entity';
 export * from './lib/pages/admin-plugins/admin-plugins';
 export * from './lib/pages/admin-exceptions/admin-exceptions';
 export * from './lib/pages/admin-dashboard/admin-dashboard';
+export * from './lib/components/health-pill/health-pill';
 export * from './lib/pages/admin-comments/admin-comments';
 export * from './lib/services/comments-admin.service';
 export * from './lib/services/dashboard.service';

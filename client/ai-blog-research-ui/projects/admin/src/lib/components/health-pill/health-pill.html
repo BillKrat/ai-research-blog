@@ -1,0 +1,19 @@
+<span class="health-pill" aria-live="polite">
+  @switch (state()) {
+    @case ('checking') {
+      <span class="badge badge--info">API: checking...</span>
+    }
+    @case ('healthy') {
+      <span class="badge badge--success" [attr.title]="'WebApi healthy as of ' + checkedAt()">API: healthy</span>
+    }
+    @case ('degraded') {
+      <span class="badge badge--warning" [attr.title]="(trace() ? 'Trace: ' + trace() + '. ' : '') + 'As of ' + checkedAt()">API: degraded ({{ problem() }})</span>
+    }
+    @case ('unhealthy') {
+      <span class="badge badge--danger" [attr.title]="(trace() ? 'Trace: ' + trace() + '. ' : '') + 'As of ' + checkedAt()">API: unhealthy ({{ problem() }})</span>
+    }
+    @case ('unreachable') {
+      <span class="badge badge--danger">API: unreachable</span>
+    }
+  }
+</span>

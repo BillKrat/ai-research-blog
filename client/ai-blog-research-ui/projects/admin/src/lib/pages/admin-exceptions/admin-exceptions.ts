@@ -28,6 +28,9 @@ export class AdminExceptions implements OnInit {
   protected readonly isPurging = signal(false);
   protected readonly includePurged = signal(false);
 
+  /** The kind of failure whose occurrences are shown (a drill-down), or null for every occurrence. */
+  protected readonly drilled = signal<ExceptionSignatureSummary | null>(null);
+
   /** Triage answers by correlation id, and which ids are being triaged right now. */
   protected readonly triage = signal<Record<string, TriageResult>>({});
   protected readonly triaging = signal<Record<string, boolean>>({});
@@ -179,6 +182,19 @@ export class AdminExceptions implements OnInit {
     });
   }
 
+  /** Shows only the occurrences of one kind of failure, and brings them into view. */
+  drill(kind: ExceptionSignatureSummary): void {
+    this.drilled.set(kind);
+    this.load();
+    document.querySelector(".admin-exceptions__occurrences")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }
+
+  /** Leaves the drill-down: every occurrence again. */
+  showAll(): void {
+    this.drilled.set(null);
+    this.load();
+  }
+
   /** Shows or hides the purged entries (a purge is a soft delete, so they are still in the store). */
   togglePurged(show: boolean): void {
     this.includePurged.set(show);
@@ -187,7 +203,7 @@ export class AdminExceptions implements OnInit {
 
   private load(): void {
     this.errors.set([]);
-    this.service.grid(this.includePurged()).subscribe({
+    this.service.grid(this.includePurged(), this.drilled()?.id).subscribe({
       next: (grid) => {
         this.model.set(grid);
         this.isLoading.set(false);

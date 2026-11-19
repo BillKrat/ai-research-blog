@@ -1,0 +1,26 @@
+.badge {
+  padding: 0.15rem 0.6rem;
+  border-radius: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  &--info {
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+  }
+
+  &--success {
+    background: #1b5e20;
+    color: #fff;
+  }
+
+  &--warning {
+    background: #f9a825;
+    color: #1a1a1a;
+  }
+
+  &--danger {
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+  }
+}

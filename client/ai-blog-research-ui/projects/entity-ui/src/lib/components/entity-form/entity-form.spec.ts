@@ -166,20 +166,29 @@ describe('EntityForm', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Currently: Article');
   });
 
-  it('edits Markdown in a text area with one switch, Editor, and no Preview or image buttons', () => {
+  it('opens a Markdown field in the Editor, with one switch to the Markdown text and no Preview or image buttons', async () => {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
     const fixture = TestBed.createComponent(EntityForm);
     applyModel(fixture, pageModel());
     fixture.detectChanges();
     TestBed.inject(HttpTestingController).expectOne((r) => r.url.includes('/api/lookups')).flush([]);
+    await fixture.whenStable();
+    fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
+    const buttons = () => Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.textContent?.trim());
+
+    expect(root.querySelector('adv-visual-editor')).not.toBeNull();
+    expect(root.querySelector('textarea[aria-label="Content"]')).toBeNull();
+    expect(buttons()).toEqual(['Markdown']);
+    expect(root.querySelector('.entity-form__rich-head input[type="file"]')).toBeNull();
+    expect(root.querySelector('.entity-form__image')).toBeNull();
+
+    (root.querySelector('.entity-form__rich-head button') as HTMLButtonElement).click();
+    fixture.detectChanges();
 
     expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
-    expect(Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.textContent?.trim())).toEqual(['Editor']);
-    expect(root.querySelector('input[type="file"]')).toBeNull();
-    expect(root.querySelector('.entity-form__image')).toBeNull();
+    expect(buttons()).toEqual(['Editor']);
   });
-
 
   describe('document (HTML) editor', () => {
     function documentModel(format: string | null): EntityFormModel {
@@ -239,25 +248,28 @@ describe('EntityForm', () => {
       expect(fixture.componentInstance.form.dirty).toBe(true);
     });
 
-    it('keeps a Markdown post, and a post with no format at all, on the Markdown views', async () => {
+
+    it('opens a Markdown post, and a post with no format at all, in the Editor with the Markdown switch', async () => {
       for (const format of ['Markdown', null]) {
         TestBed.resetTestingModule();
         const { root } = await open(format);
 
         expect(root.querySelector('adv-html-editor')).toBeNull();
-        expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
-        expect(Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.textContent?.trim())).toEqual(['Editor']);
+        expect(root.querySelector('adv-visual-editor')).not.toBeNull();
+        expect(Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.textContent?.trim())).toEqual(['Markdown']);
       }
     });
   });
 
-  describe('visual editor', () => {
-    function openPage() {
+  describe('editor view of a Markdown field', () => {
+    async function openPage() {
       TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
       const fixture = TestBed.createComponent(EntityForm);
       applyModel(fixture, pageModel());
       fixture.detectChanges();
       TestBed.inject(HttpTestingController).expectOne((r) => r.url.includes('/api/lookups')).flush([]);
+      await fixture.whenStable();
+      fixture.detectChanges();
       const root = fixture.nativeElement as HTMLElement;
       const click = async (label: string) => {
         (Array.from(root.querySelectorAll('.entity-form__rich-head button')).find((b) => b.textContent?.trim() === label) as HTMLButtonElement).click();
@@ -268,11 +280,8 @@ describe('EntityForm', () => {
       return { fixture, root, click };
     }
 
-    it('offers an Editor view of a Markdown field that shows it formatted, and Markdown takes it back', async () => {
-      const { root, click } = openPage();
-      expect(root.querySelector('adv-visual-editor')).toBeNull();
-
-      await click('Editor');
+    it('shows the field formatted in the Editor from the start, and Markdown and Editor switch between the views', async () => {
+      const { root, click } = await openPage();
 
       expect(root.querySelector('adv-visual-editor .ProseMirror h1')?.textContent).toBe('Hello');
       expect(root.querySelector('adv-visual-editor .ProseMirror strong')?.textContent).toBe('bold');
@@ -282,22 +291,21 @@ describe('EntityForm', () => {
 
       expect(root.querySelector('adv-visual-editor')).toBeNull();
       expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
-    });
-
-    it('does not change the stored text, or mark the form changed, just because the Editor view was opened', async () => {
-      const { fixture, click } = openPage();
 
       await click('Editor');
+
+      expect(root.querySelector('adv-visual-editor .ProseMirror h1')?.textContent).toBe('Hello');
+    });
+
+    it('does not change the stored text, or mark the form changed, just because the Editor was opened', async () => {
+      const { fixture } = await openPage();
 
       expect(fixture.componentInstance.form.value['Content']).toBe('# Hello\n\nsome **bold** text');
       expect(fixture.componentInstance.form.dirty).toBe(false);
     });
 
-    it('stores what is edited in the Editor view as Markdown and marks the form changed', async () => {
-      const { fixture, root, click } = openPage();
-      await click('Editor');
-      const inner = root.querySelector('adv-visual-editor') as HTMLElement & { __ngContext__?: unknown };
-      expect(inner).not.toBeNull();
+    it('stores what is edited in the Editor as Markdown and marks the form changed', async () => {
+      const { fixture } = await openPage();
       const editor = (fixture.debugElement.query((d) => d.name === 'adv-visual-editor').componentInstance as { editor: { commands: { selectAll(): boolean }; chain(): { focus(): { toggleBold(): { run(): boolean } } } } }).editor;
 
       editor.commands.selectAll();

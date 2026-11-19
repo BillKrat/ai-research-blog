@@ -74,9 +74,21 @@ export class AdminExceptionsService implements OnDestroy {
   /** True once the server has answered the count for this user (only administrators get an answer). */
   readonly isAdministrator = this._isAdministrator.asReadonly();
 
-  /** The exceptions (newest first); with includePurged the purged ones too, each marked in its State column. */
-  grid(includePurged = false): Observable<EntityGridModel> {
-    return this.http.get<EntityGridModel>(this.baseUrl, { params: includePurged ? { includePurged: 'true' } : {} });
+  /**
+   * The exceptions (newest first); with includePurged the purged ones too, each marked in its State column; with a signature only the
+   * occurrences of that kind of failure.
+   */
+  grid(includePurged = false, signature?: string): Observable<EntityGridModel> {
+    const params: Record<string, string> = {};
+    if (includePurged) {
+      params['includePurged'] = 'true';
+    }
+
+    if (signature) {
+      params['signature'] = signature;
+    }
+
+    return this.http.get<EntityGridModel>(this.baseUrl, { params });
   }
 
   /** The kinds of failure seen (repeats grouped), most recently seen first. */

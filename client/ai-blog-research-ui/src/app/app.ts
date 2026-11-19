@@ -1,5 +1,5 @@
 ﻿// Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -8,10 +8,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { SiteNav, SiteService } from '@adventures/blog-reader';
-import { AdminExceptionsService, AdminMenuService, describeFailures, HealthResponse, HealthService } from '@adventures/admin';
+import { AdminExceptionsService, AdminMenuService, HealthService } from '@adventures/admin';
 import { ApiProblemService, AuthService } from '@adventures/core';
 
-type HealthState = 'checking' | 'healthy' | 'degraded' | 'unhealthy' | 'unreachable';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +18,7 @@ type HealthState = 'checking' | 'healthy' | 'degraded' | 'unhealthy' | 'unreacha
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App implements OnInit, OnDestroy {
+export class App implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly adminExceptions = inject(AdminExceptionsService);
@@ -35,16 +34,7 @@ export class App implements OnInit, OnDestroy {
   protected readonly isDark = signal(true);
   /** True under /admin: the admin area uses the whole window (menu at the left edge); the public site keeps its reading width. */
   protected readonly wide = signal(false);
-  private readonly measuredHealth = signal<HealthState>('checking');
-  /** What the badge shows: the last health check, unless a call to the API has just gone unanswered (then "unreachable" at once, until it answers again). */
-  protected readonly healthState = computed<HealthState>(() => (this.apiProblem.unreachable() ? 'unreachable' : this.measuredHealth()));
-  protected readonly healthCheckedAt = signal<string | null>(null);
-  /** What failed, for the status badge ("mcp (timeout)"), and the request id that finds it in the logs. */
-  protected readonly healthProblem = signal<string>('');
-  protected readonly healthTrace = signal<string | null>(null);
-  /** A local run on the production store: a banner says so, whoever looks. */
   protected readonly liveData = signal(false);
-  private healthTimer: ReturnType<typeof setInterval> | null = null;
 
   protected readonly isAuthenticated = this.authService.isAuthenticated;
   protected readonly username = this.authService.username;
@@ -88,41 +78,10 @@ export class App implements OnInit, OnDestroy {
       }
       lastUrl = event.urlAfterRedirects;
     });
-    this.checkHealth();
-    // A dependency can fail (or recover) while the page is open, so look again every two minutes.
-    this.healthTimer = setInterval(() => this.checkHealth(), 120_000);
+    // one cheap question for the LIVE DATA banner; the health check itself is on the Dashboard
+    this.healthService.runtime().subscribe({ next: (info) => this.liveData.set(info.liveData === true), error: () => this.liveData.set(false) });
   }
 
-  ngOnDestroy(): void {
-    if (this.healthTimer !== null) {
-      clearInterval(this.healthTimer);
-    }
-  }
-
-  private checkHealth(): void {
-    this.healthService.check(this.authService.isAuthenticated()).subscribe({
-      next: (res) => this.showHealth(res),
-      // A 503 (database failed) carries the same body as a 200: show what it says instead of a bare "unreachable".
-      error: (error) => {
-        if (error?.status === 503 && error.error?.status) {
-          this.showHealth(error.error as HealthResponse);
-        } else {
-          this.measuredHealth.set('unreachable');
-          this.healthProblem.set('');
-          this.healthTrace.set(null);
-        }
-      },
-    });
-  }
-
-  private showHealth(res: HealthResponse): void {
-    const status = res.status?.toLowerCase();
-    this.measuredHealth.set(status === 'unhealthy' ? 'unhealthy' : status === 'degraded' ? 'degraded' : 'healthy');
-    this.healthCheckedAt.set(new Date(res.timestampUtc).toLocaleTimeString());
-    this.healthProblem.set(describeFailures(res));
-    this.healthTrace.set(res.correlationId ?? null);
-    this.liveData.set(res.liveData === true);
-  }
 
   toggleTheme(): void {
     this.isDark.update((dark) => !dark);

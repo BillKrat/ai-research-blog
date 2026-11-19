@@ -2,6 +2,8 @@
   <h1>Dashboard</h1>
   <adv-tenant-panel />
 
+  <p class="dashboard__health"><adv-health-pill /></p>
+
   @if (failed()) {
     <p class="dashboard__problem" role="alert">The dashboard could not be loaded.</p>
   }
