@@ -8,6 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MarkdownContent } from '../markdown-content/markdown-content';
+import { VisualEditor } from '../visual-editor/visual-editor';
 import { describeApiError, EntityApiService, EntityFieldSchema, EntityFormModel, LookupOption, MediaService, SUPPORTED_CONTRACT_VERSION } from '@adventures/core';
 import { LabelPipe } from '../../i18n/labels';
 
@@ -24,7 +25,7 @@ export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'ref
  */
 @Component({
   selector: 'adv-entity-form',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MarkdownContent],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MarkdownContent, VisualEditor],
   templateUrl: './entity-form.html',
   styleUrl: './entity-form.scss',
 })
@@ -160,6 +161,21 @@ export class EntityForm implements OnChanges {
     const next = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
     this.form.controls[name].setValue(next.join(','));
     this.form.controls[name].markAsDirty();
+  }
+
+  /** Which Markdown fields are shown in the Visual (WYSIWYG) editor instead of the Markdown text. */
+  protected readonly visual = signal<Record<string, boolean>>({});
+
+  protected toggleVisual(name: string): void {
+    this.previewing.update((current) => ({ ...current, [name]: false }));
+    this.visual.update((current) => ({ ...current, [name]: !current[name] }));
+  }
+
+  /** The Visual editor changed something: the field now holds the Markdown it produced. */
+  protected setMarkdown(name: string, markdown: string): void {
+    const control = this.form.controls[name];
+    control.setValue(markdown);
+    control.markAsDirty();
   }
 
   protected togglePreview(name: string): void {

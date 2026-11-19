@@ -1,0 +1,81 @@
+.visual-editor {
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 0.4rem;
+
+  &__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.25rem;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    background: var(--mat-sys-surface-container);
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2rem;
+      height: 2rem;
+      border: 0;
+      border-radius: 0.3rem;
+      background: none;
+      color: inherit;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover:not(:disabled) {
+        background: var(--mat-sys-surface-container-high);
+      }
+
+      &.is-active {
+        background: var(--mat-sys-secondary-container);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+    }
+  }
+
+  &__gap {
+    width: 0.5rem;
+  }
+
+  &__error {
+    margin: 0.25rem 0.5rem;
+    color: var(--mat-sys-error);
+  }
+
+  // The editor content is created by ProseMirror, outside Angular's view encapsulation, so it is styled through ::ng-deep.
+  &__surface {
+    min-height: 14rem;
+    max-height: 70vh;
+    overflow: auto;
+    padding: 0.5rem 0.75rem;
+
+    ::ng-deep .ProseMirror {
+      min-height: 12rem;
+      outline: none;
+    }
+
+    ::ng-deep .ProseMirror img {
+      max-width: 100%;
+    }
+
+    ::ng-deep .ProseMirror pre {
+      padding: 0.5rem;
+      border-radius: 0.3rem;
+      background: var(--mat-sys-surface-container);
+      overflow: auto;
+    }
+
+    ::ng-deep .ProseMirror blockquote {
+      margin-left: 0;
+      padding-left: 0.75rem;
+      border-left: 3px solid var(--mat-sys-outline-variant);
+    }
+  }
+}

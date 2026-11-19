@@ -7,4 +7,5 @@ export * from './lib/components/entity-grid/entity-grid';
 export * from './lib/components/entity-form/entity-form';
 export * from './lib/components/relation-grid/relation-grid';
 export * from './lib/components/markdown-content/markdown-content';
+export * from './lib/components/visual-editor/visual-editor';
 export * from './lib/i18n/labels';

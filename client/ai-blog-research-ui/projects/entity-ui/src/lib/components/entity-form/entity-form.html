@@ -62,13 +62,14 @@
                   type="button"
                   class="entity-form__image"
                   [disabled]="uploading()[field.name]"
-                  (click)="imageInput.click()"
+                  (click)="imageInput.click()" [hidden]="visual()[field.name]"
                   [matTooltip]="'insertImage' | label"
                   [attr.aria-label]="'insertImage' | label"
                 >
                   <mat-icon>add_photo_alternate</mat-icon>
                 </button>
                 <input #imageInput type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden (change)="insertImage(field, $event)" />
+                <button type="button" (click)="toggleVisual(field.name)">{{ visual()[field.name] ? 'Markdown' : 'Visual' }}</button>
                 <button type="button" (click)="togglePreview(field.name)">{{ previewing()[field.name] ? 'Edit' : 'Preview' }}</button>
               </span>
             </div>
@@ -77,6 +78,8 @@
             }
             @if (previewing()[field.name]) {
               <div class="entity-form__preview"><adv-markdown-content [markdown]="textOf(field)" /></div>
+            } @else if (visual()[field.name]) {
+              <adv-visual-editor [markdown]="textOf(field)" [label]="labelOf(field)" (markdownChange)="setMarkdown(field.name, $event)" />
             } @else {
               <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)" [attr.data-field]="field.name"></textarea>
             }
