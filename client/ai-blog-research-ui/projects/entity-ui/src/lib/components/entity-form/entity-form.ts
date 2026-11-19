@@ -1,17 +1,12 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MarkdownContent } from '../markdown-content/markdown-content';
 import { VisualEditor } from '../visual-editor/visual-editor';
 import { HtmlEditor } from '../html-editor/html-editor';
-import { describeApiError, EntityApiService, EntityFieldSchema, EntityFormModel, LookupOption, MediaService, SUPPORTED_CONTRACT_VERSION } from '@adventures/core';
-import { LabelPipe } from '../../i18n/labels';
+import { EntityApiService, EntityFieldSchema, EntityFormModel, LookupOption, SUPPORTED_CONTRACT_VERSION } from '@adventures/core';
 
 /** How a field is drawn; decided from the server-supplied type name, never from the entity. */
 export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'refs' | 'markdown' | 'html' | 'choice';
@@ -26,14 +21,12 @@ export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'ref
  */
 @Component({
   selector: 'adv-entity-form',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MarkdownContent, VisualEditor, HtmlEditor],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, VisualEditor, HtmlEditor],
   templateUrl: './entity-form.html',
   styleUrl: './entity-form.scss',
 })
 export class EntityForm implements OnChanges {
   private readonly api = inject(EntityApiService);
-  private readonly media = inject(MediaService);
-  private readonly host = inject(ElementRef<HTMLElement>);
 
   @Input({ required: true }) model!: EntityFormModel;
 
@@ -43,51 +36,6 @@ export class EntityForm implements OnChanges {
 
   /** Choices of the pointer fields, by field name, as the server lookups answered. */
   protected readonly options = signal<Record<string, LookupOption[]>>({});
-
-  /** Which Markdown or HTML fields show their preview instead of the editor. */
-  protected readonly previewing = signal<Record<string, boolean>>({});
-
-  /** Which Markdown fields are uploading an image now, and what the server said when it refused one. */
-  protected readonly uploading = signal<Record<string, boolean>>({});
-  protected readonly uploadErrors = signal<Record<string, string[]>>({});
-
-  /**
-   * Uploads the chosen image and inserts the Markdown that shows it where the cursor is in that field (at the end when the field is not
-   * being edited). The server decides what is an image; a refusal is shown above the field in its own words.
-   */
-  protected insertImage(field: EntityFieldSchema, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) {
-      return;
-    }
-
-    this.uploading.update((current) => ({ ...current, [field.name]: true }));
-    this.uploadErrors.update((current) => ({ ...current, [field.name]: [] }));
-    this.media.upload(file).subscribe({
-      next: (item) => {
-        this.insertAtCursor(field.name, `${item.markdown}\n`);
-        this.uploading.update((current) => ({ ...current, [field.name]: false }));
-      },
-      error: (error) => {
-        this.uploadErrors.update((current) => ({ ...current, [field.name]: describeApiError(error, 'Could not upload that image.') }));
-        this.uploading.update((current) => ({ ...current, [field.name]: false }));
-      },
-    });
-  }
-
-  private insertAtCursor(name: string, text: string): void {
-    const control = this.form.controls[name];
-    const current = String(control?.value ?? '');
-    const area = (this.host.nativeElement as HTMLElement).querySelector(`textarea[data-field="${name}"]`) as HTMLTextAreaElement | null;
-    const start = area ? area.selectionStart : current.length;
-    const end = area ? area.selectionEnd : current.length;
-    const before = current.slice(0, start);
-    const lead = before.length > 0 && !before.endsWith('\n') ? '\n' : '';
-    control.setValue(`${before}${lead}${text}${current.slice(end)}`);
-    control.markAsDirty();
-  }
 
   /** True when the server speaks a newer contract than this client understands. */
   get unsupported(): boolean {
@@ -174,7 +122,6 @@ export class EntityForm implements OnChanges {
   protected readonly visual = signal<Record<string, boolean>>({});
 
   protected toggleVisual(name: string): void {
-    this.previewing.update((current) => ({ ...current, [name]: false }));
     this.visual.update((current) => ({ ...current, [name]: !current[name] }));
   }
 
@@ -185,18 +132,9 @@ export class EntityForm implements OnChanges {
     control.markAsDirty();
   }
 
-  protected togglePreview(name: string): void {
-    this.previewing.update((current) => ({ ...current, [name]: !current[name] }));
-  }
-
   /** The text of a field as typed, for the preview. */
   protected textOf(field: EntityFieldSchema): string {
     return String(this.form.controls[field.name]?.value ?? '');
-  }
-
-  /** The preview of an HTML field; Angular sanitises it when it is bound as HTML. (Markdown is previewed by adv-markdown-content.) */
-  protected previewOf(field: EntityFieldSchema): string {
-    return this.textOf(field);
   }
 
   /** Sets a boolean field from outside (a toolbar button such as Publish) and marks the form changed; the caller then submits. */

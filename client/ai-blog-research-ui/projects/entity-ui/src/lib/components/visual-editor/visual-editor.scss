@@ -51,8 +51,10 @@
 
   // The editor content is created by ProseMirror, outside Angular's view encapsulation, so it is styled through ::ng-deep.
   &__surface {
-    min-height: 14rem;
-    max-height: 70vh;
+    height: 24rem;
+    min-height: 10rem;
+    // the same drag handle in the bottom right corner as the Markdown text box has
+    resize: vertical;
     overflow: auto;
     padding: 0.5rem 0.75rem;
 

@@ -166,7 +166,7 @@ describe('EntityForm', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Currently: Article');
   });
 
-  it('edits Markdown in a text area and previews it rendered, without sending the preview anywhere', async () => {
+  it('edits Markdown in a text area with one switch, Editor, and no Preview or image buttons', () => {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
     const fixture = TestBed.createComponent(EntityForm);
     applyModel(fixture, pageModel());
@@ -175,15 +175,11 @@ describe('EntityForm', () => {
     const root = fixture.nativeElement as HTMLElement;
 
     expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
-    (Array.from(root.querySelectorAll('.entity-form__rich-head button')).find((b) => b.textContent?.includes('Preview')) as HTMLButtonElement).click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(root.querySelector('.entity-form__preview h1')?.textContent).toBe('Hello');
-    expect(root.querySelector('.entity-form__preview strong')?.textContent).toBe('bold');
-    expect(root.querySelector('textarea')).toBeNull();
+    expect(Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.textContent?.trim())).toEqual(['Editor']);
+    expect(root.querySelector('input[type="file"]')).toBeNull();
+    expect(root.querySelector('.entity-form__image')).toBeNull();
   });
+
 
   describe('document (HTML) editor', () => {
     function documentModel(format: string | null): EntityFormModel {
@@ -221,7 +217,7 @@ describe('EntityForm', () => {
       return { fixture, root: fixture.nativeElement as HTMLElement, started, editor };
     }
 
-    it('edits an Html post in the Word-like editor, with no Markdown, Visual or Preview buttons', async () => {
+    it('edits an Html post in the Word-like editor, with no Markdown, Editor or Preview buttons', async () => {
       const { root, started } = await open('Html');
 
       expect(started.length).toBe(1);
@@ -250,7 +246,7 @@ describe('EntityForm', () => {
 
         expect(root.querySelector('adv-html-editor')).toBeNull();
         expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
-        expect(Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.textContent?.trim()).filter((t) => t === 'Visual' || t === 'Preview')).toEqual(['Visual', 'Preview']);
+        expect(Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.textContent?.trim())).toEqual(['Editor']);
       }
     });
   });
@@ -272,11 +268,11 @@ describe('EntityForm', () => {
       return { fixture, root, click };
     }
 
-    it('offers a Visual view of a Markdown field that shows it formatted, and Markdown takes it back', async () => {
+    it('offers an Editor view of a Markdown field that shows it formatted, and Markdown takes it back', async () => {
       const { root, click } = openPage();
       expect(root.querySelector('adv-visual-editor')).toBeNull();
 
-      await click('Visual');
+      await click('Editor');
 
       expect(root.querySelector('adv-visual-editor .ProseMirror h1')?.textContent).toBe('Hello');
       expect(root.querySelector('adv-visual-editor .ProseMirror strong')?.textContent).toBe('bold');
@@ -288,18 +284,18 @@ describe('EntityForm', () => {
       expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
     });
 
-    it('does not change the stored text, or mark the form changed, just because the Visual view was opened', async () => {
+    it('does not change the stored text, or mark the form changed, just because the Editor view was opened', async () => {
       const { fixture, click } = openPage();
 
-      await click('Visual');
+      await click('Editor');
 
       expect(fixture.componentInstance.form.value['Content']).toBe('# Hello\n\nsome **bold** text');
       expect(fixture.componentInstance.form.dirty).toBe(false);
     });
 
-    it('stores what is edited in the Visual view as Markdown and marks the form changed', async () => {
+    it('stores what is edited in the Editor view as Markdown and marks the form changed', async () => {
       const { fixture, root, click } = openPage();
-      await click('Visual');
+      await click('Editor');
       const inner = root.querySelector('adv-visual-editor') as HTMLElement & { __ngContext__?: unknown };
       expect(inner).not.toBeNull();
       const editor = (fixture.debugElement.query((d) => d.name === 'adv-visual-editor').componentInstance as { editor: { commands: { selectAll(): boolean }; chain(): { focus(): { toggleBold(): { run(): boolean } } } } }).editor;
@@ -311,36 +307,6 @@ describe('EntityForm', () => {
       expect(String(fixture.componentInstance.form.value['Content'])).toContain('**');
       expect(fixture.componentInstance.form.dirty).toBe(true);
     });
-  });
-
-  it('uploads a chosen image and inserts the Markdown that shows it at the cursor, then shows a refusal in the server own words', () => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
-    const fixture = TestBed.createComponent(EntityForm);
-    applyModel(fixture, pageModel());
-    fixture.detectChanges();
-    const http = TestBed.inject(HttpTestingController);
-    http.expectOne((r) => r.url.includes('/api/lookups')).flush([]);
-    const root = fixture.nativeElement as HTMLElement;
-    const area = root.querySelector('textarea[aria-label="Content"]') as HTMLTextAreaElement;
-    area.setSelectionRange(8, 8);   // after "# Hello\n"
-    const input = root.querySelector('input[type="file"]') as HTMLInputElement;
-
-    Object.defineProperty(input, 'files', { value: [new File([new Uint8Array([0x89, 0x50])], 'My Photo.png', { type: 'image/png' })], configurable: true });
-    input.dispatchEvent(new Event('change'));
-    const upload = http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/api/media'));
-    expect(upload.request.body instanceof FormData).toBe(true);
-    upload.flush({ id: 'm1', name: 'my-photo.png', url: 'https://api.test/api/media/m1/my-photo.png', markdown: '![my-photo](https://api.test/api/media/m1/my-photo.png)' });
-    fixture.detectChanges();
-
-    expect(fixture.componentInstance.form.controls['Content'].value).toBe('# Hello\n![my-photo](https://api.test/api/media/m1/my-photo.png)\n\nsome **bold** text');
-
-    Object.defineProperty(input, 'files', { value: [new File(['<html>'], 'evil.png', { type: 'image/png' })], configurable: true });
-    input.dispatchEvent(new Event('change'));
-    http.expectOne((r) => r.url.endsWith('/api/media')).flush({ title: 'Only PNG, JPEG, GIF and WebP images are accepted.' }, { status: 400, statusText: 'Bad Request' });
-    fixture.detectChanges();
-
-    expect(root.querySelector('.entity-form__error')?.textContent).toContain('Only PNG, JPEG, GIF and WebP');
-    expect(fixture.componentInstance.form.controls['Content'].value).toContain('my-photo');   // the refused file changed nothing
   });
 
   it('draws a multi-valued pointer as checkboxes over the lookup and posts the chosen ids as a comma-separated list', () => {

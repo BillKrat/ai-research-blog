@@ -38,3 +38,7 @@ The editor has not been used in a real browser (the tests run in jsdom), so look
 ## Left for later
 
 The conversation reply box still uses the plain Markdown box (the Visual view could be offered there too). Constructs the editor cannot draw (raw HTML, footnotes) are kept safe by leaving the default on Markdown. A media library screen, alt text and resizing remain in the backlog.
+
+## Changed after the human review (2026-11-19)
+
+The Preview and Edit button and the Insert image button are gone from Markdown fields (the editor has its own picture button), and the switch now reads **Editor** / **Markdown**. The Editor surface can be resized with the drag handle in its bottom-right corner, like the Markdown text box. A Markdown diagram (Mermaid) now shows as a code block in the Editor and is drawn on the site itself.
