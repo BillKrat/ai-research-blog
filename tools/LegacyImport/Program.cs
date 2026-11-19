@@ -179,7 +179,7 @@ Console.WriteLine();
 Console.WriteLine(failed ? "RESULT: mismatches found (see above)" : "RESULT: ok");
 return failed ? 1 : 0;
 
-static string FindSeedDirectory() => FindUp(Path.Combine("Adventures.Foundation", "src", "Adventures.Data.NQuad", "Sql", "seed"));
+static string FindSeedDirectory() => FindUp(Path.Combine("Adventures.Foundation", "src", "Adventures.Blog.Legacy", "Sql", "seed"));
 
 static string FindConverter() => FindUp(Path.Combine("ai-research-blog", "tools", "legacy-migrate", "convert.mjs"));
 

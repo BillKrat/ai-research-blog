@@ -7,7 +7,7 @@ namespace McpServer.WebApi.BlogAi;
 /// Generates the N-Quad seed that gives every legacy table of <see cref="BlogAiTables"/> a schema in the legacy mirror layer:
 /// <c>https://schema.global-webnet.com/legacy/&lt;table&gt;</c>, one field per column with its original name, one predicate per column
 /// under <c>https://global-webnet.com/ontology/legacy/&lt;table&gt;#&lt;column&gt;</c>, the field order of the table, and the schema version.
-/// The output is the file <c>Adventures.Foundation/src/Adventures.Data.NQuad/Sql/seed/seed-009-legacy-schemas.nq</c>; a test keeps the
+/// The output is the file <c>Adventures.Foundation/src/Adventures.Blog.Legacy/Sql/seed/seed-009-legacy-schemas.nq</c>; a test keeps the
 /// checked-in file identical to this output (set <c>REGENERATE_LEGACY_SEED=1</c> to rewrite it).
 /// </summary>
 public static class LegacySchemaSeed

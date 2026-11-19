@@ -19,7 +19,7 @@ public sealed class LegacySchemaSeedTests
         }
 
         var workspace = directory?.Parent?.FullName ?? throw new InvalidOperationException("Workspace root not found.");
-        return Path.Combine(workspace, "Adventures.Foundation", "src", "Adventures.Data.NQuad", "Sql", "seed", file);
+        return Path.Combine(workspace, "Adventures.Foundation", "src", "Adventures.Blog.Legacy", "Sql", "seed", file);
     }
 
     private const string ColumnsSeed = "seed-009-legacy-schemas.nq";

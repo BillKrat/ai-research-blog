@@ -10,21 +10,20 @@ namespace LegacyImport.Tests;
 
 public sealed class ImportTests
 {
-    private static string SeedDirectory
+    /// <summary>The seed file with this name, found in whichever Foundation project ships it (each feature owns its seeds under <c>src/&lt;project&gt;/Sql/seed</c>).</summary>
+    private static string SeedFile(string name)
     {
-        get
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
         {
-            for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+            var src = Path.Combine(directory.FullName, "Adventures.Foundation", "src");
+            if (Directory.Exists(src))
             {
-                var candidate = Path.Combine(directory.FullName, "Adventures.Foundation", "src", "Adventures.Data.NQuad", "Sql", "seed");
-                if (Directory.Exists(candidate))
-                {
-                    return candidate;
-                }
+                return Directory.GetFiles(src, name, SearchOption.AllDirectories).FirstOrDefault(f => f.Contains(Path.Combine("Sql", "seed") + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                    ?? throw new FileNotFoundException($"Seed {name} not found under {src}.");
             }
-
-            throw new DirectoryNotFoundException("Adventures.Foundation seed folder not found.");
         }
+
+        throw new DirectoryNotFoundException("Adventures.Foundation source folder not found.");
     }
 
     private static async Task<InMemoryNQuadStore> SeededStoreAsync()
@@ -32,7 +31,7 @@ public sealed class ImportTests
         var store = new InMemoryNQuadStore();
         foreach (var seed in new[] { "seed.nq", "seed-006-content.nq", "seed-007-post-taxonomy.nq", "seed-008-post-revision.nq", "seed-009-legacy-schemas.nq", "seed-010-legacy-ids.nq", "seed-012-legacy-wave2.nq" })
         {
-            await store.SeedFromFileAsync(Path.Combine(SeedDirectory, seed));
+            await store.SeedFromFileAsync(SeedFile(seed));
         }
 
         return store;
