@@ -244,6 +244,9 @@ try
     // The review state of a collaboration post (Approval, ApprovedBy, ApprovedAt): changed only by the approve actions.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-013-post-approval.nq"), BlogConstants.Content.ApprovalSeedName);
+    // How the Content of a post or page is written (Markdown or Html): a person in the admin writes Html, an AI and older posts are Markdown.
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-022-content-format.nq"), BlogConstants.Content.ContentFormatSeedName);
     // What readers write under a post (pending until a person approves it).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-021-visitor-comments.nq"), BlogConstants.Content.VisitorCommentSeedName);
