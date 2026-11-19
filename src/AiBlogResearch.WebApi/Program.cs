@@ -221,14 +221,14 @@ try
     seeded = await nquadStore.SeedOnceAsync(nquadSeedPath, "baseline");
     // Named, once-only seeds added after the baseline (each ships as its own file, never merged into seed.nq).
     await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-002-exception-log.nq"), EntityConstants.ExceptionLog.SeedName);
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-002-exception-log.nq"), ExceptionLogConstants.SeedName);
     await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-003-exception-signature.nq"), EntityConstants.ExceptionLog.SignatureSeedName);
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-003-exception-signature.nq"), ExceptionLogConstants.SignatureSeedName);
     // The tenant and role model already in the baseline: seed 004 only describes it (schemas, and the User role-assignment relations).
     await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-004-identity.nq"), EntityConstants.Identity.SeedName);
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-004-identity.nq"), IdentityConstants.SeedName);
     await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-005-identity-required.nq"), EntityConstants.Identity.RequiredSeedName);
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-005-identity-required.nq"), IdentityConstants.RequiredSeedName);
     // The content model (pages, posts, categories, tags): new schemas under the schema host, modelled on the BlogEngine admin.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-006-content.nq"), BlogConstants.Content.SeedName);
@@ -280,7 +280,7 @@ try
         return;
     }
 
-    var userSchema = SchemaDal.Load(userQuads, EntityConstants.Schema.UserIri);
+    var userSchema = SchemaDal.Load(userQuads, UserConstants.SchemaIri);
 
     builder.Services.AddSingleton<INQuadStore>(nquadStore);
     if (legacy)
@@ -295,9 +295,9 @@ try
 
     builder.Services.AddNQuadEntityRepository(
         userSchema,
-        EntityConstants.User.BaseIri,
-        EntityConstants.User.TypeIri,
-        EntityConstants.User.DefaultGraph,
+        UserConstants.BaseIri,
+        UserConstants.TypeIri,
+        UserConstants.DefaultGraph,
         schema => new User(schema));
 
     // SchemaBll (Adventures.Entities) is auto-registered by AddLifetimeServices above via its
@@ -307,30 +307,30 @@ try
     // in this app calls ISchemaBll yet. Reuses the same seeded store; each schema is loaded the
     // same way the User schema above is - via SchemaDal.Load - no hardcoded MetaSchema anymore.
     builder.Services.AddNQuadEntityRepository(
-        SchemaDal.Load(userQuads, EntityConstants.ExceptionLog.SchemaIri),
-        EntityConstants.ExceptionLog.BaseIri,
-        EntityConstants.ExceptionLog.TypeIri,
-        EntityConstants.ExceptionLog.DefaultGraph,
+        SchemaDal.Load(userQuads, ExceptionLogConstants.SchemaIri),
+        ExceptionLogConstants.BaseIri,
+        ExceptionLogConstants.TypeIri,
+        ExceptionLogConstants.DefaultGraph,
         schema => new ExceptionLogEntry(schema));
 
     builder.Services.AddNQuadEntityRepository(
-        SchemaDal.Load(userQuads, EntityConstants.ExceptionSignatureEntity.SchemaIri),
-        EntityConstants.ExceptionSignatureEntity.BaseIri,
-        EntityConstants.ExceptionSignatureEntity.TypeIri,
-        EntityConstants.ExceptionSignatureEntity.DefaultGraph,
+        SchemaDal.Load(userQuads, ExceptionSignatureConstants.SchemaIri),
+        ExceptionSignatureConstants.BaseIri,
+        ExceptionSignatureConstants.TypeIri,
+        ExceptionSignatureConstants.DefaultGraph,
         schema => new ExceptionSignatureEntry(schema));
 
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, EntityConstants.Schema.EntityTypeIri),
         EntityConstants.Schema.EntityBaseIri,
         EntityConstants.Schema.EntityTypeIri,
-        EntityConstants.User.DefaultGraph,
+        UserConstants.DefaultGraph,
         schema => new SchemaEntity(schema));
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, EntityConstants.Schema.FieldEntityTypeIri),
         EntityConstants.Schema.FieldEntityBaseIri,
         EntityConstants.Schema.FieldEntityTypeIri,
-        EntityConstants.User.DefaultGraph,
+        UserConstants.DefaultGraph,
         schema => new SchemaFieldEntity(schema));
 
     // Identity schemas (seed 004): the data is untouched; each schema maps onto the existing predicates. Roles get an admin grid;
@@ -338,14 +338,14 @@ try
     static void AddIdentityEntity<TEntity>(
         IServiceCollection services, IReadOnlyList<NQuad> quads, string schemaIri, string baseIri, string typeIri, Func<EntitySchema, TEntity> factory)
         where TEntity : DynamicEntity =>
-        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, EntityConstants.Identity.DefaultGraph, factory);
+        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, IdentityConstants.DefaultGraph, factory);
 
-    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.RoleSchemaIri, EntityConstants.Identity.RoleBaseIri, EntityConstants.Identity.RoleTypeIri, s => new Role(s));
-    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.TenantSchemaIri, EntityConstants.Identity.TenantBaseIri, EntityConstants.Identity.TenantTypeIri, s => new Tenant(s));
-    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.BlogSchemaIri, EntityConstants.Identity.BlogBaseIri, EntityConstants.Identity.BlogTypeIri, s => new Blog(s));
-    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.OrganizationSchemaIri, EntityConstants.Identity.OrganizationBaseIri, EntityConstants.Identity.OrganizationTypeIri, s => new Organization(s));
-    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.TenantRoleSchemaIri, EntityConstants.Identity.TenantRoleBaseIri, EntityConstants.Identity.TenantRoleTypeIri, s => new TenantRoleAssignment(s));
-    AddIdentityEntity(builder.Services, userQuads, EntityConstants.Identity.OrganizationRoleSchemaIri, EntityConstants.Identity.OrganizationRoleBaseIri, EntityConstants.Identity.OrganizationRoleTypeIri, s => new OrganizationRoleAssignment(s));
+    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.RoleSchemaIri, IdentityConstants.RoleBaseIri, IdentityConstants.RoleTypeIri, s => new Role(s));
+    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.TenantSchemaIri, IdentityConstants.TenantBaseIri, IdentityConstants.TenantTypeIri, s => new Tenant(s));
+    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.BlogSchemaIri, IdentityConstants.BlogBaseIri, IdentityConstants.BlogTypeIri, s => new Blog(s));
+    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.OrganizationSchemaIri, IdentityConstants.OrganizationBaseIri, IdentityConstants.OrganizationTypeIri, s => new Organization(s));
+    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.TenantRoleSchemaIri, IdentityConstants.TenantRoleBaseIri, IdentityConstants.TenantRoleTypeIri, s => new TenantRoleAssignment(s));
+    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.OrganizationRoleSchemaIri, IdentityConstants.OrganizationRoleBaseIri, IdentityConstants.OrganizationRoleTypeIri, s => new OrganizationRoleAssignment(s));
     static void AddContentEntity<TEntity>(
         IServiceCollection services, IReadOnlyList<NQuad> quads, string schemaIri, string baseIri, string typeIri, Func<EntitySchema, TEntity> factory)
         where TEntity : DynamicEntity =>
