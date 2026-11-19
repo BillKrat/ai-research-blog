@@ -1,0 +1,44 @@
+<section class="comments" aria-labelledby="comments-heading">
+  <h3 id="comments-heading">Comments</h3>
+  <ul class="comments__list">
+    @for (comment of comments(); track $index) {
+      <li class="comments__item">
+        <strong>{{ comment.author }}</strong>
+        <span class="comments__when">{{ comment.created | date: 'mediumDate' }}</span>
+        <p class="comments__body">{{ comment.body }}</p>
+      </li>
+    } @empty {
+      <li class="comments__empty">No comments yet.</li>
+    }
+  </ul>
+
+  <form #form class="comments__form" (submit)="$event.preventDefault(); send(form, author.value, email.value, body.value, website.value)">
+    <h4>Leave a comment</h4>
+    <label>
+      Name
+      <input #author name="author" type="text" maxlength="80" autocomplete="name" required />
+    </label>
+    <label>
+      Email (optional, never shown)
+      <input #email name="email" type="email" maxlength="120" autocomplete="email" />
+    </label>
+    <label>
+      Comment
+      <textarea #body name="body" rows="5" maxlength="2000" required></textarea>
+    </label>
+    <div class="comments__trap" aria-hidden="true">
+      <label>
+        Leave this empty
+        <input #website name="website" type="text" tabindex="-1" autocomplete="off" />
+      </label>
+    </div>
+    <button type="submit" [disabled]="sending()">Send comment</button>
+    <p class="comments__hint">Comments appear after they have been approved.</p>
+    @if (notice()) {
+      <p class="comments__notice" role="status">{{ notice() }}</p>
+    }
+    @if (problem()) {
+      <p class="comments__problem" role="alert">{{ problem() }}</p>
+    }
+  </form>
+</section>

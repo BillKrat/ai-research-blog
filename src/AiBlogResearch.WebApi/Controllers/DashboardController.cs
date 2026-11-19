@@ -55,7 +55,7 @@ public static class DashboardSummary
 [Route("api/admin/dashboard")]
 [RequireRight(Rights.AdminAccess)]
 public sealed class DashboardController(
-    IEntityBll<Post> posts, IPageBll pages, IExceptionLogPresenter exceptions, ICollaborationBll collaboration) : ControllerBase
+    IEntityBll<Post> posts, IPageBll pages, IExceptionLogPresenter exceptions, ICollaborationBll collaboration, IVisitorComments comments) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<DashboardModel>> Get(CancellationToken cancellationToken)
@@ -67,7 +67,7 @@ public sealed class DashboardController(
             pageRows,
             await exceptions.CountActiveAsync(cancellationToken),
             await ReviewQueue.CountItemsAsync(collaboration, cancellationToken),
-            commentsPending: 0));
+            commentsPending: await comments.CountPendingAsync(cancellationToken)));
     }
 
     private static ContentRow ToRow(DynamicEntity entity) => new(

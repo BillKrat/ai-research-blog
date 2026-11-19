@@ -26,5 +26,8 @@
         <a [routerLink]="['/tag', tag]">#{{ tag }}</a>
       }
     </p>
+    @if (result.enableComments && !result.summary.isDraft) {
+      <adv-post-comments [slug]="result.summary.slug" />
+    }
   }
 </article>

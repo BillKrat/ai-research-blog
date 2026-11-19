@@ -5,13 +5,14 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContentTools } from '../../components/content-tools/content-tools';
+import { PostComments } from '../../components/post-comments/post-comments';
 import { MarkdownContent } from '@adventures/entity-ui';
 import { PublicContentService, PublicPost } from '../../services/public-content.service';
 
 /** One published post: title, who and when, its categories and tags as links, and the rendered Markdown. A draft or unknown slug is a 404. */
 @Component({
   selector: 'app-post-view',
-  imports: [RouterLink, DatePipe, MarkdownContent, ContentTools, DraftBadge, ApprovalBadge],
+  imports: [RouterLink, DatePipe, MarkdownContent, ContentTools, DraftBadge, ApprovalBadge, PostComments],
   templateUrl: './post-view.html',
   styleUrl: './public.scss',
 })

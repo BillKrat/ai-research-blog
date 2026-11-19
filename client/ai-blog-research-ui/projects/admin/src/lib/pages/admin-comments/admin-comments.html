@@ -1,0 +1,54 @@
+<section class="comments-admin">
+  <h1>Comments</h1>
+
+  <div class="comments-admin__bar">
+    <label>
+      Show
+      <select #show aria-label="Show" (change)="setFilter(show.value)">
+        <option value="">All</option>
+        <option value="Pending">Waiting for approval</option>
+        <option value="Approved">Approved</option>
+      </select>
+    </label>
+    <button type="button" class="comments-admin__approve" [disabled]="noneSelected()" (click)="act('approve')">Approve</button>
+    <button type="button" class="comments-admin__unapprove" [disabled]="noneSelected()" (click)="act('unapprove')">Unapprove</button>
+    <button type="button" class="comments-admin__delete" [disabled]="noneSelected()" (click)="act('delete')">Delete</button>
+  </div>
+
+  @if (problem()) {
+    <p class="comments-admin__problem" role="alert">{{ problem() }}</p>
+  }
+
+  @if (comments().length === 0 && !problem()) {
+    <p>No comments.</p>
+  } @else if (comments().length > 0) {
+    <table class="comments-admin__table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" aria-label="Select all" (change)="toggleAll($any($event.target).checked)" /></th>
+          <th>Comment</th>
+          <th>Post</th>
+          <th>When</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (comment of comments(); track comment.id) {
+          <tr>
+            <td><input type="checkbox" [attr.aria-label]="'Select ' + comment.author" [checked]="selected().has(comment.id)" (click)="toggle(comment.id)" /></td>
+            <td>
+              <strong>{{ comment.author }}</strong>
+              @if (comment.email) {
+                <small>{{ comment.email }}</small>
+              }
+              <p class="comments-admin__body">{{ comment.body }}</p>
+            </td>
+            <td><a [routerLink]="['/post', comment.postSlug]">{{ comment.postTitle }}</a></td>
+            <td>{{ comment.created | date: 'medium' }}</td>
+            <td>{{ comment.status }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

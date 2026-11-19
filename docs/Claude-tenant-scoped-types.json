@@ -5,5 +5,6 @@
   { "baseIri": "https://global-webnet.com/id/page/", "graph": "https://global-webnet.com/graph/content" },
   { "baseIri": "https://global-webnet.com/id/post/", "graph": "https://global-webnet.com/graph/content" },
   { "baseIri": "https://global-webnet.com/id/site-setting/", "graph": "https://global-webnet.com/graph/site" },
-  { "baseIri": "https://global-webnet.com/id/tag/", "graph": "https://global-webnet.com/graph/content" }
+  { "baseIri": "https://global-webnet.com/id/tag/", "graph": "https://global-webnet.com/graph/content" },
+  { "baseIri": "https://global-webnet.com/id/visitor-comment/", "graph": "https://global-webnet.com/graph/content" }
 ]

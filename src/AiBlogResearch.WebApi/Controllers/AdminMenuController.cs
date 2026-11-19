@@ -24,7 +24,7 @@ public static class AdminMenuDefinitions
         new("Dashboard", "dashboard", "Dashboard", "/admin/dashboard", "dashboard", RequiredRight: Rights.AdminAccess, Order: 1),
         new("Content", "posts", "Posts", "/admin/posts", "article", RequiredRight: Rights.PostsRead, Order: 1),
         new("Content", "collaboration", "Collaboration", "/admin/collaboration", "forum", RequiredRight: Rights.CollaborationRead, Order: 2),
-        new("Content", "comments", "Comments", "/admin/comments", "comment", RequiredRight: Rights.PostsRead, Available: false, Order: 8),
+        new("Content", "comments", "Comments", "/admin/comments", "comment", RequiredRight: Rights.CommentsModerate, Order: 6),
         new("Content", "pages", "Pages", "/admin/pages", "description", RequiredRight: Rights.PagesRead, Order: 3),
         new("Content", "categories", "Categories", "/admin/categories", "folder", RequiredRight: Rights.PostsRead, Order: 4),
         new("Content", "tags", "Tags", "/admin/tags", "sell", RequiredRight: Rights.PostsRead, Order: 5),
@@ -52,7 +52,7 @@ public static class AdminMenuDefinitions
 [ApiController]
 [Route("api/admin/menu")]
 [Authorize]
-public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPublicContent content, ICollaborationBll collaboration, IPlugins plugins, IRightsAuthorizer authorizer) : ControllerBase
+public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPublicContent content, ICollaborationBll collaboration, IPlugins plugins, IRightsAuthorizer authorizer, IVisitorComments comments) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<AdminMenuModel>> Get(CancellationToken cancellationToken)
@@ -66,6 +66,8 @@ public sealed class AdminMenuController(IExceptionLogPresenter exceptions, IPubl
                 ["posts"] = await ReviewQueue.CountAsync(content, cancellationToken),
                 // collaboration items waiting for the human's review
                 ["collaboration"] = await ReviewQueue.CountItemsAsync(collaboration, cancellationToken),
+                // visitor comments waiting for approval
+                ["comments"] = await comments.CountPendingAsync(cancellationToken),
             }
             : null;
         return Ok(AdminMenuBuilder.Build(AdminMenuDefinitions.Visible(await plugins.EnabledKeysAsync(cancellationToken)), User, badges, rights));

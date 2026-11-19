@@ -94,7 +94,32 @@ export class PublicContentService {
     return this.http.get<PublicTerm[]>(`${this.base}/categories`);
   }
 
+  /** The approved comments under a post, oldest first. */
+  comments(slug: string): Observable<PublicComment[]> {
+    return this.http.get<PublicComment[]>(`${this.base}/posts/${encodeURIComponent(slug)}/comments`);
+  }
+
+  /** Sends a new comment; it waits for approval before anyone sees it. */
+  submitComment(slug: string, comment: CommentSubmission): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.base}/posts/${encodeURIComponent(slug)}/comments`, comment);
+  }
+
   tags(): Observable<PublicTerm[]> {
     return this.http.get<PublicTerm[]>(`${this.base}/tags`);
   }
+}
+
+/** An approved comment: no id and no e-mail address ever reach a reader. */
+export interface PublicComment {
+  author: string;
+  created: string;
+  body: string;
+}
+
+/** What the comment form sends. `website` is a hidden field only a robot fills in. */
+export interface CommentSubmission {
+  author: string;
+  email: string;
+  body: string;
+  website: string;
 }

@@ -244,6 +244,9 @@ try
     // The review state of a collaboration post (Approval, ApprovedBy, ApprovedAt): changed only by the approve actions.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-013-post-approval.nq"), BlogConstants.Content.ApprovalSeedName);
+    // What readers write under a post (pending until a person approves it).
+    await nquadStore.SeedOnceAsync(
+        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-021-visitor-comments.nq"), BlogConstants.Content.VisitorCommentSeedName);
     // The conversation under a post (comments and decisions).
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-014-comments.nq"), CollaborationConstants.CommentsSeedName);
@@ -268,7 +271,7 @@ try
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
-    if (skipSeeding && StartupChecks.FindMissingSchemas(userQuads, [CollaborationConstants.SchemaIri, PluginConstants.SchemaIri]) is { Count: > 0 } missingSchemas)
+    if (skipSeeding && StartupChecks.FindMissingSchemas(userQuads, [CollaborationConstants.SchemaIri, PluginConstants.SchemaIri, BlogConstants.Content.VisitorCommentSchemaIri]) is { Count: > 0 } missingSchemas)
     {
         await StartupChecks.RunReportingAppAsync(args, missingSchemas, builder.Environment.IsDevelopment(), liveData);
         return;
@@ -349,6 +352,7 @@ try
     AddContentEntity(builder.Services, userQuads, BlogConstants.Content.PostSchemaIri, BlogConstants.Content.PostBaseIri, BlogConstants.Content.PostTypeIri, s => new Post(s));
     AddContentEntity(builder.Services, userQuads, BlogConstants.Content.CategorySchemaIri, BlogConstants.Content.CategoryBaseIri, BlogConstants.Content.CategoryTypeIri, s => new Category(s));
     AddContentEntity(builder.Services, userQuads, BlogConstants.Content.TagSchemaIri, BlogConstants.Content.TagBaseIri, BlogConstants.Content.TagTypeIri, s => new Tag(s));
+    AddContentEntity(builder.Services, userQuads, BlogConstants.Content.VisitorCommentSchemaIri, BlogConstants.Content.VisitorCommentBaseIri, BlogConstants.Content.VisitorCommentTypeIri, s => new VisitorComment(s));
     AddContentEntity(builder.Services, userQuads, CollaborationConstants.CommentSchemaIri, CollaborationConstants.CommentBaseIri, CollaborationConstants.CommentTypeIri, s => new Comment(s));
     builder.Services.AddNQuadEntityRepository(
         SchemaDal.Load(userQuads, CollaborationConstants.SchemaIri), CollaborationConstants.BaseIri, CollaborationConstants.TypeIri,

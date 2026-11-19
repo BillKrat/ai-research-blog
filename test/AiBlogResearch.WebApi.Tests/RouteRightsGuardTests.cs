@@ -28,6 +28,7 @@ public sealed class RouteRightsGuardTests
         [nameof(HealthController)] = "health check",
         [nameof(PublicController)] = "the public read side",
         [nameof(SiteController)] = "public site settings",
+        [nameof(PublicCommentsController)] = "anonymous: the approved comments of a post and the rate-limited comment form (new comments wait for approval)",
         [nameof(ProfileController)] = "the signed-in person edits their own profile",
         [nameof(TenantController)] = "which tenant the domain names; display only",
         [nameof(AdminMenuController)] = "the menu lists only what the caller rights allow",

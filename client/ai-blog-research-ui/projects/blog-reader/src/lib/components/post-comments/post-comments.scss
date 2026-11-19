@@ -1,0 +1,62 @@
+.comments {
+  margin-top: 2rem;
+
+  &__list {
+    list-style: none;
+    margin: 0 0 1.5rem;
+    padding: 0;
+  }
+
+  &__item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  &__when {
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+
+  &__body {
+    margin: 0.25rem 0 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  &__empty,
+  &__hint {
+    opacity: 0.7;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-width: 36rem;
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    input,
+    textarea {
+      font: inherit;
+    }
+  }
+
+  // Off screen, not display:none, so a robot that fills every field still fills this one; a person never reaches it.
+  &__trap {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  &__problem {
+    color: var(--mat-sys-error);
+  }
+}
