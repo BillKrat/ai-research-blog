@@ -77,7 +77,13 @@
 
   <form class="conversation__add" (ngSubmit)="send()">
     @if (previewing()) {
-      <div class="conversation__preview"><adv-markdown-content [markdown]="text" /></div>
+      <div class="conversation__preview">
+        @if (text.trim()) {
+          <adv-markdown-content [markdown]="text" />
+        } @else {
+          <p class="conversation__preview-empty">Nothing to preview. Press the pencil to write a reply.</p>
+        }
+      </div>
     } @else {
       <textarea name="text" rows="3" [(ngModel)]="text" aria-label="Add to the conversation" placeholder="Answer, ask, or record a decision (Markdown)"></textarea>
     }

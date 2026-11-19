@@ -376,4 +376,44 @@ describe('Conversation unsent reply', () => {
     blocked.mockRestore();
     vi.restoreAllMocks();
   });
+
+  describe('reply box default (human, 2026-10-25)', () => {
+    function openItem() {
+      TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
+      const fixture = TestBed.createComponent(Conversation);
+      fixture.componentRef.setInput('postId', 'i1');
+      fixture.componentRef.setInput('base', 'collaboration');
+      fixture.detectChanges();
+      TestBed.inject(HttpTestingController).expectOne((r) => r.method === 'GET').flush([]);
+      fixture.detectChanges();
+      return { fixture, root: fixture.nativeElement as HTMLElement, component: fixture.componentInstance as unknown as { text: string } };
+    }
+
+    it('opens a collaboration item in Preview, with a hint instead of an empty box', () => {
+      const { root } = openItem();
+
+      expect(root.querySelector('textarea')).toBeNull();
+      expect(root.querySelector('.conversation__preview')).not.toBeNull();
+      expect(root.querySelector('.conversation__preview-empty')?.textContent).toContain('Press the pencil');
+    });
+
+    it('opens the editor when a quick reply pre-fills the box', () => {
+      const { fixture, root } = openItem();
+      const ask = Array.from(root.querySelectorAll('.conversation__quick button')).find((b) => b.textContent?.includes('Ask')) as HTMLButtonElement;
+
+      ask.click();
+      fixture.detectChanges();
+
+      expect(root.querySelector('textarea')).not.toBeNull();
+    });
+
+    it('keeps a post comment box as the editor', () => {
+      TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideMarkdown()] });
+      const fixture = TestBed.createComponent(Conversation);
+      fixture.componentRef.setInput('postId', 'p1');
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('textarea')).not.toBeNull();
+    });
+  });
 });

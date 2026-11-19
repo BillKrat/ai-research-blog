@@ -148,6 +148,7 @@ export class Conversation {
   protected approve(): void {
     this.approving.set(true);
     this.requestingChange.set(false);
+    this.previewing.set(false);
     if (!this.text.trim()) {
       this.text = 'Approved: ';
     }
@@ -157,6 +158,7 @@ export class Conversation {
   protected changeRequest(): void {
     this.approving.set(false);
     this.requestingChange.set(true);
+    this.previewing.set(false);
     if (!this.text.trim()) {
       this.text = 'Change request: ';
     }
@@ -166,6 +168,7 @@ export class Conversation {
   protected ask(): void {
     this.requestingChange.set(false);
     this.approving.set(false);
+    this.previewing.set(false);
     if (!this.text.trim()) {
       this.text = 'Question: ';
     }
@@ -195,6 +198,7 @@ export class Conversation {
   protected backlog(): void {
     this.requestingChange.set(false);
     this.approving.set(false);
+    this.previewing.set(false);
     if (!this.text.trim()) {
       this.text = 'Backlog: ';
     }
@@ -236,7 +240,7 @@ export class Conversation {
         this.asDecision = false;
         this.requestingChange.set(false);
         this.approving.set(false);
-        this.previewing.set(false);
+        this.previewing.set(this.opensInPreview());
         this.sending.set(false);
         done();
       },
@@ -249,8 +253,14 @@ export class Conversation {
     this.sending.set(false);
   }
 
+  /** A collaboration item is mostly read, so its reply box opens in Preview (the pencil is one click away); a post's comment box opens ready to type. */
+  private opensInPreview(): boolean {
+    return this.base() === 'collaboration';
+  }
+
   private load(postId: string): void {
     this.restoreDraft();
+    this.previewing.set(this.opensInPreview());
     this.errors.set([]);
     this.conversation.list(postId, this.base()).subscribe({
       next: (all) => this.entries.set(all),
