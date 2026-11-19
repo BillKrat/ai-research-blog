@@ -32,6 +32,14 @@ public class AdminMenuPluginTests
         Assert.DoesNotContain(AdminMenuDefinitions.Visible(new HashSet<string> { CollaborationPlugins.Decisions }), item => item.Id == "collaboration");
     }
 
+    [Theory]
+    [InlineData("blogs")]
+    [InlineData("contacts")]
+    public void Items_that_are_not_in_the_beta_are_not_listed(string id)
+    {
+        Assert.DoesNotContain(AdminMenuDefinitions.All, item => item.Id == id);
+    }
+
     [Fact]
     public void The_plugins_page_itself_is_never_hidden()
     {
