@@ -17,7 +17,11 @@
       </span>
       <adv-content-tools kind="posts" [slug]="result.summary.slug" />
     </p>
-    <adv-markdown-content [markdown]="result.content" />
+    @if (result.contentFormat === 'Html') {
+      <adv-html-content [html]="result.content" />
+    } @else {
+      <adv-markdown-content [markdown]="result.content" />
+    }
     <p class="public__chips">
       @for (category of result.summary.categories; track category) {
         <a [routerLink]="['/category', category]">{{ category }}</a>

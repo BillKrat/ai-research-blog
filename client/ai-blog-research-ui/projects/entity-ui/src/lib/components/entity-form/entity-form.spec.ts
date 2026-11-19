@@ -1,5 +1,6 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 import { provideMarkdown } from 'ngx-markdown';
+import { TINYMCE_LOADER } from '../html-editor/html-editor';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -182,6 +183,76 @@ describe('EntityForm', () => {
     expect(root.querySelector('.entity-form__preview h1')?.textContent).toBe('Hello');
     expect(root.querySelector('.entity-form__preview strong')?.textContent).toBe('bold');
     expect(root.querySelector('textarea')).toBeNull();
+  });
+
+  describe('document (HTML) editor', () => {
+    function documentModel(format: string | null): EntityFormModel {
+      const model = pageModel();
+      const fields = [...model.schema.fields, { name: 'ContentFormat', type: 'String', isRequired: false, label: 'Format', isReadOnly: true, order: 9 }];
+      const values: Record<string, string> = { ...model.entity.values, Content: '<p>Hello <strong>there</strong></p>' };
+      if (format !== null) {
+        values['ContentFormat'] = format;
+      }
+
+      return { ...model, schema: { ...model.schema, fields }, entity: { ...model.entity, values } };
+    }
+
+    async function open(format: string | null) {
+      const started: Record<string, unknown>[] = [];
+      const editor = { content: '', handlers: [] as (() => void)[], on(_: string, h: () => void) { this.handlers.push(h); }, getContent() { return this.content; }, setContent(h: string) { this.content = h; }, remove() { /* nothing */ } };
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideMarkdown(),
+          {
+            provide: TINYMCE_LOADER,
+            useValue: () => Promise.resolve({ init: (config: Record<string, unknown>) => { started.push(config); editor.content = (config['target'] as HTMLTextAreaElement).value; (config['setup'] as (e: unknown) => void)(editor); return Promise.resolve([editor]); } }),
+          },
+        ],
+      });
+      const fixture = TestBed.createComponent(EntityForm);
+      applyModel(fixture, documentModel(format));
+      fixture.detectChanges();
+      TestBed.inject(HttpTestingController).expectOne((r) => r.url.includes('/api/lookups')).flush([]);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      return { fixture, root: fixture.nativeElement as HTMLElement, started, editor };
+    }
+
+    it('edits an Html post in the Word-like editor, with no Markdown, Visual or Preview buttons', async () => {
+      const { root, started } = await open('Html');
+
+      expect(started.length).toBe(1);
+      expect((started[0]['target'] as HTMLTextAreaElement).value).toBe('<p>Hello <strong>there</strong></p>');
+      expect(root.querySelector('adv-html-editor')).not.toBeNull();
+      expect(root.querySelector('.entity-form__rich-head button')).toBeNull();
+    });
+
+    it('stores what is typed as HTML and marks the form changed, but not just because it opened', async () => {
+      const { fixture, editor } = await open('Html');
+      expect(fixture.componentInstance.form.dirty).toBe(false);
+      expect(fixture.componentInstance.form.value['Content']).toBe('<p>Hello <strong>there</strong></p>');
+
+      editor.content = '<p>Changed</p>';
+      editor.handlers.forEach((h) => h());
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.form.value['Content']).toBe('<p>Changed</p>');
+      expect(fixture.componentInstance.form.dirty).toBe(true);
+    });
+
+    it('keeps a Markdown post, and a post with no format at all, on the Markdown views', async () => {
+      for (const format of ['Markdown', null]) {
+        TestBed.resetTestingModule();
+        const { root } = await open(format);
+
+        expect(root.querySelector('adv-html-editor')).toBeNull();
+        expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
+        expect(Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.textContent?.trim()).filter((t) => t === 'Visual' || t === 'Preview')).toEqual(['Visual', 'Preview']);
+      }
+    });
   });
 
   describe('visual editor', () => {

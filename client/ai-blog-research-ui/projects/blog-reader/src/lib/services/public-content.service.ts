@@ -22,6 +22,8 @@ export interface PublicPost {
   summary: PublicPostSummary;
   content: string;
   enableComments: boolean;
+  /** How content is written: Markdown (AI authors, older posts) or Html (the visual editor). The server has already cleaned Html. */
+  contentFormat?: 'Markdown' | 'Html';
 }
 
 export interface PublicPage {
@@ -33,6 +35,7 @@ export interface PublicPage {
   parentTitle: string | null;
   parentSlug: string | null;
   isDraft?: boolean;
+  contentFormat?: 'Markdown' | 'Html';
 }
 
 export interface PublicMenuItem {

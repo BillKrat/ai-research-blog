@@ -42,9 +42,26 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*.min.js",
+                "input": "node_modules/tinymce",
+                "output": "/tinymce"
+              },
+              {
+                "glob": "**/*.min.css",
+                "input": "node_modules/tinymce",
+                "output": "/tinymce"
+              },
+              {
+                "glob": "skins/**/fonts/*",
+                "input": "node_modules/tinymce",
+                "output": "/tinymce"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": [
+              "src/styles.scss"
+            ]
           },
           "configurations": {
             "production": {

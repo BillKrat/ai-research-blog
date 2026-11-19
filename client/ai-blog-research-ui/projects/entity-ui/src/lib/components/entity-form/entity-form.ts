@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MarkdownContent } from '../markdown-content/markdown-content';
 import { VisualEditor } from '../visual-editor/visual-editor';
+import { HtmlEditor } from '../html-editor/html-editor';
 import { describeApiError, EntityApiService, EntityFieldSchema, EntityFormModel, LookupOption, MediaService, SUPPORTED_CONTRACT_VERSION } from '@adventures/core';
 import { LabelPipe } from '../../i18n/labels';
 
@@ -25,7 +26,7 @@ export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'ref
  */
 @Component({
   selector: 'adv-entity-form',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MarkdownContent, VisualEditor],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MarkdownContent, VisualEditor, HtmlEditor],
   templateUrl: './entity-form.html',
   styleUrl: './entity-form.scss',
 })
@@ -105,6 +106,12 @@ export class EntityForm implements OnChanges {
     }
   }
 
+  /** A Markdown-typed field whose sibling format field (Content and ContentFormat) says Html is a document written in the Word-like editor. */
+  private isDocument(field: EntityFieldSchema): boolean {
+    const format = this.form.controls[`${field.name}Format`]?.value ?? this.model?.entity.values[`${field.name}Format`];
+    return format === 'Html';
+  }
+
   kindOf(field: EntityFieldSchema): ControlKind {
     if (field.choices && field.choices.length > 0) {
       return 'choice';
@@ -127,7 +134,7 @@ export class EntityForm implements OnChanges {
       case 'decimal':
         return 'number';
       case 'markdown':
-        return 'markdown';
+        return this.isDocument(field) ? 'html' : 'markdown';
       case 'html':
         return 'html';
       default:

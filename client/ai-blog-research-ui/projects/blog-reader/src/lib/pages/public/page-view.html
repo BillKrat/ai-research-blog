@@ -10,6 +10,10 @@
     }
     <h2>{{ result.title }}@if (result.isDraft) {<adv-draft-badge />}</h2>
     <p class="public__meta public__meta--tools"><adv-content-tools kind="pages" [slug]="result.slug" /></p>
-    <adv-markdown-content [markdown]="result.content" />
+    @if (result.contentFormat === 'Html') {
+      <adv-html-content [html]="result.content" />
+    } @else {
+      <adv-markdown-content [markdown]="result.content" />
+    }
   }
 </article>

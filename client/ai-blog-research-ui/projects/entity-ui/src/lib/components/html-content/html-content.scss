@@ -1,0 +1,31 @@
+.html-content {
+  overflow-wrap: anywhere;
+
+  ::ng-deep img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  ::ng-deep table {
+    border-collapse: collapse;
+    max-width: 100%;
+  }
+
+  ::ng-deep td,
+  ::ng-deep th {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  ::ng-deep pre {
+    padding: 0.5rem;
+    overflow: auto;
+    background: var(--mat-sys-surface-container);
+  }
+
+  ::ng-deep blockquote {
+    margin-left: 0;
+    padding-left: 0.75rem;
+    border-left: 3px solid var(--mat-sys-outline-variant);
+  }
+}

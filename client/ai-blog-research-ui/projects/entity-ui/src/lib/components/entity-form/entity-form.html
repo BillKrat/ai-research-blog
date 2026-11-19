@@ -92,13 +92,12 @@
         @case ('html') {
           <div class="entity-form__rich">
             <div class="entity-form__rich-head">
-              <span>{{ labelOf(field) }} (HTML)</span>
-              <button type="button" (click)="togglePreview(field.name)">{{ previewing()[field.name] ? 'Edit' : 'Preview' }}</button>
+              <span>{{ labelOf(field) }}</span>
             </div>
-            @if (previewing()[field.name]) {
-              <div class="entity-form__preview" [innerHTML]="previewOf(field)"></div>
-            } @else {
-              <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)"></textarea>
+            @defer (on immediate) {
+              <adv-html-editor [html]="textOf(field)" [label]="labelOf(field)" (htmlChange)="setMarkdown(field.name, $event)" />
+            } @placeholder {
+              <p class="entity-form__hint">Loading the editor...</p>
             }
           </div>
         }

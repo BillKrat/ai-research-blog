@@ -3,7 +3,7 @@ import { DraftBadge } from '../../components/draft-badge/draft-badge';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContentTools } from '../../components/content-tools/content-tools';
-import { MarkdownContent } from '@adventures/entity-ui';
+import { HtmlContent, MarkdownContent } from '@adventures/entity-ui';
 import { PublicContentService, PublicPage } from '../../services/public-content.service';
 
 /**
@@ -12,7 +12,7 @@ import { PublicContentService, PublicPage } from '../../services/public-content.
  */
 @Component({
   selector: 'app-page-view',
-  imports: [RouterLink, MarkdownContent, ContentTools, DraftBadge],
+  imports: [RouterLink, MarkdownContent, HtmlContent, ContentTools, DraftBadge],
   templateUrl: './page-view.html',
   styleUrl: './public.scss',
 })

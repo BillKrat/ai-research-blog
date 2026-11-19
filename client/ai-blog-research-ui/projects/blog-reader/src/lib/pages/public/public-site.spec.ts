@@ -117,6 +117,42 @@ describe('Public site', () => {
     expect(links).toEqual([['Posts', false], ['Live page', false], ['Draft pageDraft', true]]);
   });
 
+  it('PostView shows an Html post as written in the visual editor, keeping alignment and colour, and does not run it through Markdown', async () => {
+    const http = configure(routeStub({ slug: 'visual' }));
+    const fixture = TestBed.createComponent(PostView);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/public/posts/visual')).flush({
+      summary: { title: 'Visual', slug: 'visual', description: null, datePublished: null, author: 'Pat', categories: [], tags: [] },
+      content: '<h2>Heading</h2><p style="text-align: center;">Centred <span style="color: #ff0000;">red</span></p><p>1 * 2 * 3 is not emphasis</p>',
+      enableComments: false,
+      contentFormat: 'Html',
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('adv-html-content')).not.toBeNull();
+    expect(root.querySelector('adv-markdown-content')).toBeNull();
+    expect(root.querySelector('.html-content h2')?.textContent).toBe('Heading');
+    expect((root.querySelector('.html-content p') as HTMLElement).style.textAlign).toBe('center');
+    expect(root.querySelector('.html-content em')).toBeNull();
+  });
+
+  it('PageView shows an Html page the same way', async () => {
+    const http = configure(routeStub({ slug: 'about' }));
+    const fixture = TestBed.createComponent(PageView);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/public/pages/about')).flush({
+      title: 'About', slug: 'about', description: null, content: '<p><strong>Hi</strong></p>', datePublished: null, parentTitle: null, parentSlug: null, contentFormat: 'Html',
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('.html-content strong')?.textContent).toBe('Hi');
+    expect(root.querySelector('adv-markdown-content')).toBeNull();
+  });
+
   it('PostView renders the Markdown body, and says not found for a draft or unknown slug', async () => {
     const http = configure(routeStub({ slug: 'how-it-works' }));
     const fixture = TestBed.createComponent(PostView);
