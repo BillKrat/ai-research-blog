@@ -1,3 +1,4 @@
+using Adventures.Diagnostics.WebApi;
 using Adventures.Collaboration.WebApi;
 using System.Reflection;
 using Adventures.Entities;
@@ -40,7 +41,7 @@ public sealed class RouteRightsGuardTests
     };
 
     private static IEnumerable<Type> Controllers() =>
-        typeof(TenantController).Assembly.GetTypes().Concat(typeof(AuthoringController).Assembly.GetTypes()).Concat(typeof(CollaborationController).Assembly.GetTypes())
+        typeof(TenantController).Assembly.GetTypes().Concat(typeof(AuthoringController).Assembly.GetTypes()).Concat(typeof(CollaborationController).Assembly.GetTypes()).Concat(typeof(HealthController).Assembly.GetTypes())
             .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract);
 
     private static IEnumerable<MethodInfo> Actions(Type controller) =>

@@ -1,3 +1,4 @@
+using Adventures.Diagnostics.WebApi;
 using AiBlogResearch.WebApi.Controllers;
 using Microsoft.Extensions.Configuration;
 using Xunit;

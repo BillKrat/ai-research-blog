@@ -16,6 +16,7 @@ using Adventures.Blog;
 using Adventures.Blog.Legacy;
 using Adventures.Blog.WebApi;
 using Adventures.Collaboration.WebApi;
+using Adventures.Diagnostics.WebApi;
 using Adventures.Blog.Postgres;
 using Adventures.Collaboration;
 using Adventures.MEF;
@@ -104,19 +105,20 @@ try
 
     builder.Services.AddControllers()
         .AddBlogControllers()
-        .AddCollaborationControllers();
+        .AddCollaborationControllers()
+        .AddDiagnosticsControllers();
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
 
     builder.Services.AddSharedJwtAuthentication(builder.Configuration);
     builder.Services.AddRequestHardening(builder.Configuration);
-    builder.Services.AddSingleton(_ => new AiBlogResearch.WebApi.Controllers.HealthSnapshotCache(AiBlogResearch.WebApi.Controllers.HealthSnapshotCache.WindowFrom(builder.Configuration), TimeProvider.System));
+    builder.Services.AddSingleton(_ => new HealthSnapshotCache(HealthSnapshotCache.WindowFrom(builder.Configuration), TimeProvider.System));
 
     builder.Services.AddOptions<M2MClientsOptions>()
         .Bind(builder.Configuration.GetSection(M2MClientsOptions.SectionName));
     builder.Services.AddSingleton<IClientSecretHasher, ClientSecretHasher>();
     builder.Services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
-    builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search", AiBlogResearch.WebApi.Controllers.McpDiagnosticsController.RequiredScope, Adventures.Blog.WebApi.AuthoringController.RequiredScope);
+    builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search", McpDiagnosticsController.RequiredScope, Adventures.Blog.WebApi.AuthoringController.RequiredScope);
     builder.Services.AddRoleAuthorization(WellKnownClaims.TenantAdminRole);
 
     // McpServer:BaseUrl -> mcp.global-webnet.com. HealthController calls this over M2M auth (minting

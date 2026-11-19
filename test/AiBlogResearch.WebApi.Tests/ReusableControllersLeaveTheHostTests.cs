@@ -13,8 +13,8 @@ public sealed class ReusableControllersLeaveTheHostTests
 {
     private static readonly string[] StillInTheHost =
     [
-        "AdminDiagnosticsController", "AdminExceptionsController", "AdminMenuController", "AuthController", "ClientErrorsController", "DashboardController",
-        "HealthController", "LookupsController", "M2MAuthController", "McpDiagnosticsController", "ProfileController", "RolesController", "RuntimeController", "TenantController", "UsersController",
+        "AdminMenuController", "AuthController", "DashboardController",
+        "LookupsController", "M2MAuthController", "ProfileController", "RolesController", "RuntimeController", "TenantController", "UsersController",
     ];
 
     [Fact]
