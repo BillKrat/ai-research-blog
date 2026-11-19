@@ -1,5 +1,5 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Routes } from '@angular/router';
 import { authGuard } from '@adventures/core';
 
 /**
@@ -19,10 +19,15 @@ const adminCollection = (path: string, collection: string, title: string): Route
   },
 ];
 
+/** The post address BlogEngine.NET used, /post/yyyy/MM/dd/slug, becomes the current one, /post/slug (the date in the path is dropped). */
+export const legacyPostRedirect = (route: Pick<ActivatedRouteSnapshot, 'params'>): string => `/post/${encodeURIComponent(route.params['slug'])}`;
+
 export const routes: Routes = [
   // The public site (anonymous): home (the front page, else a welcome), posts, one post, one page, a category, a tag.
   { path: '', pathMatch: 'full', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PageView), data: { front: true } },
   { path: 'posts', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'all' } },
+  { path: 'post/:year/:month/:day/:slug', redirectTo: legacyPostRedirect },
+  { path: 'post/:year/:month/:day/:slug/rate/:stars', redirectTo: legacyPostRedirect },
   { path: 'post/:slug', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostView) },
   { path: 'page/:slug', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PageView) },
   { path: 'category/:name', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'category' } },
