@@ -392,6 +392,7 @@ try
     builder.Services.AddCollaboration();
     builder.Services.AddNQuadRelations();
     builder.Services.AddNQuadRelationWriter();
+    builder.Services.AddIdentityRelationGuards();
     builder.Services.AddScoped<IEntityBll<Role>>(provider => new EntityBll<Role>(provider.GetRequiredService<IEntityDal<Role>>()));
     builder.Services.AddScoped<IEntityPresenter<Role>>(provider => new RolePresenter(
         provider.GetRequiredService<IEntityBll<Role>>(), provider.GetRequiredService<EntitySchemaOf<Role>>(), provider.GetService<IEntityRelationProvider>()));
