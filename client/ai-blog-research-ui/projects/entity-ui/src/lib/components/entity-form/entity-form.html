@@ -79,7 +79,11 @@
             @if (previewing()[field.name]) {
               <div class="entity-form__preview"><adv-markdown-content [markdown]="textOf(field)" /></div>
             } @else if (visual()[field.name]) {
+              @defer (on immediate) {
               <adv-visual-editor [markdown]="textOf(field)" [label]="labelOf(field)" (markdownChange)="setMarkdown(field.name, $event)" />
+              } @placeholder {
+                <p class="entity-form__hint">Loading the visual editor...</p>
+              }
             } @else {
               <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)" [attr.data-field]="field.name"></textarea>
             }

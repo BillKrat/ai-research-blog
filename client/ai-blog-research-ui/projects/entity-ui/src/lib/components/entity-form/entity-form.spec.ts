@@ -192,41 +192,43 @@ describe('EntityForm', () => {
       fixture.detectChanges();
       TestBed.inject(HttpTestingController).expectOne((r) => r.url.includes('/api/lookups')).flush([]);
       const root = fixture.nativeElement as HTMLElement;
-      const click = (label: string) => {
+      const click = async (label: string) => {
         (Array.from(root.querySelectorAll('.entity-form__rich-head button')).find((b) => b.textContent?.trim() === label) as HTMLButtonElement).click();
+        fixture.detectChanges();
+        await fixture.whenStable();
         fixture.detectChanges();
       };
       return { fixture, root, click };
     }
 
-    it('offers a Visual view of a Markdown field that shows it formatted, and Markdown takes it back', () => {
+    it('offers a Visual view of a Markdown field that shows it formatted, and Markdown takes it back', async () => {
       const { root, click } = openPage();
       expect(root.querySelector('adv-visual-editor')).toBeNull();
 
-      click('Visual');
+      await click('Visual');
 
       expect(root.querySelector('adv-visual-editor .ProseMirror h1')?.textContent).toBe('Hello');
       expect(root.querySelector('adv-visual-editor .ProseMirror strong')?.textContent).toBe('bold');
       expect(root.querySelector('textarea[aria-label="Content"]')).toBeNull();
 
-      click('Markdown');
+      await click('Markdown');
 
       expect(root.querySelector('adv-visual-editor')).toBeNull();
       expect(root.querySelector('textarea[aria-label="Content"]')).not.toBeNull();
     });
 
-    it('does not change the stored text, or mark the form changed, just because the Visual view was opened', () => {
+    it('does not change the stored text, or mark the form changed, just because the Visual view was opened', async () => {
       const { fixture, click } = openPage();
 
-      click('Visual');
+      await click('Visual');
 
       expect(fixture.componentInstance.form.value['Content']).toBe('# Hello\n\nsome **bold** text');
       expect(fixture.componentInstance.form.dirty).toBe(false);
     });
 
-    it('stores what is edited in the Visual view as Markdown and marks the form changed', () => {
+    it('stores what is edited in the Visual view as Markdown and marks the form changed', async () => {
       const { fixture, root, click } = openPage();
-      click('Visual');
+      await click('Visual');
       const inner = root.querySelector('adv-visual-editor') as HTMLElement & { __ngContext__?: unknown };
       expect(inner).not.toBeNull();
       const editor = (fixture.debugElement.query((d) => d.name === 'adv-visual-editor').componentInstance as { editor: { commands: { selectAll(): boolean }; chain(): { focus(): { toggleBold(): { run(): boolean } } } } }).editor;
