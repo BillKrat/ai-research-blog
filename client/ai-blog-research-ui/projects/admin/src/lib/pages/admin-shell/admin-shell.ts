@@ -1,5 +1,5 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminMenuService } from '../../services/admin-menu.service';
@@ -21,6 +21,29 @@ export class AdminShell implements OnInit {
   private readonly tenantService = inject(TenantService);
 
   protected readonly menu = this.menuService.menu;
+
+  /** Whether the menu shows icons only, to give the screen more room. Remembered in this browser (a per-viewer convenience; storage may be refused). */
+  protected readonly collapsed = signal(AdminShell.readCollapsed());
+
+  protected toggle(): void {
+    const next = !this.collapsed();
+    this.collapsed.set(next);
+    try {
+      localStorage.setItem(AdminShell.storageKey, String(next));
+    } catch {
+      // storage is a convenience only
+    }
+  }
+
+  private static readonly storageKey = "adv.admin-menu-collapsed";
+
+  private static readCollapsed(): boolean {
+    try {
+      return localStorage.getItem(AdminShell.storageKey) === "true";
+    } catch {
+      return false;
+    }
+  }
 
   ngOnInit(): void {
     this.menuService.load();
