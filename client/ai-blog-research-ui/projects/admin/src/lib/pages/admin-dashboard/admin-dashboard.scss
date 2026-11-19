@@ -1,0 +1,49 @@
+.dashboard {
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  &__card {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 0.5rem;
+
+    h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+    }
+
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  &__count {
+    font-weight: 600;
+
+    &--alert {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  &__empty {
+    opacity: 0.7;
+  }
+
+  &__problem {
+    color: var(--mat-sys-error);
+  }
+}

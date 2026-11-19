@@ -1,0 +1,53 @@
+<section class="dashboard">
+  <h1>Dashboard</h1>
+  <adv-tenant-panel />
+
+  @if (failed()) {
+    <p class="dashboard__problem" role="alert">The dashboard could not be loaded.</p>
+  }
+
+  @if (model(); as m) {
+    <div class="dashboard__grid">
+      <div class="dashboard__card">
+        <h2>Content</h2>
+        <ul>
+          <li><a routerLink="/admin/posts">Published posts</a><span class="dashboard__count">{{ m.publishedPosts }}</span></li>
+          <li><a routerLink="/admin/posts">Draft posts</a><span class="dashboard__count">{{ m.draftPosts }}</span></li>
+          <li><a routerLink="/admin/pages">Published pages</a><span class="dashboard__count">{{ m.publishedPages }}</span></li>
+          <li><a routerLink="/admin/pages">Draft pages</a><span class="dashboard__count">{{ m.draftPages }}</span></li>
+        </ul>
+      </div>
+
+      <div class="dashboard__card">
+        <h2>Waiting for you</h2>
+        <ul>
+          <li><a routerLink="/admin/collaboration">Collaboration items to review</a><span class="dashboard__count" [class.dashboard__count--alert]="m.collaborationWaiting > 0">{{ m.collaborationWaiting }}</span></li>
+          <li><a routerLink="/admin/exceptions">Active exceptions</a><span class="dashboard__count" [class.dashboard__count--alert]="m.exceptions > 0">{{ m.exceptions }}</span></li>
+          <li><a routerLink="/admin/comments">Comments to approve</a><span class="dashboard__count" [class.dashboard__count--alert]="m.commentsPending > 0">{{ m.commentsPending }}</span></li>
+        </ul>
+      </div>
+
+      <div class="dashboard__card">
+        <h2>Draft posts</h2>
+        <ul>
+          @for (item of m.draftPostList; track item.id) {
+            <li><a [routerLink]="['/admin/posts', item.id]">{{ item.title }}</a></li>
+          } @empty {
+            <li class="dashboard__empty">None</li>
+          }
+        </ul>
+      </div>
+
+      <div class="dashboard__card">
+        <h2>Draft pages</h2>
+        <ul>
+          @for (item of m.draftPageList; track item.id) {
+            <li><a [routerLink]="['/admin/pages', item.id]">{{ item.title }}</a></li>
+          } @empty {
+            <li class="dashboard__empty">None</li>
+          }
+        </ul>
+      </div>
+    </div>
+  }
+</section>

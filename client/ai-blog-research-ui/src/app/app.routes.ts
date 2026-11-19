@@ -40,7 +40,8 @@ export const routes: Routes = [
     loadComponent: () => import('@adventures/admin').then((m) => m.AdminShell),
     canActivate: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'users' },
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'dashboard', loadComponent: () => import('@adventures/admin').then((m) => m.AdminDashboard) },
       ...adminCollection('users', '/api/users', 'Users'),
       ...adminCollection('roles', '/api/roles', 'Roles'),
       ...adminCollection('posts', '/api/posts', 'Posts'),

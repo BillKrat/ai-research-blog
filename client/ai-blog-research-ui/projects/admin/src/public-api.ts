@@ -17,5 +17,8 @@ export * from './lib/pages/admin-grid/admin-grid';
 export * from './lib/pages/admin-entity/admin-entity';
 export * from './lib/pages/admin-plugins/admin-plugins';
 export * from './lib/pages/admin-exceptions/admin-exceptions';
+export * from './lib/pages/admin-dashboard/admin-dashboard';
+export * from './lib/services/dashboard.service';
+export * from './lib/components/tenant-panel/tenant-panel';
 export * from './lib/pages/login/login';
 export * from './lib/pages/profile/profile';

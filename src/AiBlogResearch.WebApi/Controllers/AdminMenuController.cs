@@ -21,7 +21,7 @@ public static class AdminMenuDefinitions
 
     public static readonly IReadOnlyList<AdminMenuItemDefinition> All =
     [
-        new("Dashboard", "dashboard", "Dashboard", "/admin/dashboard", "dashboard", RequiredRight: Rights.AdminAccess, Available: false, Order: 1),
+        new("Dashboard", "dashboard", "Dashboard", "/admin/dashboard", "dashboard", RequiredRight: Rights.AdminAccess, Order: 1),
         new("Content", "posts", "Posts", "/admin/posts", "article", RequiredRight: Rights.PostsRead, Order: 1),
         new("Content", "collaboration", "Collaboration", "/admin/collaboration", "forum", RequiredRight: Rights.CollaborationRead, Order: 2),
         new("Content", "comments", "Comments", "/admin/comments", "comment", RequiredRight: Rights.PostsRead, Available: false, Order: 8),
