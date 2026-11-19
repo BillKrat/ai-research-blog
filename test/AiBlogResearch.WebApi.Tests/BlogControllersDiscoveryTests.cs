@@ -1,3 +1,4 @@
+using Adventures.Identity.WebApi;
 using Adventures.Blog.WebApi;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
@@ -15,7 +16,7 @@ public class BlogControllersDiscoveryTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddControllers().AddApplicationPart(typeof(AiBlogResearch.WebApi.Controllers.TenantController).Assembly).AddBlogControllers();
+        services.AddControllers().AddApplicationPart(typeof(AiBlogResearch.WebApi.Controllers.DashboardController).Assembly).AddBlogControllers();
 
         using var provider = services.BuildServiceProvider();
         var manager = provider.GetRequiredService<ApplicationPartManager>();
@@ -26,6 +27,6 @@ public class BlogControllersDiscoveryTests
         Assert.Single(names, n => n == typeof(AuthoringController).FullName);
         Assert.Single(names, n => n == typeof(PostsController).FullName);
         Assert.Single(names, n => n == typeof(PublicController).FullName);
-        Assert.Contains(typeof(AiBlogResearch.WebApi.Controllers.TenantController).FullName, names);
+        Assert.Contains(typeof(AiBlogResearch.WebApi.Controllers.DashboardController).FullName, names);
     }
 }

@@ -1,3 +1,4 @@
+using Adventures.Identity.WebApi;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
@@ -13,14 +14,13 @@ public sealed class ReusableControllersLeaveTheHostTests
 {
     private static readonly string[] StillInTheHost =
     [
-        "AdminMenuController", "AuthController", "DashboardController",
-        "LookupsController", "M2MAuthController", "ProfileController", "RolesController", "RuntimeController", "TenantController", "UsersController",
+        "AdminMenuController", "DashboardController", "RuntimeController",
     ];
 
     [Fact]
     public void TheHostProjectDeclaresOnlyTheControllersListedHere()
     {
-        var found = typeof(AiBlogResearch.WebApi.Controllers.TenantController).Assembly.GetTypes()
+        var found = typeof(AiBlogResearch.WebApi.Controllers.DashboardController).Assembly.GetTypes()
             .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract)
             .Select(t => t.Name)
             .Order(StringComparer.Ordinal)

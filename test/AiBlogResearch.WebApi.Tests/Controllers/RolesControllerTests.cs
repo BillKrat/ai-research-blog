@@ -1,3 +1,4 @@
+using Adventures.Identity.WebApi;
 using System.Security.Claims;
 using Adventures.Common.Exceptions;
 using Adventures.Entities;

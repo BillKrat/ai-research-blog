@@ -17,6 +17,7 @@ using Adventures.Blog.Legacy;
 using Adventures.Blog.WebApi;
 using Adventures.Collaboration.WebApi;
 using Adventures.Diagnostics.WebApi;
+using Adventures.Identity.WebApi;
 using Adventures.Blog.Postgres;
 using Adventures.Collaboration;
 using Adventures.MEF;
@@ -106,7 +107,8 @@ try
     builder.Services.AddControllers()
         .AddBlogControllers()
         .AddCollaborationControllers()
-        .AddDiagnosticsControllers();
+        .AddDiagnosticsControllers()
+        .AddIdentityControllers();
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
 
@@ -386,7 +388,7 @@ try
     builder.Services.AddScoped<ITenantContext, RequestGraphScope>();
     builder.Services.AddNQuadUserMembership();
     builder.Services.AddScoped<UserVisibility>();
-    builder.Services.AddScoped<AiBlogResearch.WebApi.Controllers.PlatformUserVisibilityFilter>();
+    builder.Services.AddScoped<PlatformUserVisibilityFilter>();
     builder.Services.AddScoped<TenantScopedUserBll>();
     builder.Services.AddScoped<ITenantUserPresenter, TenantUserPresenter>();
     builder.Services.AddNQuadEntityRepository(

@@ -1,3 +1,4 @@
+using Adventures.Identity.WebApi;
 // Assessed 2026-10-24 17:51 CT (Claude): automated scan for secrets, injection and unsafe patterns, re-run after the fixes - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 using System.Security.Claims;
 using Adventures.Entities;
