@@ -6,7 +6,7 @@
         [routerLink]="item.tag.link"
         [style.font-size.rem]="item.size"
         [attr.title]="item.tag.count + (item.tag.count === 1 ? ' post' : ' posts')"
-      >{{ item.tag.name }}<sup class="tag-cloud__count">{{ item.tag.count }}</sup></a>
+      >{{ item.tag.name }}<span class="tag-cloud__count">{{ item.tag.count }}</span></a>
       @if (item.tag.editLink) {
         <a class="tag-cloud__edit" [routerLink]="item.tag.editLink" [attr.aria-label]="'Edit ' + item.tag.name" title="Edit">
           <mat-icon>edit</mat-icon>
