@@ -18,6 +18,7 @@ using Adventures.Blog.WebApi;
 using Adventures.Collaboration.WebApi;
 using Adventures.Diagnostics.WebApi;
 using Adventures.Identity.WebApi;
+using Adventures.Tools.WebApi;
 using Adventures.Blog.Postgres;
 using Adventures.Collaboration;
 using Adventures.MEF;
@@ -46,7 +47,8 @@ internal static class AppPlatformServices
                 .AddBlogControllers()
                 .AddCollaborationControllers()
                 .AddDiagnosticsControllers()
-                .AddIdentityControllers();
+                .AddIdentityControllers()
+                .AddToolsControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             services.AddOpenApi();
 

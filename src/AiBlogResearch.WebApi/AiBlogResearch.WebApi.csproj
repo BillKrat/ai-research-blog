@@ -35,6 +35,7 @@
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Data.NQuad\Adventures.Data.NQuad.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Data.NQuad.Postgres\Adventures.Data.NQuad.Postgres.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.WebApi\Adventures.WebApi.csproj" />
+    <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Tools.WebApi\Adventures.Tools.WebApi.csproj" />
   </ItemGroup>
 
   <ItemGroup>

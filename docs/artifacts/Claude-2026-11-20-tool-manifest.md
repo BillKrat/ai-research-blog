@@ -1,0 +1,54 @@
+# Stage review, 2026-11-20: tool manifest (stage 1 of the tool plan)
+
+The first two stages of [the tool inventory](../Claude-mcp-tool-inventory-2026-11.md) are built on the session branch: the `IAppTool` seam with its
+selector chain, and a manifest of the 19 existing tools served at `GET /api/tools`. **Nothing the MCP server does has changed**; it still has its own
+list, so there is no behaviour change to test by hand. Not merged or deployed.
+
+```mermaid
+flowchart TB
+  subgraph Foundation
+    T["Adventures.Tools: IAppTool, AppTool, ToolCatalog, ToolSelector, DefaultFallbackTool"]
+    D["Diagnostics.WebApi: 3 tools"]
+    B["Blog.WebApi: 10 tools"]
+    C["Collaboration.WebApi: 6 tools, owned by the collaboration plug-ins"]
+    W["Tools.WebApi: GET /api/tools, GET /api/tools/find"]
+  end
+  D --> T
+  B --> T
+  C --> T
+  W --> T
+  Host["API host: AddToolsControllers()"] --> W
+  Client["any client with a token"] -->|GET /api/tools| W
+  W -->|"scope on the token + plug-in on"| Client
+```
+
+## What was built
+
+- **`Adventures.Tools`** (no references at all, pinned by a guard test): `IAppTool` is a description of an API call (name, description, input
+  schema, the **scope** the API enforces, method, path) that also decides for itself whether it matches a search key (`CanHandle`). The default
+  matches by exact name, by every word of the key in the name or description (a grep), or by a small misspelling of the name (fuzzy); a tool author
+  overrides it. `ToolSelector` is the chain of responsibility (first tool that handles the key wins; an optional `IToolGuesser` for an AI may only
+  choose among the offered tools; `DefaultFallbackTool` always handles, so a search never comes back empty). `ToolCatalog` lists what a caller may
+  use: the tool's scope on the token and, when the tool belongs to plug-ins, any one of them being on.
+- **The 19 tools as data**, next to the controllers they describe, copied from the MCP definitions so descriptions and schemas are identical.
+- **`GET /api/tools`** (any signed-in caller; filtered by the token's scopes and the enabled plug-ins) and **`GET /api/tools/find?key=`** (through the
+  replaceable `IToolSelector`).
+- **Guard tests in the host** (`ToolManifestGuardTests`): 19 tools declared, each maps to a real route with that HTTP method, each route is guarded by
+  the scope policy the tool names.
+
+## A correction to the inventory
+
+The inventory said the API decides with **rights** for these tools. Reading the controllers showed `/api/author/*` and `/api/diagnostics/*` are
+guarded by **token scopes** (`content.draft`, `mcp.diagnostics.read`), not rights. So a client without MCP needs a machine token carrying those scopes
+(the `claude-author` and `claude-diagnostics` clients exist), not a person's sign-in. `IAppTool` names the scope accordingly. Rights stay for the
+admin screens.
+
+## Verified
+
+Foundation: every suite passes (Tools 18, Tools.WebApi 9, Architecture 23 with the new edges recorded). App: the full solution passes (HostTests 15,
+including the four guards). Not done: a call to the live `/api/tools` (nothing is deployed).
+
+## Next (stage 2)
+
+The MCP server reads the manifest: delete its static array and the `switch`, so a developer's plug-in tool shows up in `tools/list` with no edit to
+`McpController`. The argument checks it repeats ("id is required") move to the API, which already makes them.
