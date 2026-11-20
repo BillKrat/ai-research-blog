@@ -42,12 +42,15 @@
     @if (grid.rows.length === 0) {
       <p>{{ drilled() ? 'No occurrences of this kind are listed.' : includePurged() ? 'No exceptions recorded.' : 'No active exceptions.' }}</p>
     } @else {
-      <adv-entity-grid [model]="grid" [rowTools]="rowTools" />
+      <div class="admin-exceptions__grid">
+        <adv-entity-grid [model]="grid" [rowTools]="rowTools" (request)="onRequest($event)" />
+      </div>
     }
   }
   @if (signatures().length > 0) {
     <h3>Kinds of failure</h3>
     <p class="admin-exceptions__hint">Repeats of the same exception are grouped. Press a count to list just that kind above.</p>
+    <div class="admin-exceptions__grid">
     <table class="admin-exceptions__kinds">
       <thead>
         <tr>
@@ -92,6 +95,7 @@
         }
       </tbody>
     </table>
+    </div>
   }
 </section>
 

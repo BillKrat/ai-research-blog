@@ -17,22 +17,25 @@ public sealed class AdminExceptionsControllerTests
 
         private static readonly Adventures.Entities.EntityGridModel Empty = new(new Adventures.Entities.EntitySchemaModel("urn:test", []), []);
 
+        /// <summary>What every grid call answers (empty unless a test wants rows).</summary>
+        public Adventures.Entities.EntityGridModel Answer { get; init; } = Empty;
+
         public Task<Adventures.Entities.EntityGridModel> GetSignatureGridAsync(string signatureId, bool includePurged, CancellationToken cancellationToken = default)
         {
             DrillDown = (signatureId, includePurged);
-            return Task.FromResult(Empty);
+            return Task.FromResult(Answer);
         }
 
         public Task<Adventures.Entities.EntityGridModel> GetGridAsync(CancellationToken cancellationToken = default)
         {
             PlainGridAsked = true;
-            return Task.FromResult(Empty);
+            return Task.FromResult(Answer);
         }
 
         public Task<Adventures.Entities.EntityGridModel> GetHistoryGridAsync(CancellationToken cancellationToken = default)
         {
             HistoryAsked = true;
-            return Task.FromResult(Empty);
+            return Task.FromResult(Answer);
         }
 
         public Task<Adventures.Entities.EntityGridModel> GetGridAsync(Adventures.Entities.EntityGridQuery query, CancellationToken cancellationToken = default) => throw new NotSupportedException();
@@ -81,6 +84,52 @@ public sealed class AdminExceptionsControllerTests
         Assert.True(presenter.PlainGridAsked);
         Assert.True(presenter.HistoryAsked);
         Assert.Null(presenter.DrillDown);
+    }
+
+    private static Adventures.Entities.EntityGridModel Rows(int count) =>
+        new(
+            new Adventures.Entities.EntitySchemaModel("urn:test", []),
+            Enumerable.Range(1, count).Select(n => new Adventures.Entities.EntityDataModel($"e{n}", new Dictionary<string, string?>())).ToArray());
+
+    private static Adventures.Entities.EntityGridModel Served(Microsoft.AspNetCore.Mvc.ActionResult<Adventures.Entities.EntityGridModel> result) =>
+        Assert.IsType<Adventures.Entities.EntityGridModel>(Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result.Result).Value);
+
+    [Fact]
+    public async Task TheGridIsPaged_TwentyFiveToAPageByDefault()
+    {
+        var controller = new AdminExceptionsController(new FakePresenter { Answer = Rows(159) }, null!);
+
+        var grid = Served(await controller.Grid());
+
+        Assert.Equal(25, grid.Rows.Count);
+        Assert.Equal("e1", grid.Rows[0].EntityId);
+        Assert.Equal(new Adventures.Entities.GridPaging(1, 25, 159, null, false), grid.Paging);
+        Assert.Equal(7, grid.Paging!.TotalPages);
+        Assert.Null(grid.Links!.Previous);
+        Assert.NotNull(grid.Links.Next);
+    }
+
+    [Fact]
+    public async Task ALaterPageHoldsTheNextRows_AndItsLinksKeepTheDrillDownAndHistory()
+    {
+        var controller = new AdminExceptionsController(new FakePresenter { Answer = Rows(159) }, null!);
+
+        var grid = Served(await controller.Grid(includePurged: true, signature: "kind 1", page: 7));
+
+        Assert.Equal(9, grid.Rows.Count);
+        Assert.Equal("e151", grid.Rows[0].EntityId);
+        Assert.Null(grid.Links!.Next);
+        Assert.Equal("/api/admin/exceptions?page=6&pageSize=25&includePurged=true&signature=kind%201", grid.Links.Previous);
+    }
+
+    [Fact]
+    public async Task APageBeyondTheEnd_ShowsTheLastPage_AndPageSizeIsCapped()
+    {
+        var controller = new AdminExceptionsController(new FakePresenter { Answer = Rows(30) }, null!);
+
+        Assert.Equal(2, Served(await controller.Grid(page: 99)).Paging!.Page);
+        Assert.Equal(Adventures.Entities.EntityGridQuery.MaxPageSize, Served(await controller.Grid(pageSize: 100000)).Paging!.PageSize);
+        Assert.Equal(1, Served(await controller.Grid(page: 0)).Paging!.Page);
     }
 
     [Fact]

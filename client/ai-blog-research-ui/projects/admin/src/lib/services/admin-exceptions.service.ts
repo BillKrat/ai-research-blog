@@ -78,8 +78,8 @@ export class AdminExceptionsService implements OnDestroy {
    * The exceptions (newest first); with includePurged the purged ones too, each marked in its State column; with a signature only the
    * occurrences of that kind of failure.
    */
-  grid(includePurged = false, signature?: string): Observable<EntityGridModel> {
-    const params: Record<string, string> = {};
+  grid(includePurged = false, signature?: string, page = 1): Observable<EntityGridModel> {
+    const params: Record<string, string> = { page: String(page) };
     if (includePurged) {
       params['includePurged'] = 'true';
     }

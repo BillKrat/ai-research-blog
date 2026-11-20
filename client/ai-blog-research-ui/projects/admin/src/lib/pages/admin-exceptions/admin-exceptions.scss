@@ -19,6 +19,17 @@
   }
 }
 
+// The screen stays inside the window: wide tables scroll within their own box instead of widening the page.
+.admin-exceptions {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.admin-exceptions__grid {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 .admin-exceptions__hint {
   margin: 0 0 0.5rem;
   opacity: 0.75;

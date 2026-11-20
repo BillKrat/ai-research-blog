@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { EntityGrid, LabelPipe } from '@adventures/entity-ui';
+import { EntityGrid, GridRequest, LabelPipe } from '@adventures/entity-ui';
 import { describeApiError, EntityDataModel, EntityGridModel, SpinnerService } from '@adventures/core';
 import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
 
@@ -28,6 +28,8 @@ export class AdminExceptions implements OnInit {
   protected readonly errors = signal<string[]>([]);
   protected readonly isPurging = signal(false);
   protected readonly includePurged = signal(false);
+  /** The page of the list being shown (1 based); anything that changes which rows are listed starts again at 1. */
+  private readonly page = signal(1);
 
   /** The kind of failure whose occurrences are shown (a drill-down), or null for every occurrence. */
   protected readonly drilled = signal<ExceptionSignatureSummary | null>(null);
@@ -190,6 +192,7 @@ export class AdminExceptions implements OnInit {
   drill(kind: ExceptionSignatureSummary): void {
     this.drilled.set(kind);
     this.includePurged.set(true);
+    this.page.set(1);
     this.load(true);
     document.querySelector(".admin-exceptions__occurrences")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
@@ -197,13 +200,23 @@ export class AdminExceptions implements OnInit {
   /** Leaves the drill-down: every occurrence again. */
   showAll(): void {
     this.drilled.set(null);
+    this.page.set(1);
     this.load();
   }
 
   /** Shows or hides the purged entries (a purge is a soft delete, so they are still in the store). */
   togglePurged(show: boolean): void {
     this.includePurged.set(show);
+    this.page.set(1);
     this.load();
+  }
+
+  /** Next and previous page of the list (the server pages it, 25 a time); the drill-down and history switch are kept. */
+  protected onRequest(request: GridRequest): void {
+    if (request.kind === 'next' || request.kind === 'previous') {
+      this.page.update((p) => Math.max(1, p + (request.kind === 'next' ? 1 : -1)));
+      this.load(true);
+    }
   }
 
   private load(withSpinner = false): void {
@@ -212,8 +225,9 @@ export class AdminExceptions implements OnInit {
       this.spinner.start();
     }
 
-    this.service.grid(this.includePurged(), this.drilled()?.id).subscribe({
+    this.service.grid(this.includePurged(), this.drilled()?.id, this.page()).subscribe({
       next: (grid) => {
+        this.page.set(grid.paging?.page ?? 1);
         if (withSpinner) {
           this.spinner.stop();
         }

@@ -129,6 +129,36 @@ describe('AdminExceptions kinds of failure', () => {
     expect(spinner.active()).toBe(false);
   });
 
+  it('pages the list: Next asks the server for page 2 and keeps the drill-down and history', () => {
+    const { fixture, http, root } = open();
+    (root.querySelector('button.admin-exceptions__drill') as HTMLButtonElement).click();
+    const paged = (page: number) => ({
+      ...grid([{ id: `e${page}`, type: 'ClientReportedException', message: `boom p${page}`, signature: 'k1' }]),
+      paging: { page, pageSize: 25, totalCount: 60, totalPages: 3, sort: null, descending: false },
+      links: { self: '', next: page < 3 ? 'n' : null, previous: page > 1 ? 'p' : null },
+    });
+    http.expectOne((r) => r.params.get('signature') === 'k1').flush(paged(1));
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Page 1 of 3');
+
+    (Array.from(root.querySelectorAll('.entity-grid__pager button')).find((b) => b.textContent === 'Next') as HTMLButtonElement).click();
+    const next = http.expectOne((r) => r.url.endsWith('/api/admin/exceptions') && r.params.get('page') === '2');
+    expect(next.request.params.get('signature')).toBe('k1');
+    expect(next.request.params.get('includePurged')).toBe('true');
+    next.flush(paged(2));
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Page 2 of 3');
+
+    (Array.from(root.querySelectorAll('.entity-grid__pager button')).find((b) => b.textContent === 'Previous') as HTMLButtonElement).click();
+    expect(http.expectOne((r) => r.params.get('page') === '1')).toBeTruthy();
+  });
+
+  it('a new pill starts again at page 1', () => {
+    const { http, root } = open();
+    (root.querySelector('button.admin-exceptions__drill') as HTMLButtonElement).click();
+    expect(http.expectOne((r) => r.params.get('signature') === 'k1').request.params.get('page')).toBe('1');
+  });
+
   it('turns the gears off when the list fails to load', () => {
     const { http, root } = open();
     const spinner = TestBed.inject(SpinnerService);
