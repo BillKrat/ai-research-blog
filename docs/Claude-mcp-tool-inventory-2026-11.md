@@ -107,3 +107,13 @@ An `IWidget` list: a developer drops a DLL in a folder and the widget appears on
 module would still need Angular, but a C# developer should be able to implement the interface, return HTML, and drop it in without knowing
 Angular (the human started with BlogEngine.NET before he knew Angular). Open design questions, not yet decided: how the server-rendered HTML
 is sanitised and placed in a zone, how the drop-in folder is discovered (MEF, per tenant?), and how this meets the reviewed upload library.
+
+### Decision on sanitising returned HTML (human, 2026-11-20)
+
+Sanitising is **not hard-coded: it is a plug-in, enabled by default**, behind an interface (`IHtmlSanitizer`-style seam), so an owner can disable it
+or replace it with their own. Reason: restrictive fixed sanitisers blocked the owner of a site he alone writes for (BlogEngine.NET's
+GwnWikiExtension was hard to build inside such constraints), and a company may use the app as a plain web site without the blog at all. Each
+plug-in has a **Customize** screen (as BlogEngine's Plugins page does); that is where the framework should shine: its settings, including the
+sanitiser's allow-list, live there. Design notes for when it is built: today's TinyMCE post HTML is sanitised on save and on serve by fixed code,
+which moves behind this seam with the same default; turning it off needs a high right (not Editor) and is per tenant; the Plugins page shows a
+plain warning when it is off. Same pattern for widget HTML (`IWidget`).
