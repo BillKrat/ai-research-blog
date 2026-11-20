@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { SpinnerService } from '@adventures/core';
 import { AdminExceptions } from './admin-exceptions';
 
 describe('AdminExceptions kinds of failure', () => {
@@ -100,5 +101,40 @@ describe('AdminExceptions kinds of failure', () => {
     expect(again.request.params.get('includePurged')).toBe('true');
     again.flush(grid([]));
     http.match((r) => r.url.endsWith('/api/admin/exceptions/signatures')).forEach((p) => p.flush(kinds));
+  });
+
+  it('a pill clicked while "show history" is off switches it on, so purged occurrences are listed too', () => {
+    const { fixture, http, root } = open();
+    const toggle = root.querySelector('.admin-exceptions__toggle input') as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+
+    (root.querySelector('button.admin-exceptions__drill') as HTMLButtonElement).click();
+    const request = http.expectOne((r) => r.url.endsWith('/api/admin/exceptions') && r.params.get('signature') === 'k1');
+    expect(request.request.params.get('includePurged')).toBe('true');
+    request.flush(grid([]));
+    fixture.detectChanges();
+
+    expect(toggle.checked).toBe(true);
+  });
+
+  it('turns the gears on when a pill is clicked and off when the list has arrived', () => {
+    const { fixture, http, root } = open();
+    const spinner = TestBed.inject(SpinnerService);
+    expect(spinner.active()).toBe(false);
+
+    (root.querySelector('button.admin-exceptions__drill') as HTMLButtonElement).click();
+    expect(spinner.active()).toBe(true);
+    http.expectOne((r) => r.params.get('signature') === 'k1').flush(grid([]));
+    fixture.detectChanges();
+    expect(spinner.active()).toBe(false);
+  });
+
+  it('turns the gears off when the list fails to load', () => {
+    const { http, root } = open();
+    const spinner = TestBed.inject(SpinnerService);
+
+    (root.querySelector('button.admin-exceptions__drill') as HTMLButtonElement).click();
+    http.expectOne((r) => r.params.get('signature') === 'k1').flush('no', { status: 500, statusText: 'Server Error' });
+    expect(spinner.active()).toBe(false);
   });
 });

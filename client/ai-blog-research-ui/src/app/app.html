@@ -78,3 +78,9 @@
 
   <router-outlet />
 </div>
+
+@if (spinner.active()) {
+  <div class="busy" role="status" aria-live="polite" aria-label="Working">
+    <img class="busy__gears" src="gears.gif" alt="" width="96" height="96" />
+  </div>
+}

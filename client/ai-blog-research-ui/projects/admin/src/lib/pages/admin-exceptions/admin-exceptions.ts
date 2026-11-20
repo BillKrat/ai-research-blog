@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EntityGrid, LabelPipe } from '@adventures/entity-ui';
-import { describeApiError, EntityDataModel, EntityGridModel } from '@adventures/core';
+import { describeApiError, EntityDataModel, EntityGridModel, SpinnerService } from '@adventures/core';
 import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
 
 /**
@@ -21,6 +21,7 @@ import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, Tria
 export class AdminExceptions implements OnInit {
   private readonly service = inject(AdminExceptionsService);
   private readonly router = inject(Router);
+  private readonly spinner = inject(SpinnerService);
 
   protected readonly model = signal<EntityGridModel | null>(null);
   protected readonly isLoading = signal(true);
@@ -182,10 +183,14 @@ export class AdminExceptions implements OnInit {
     });
   }
 
-  /** Shows only the occurrences of one kind of failure, and brings them into view. */
+  /**
+   * Shows only the occurrences of one kind of failure, and brings them into view. A kind's occurrences may all have been purged,
+   * so "show history" is switched on with the click (otherwise the list came back empty and the click seemed to do nothing).
+   */
   drill(kind: ExceptionSignatureSummary): void {
     this.drilled.set(kind);
-    this.load();
+    this.includePurged.set(true);
+    this.load(true);
     document.querySelector(".admin-exceptions__occurrences")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
 
@@ -201,16 +206,28 @@ export class AdminExceptions implements OnInit {
     this.load();
   }
 
-  private load(): void {
+  private load(withSpinner = false): void {
     this.errors.set([]);
+    if (withSpinner) {
+      this.spinner.start();
+    }
+
     this.service.grid(this.includePurged(), this.drilled()?.id).subscribe({
       next: (grid) => {
+        if (withSpinner) {
+          this.spinner.stop();
+        }
+
         this.model.set(grid);
         this.isLoading.set(false);
         this.service.refresh();
       },
       // (signatures load separately below so a failure there never hides the grid)
       error: (error) => {
+        if (withSpinner) {
+          this.spinner.stop();
+        }
+
         this.isLoading.set(false);
         this.errors.set(describeApiError(error, "Couldn't load the exceptions."));
       },
