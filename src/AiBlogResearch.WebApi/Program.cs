@@ -476,6 +476,7 @@ try
     app.UseAuthentication();
     app.UseTenantTokenCheck();
     app.UseActingTenant();
+    app.UsePasswordChangeRequired();
     app.UseAuthorization();
 
     app.MapControllers();

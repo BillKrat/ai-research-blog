@@ -29,6 +29,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           void router.navigate(['/login'], { queryParams: { expired: 1, returnUrl } });
         }
       }
+      if (error instanceof HttpErrorResponse && error.status === 403 && error.error?.code === 'password_change_required') {
+        // The password must be changed before anything else: hold the person to the profile page and bring them back to this page afterwards.
+        const returnUrl = router.url;
+        authService.requirePasswordChange();
+        if (!returnUrl.startsWith('/profile')) {
+          authService.rememberReturnUrl(returnUrl);
+          void router.navigate(['/profile']);
+        }
+      }
       return throwError(() => error);
     }),
   );

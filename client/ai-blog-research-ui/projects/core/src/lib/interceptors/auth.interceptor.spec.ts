@@ -54,6 +54,21 @@ describe('authInterceptor', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('sends the person to the password form, remembering the page, when the server says the password must be changed first', () => {
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    vi.spyOn(router, 'url', 'get').mockReturnValue('/admin/posts');
+    http.get('/api/admin/posts').subscribe({ error: () => undefined });
+
+    controller
+      .expectOne('/api/admin/posts')
+      .flush({ code: 'password_change_required' }, { status: 403, statusText: 'Forbidden' });
+
+    expect(auth.mustChangePassword()).toBe(true);
+    expect(auth.accessToken()).toBe('tok');
+    expect(auth.takeReturnUrl()).toBe('/admin/posts');
+    expect(navigate).toHaveBeenCalledWith(['/profile']);
+  });
+
   it('does nothing about a 403 (signed in, just not allowed)', () => {
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     http.get('/api/roles').subscribe({ error: () => undefined });

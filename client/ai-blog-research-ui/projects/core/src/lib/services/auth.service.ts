@@ -17,6 +17,7 @@ const TOKEN_STORAGE_KEY = 'auth.accessToken';
 const EXPIRY_STORAGE_KEY = 'auth.expiresAtUtc';
 const USERNAME_STORAGE_KEY = 'auth.username';
 const RETURN_STORAGE_KEY = 'auth.returnUrl';
+const MUST_CHANGE_STORAGE_KEY = 'auth.mustChangePassword';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -37,11 +38,21 @@ export class AuthService {
   private readonly _username = signal<string | null>(sessionStorage.getItem(USERNAME_STORAGE_KEY));
   readonly username = this._username.asReadonly();
 
-  // Surfaced so nothing silently drops it (see gap 2 in the same entry), but no forced-password-
-  // change flow acts on it yet - deferred twice already per docs/SESSION_HANDOFF.md's 2026-09-19/21
-  // entries, not re-decided here.
-  private readonly _mustChangePassword = signal(false);
+  // True while the person must change their password before anything else. The server enforces it (403 password_change_required on every other
+  // call) and the route guard holds the person to the profile page; it is kept for this browser tab so a reload does not forget it.
+  private readonly _mustChangePassword = signal(sessionStorage.getItem(MUST_CHANGE_STORAGE_KEY) === '1');
   readonly mustChangePassword = this._mustChangePassword.asReadonly();
+
+  /** The server said the password must be changed first (or the sign-in response did): hold the person to the password form. */
+  requirePasswordChange(): void {
+    this._mustChangePassword.set(true);
+    sessionStorage.setItem(MUST_CHANGE_STORAGE_KEY, '1');
+  }
+
+  private clearPasswordChange(): void {
+    this._mustChangePassword.set(false);
+    sessionStorage.removeItem(MUST_CHANGE_STORAGE_KEY);
+  }
 
   login(userName: string, password: string): Observable<string> {
     return this.http
@@ -49,7 +60,11 @@ export class AuthService {
       .pipe(
         tap((response) => {
           this._accessToken.set(response.accessToken);
-          this._mustChangePassword.set(response.mustChangePassword);
+          if (response.mustChangePassword) {
+            this.requirePasswordChange();
+          } else {
+            this.clearPasswordChange();
+          }
           sessionStorage.setItem(TOKEN_STORAGE_KEY, response.accessToken);
           sessionStorage.setItem(EXPIRY_STORAGE_KEY, response.expiresAtUtc);
         }),
@@ -65,7 +80,7 @@ export class AuthService {
   changePassword(currentPassword: string, newPassword: string): Observable<void> {
     return this.http
       .post<void>(`${this.apiUrl}/api/auth/change-password`, { currentPassword, newPassword })
-      .pipe(tap(() => this._mustChangePassword.set(false)));
+      .pipe(tap(() => this.clearPasswordChange()));
   }
 
   /** Remembers the page to return to after a forced password change (kept for this browser tab only). */
@@ -83,7 +98,7 @@ export class AuthService {
   logout(): void {
     this._accessToken.set(null);
     this._username.set(null);
-    this._mustChangePassword.set(false);
+    this.clearPasswordChange();
     sessionStorage.removeItem(TOKEN_STORAGE_KEY);
     sessionStorage.removeItem(EXPIRY_STORAGE_KEY);
     sessionStorage.removeItem(USERNAME_STORAGE_KEY);
