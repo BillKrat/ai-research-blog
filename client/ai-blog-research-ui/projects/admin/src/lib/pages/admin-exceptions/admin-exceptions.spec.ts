@@ -154,6 +154,16 @@ describe('AdminExceptions kinds of failure', () => {
     expect(http.expectOne((r) => r.params.get('page') === '1')).toBeTruthy();
   });
 
+  it('asks for seven rows a page, and does not move the page when a pill is clicked', () => {
+    const { http, root } = open();
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
+
+    (root.querySelector('button.admin-exceptions__drill') as HTMLButtonElement).click();
+    expect(http.expectOne((r) => r.params.get('signature') === 'k1').request.params.get('pageSize')).toBe('7');
+    expect(scroll).not.toHaveBeenCalled();
+  });
+
   it('a new pill starts again at page 1', () => {
     const { http, root } = open();
     (root.querySelector('button.admin-exceptions__drill') as HTMLButtonElement).click();

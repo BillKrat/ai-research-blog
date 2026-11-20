@@ -2,7 +2,8 @@
   display: grid;
   // minmax(0, 1fr): a plain 1fr cannot shrink below its widest cell, which pushed the whole page (and the Add button) off the screen
   grid-template-columns: 14rem minmax(0, 1fr);
-  gap: 2rem;
+  // 12px between the banner (when there is one) and the content, like the space above it; 2rem between the menu and the screen
+  gap: 0.75rem 2rem;
   margin-top: 0.75rem;
 
   @media (max-width: 800px) {

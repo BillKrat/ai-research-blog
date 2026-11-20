@@ -207,7 +207,7 @@ export class AdminExceptions implements OnInit, OnDestroy {
   }
 
   /**
-   * Shows only the occurrences of one kind of failure, and brings them into view. A kind's occurrences may all have been purged,
+   * Shows only the occurrences of one kind of failure, and leaves the page where it is (the reader scrolls up to the banner). A kind's occurrences may all have been purged,
    * so "show history" is switched on with the click (otherwise the list came back empty and the click seemed to do nothing).
    */
   drill(kind: ExceptionSignatureSummary): void {
@@ -215,7 +215,6 @@ export class AdminExceptions implements OnInit, OnDestroy {
     this.includePurged.set(true);
     this.page.set(1);
     this.load(true);
-    document.querySelector('.admin-shell__content .page-header')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }
 
   /** Leaves the drill-down: every occurrence again. */
