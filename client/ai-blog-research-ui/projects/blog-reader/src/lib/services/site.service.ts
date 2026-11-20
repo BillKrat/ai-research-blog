@@ -9,6 +9,8 @@ export interface SiteSettings {
   title: string;
   tagline: string;
   postsPerPage: number;
+  /** False when comments are switched off for the whole site (an older API sends nothing, which means on). */
+  commentsEnabled?: boolean;
 }
 
 const DEFAULTS: SiteSettings = { title: 'AI Research Blog', tagline: '', postsPerPage: 10 };

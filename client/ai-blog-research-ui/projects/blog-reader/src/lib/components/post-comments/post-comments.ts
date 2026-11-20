@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { SiteService } from '../../services/site.service';
 import { PublicComment, PublicContentService } from '../../services/public-content.service';
 
 /**
@@ -15,6 +16,10 @@ import { PublicComment, PublicContentService } from '../../services/public-conte
 })
 export class PostComments implements OnInit {
   private readonly content = inject(PublicContentService);
+  private readonly site = inject(SiteService);
+
+  /** False when an administrator turned comments off for the whole site: the form goes, the comments that exist stay. */
+  protected readonly open = computed(() => this.site.settings().commentsEnabled !== false);
 
   readonly slug = input.required<string>();
 

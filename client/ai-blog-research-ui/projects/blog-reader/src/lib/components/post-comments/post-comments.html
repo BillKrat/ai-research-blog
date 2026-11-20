@@ -1,3 +1,4 @@
+@if (open() || comments().length > 0) {
 <section class="comments" aria-labelledby="comments-heading">
   <h3 id="comments-heading">Comments</h3>
   <ul class="comments__list">
@@ -12,6 +13,7 @@
     }
   </ul>
 
+  @if (open()) {
   <form #form class="comments__form" (submit)="$event.preventDefault(); send(form, author.value, email.value, body.value, website.value)">
     <h4>Leave a comment</h4>
     <label>
@@ -41,4 +43,8 @@
       <p class="comments__problem" role="alert">{{ problem() }}</p>
     }
   </form>
+  } @else {
+    <p class="comments__closed" role="status">Comments are closed.</p>
+  }
 </section>
+}

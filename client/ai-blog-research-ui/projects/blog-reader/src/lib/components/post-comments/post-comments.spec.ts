@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { SiteService } from '../../services/site.service';
 import { PostComments } from './post-comments';
 
 describe('PostComments', () => {
@@ -91,5 +92,31 @@ describe('PostComments', () => {
 
     expect(field.tabIndex).toBe(-1);
     expect(field.closest('[aria-hidden=true]')).not.toBeNull();
+  });
+
+  describe('when the site has turned comments off', () => {
+    const closeSite = () => TestBed.inject(SiteService).settings.update((current) => ({ ...current, commentsEnabled: false }));
+
+    it('hides the form and says comments are closed, but still shows the comments that exist', () => {
+      closeSite();
+      const { root } = render([{ author: 'Pat', created: '2026-11-19T10:00:00Z', body: 'Earlier remark' }]);
+
+      expect(root.querySelector('form')).toBeNull();
+      expect(root.textContent).toContain('Earlier remark');
+      expect(root.textContent).toContain('Comments are closed');
+    });
+
+    it('shows nothing at all when there are no comments to keep', () => {
+      closeSite();
+      const { root } = render([]);
+
+      expect(root.querySelector('.comments')).toBeNull();
+    });
+  });
+
+  it('still shows the form when the site answer carries no comments flag (an older API)', () => {
+    const { root } = render([]);
+
+    expect(root.querySelector('form')).not.toBeNull();
   });
 });
