@@ -1,8 +1,8 @@
-# Stage review, 2026-11-20: tool manifest (stage 1 of the tool plan)
+# Stage review, 2026-11-20: tool manifest and the MCP server reading it (stages 1 and 2 of the tool plan)
 
-The first two stages of [the tool inventory](../Claude-mcp-tool-inventory-2026-11.md) are built on the session branch: the `IAppTool` seam with its
-selector chain, and a manifest of the 19 existing tools served at `GET /api/tools`. **Nothing the MCP server does has changed**; it still has its own
-list, so there is no behaviour change to test by hand. Not merged or deployed.
+Stages 1 and 2 of [the tool inventory](../Claude-mcp-tool-inventory-2026-11.md) are built on the session branch: the `IAppTool` seam with its
+selector chain, a manifest of the 19 existing tools served at `GET /api/tools`, and **the MCP server now builds its tool list and its calls from that
+manifest** instead of its own hard-coded array and `switch`. Not merged or deployed.
 
 ```mermaid
 flowchart TB
@@ -48,7 +48,35 @@ admin screens.
 Foundation: every suite passes (Tools 18, Tools.WebApi 9, Architecture 23 with the new edges recorded). App: the full solution passes (HostTests 15,
 including the four guards). Not done: a call to the live `/api/tools` (nothing is deployed).
 
-## Next (stage 2)
+## Stage 2: the MCP server reads the manifest
 
-The MCP server reads the manifest: delete its static array and the `switch`, so a developer's plug-in tool shows up in `tools/list` with no edit to
-`McpController`. The argument checks it repeats ("id is required") move to the API, which already makes them.
+`McpController` went from 507 to 348 lines. The 19 forwarding tool definitions and the 160-line `switch` are gone. What it does now:
+
+- **`tools/list`** asks the API for `GET api/tools` with the caller own token (so the list is already filtered by the token scopes and the enabled
+  plug-ins), then adds the research tools (`blogai_*`, which only this server owns) the token may use. If the API cannot be reached or refuses, the
+  caller still gets the research tools.
+- **`tools/call`** finds the tool in the manifest, takes the required arguments from the tool input schema (same messages as before, for example
+  "id and title are required."), builds the path from the manifest template (path values escaped; for a GET the other arguments go in the query,
+  otherwise they are the JSON body) and forwards it with the caller token. The API still decides everything.
+- A new feature tool (for example from a plug-in) shows up in `tools/list` and works in `tools/call` with **no edit to `McpController`**: two
+  new tests prove it with a made-up wiki tool.
+
+**One behaviour change:** a tool the token cannot use used to answer "This token does not carry the x scope"; it is now simply unknown to the caller
+(JSON-RPC error -32602), because the API does not list it. The collaboration tools also vanish from `tools/list` when both collaboration plug-ins
+are off (before, the model saw them and the API refused).
+
+**Deploy order matters:** the MCP server now needs `GET api/tools` on the API. Deploy the API first (or together; both deploy on a push to `main`).
+Until the API is updated, `tools/list` on the new MCP server returns only the research tools.
+
+**Costs and follow-ups, not done:** every call asks the API for the manifest first (two requests per tool call; a short cache per token would fix it);
+the MCP scope gate still knows only the three scopes it was built with, so a plug-in tool with a new scope also needs that scope added there once.
+
+## Verified (stage 2)
+
+MCP tests 88 (5 new: follows the manifest, plug-in tools omitted, API down, template and query building, missing arguments), full app solution passes.
+Not done: a live `tools/list` through the deployed MCP server (nothing is deployed); do that after the deploy with `Claude-author.ps1`.
+
+## Next (stage 3)
+
+Mark the research tools `IMcpOnlyTool` behind their own registry, with a guard test that they cannot write; then the developer sample (a widget and a
+tool in a separate project, discovered through MEF).

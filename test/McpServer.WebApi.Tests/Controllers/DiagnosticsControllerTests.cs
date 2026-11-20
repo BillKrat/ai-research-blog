@@ -86,14 +86,75 @@ public sealed class DiagnosticsControllerTests : IClassFixture<DiagnosticsContro
 
         public string? LastBody { get; private set; }
 
+        /// <summary>What GET /api/tools offers before the token's scopes are applied: by default the real declarations of the three feature libraries.</summary>
+        public Func<IReadOnlyList<Adventures.Tools.IAppTool>> Manifest { get; set; } = () =>
+            [.. Adventures.Diagnostics.WebApi.DiagnosticsTools.All, .. Adventures.Blog.WebApi.AuthoringTools.All, .. Adventures.Collaboration.WebApi.CollaborationAuthoringTools.All];
+
+        /// <summary>When set, the manifest request fails like an unreachable API.</summary>
+        public bool ManifestDown { get; set; }
+
+        public int ManifestRequests { get; private set; }
+
         public void ResetForTests()
         {
             LastRequest = null;
             LastBody = null;
+            ManifestRequests = 0;
+        }
+
+        private HttpResponseMessage ManifestAnswer(HttpRequestMessage request)
+        {
+            ManifestRequests++;
+            if (ManifestDown)
+            {
+                throw new HttpRequestException("api down");
+            }
+
+            // Like the real endpoint: only the tools the token's scopes allow.
+            var scopes = TokenScopes(request.Headers.Authorization?.Parameter);
+            var tools = Manifest().Where(t => scopes.Contains(t.RequiredScope)).Select(t => new
+            {
+                name = t.Name,
+                description = t.Description,
+                inputSchema = System.Text.Json.JsonDocument.Parse(t.InputSchema).RootElement,
+                requiredScope = t.RequiredScope,
+                method = t.Method,
+                path = t.PathTemplate,
+            });
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(tools), System.Text.Encoding.UTF8, "application/json") };
+        }
+
+        private static HashSet<string> TokenScopes(string? jwt)
+        {
+            var scopes = new HashSet<string>(StringComparer.Ordinal);
+            var payload = jwt?.Split('.').ElementAtOrDefault(1);
+            if (payload is null)
+            {
+                return scopes;
+            }
+
+            var padded = payload.Replace('-', '+').Replace('_', '/');
+            padded = padded.PadRight(padded.Length + (4 - padded.Length % 4) % 4, '=');
+            using var json = System.Text.Json.JsonDocument.Parse(Convert.FromBase64String(padded));
+            if (json.RootElement.TryGetProperty("scope", out var claim))
+            {
+                var values = claim.ValueKind == System.Text.Json.JsonValueKind.Array ? claim.EnumerateArray().Select(v => v.GetString() ?? "") : [claim.GetString() ?? ""];
+                foreach (var value in values.SelectMany(v => v.Split(' ', StringSplitOptions.RemoveEmptyEntries)))
+                {
+                    scopes.Add(value);
+                }
+            }
+
+            return scopes;
         }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            if (request.Method == HttpMethod.Get && request.RequestUri!.AbsolutePath == "/api/tools")
+            {
+                return Task.FromResult(ManifestAnswer(request));
+            }
+
             LastRequest = request;
             LastBody = request.Content?.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
             return Task.FromResult(Respond(request));

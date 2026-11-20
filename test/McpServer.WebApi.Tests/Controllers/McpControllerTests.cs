@@ -130,7 +130,8 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
 
         string[] Names(JsonElement answer) => answer.GetProperty("result").GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()!).ToArray();
         Assert.Equal(["diagnose_request", "recent_exceptions", "exception_signatures"], Names(diagnostics));
-        Assert.Equal(["list_my_posts", "create_draft_post", "update_draft_post", "propose_revision", "list_post_comments", "add_post_comment", "list_my_collaboration", "get_collaboration_item", "create_collaboration_item", "update_collaboration_item", "list_collaboration_comments", "add_collaboration_comment", "list_categories", "list_tags", "create_category", "create_tag"], Names(authoring));
+        // The order follows the API's manifest (feature by feature); what matters is the set.
+        Assert.Equal(new[] { "list_my_posts", "create_draft_post", "update_draft_post", "propose_revision", "list_post_comments", "add_post_comment", "list_my_collaboration", "get_collaboration_item", "create_collaboration_item", "update_collaboration_item", "list_collaboration_comments", "add_collaboration_comment", "list_categories", "list_tags", "create_category", "create_tag" }.Order(), Names(authoring).Order());
         Assert.Equal(19, Names(both).Length);
     }
 
@@ -219,10 +220,9 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
             jsonrpc = "2.0", id = 7, method = "tools/call", @params = new { name = "create_draft_post", arguments = new { title = "x" } },
         });
 
-        Assert.True(authoringOnly.GetProperty("result").GetProperty("isError").GetBoolean());
-        Assert.Contains("mcp.diagnostics.read", authoringOnly.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString());
-        Assert.True(diagnosticsOnly.GetProperty("result").GetProperty("isError").GetBoolean());
-        Assert.Contains("content.draft", diagnosticsOnly.GetProperty("result").GetProperty("content")[0].GetProperty("text").GetString());
+        // The manifest the API offers this token does not hold the tool, so it is unknown to the caller (not forwarded).
+        Assert.Equal(-32602, authoringOnly.GetProperty("error").GetProperty("code").GetInt32());
+        Assert.Equal(-32602, diagnosticsOnly.GetProperty("error").GetProperty("code").GetInt32());
         Assert.Null(_app.Api.LastRequest);
     }
 
@@ -269,5 +269,99 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
 
         var missing = await RpcAsync(ClientWith("content.draft"), new { jsonrpc = "2.0", id = 11, method = "tools/call", @params = new { name = "add_post_comment", arguments = new { id = "p1" } } });
         Assert.True(missing.GetProperty("result").GetProperty("isError").GetBoolean());
+    }
+
+    private static string[] ListedNames(JsonElement answer) =>
+        answer.GetProperty("result").GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()!).ToArray();
+
+    private static Adventures.Tools.AppTool WikiTool() =>
+        new("wiki_lookup", "Looks a page up in the wiki.", """{ "type": "object", "properties": { "page": { "type": "string" }, "q": { "type": "string" } }, "required": ["page"] }""",
+            "content.draft", "GET", "api/wiki/{page}");
+
+    [Fact]
+    public async Task ToolsList_FollowsTheApiManifest_SoAFeatureToolAppearsWithoutEditingTheController()
+    {
+        var original = _app.Api.Manifest;
+        try
+        {
+            _app.Api.Manifest = () => [.. original(), WikiTool()];
+
+            var names = ListedNames(await RpcAsync(ClientWith("content.draft"), new { jsonrpc = "2.0", id = 1, method = "tools/list" }));
+
+            Assert.Contains("wiki_lookup", names);
+            Assert.Contains("list_my_posts", names);
+        }
+        finally
+        {
+            _app.Api.Manifest = original;
+        }
+    }
+
+    [Fact]
+    public async Task ToolsList_OmitsTheToolsOfADisabledPlugin_BecauseTheManifestDoes()
+    {
+        var original = _app.Api.Manifest;
+        try
+        {
+            _app.Api.Manifest = () => [.. original().Where(t => !t.Name.Contains("collaboration"))];
+
+            var names = ListedNames(await RpcAsync(ClientWith("content.draft"), new { jsonrpc = "2.0", id = 2, method = "tools/list" }));
+
+            Assert.DoesNotContain(names, n => n.Contains("collaboration"));
+            Assert.Equal(10, names.Length);
+        }
+        finally
+        {
+            _app.Api.Manifest = original;
+        }
+    }
+
+    [Fact]
+    public async Task ToolsList_WhenTheApiCannotBeReached_StillOffersTheResearchTools()
+    {
+        _app.Api.ManifestDown = true;
+        try
+        {
+            var names = ListedNames(await RpcAsync(ClientWith("content.draft", "blogai.read"), new { jsonrpc = "2.0", id = 3, method = "tools/list" }));
+
+            Assert.NotEmpty(names);
+            Assert.All(names, n => Assert.StartsWith("blogai_", n));
+        }
+        finally
+        {
+            _app.Api.ManifestDown = false;
+        }
+    }
+
+    [Fact]
+    public async Task ToolsCall_BuildsTheRequestFromTheManifestTemplate_PathValuesEscapedAndTheRestInTheQuery()
+    {
+        var original = _app.Api.Manifest;
+        try
+        {
+            _app.Api.Manifest = () => [.. original(), WikiTool()];
+            _app.Api.Respond = _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("page text") };
+
+            var answer = await RpcAsync(ClientWith("content.draft"), new { jsonrpc = "2.0", id = 4, method = "tools/call", @params = new { name = "wiki_lookup", arguments = new { page = "a b", q = "x&y" } } });
+
+            Assert.False(answer.GetProperty("result").GetProperty("isError").GetBoolean());
+            Assert.Equal("GET", _app.Api.LastRequest!.Method.Method);
+            Assert.Equal("/api/wiki/a%20b", _app.Api.LastRequest.RequestUri!.AbsolutePath);
+            Assert.Equal("?q=x%26y", _app.Api.LastRequest.RequestUri.Query);
+        }
+        finally
+        {
+            _app.Api.Manifest = original;
+        }
+    }
+
+    [Fact]
+    public async Task ToolsCall_NamesEveryMissingRequiredArgument()
+    {
+        var answer = await RpcAsync(ClientWith("content.draft"), new { jsonrpc = "2.0", id = 5, method = "tools/call", @params = new { name = "update_draft_post", arguments = new { } } });
+
+        var result = answer.GetProperty("result");
+        Assert.True(result.GetProperty("isError").GetBoolean());
+        Assert.Equal("id and title are required.", result.GetProperty("content")[0].GetProperty("text").GetString());
     }
 }
