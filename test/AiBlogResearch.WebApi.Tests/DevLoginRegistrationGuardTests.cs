@@ -11,11 +11,17 @@ public class DevLoginRegistrationGuardTests
     [Fact]
     public void AddDevLogin_is_called_once_and_only_inside_the_Legacy_branch()
     {
-        var program = File.ReadAllLines(Path.Combine(FindRoot(), "src", "AiBlogResearch.WebApi", "Program.cs"));
-        var calls = program.Select((line, index) => (line, index)).Where(x => x.line.Contains("AddDevLogin(", StringComparison.Ordinal)).ToList();
+        // the host's startup is Program.cs plus the composition modules under Startup/
+        var project = Path.Combine(FindRoot(), "src", "AiBlogResearch.WebApi");
+        var startup = new[] { Path.Combine(project, "Program.cs") }.Concat(Directory.GetFiles(Path.Combine(project, "Startup"), "*.cs"));
+        var calls = startup
+            .Select(file => (file, lines: File.ReadAllLines(file)))
+            .SelectMany(x => x.lines.Select((line, index) => (x.file, x.lines, line, index)))
+            .Where(x => x.line.Contains("AddDevLogin(", StringComparison.Ordinal))
+            .ToList();
 
         var call = Assert.Single(calls);
-        var branch = program.Take(call.index).Reverse().FirstOrDefault(l => l.TrimStart().StartsWith("if (", StringComparison.Ordinal) || l.TrimStart().StartsWith("else", StringComparison.Ordinal));
+        var branch = call.lines.Take(call.index).Reverse().FirstOrDefault(l => l.TrimStart().StartsWith("if (", StringComparison.Ordinal) || l.TrimStart().StartsWith("else", StringComparison.Ordinal));
         Assert.NotNull(branch);
         Assert.Contains("if (legacy)", branch);
     }

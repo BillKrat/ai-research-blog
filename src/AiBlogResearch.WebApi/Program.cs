@@ -69,97 +69,13 @@ try
     // Every line carries the request's CorrelationId (pushed by the middleware below into the LogContext). The text log is
     // for people; the compact JSON sibling (one JSON object per line, "CorrelationId" a top-level field) is for tools - an
     // MCP diagnostics tool filters it by id without parsing text.
-    const string LogTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{CorrelationId}] {Message:lj}{NewLine}{Exception}";
-    builder.Host.UseSerilog((context, services, configuration) => configuration
-        .ReadFrom.Configuration(context.Configuration)
-        .ReadFrom.Services(services)
-        .Enrich.FromLogContext()
-        .WriteTo.Console(outputTemplate: LogTemplate)
-        .WriteTo.File(
-            Path.Combine(AppContext.BaseDirectory, "logs", "webapi-.log"),
-            outputTemplate: LogTemplate,
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 14)
-        .WriteTo.File(
-            new Serilog.Formatting.Compact.RenderedCompactJsonFormatter(),
-            Path.Combine(AppContext.BaseDirectory, "logs", "webapi-json-.log"),
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 14));
+    builder.Host.UseAppSerilog();
 
     builder.AddServiceDefaults();
 
     // Add services to the container.
 
-    const string AngularCorsPolicy = "Angular";
-
-    var allowedOrigins = Adventures.WebApi.SiteDomain.AllowedOrigins(builder.Configuration, builder.Environment.IsDevelopment()).ToArray();
-    builder.Services.AddCors(options =>
-    {
-        options.AddPolicy(AngularCorsPolicy, policy =>
-        {
-            policy.WithOrigins(allowedOrigins)
-                .AllowAnyHeader()
-                .WithExposedHeaders(CorrelationIdMiddleware.HeaderName)
-                .AllowAnyMethod();
-        });
-    });
-
-    builder.Services.AddControllers()
-        .AddBlogControllers()
-        .AddCollaborationControllers()
-        .AddDiagnosticsControllers()
-        .AddIdentityControllers();
-    // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-    builder.Services.AddOpenApi();
-
-    builder.Services.AddSharedJwtAuthentication(builder.Configuration);
-    builder.Services.AddRequestHardening(builder.Configuration);
-    builder.Services.AddSingleton(_ => new HealthSnapshotCache(HealthSnapshotCache.WindowFrom(builder.Configuration), TimeProvider.System));
-
-    builder.Services.AddOptions<M2MClientsOptions>()
-        .Bind(builder.Configuration.GetSection(M2MClientsOptions.SectionName));
-    builder.Services.AddSingleton<IClientSecretHasher, ClientSecretHasher>();
-    builder.Services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
-    builder.Services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search", McpDiagnosticsController.RequiredScope, Adventures.Blog.WebApi.AuthoringController.RequiredScope);
-    builder.Services.AddRoleAuthorization(WellKnownClaims.TenantAdminRole);
-
-    // McpServer:BaseUrl -> mcp.global-webnet.com. HealthController calls this over M2M auth (minting
-    // its own "mcp-host" token in-process via IJwtTokenService, since this app IS the token issuer -
-    // see docs/artifacts/2026-09-23-mcp-m2m-hello-world.md) to prove the cross-site M2M pipeline end
-    // to end. A short timeout keeps a slow/unreachable mcp site from hanging /api/health itself.
-#pragma warning disable EXTEXP0001 // RemoveAllResilienceHandlers is marked experimental; it is the supported way to opt one client out.
-    builder.Services.AddHttpClient("McpServer", (services, client) =>
-    {
-        var baseUrl = Adventures.WebApi.SiteDomain.McpBaseUrl(services.GetRequiredService<IConfiguration>())
-            ?? throw new InvalidOperationException("McpServer:BaseUrl is not configured.");
-        client.BaseAddress = new Uri(baseUrl);
-        client.Timeout = TimeSpan.FromSeconds(10);
-    })
-    // This client only serves the health probe: no retries (the default resilience handler would turn one failure into
-    // eight seconds of waiting), so /api/health answers promptly and says what failed.
-    .RemoveAllResilienceHandlers()
-    .AddCorrelationIdHandler();
-#pragma warning restore EXTEXP0001
-    builder.Services.AddCorrelationId();
-    builder.Services.AddFailureReporting();
-    builder.Services.AddScoped<IDependencyProbes>(sp => new DependencyProbes(
-        sp.GetRequiredService<IJwtTokenService>(),
-        sp.GetRequiredService<IHttpClientFactory>(),
-        sp.GetService<Adventures.Common.Diagnostics.IStoreProbe>(),
-        sp.GetRequiredService<ILoggerFactory>().CreateLogger<DependencyProbes>()));
-
-    // The AI triage (an administrator's button): Anthropic:ApiKey is a secret (user-secrets locally, the host's environment
-    // secret Anthropic__ApiKey in production); without it the button answers "not set up". One call can take many seconds
-    // and is never retried automatically (a retry would double the cost), so this client opts out of the default resilience.
-    builder.Services.Configure<AnthropicOptions>(builder.Configuration.GetSection(AnthropicOptions.SectionName));
-#pragma warning disable EXTEXP0001
-    builder.Services.AddHttpClient(AiTriage.ClientName, client =>
-    {
-        client.BaseAddress = new Uri("https://api.anthropic.com/");
-        client.Timeout = TimeSpan.FromSeconds(90);
-    }).RemoveAllResilienceHandlers();
-#pragma warning restore EXTEXP0001
-    builder.Services.AddSingleton<IAiTriage, AiTriage>();
+    builder.Services.AddAppPlatform(builder.Configuration, builder.Environment.IsDevelopment());
 
     // Adventures.Data/Adventures.Identity: registered so IUserAccountService is available to
     // AuthController, which uses it for the real login (see
@@ -167,29 +83,12 @@ try
     // NpgsqlSqlExecutor doesn't open a connection until something actually queries through it, so
     // this registration alone can't reproduce today's Jwt:SigningKey-shaped startup crash even if
     // ConnectionStrings:Postgres is ever missing in an environment.
-    if (legacy)
-    {
-        // No vault and no user store in Legacy: the developer-testing sign-in only, behind four gates (Legacy mode, Legacy:DevLogin=true in user-secrets,
-        // the Development environment, a request from this machine). A deployed site cannot satisfy them.
-        builder.Services.AddHttpContextAccessor();
-        builder.Services.AddScoped<IRequestOrigin, HttpRequestOrigin>();
-        builder.Services.AddScoped<IUserProvisioning, LegacyUserProvisioning>();
-        builder.Services.AddDevLogin(
-            enabled: string.Equals(builder.Configuration[DevLoginOptions.SettingName], "true", StringComparison.OrdinalIgnoreCase),
-            isDevelopment: builder.Environment.IsDevelopment());
-    }
-    else
-    {
-        builder.Services.AddSingleton<ISqlExecutor>(_ =>
-        new NpgsqlSqlExecutor(builder.Configuration.GetConnectionString("Postgres")
-            ?? throw new InvalidOperationException("ConnectionStrings:Postgres is not configured.")));
-    builder.Services.AddScoped<IEntityRecordRepository, PostgresEntityRepository>();
-    builder.Services.AddUserIdentity();
-    builder.Services.AddPostgresUserCredentials();
-    }
+    builder.Services.AddAppIdentity(legacy, builder.Configuration, builder.Environment.IsDevelopment());
 
     // Adventures.Ioc's reflection-based auto-registration for the Bll/Dal/Presenter MvpVm pattern
     // (see Adventures.Common.Tests/MvpVmTests.cs) - picks up UserBll and UserPresenter below.
+    // The scan only sees loaded assemblies, so load every referenced library first (see AppAssemblies).
+    AppAssemblies.EnsureReferencedLoaded();
     builder.Services.AddLifetimeServices();
 
     // User CRUDL runs on the newer, schema-driven Adventures.Entities/NQuadEntityRepository stack -
@@ -218,65 +117,7 @@ try
     }
     if (!skipSeeding)
     {
-    if (nquadStore is INQuadStoreInitializer initializer)
-    {
-        await initializer.InitializeAsync();
-    }
-
-    var nquadSeedPath = Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed.nq");
-    seeded = await nquadStore.SeedOnceAsync(nquadSeedPath, "baseline");
-    // Named, once-only seeds added after the baseline (each ships as its own file, never merged into seed.nq).
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-002-exception-log.nq"), ExceptionLogConstants.SeedName);
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-003-exception-signature.nq"), ExceptionLogConstants.SignatureSeedName);
-    // The tenant and role model already in the baseline: seed 004 only describes it (schemas, and the User role-assignment relations).
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-004-identity.nq"), IdentityConstants.SeedName);
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-005-identity-required.nq"), IdentityConstants.RequiredSeedName);
-    // The content model (pages, posts, categories, tags): new schemas under the schema host, modelled on the BlogEngine admin.
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-006-content.nq"), BlogConstants.Content.SeedName);
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-007-post-taxonomy.nq"), BlogConstants.Content.TaxonomySeedName);
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-008-post-revision.nq"), BlogConstants.Content.RevisionSeedName);
-    // The legacy mirror layer: one schema per ported BlogEngine.NET table (generated; see the legacy table migration plan). Schemas only, no data.
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-009-legacy-schemas.nq"), EntityConstants.Legacy.SchemaSeedName);
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-010-legacy-ids.nq"), EntityConstants.Legacy.IdFieldsSeedName);
-    // The review state of a collaboration post (Approval, ApprovedBy, ApprovedAt): changed only by the approve actions.
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-013-post-approval.nq"), BlogConstants.Content.ApprovalSeedName);
-    // How the Content of a post or page is written (Markdown or Html): a person in the admin writes Html, an AI and older posts are Markdown.
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-022-content-format.nq"), BlogConstants.Content.ContentFormatSeedName);
-    // What readers write under a post (pending until a person approves it).
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-021-visitor-comments.nq"), BlogConstants.Content.VisitorCommentSeedName);
-    // The conversation under a post (comments and decisions).
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-014-comments.nq"), CollaborationConstants.CommentsSeedName);
-    // Collaboration items (review requests and research questions): their own type, never public (not a post).
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-015-collaboration.nq"), CollaborationConstants.SeedName);
-    // The Research kind of collaboration item: Status, Sources and Findings.
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-017-research.nq"), CollaborationConstants.ResearchSeedName);
-    // The rights of the Admin, Editor, Reviewer and Developer roles (a Rights field on Role and its default values).
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-018-role-rights.nq"), "018-role-rights");
-    // Host aliases: the Aliases field on the tenant (which host names reach which tenant; changed only by a platform administrator).
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-020-tenant-aliases.nq"), "020-tenant-aliases");
-    // The on/off state of the built-in plug-ins (a plug-in with no stored state is on).
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-016-plugins.nq"), PluginConstants.SeedName);
-    // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), BlogConstants.Site.SeedName);
+        seeded = await StartupSeeds.ApplyAsync(nquadStore);
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
@@ -285,8 +126,6 @@ try
         await StartupChecks.RunReportingAppAsync(args, missingSchemas, builder.Environment.IsDevelopment(), liveData);
         return;
     }
-
-    var userSchema = SchemaDal.Load(userQuads, UserConstants.SchemaIri);
 
     builder.Services.AddSingleton<INQuadStore>(nquadStore);
     if (legacy)
@@ -299,201 +138,13 @@ try
     builder.Services.AddSingleton<IMediaStore>(useMemoryStore ? new InMemoryMediaStore() : new NpgsqlMediaStore(postgresConnection!, builder.Configuration["Media:Table"] ?? "app_media"));
     builder.Services.AddHttpContextAccessor();
 
-    builder.Services.AddNQuadEntityRepository(
-        userSchema,
-        UserConstants.BaseIri,
-        UserConstants.TypeIri,
-        UserConstants.DefaultGraph,
-        schema => new User(schema));
-
-    // SchemaBll (Adventures.Entities) is auto-registered by AddLifetimeServices above via its
-    // reflection scan across every loaded assembly, not just what this host actually uses - ASP.NET
-    // Core validates every registered service graph is resolvable at Build() time (Development
-    // default), so SchemaEntity/SchemaFieldEntity repositories are needed here even though nothing
-    // in this app calls ISchemaBll yet. Reuses the same seeded store; each schema is loaded the
-    // same way the User schema above is - via SchemaDal.Load - no hardcoded MetaSchema anymore.
-    builder.Services.AddNQuadEntityRepository(
-        SchemaDal.Load(userQuads, ExceptionLogConstants.SchemaIri),
-        ExceptionLogConstants.BaseIri,
-        ExceptionLogConstants.TypeIri,
-        ExceptionLogConstants.DefaultGraph,
-        schema => new ExceptionLogEntry(schema));
-
-    builder.Services.AddNQuadEntityRepository(
-        SchemaDal.Load(userQuads, ExceptionSignatureConstants.SchemaIri),
-        ExceptionSignatureConstants.BaseIri,
-        ExceptionSignatureConstants.TypeIri,
-        ExceptionSignatureConstants.DefaultGraph,
-        schema => new ExceptionSignatureEntry(schema));
-
-    builder.Services.AddNQuadEntityRepository(
-        SchemaDal.Load(userQuads, EntityConstants.Schema.EntityTypeIri),
-        EntityConstants.Schema.EntityBaseIri,
-        EntityConstants.Schema.EntityTypeIri,
-        UserConstants.DefaultGraph,
-        schema => new SchemaEntity(schema));
-    builder.Services.AddNQuadEntityRepository(
-        SchemaDal.Load(userQuads, EntityConstants.Schema.FieldEntityTypeIri),
-        EntityConstants.Schema.FieldEntityBaseIri,
-        EntityConstants.Schema.FieldEntityTypeIri,
-        UserConstants.DefaultGraph,
-        schema => new SchemaFieldEntity(schema));
-
-    // Identity schemas (seed 004): the data is untouched; each schema maps onto the existing predicates. Roles get an admin grid;
-    // the rest are read through the relation provider (a user role assignments) and need only their registrations.
-    static void AddIdentityEntity<TEntity>(
-        IServiceCollection services, IReadOnlyList<NQuad> quads, string schemaIri, string baseIri, string typeIri, Func<EntitySchema, TEntity> factory)
-        where TEntity : DynamicEntity =>
-        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, IdentityConstants.DefaultGraph, factory);
-
-    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.RoleSchemaIri, IdentityConstants.RoleBaseIri, IdentityConstants.RoleTypeIri, s => new Role(s));
-    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.TenantSchemaIri, IdentityConstants.TenantBaseIri, IdentityConstants.TenantTypeIri, s => new Tenant(s));
-    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.BlogSchemaIri, IdentityConstants.BlogBaseIri, IdentityConstants.BlogTypeIri, s => new Blog(s));
-    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.OrganizationSchemaIri, IdentityConstants.OrganizationBaseIri, IdentityConstants.OrganizationTypeIri, s => new Organization(s));
-    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.TenantRoleSchemaIri, IdentityConstants.TenantRoleBaseIri, IdentityConstants.TenantRoleTypeIri, s => new TenantRoleAssignment(s));
-    AddIdentityEntity(builder.Services, userQuads, IdentityConstants.OrganizationRoleSchemaIri, IdentityConstants.OrganizationRoleBaseIri, IdentityConstants.OrganizationRoleTypeIri, s => new OrganizationRoleAssignment(s));
-    static void AddContentEntity<TEntity>(
-        IServiceCollection services, IReadOnlyList<NQuad> quads, string schemaIri, string baseIri, string typeIri, Func<EntitySchema, TEntity> factory)
-        where TEntity : DynamicEntity =>
-        services.AddNQuadEntityRepository(SchemaDal.Load(quads, schemaIri), baseIri, typeIri, BlogConstants.Content.DefaultGraph, factory, tenantScoped: true);
-
-    AddContentEntity(builder.Services, userQuads, BlogConstants.Content.PageSchemaIri, BlogConstants.Content.PageBaseIri, BlogConstants.Content.PageTypeIri, s => new Page(s));
-    AddContentEntity(builder.Services, userQuads, BlogConstants.Content.PostSchemaIri, BlogConstants.Content.PostBaseIri, BlogConstants.Content.PostTypeIri, s => new Post(s));
-    AddContentEntity(builder.Services, userQuads, BlogConstants.Content.CategorySchemaIri, BlogConstants.Content.CategoryBaseIri, BlogConstants.Content.CategoryTypeIri, s => new Category(s));
-    AddContentEntity(builder.Services, userQuads, BlogConstants.Content.TagSchemaIri, BlogConstants.Content.TagBaseIri, BlogConstants.Content.TagTypeIri, s => new Tag(s));
-    AddContentEntity(builder.Services, userQuads, BlogConstants.Content.VisitorCommentSchemaIri, BlogConstants.Content.VisitorCommentBaseIri, BlogConstants.Content.VisitorCommentTypeIri, s => new VisitorComment(s));
-    AddContentEntity(builder.Services, userQuads, CollaborationConstants.CommentSchemaIri, CollaborationConstants.CommentBaseIri, CollaborationConstants.CommentTypeIri, s => new Comment(s));
-    builder.Services.AddNQuadEntityRepository(
-        SchemaDal.Load(userQuads, CollaborationConstants.SchemaIri), CollaborationConstants.BaseIri, CollaborationConstants.TypeIri,
-        CollaborationConstants.DefaultGraph, s => new CollaborationItem(s), tenantScoped: true);
-    builder.Services.AddNQuadEntityRepository(
-        SchemaDal.Load(userQuads, PluginConstants.SchemaIri), PluginConstants.BaseIri, PluginConstants.TypeIri,
-        CollaborationConstants.DefaultGraph, s => new Plugin(s));
-    // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
-    builder.Services.AddNQuadPlatformAdministrators();
-    builder.Services.AddScoped<ITenantAliasEditor, TenantAliasEditor>();
-    // The tenant switcher: a person acts in the tenants they belong to (a platform administrator in every one); the X-Acting-Tenant header is checked on every request.
-    builder.Services.AddScoped<IActingTenants, ActingTenants>();
-    builder.Services.AddScoped<IRightsResolver, RightsResolver>();
-    builder.Services.AddScoped<IRoleRightsEditor, RoleRightsEditor>();
-    builder.Services.AddRightsAuthorization();
-    builder.Services.AddScoped<IEntityBll<Tenant>>(provider => new EntityBll<Tenant>(provider.GetRequiredService<IEntityDal<Tenant>>()));
-    builder.Services.AddScoped<IEntityBll<Organization>>(provider => new EntityBll<Organization>(provider.GetRequiredService<IEntityDal<Organization>>()));
-    builder.Services.AddScoped<ITenantResolver, TenantResolver>();
-    // T1: the tenant of each request is decided from the host the server saw (Tenancy:Enforcement = Off, Report (default) or Enforce; Tenancy:FallbackDomain only in Development).
-    builder.Services.AddTenancy(builder.Configuration, builder.Environment.IsDevelopment());
-    // T2: posts, pages, categories, tags, comments, collaboration items and site settings live in the request tenant's own graph; every tenant is equal and a host with no tenant sees none of it.
-    builder.Services.AddScoped<IGraphScope, RequestGraphScope>();
-    // T3b: the people screen shows and changes only members of the request tenant; sign-in and the profile keep the plain, global IUserBll.
-    builder.Services.AddScoped<ITenantContext, RequestGraphScope>();
-    builder.Services.AddNQuadUserMembership();
-    builder.Services.AddScoped<UserVisibility>();
-    builder.Services.AddScoped<PlatformUserVisibilityFilter>();
-    builder.Services.AddScoped<TenantScopedUserBll>();
-    builder.Services.AddScoped<ITenantUserPresenter, TenantUserPresenter>();
-    builder.Services.AddNQuadEntityRepository(
-        SchemaDal.Load(userQuads, BlogConstants.Site.SettingSchemaIri), BlogConstants.Site.SettingBaseIri, BlogConstants.Site.SettingTypeIri,
-        BlogConstants.Site.DefaultGraph, s => new SiteSetting(s), tenantScoped: true);
-    builder.Services.AddBlog();
-    builder.Services.AddCollaboration();
-    builder.Services.AddNQuadRelations();
-    builder.Services.AddNQuadRelationWriter();
-    builder.Services.AddIdentityRelationGuards();
-    builder.Services.AddScoped<IEntityBll<Role>>(provider => new EntityBll<Role>(provider.GetRequiredService<IEntityDal<Role>>()));
-    builder.Services.AddScoped<IEntityPresenter<Role>>(provider => new RolePresenter(
-        provider.GetRequiredService<IEntityBll<Role>>(), provider.GetRequiredService<EntitySchemaOf<Role>>(), provider.GetService<IEntityRelationProvider>()));
+    builder.Services.AddAppEntities(userQuads, builder.Configuration, builder.Environment.IsDevelopment());
 
     var app = builder.Build();
 
-    if (legacy)
-    {
-        // The legacy tables have no place for collaboration items: its plug-ins are switched off (the Plugins page shows them off).
-        using var pluginScope = app.Services.CreateScope();
-        var plugins = pluginScope.ServiceProvider.GetRequiredService<IPlugins>();
-        foreach (var definition in CollaborationPlugins.Definitions)
-        {
-            if (await plugins.IsEnabledAsync(definition.Key))
-            {
-                await plugins.SetEnabledAsync(definition.Key, false);
-            }
-        }
-    }
+    await app.ApplyAsync(legacy, skipSeeding);
 
-    if (!skipSeeding)
-    {
-        // Improved default rights for roles still at their first shipped values (a seed cannot supersede a stored value); an edited role is left alone.
-        using var upgradeScope = app.Services.CreateScope();
-        var upgraded = await RoleRightsUpgrade.ApplyAsync(upgradeScope.ServiceProvider.GetRequiredService<IEntityDal<Role>>());
-
-        if (upgraded > 0)
-        {
-            Log.Information("Upgraded the default rights of {Count} role(s).", upgraded);
-        }
-
-        // When nobody is a platform administrator yet, Admin becomes one (never again once someone holds it, so a person switched off on purpose stays off).
-        if (await upgradeScope.ServiceProvider.GetRequiredService<PlatformAdministratorBll>().EnsureFirstAsync())
-        {
-            Log.Information("{UserName} is now the platform administrator (nobody held the switch).", PlatformAdministratorBll.FirstAdministratorUserName);
-        }
-    }
-
-    // First in the pipeline: everything after it (request logging, the exception handler, controllers) logs under the id.
-    app.UseCorrelationId();
-    app.UseSecurityHeaders(app.Environment.IsDevelopment());
-    app.Use(async (context, next) =>
-    {
-        using (Serilog.Context.LogContext.PushProperty(CorrelationIdMiddleware.LogPropertyName, CorrelationIdMiddleware.Get(context)))
-        {
-            await next(context);
-        }
-    });
-    app.UseSerilogRequestLogging();
-
-    // Configure the HTTP request pipeline.
-    // UseCors must come before any Map* calls so it runs ahead of terminal
-    // middleware (health checks, controllers) and can attach CORS headers.
-    // The root stays reachable over plain HTTP: SmarterASP's free-SSL preflight requests it
-    // without following redirects, so redirecting "/" would fail issue and renewal.
-    app.UseWhen(context => !context.Request.Path.Equals("/"), branch => branch.UseHttpsRedirection());
-    app.UseCors(AngularCorsPolicy);
-    app.UseRateLimiter();
-
-    // One handler in every environment, so what a developer sees is what production does: the full exception goes to the
-    // log file and the exception log, the client gets a shielded body with a reference (see UnhandledExceptionHandler).
-    // Without a handler an exception anywhere in the pipeline (authentication and authorization included) would fall
-    // through to IIS's own bare error page with nothing logged.
-    app.UseExceptionHandler(errorApp => errorApp.Run(UnhandledExceptionHandler.HandleAsync));
-    // After the exception handler and the rate limiter, before authentication: a host that matches no tenant never reaches the controllers when enforcement is on.
-    app.UseTenancy();
-
-    if (app.Environment.IsDevelopment())
-    {
-        app.MapOpenApi().AllowAnonymous();
-    }
-
-    app.MapDefaultEndpoints();
-
-    app.UseAuthentication();
-    app.UseTenantTokenCheck();
-    app.UseActingTenant();
-    app.UsePasswordChangeRequired();
-    app.UseAuthorization();
-
-    app.MapControllers();
-
-    if (app.Environment.IsDevelopment())
-    {
-        // Test aid, not a feature: throws on purpose so the exception log, the header warning and the Exceptions screen
-        // can be exercised end to end. Development only (not mapped in production), administrators only.
-        static IResult ThrowDeliberately() => throw new InvalidOperationException("Deliberate test exception from /api/dev/throw.");
-        app.MapGet("/api/dev/throw", ThrowDeliberately)
-            .RequireAuthorization(WellKnownClaims.TenantAdminPolicy)
-            .ExcludeFromDescription();
-    }
-
-    // SmarterASP's free-SSL request (issue and renewal) requires the domain root to return HTTP 200.
-    app.MapGet("/", () => Results.Ok(new { service = "AiBlogResearch.WebApi", status = "ok" })).AllowAnonymous()
-        .ExcludeFromDescription();
+    app.UseAppPipeline();
 
     app.Run();
 }
