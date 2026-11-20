@@ -85,3 +85,25 @@ the tool result.
    Layer 1: a blog owner without MCP should still read their own exceptions through the API.
 3. Which research tools come next after `blogai_*` (the AI-assisted search and the upload processing you named): are they Layer 2 only, or does a
    simple search of the blog's own content belong in Layer 1 as well? I lean to a basic Layer 1 search, and the AI-assisted one in Layer 2.
+
+## The human's answers (2026-11-20)
+
+1. **A single `IAppTool`, declared by a feature.** A feature (for example a plug-in) declares its tools, so a developer picks which tools are
+   on from the screens that already exist (a plug-in feature that declares `IAppTool` is listed in the Plugins grid). Finding a tool is its own
+   seam, a **tool selector** interface with our implementation and a replaceable one. Matching may use grep, fuzzy, RegEx, or a function the
+   tool's own author writes (`CanHandle(searchKey)` returning true or false), so the responsibility for being found sits with the tool's
+   author, not in a description we try to make fit every case. Design: **Chain of Responsibility**; the last link is a `DefaultFallbackTool`
+   whose `CanHandle()` always returns true (the best guess; when Claude is configured it asks the AI). Consequence for the contract above:
+   the manifest gains `CanHandle(string searchKey)` and the selector walks the chain in order.
+2. **Layer 1 for the diagnostics tools** (agreed).
+3. **Hybrid search.** The blog's own search tools are Layer 1 (work without MCP) and are Blog-centric; the AI-assisted search reuses them
+   instead of indexing every post on save (no RAG pass on each save). The AI's work is uploaded documents, retrieving the applicable posts
+   through those tools, and writing a comprehensive answer. **Keep in mind for the private repository:** its search will also cover blogs a
+   user subscribes to, so the search tool takes a scope (own blog, subscribed blogs) rather than assuming one.
+
+## Widgets from a C# developer's point of view (human, thinking aloud, 2026-11-20)
+
+An `IWidget` list: a developer drops a DLL in a folder and the widget appears on the Widgets page. Widgets that are best done as an Angular
+module would still need Angular, but a C# developer should be able to implement the interface, return HTML, and drop it in without knowing
+Angular (the human started with BlogEngine.NET before he knew Angular). Open design questions, not yet decided: how the server-rendered HTML
+is sanitised and placed in a zone, how the drop-in folder is discovered (MEF, per tenant?), and how this meets the reviewed upload library.
