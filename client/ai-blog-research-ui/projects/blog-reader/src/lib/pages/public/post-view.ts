@@ -8,6 +8,7 @@ import { ContentTools } from '../../components/content-tools/content-tools';
 import { PostComments } from '../../components/post-comments/post-comments';
 import { HtmlContent, MarkdownContent } from '@adventures/entity-ui';
 import { PublicContentService, PublicPost } from '../../services/public-content.service';
+import { bindSpinner } from '@adventures/core';
 
 /** One published post: title, who and when, its categories and tags as links, and the rendered Markdown. A draft or unknown slug is a 404. */
 @Component({
@@ -23,6 +24,7 @@ export class PostView implements OnInit {
   protected readonly post = signal<PublicPost | null>(null);
   protected readonly notFound = signal(false);
   protected readonly isLoading = signal(true);
+  private readonly gears = bindSpinner(this.isLoading);
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {

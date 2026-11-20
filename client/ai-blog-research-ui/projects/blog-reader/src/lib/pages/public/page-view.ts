@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContentTools } from '../../components/content-tools/content-tools';
 import { HtmlContent, MarkdownContent } from '@adventures/entity-ui';
 import { PublicContentService, PublicPage } from '../../services/public-content.service';
+import { bindSpinner } from '@adventures/core';
 
 /**
  * One published page by slug (/page/:slug), or, with route data front = true, the front page at the home address: when the site has
@@ -24,6 +25,7 @@ export class PageView implements OnInit {
   protected readonly page = signal<PublicPage | null>(null);
   protected readonly notFound = signal(false);
   protected readonly isLoading = signal(true);
+  private readonly gears = bindSpinner(this.isLoading);
 
   protected get isFront(): boolean {
     return this.route.snapshot.data['front'] === true;

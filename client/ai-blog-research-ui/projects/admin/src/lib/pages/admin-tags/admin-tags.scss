@@ -1,0 +1,15 @@
+.admin-tags {
+  margin: 0;
+  max-width: 100%;
+  min-width: 0;
+
+  &__error {
+    color: var(--mat-sys-error);
+    margin: 0 0 0.5rem;
+  }
+
+  &__hint {
+    margin: 0 0 0.5rem;
+    opacity: 0.75;
+  }
+}

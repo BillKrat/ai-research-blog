@@ -60,6 +60,7 @@ export const routes: Routes = [
       ...adminCollection('collaboration', '/api/collaboration', 'Collaboration'),
       ...adminCollection('pages', '/api/pages', 'Pages'),
       ...adminCollection('categories', '/api/categories', 'Categories'),
+      { path: 'tags', loadComponent: () => import('@adventures/admin').then((m) => m.AdminTags) },
       ...adminCollection('tags', '/api/tags', 'Tags'),
       ...adminCollection('settings', '/api/settings', 'Settings'),
       { path: 'plugins', loadComponent: () => import('@adventures/admin').then((m) => m.AdminPlugins) },

@@ -21,3 +21,4 @@ export * from './lib/interceptors/acting-tenant.interceptor';
 export * from './lib/services/acting-tenant.service';
 export * from './lib/services/spinner.service';
 export * from './lib/services/page-banner.service';
+export * from './lib/services/bind-spinner';

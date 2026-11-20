@@ -1,6 +1,6 @@
 <article class="public">
   @if (isLoading()) {
-    <p>Loading...</p>
+    <!-- the global gears (spinner) run while this loads -->
   } @else if (notFound()) {
     <h2>Not found</h2>
     <p>This page does not exist or is not published. <a routerLink="/posts">Back to the posts</a>.</p>

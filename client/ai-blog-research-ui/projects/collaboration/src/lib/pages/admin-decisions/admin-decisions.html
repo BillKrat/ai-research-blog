@@ -7,7 +7,7 @@
   }
 
   @if (isLoading()) {
-    <p>Loading...</p>
+    <!-- the global gears (spinner) run while this loads -->
   } @else {
     @for (decision of decisions(); track decision.id) {
       <article class="admin-decisions__entry">

@@ -64,7 +64,7 @@
               @defer (on immediate) {
                 <adv-visual-editor [markdown]="textOf(field)" [label]="labelOf(field)" (markdownChange)="setMarkdown(field.name, $event)" />
               } @placeholder {
-                <p class="entity-form__hint">Loading the editor...</p>
+                <adv-busy />
               }
             } @else {
               <textarea [formControlName]="field.name" rows="16" [attr.aria-label]="labelOf(field)" [attr.data-field]="field.name"></textarea>
@@ -79,7 +79,7 @@
             @defer (on immediate) {
               <adv-html-editor [html]="textOf(field)" [label]="labelOf(field)" (htmlChange)="setMarkdown(field.name, $event)" />
             } @placeholder {
-              <p class="entity-form__hint">Loading the editor...</p>
+              <adv-busy />
             }
           </div>
         }

@@ -8,7 +8,7 @@
   }
 
   @if (isLoading()) {
-    <p>Loading...</p>
+    <!-- the global gears (spinner) run while this loads -->
   } @else if (model(); as form) {
     <!-- The same buttons sit above the form and again at the end of the page (a long conversation scrolls Save out of sight). The bottom bar is outside the form, so its Save asks the form to submit. -->
     <ng-template #actionBar let-atEnd>

@@ -1,0 +1,22 @@
+<section class="admin-tags">
+  <adv-page-header title="Tags">
+    @if (canCreate()) {
+      <a mat-icon-button routerLink="/admin/tags/new" [matTooltip]="'new' | label" [attr.aria-label]="'new' | label">
+        <mat-icon>add</mat-icon>
+      </a>
+    }
+  </adv-page-header>
+
+  @for (message of errors(); track message) {
+    <p class="admin-tags__error" role="alert">{{ message }}</p>
+  }
+
+  @if (isLoading()) {
+    <!-- the global gears (spinner) run while this loads -->
+  } @else if (tags().length === 0 && errors().length === 0) {
+    <p>No tags yet.</p>
+  } @else if (tags().length > 0) {
+    <p class="admin-tags__hint">The bigger a tag, the more posts use it. Click a tag to list its posts; the pencil edits it.</p>
+    <adv-tag-cloud [tags]="tags()" />
+  }
+</section>

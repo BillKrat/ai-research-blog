@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MarkdownContent } from '@adventures/entity-ui';
-import { describeApiError } from '@adventures/core';
+import { describeApiError, bindSpinner } from '@adventures/core';
 import { DecisionEntry, ConversationService } from '../../services/conversation.service';
 
 /**
@@ -22,6 +22,7 @@ export class AdminDecisions implements OnInit {
   protected readonly decisions = signal<DecisionEntry[]>([]);
   protected readonly errors = signal<string[]>([]);
   protected readonly isLoading = signal(true);
+  private readonly gears = bindSpinner(this.isLoading);
 
   ngOnInit(): void {
     this.api.decisions().subscribe({

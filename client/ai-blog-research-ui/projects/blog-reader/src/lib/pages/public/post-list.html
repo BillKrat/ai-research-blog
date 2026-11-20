@@ -4,7 +4,7 @@
   @if (failed()) {
     <p role="alert">The posts could not be loaded. Try again in a moment.</p>
   } @else if (isLoading() && !list()) {
-    <p>Loading...</p>
+    <!-- the global gears (spinner) run while this loads -->
   } @else if (list(); as result) {
     @if (result.posts.length === 0) {
       <p>No posts yet.</p>

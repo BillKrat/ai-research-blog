@@ -9,7 +9,7 @@ import { Conversation } from '@adventures/collaboration';
 import { RightsChecklist } from '../../components/rights-checklist/rights-checklist';
 import { PlatformSwitch } from '../../components/platform-switch/platform-switch';
 import { EntityForm, LabelPipe, RelationGrid } from '@adventures/entity-ui';
-import { describeApiError, EntityAction, EntityApiService, EntityFormModel } from '@adventures/core';
+import { describeApiError, EntityAction, EntityApiService, EntityFormModel, bindSpinner } from '@adventures/core';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -35,6 +35,7 @@ export class AdminEntity implements OnInit {
   protected readonly title = signal('');
   protected readonly model = signal<EntityFormModel | null>(null);
   protected readonly isLoading = signal(true);
+  private readonly gears = bindSpinner(this.isLoading);
   protected readonly isNew = signal(false);
   protected readonly loadErrors = signal<string[]>([]);
   protected readonly saveState = signal<SaveState>('idle');

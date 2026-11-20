@@ -29,7 +29,7 @@
   }
 
   @if (isLoading() && !model()) {
-    <p>Loading...</p>
+    <!-- the global gears (spinner) run while this loads -->
   } @else if (model(); as grid) {
     @if (grid.rows.length === 0) {
       <p>{{ selectedFilterValue() ? 'Nothing matches this filter.' : 'Nothing here yet.' }}</p>

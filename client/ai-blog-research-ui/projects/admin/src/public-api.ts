@@ -25,3 +25,4 @@ export * from './lib/services/dashboard.service';
 export * from './lib/components/tenant-panel/tenant-panel';
 export * from './lib/pages/login/login';
 export * from './lib/pages/profile/profile';
+export * from './lib/pages/admin-tags/admin-tags';

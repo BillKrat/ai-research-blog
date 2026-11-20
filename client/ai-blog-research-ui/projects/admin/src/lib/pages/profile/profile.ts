@@ -8,7 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { EntityForm, LabelPipe } from '@adventures/entity-ui';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { AuthService, describeApiError, EntityDataModel, EntityFormModel, MyRight, ProfileService } from '@adventures/core';
+import { AuthService, describeApiError, EntityDataModel, EntityFormModel, MyRight, ProfileService, bindSpinner } from '@adventures/core';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 type DeleteState = 'idle' | 'deleting' | 'error';
@@ -44,6 +44,7 @@ export class Profile implements OnInit {
 
   protected readonly model = signal<EntityFormModel | null>(null);
   protected readonly isLoading = signal(true);
+  private readonly gears = bindSpinner(this.isLoading);
   protected readonly saveState = signal<SaveState>('idle');
   protected readonly deleteState = signal<DeleteState>('idle');
 

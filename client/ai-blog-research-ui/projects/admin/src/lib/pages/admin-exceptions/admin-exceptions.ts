@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EntityGrid, GridRequest, LabelPipe } from '@adventures/entity-ui';
-import { describeApiError, EntityDataModel, EntityGridModel, PageBannerService, SpinnerService } from '@adventures/core';
+import { describeApiError, EntityDataModel, EntityGridModel, PageBannerService, SpinnerService, bindSpinner } from '@adventures/core';
 import { PageHeader } from '../../components/page-header/page-header';
 import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
 
@@ -27,6 +27,7 @@ export class AdminExceptions implements OnInit, OnDestroy {
 
   protected readonly model = signal<EntityGridModel | null>(null);
   protected readonly isLoading = signal(true);
+  private readonly gears = bindSpinner(this.isLoading);
   protected readonly errors = signal<string[]>([]);
   protected readonly isPurging = signal(false);
   protected readonly includePurged = signal(false);

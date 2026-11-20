@@ -4,6 +4,7 @@ import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angu
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { Busy } from '../busy/busy';
 import { VisualEditor } from '../visual-editor/visual-editor';
 import { HtmlEditor } from '../html-editor/html-editor';
 import { EntityApiService, EntityFieldSchema, EntityFormModel, LookupOption, SUPPORTED_CONTRACT_VERSION } from '@adventures/core';
@@ -21,7 +22,7 @@ export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'ref
  */
 @Component({
   selector: 'adv-entity-form',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, VisualEditor, HtmlEditor],
+  imports: [Busy, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, VisualEditor, HtmlEditor],
   templateUrl: './entity-form.html',
   styleUrl: './entity-form.scss',
 })

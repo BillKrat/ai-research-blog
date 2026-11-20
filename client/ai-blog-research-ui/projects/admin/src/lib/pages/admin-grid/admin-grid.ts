@@ -1,12 +1,12 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap, throwError } from 'rxjs';
 import { EntityGrid, GridRequest, LabelPipe } from '@adventures/entity-ui';
-import { describeApiError, EntityApiService, EntityGridModel } from '@adventures/core';
+import { describeApiError, EntityApiService, EntityGridModel, bindSpinner } from '@adventures/core';
 import { TenantService } from '../../services/tenant.service';
 
 /**
@@ -32,6 +32,7 @@ export class AdminGrid implements OnInit {
   protected readonly title = signal('');
   protected readonly model = signal<EntityGridModel | null>(null);
   protected readonly isLoading = signal(true);
+  private readonly gears = bindSpinner(computed(() => this.isLoading() && !this.model()));
   protected readonly errors = signal<string[]>([]);
   protected readonly showEveryone = signal(false);
 

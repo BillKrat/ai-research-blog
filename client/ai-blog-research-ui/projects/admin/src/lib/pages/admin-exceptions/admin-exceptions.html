@@ -25,7 +25,7 @@
   }
 
   @if (isLoading()) {
-    <p>Loading exceptions...</p>
+    <!-- the global gears (spinner) run while this loads -->
   } @else if (model(); as grid) {
     @if (grid.rows.length === 0) {
       <p>{{ drilled() ? 'No occurrences of this kind are listed.' : includePurged() ? 'No exceptions recorded.' : 'No active exceptions.' }}</p>

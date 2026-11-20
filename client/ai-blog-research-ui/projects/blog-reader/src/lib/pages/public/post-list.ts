@@ -2,11 +2,12 @@
 import { ApprovalBadge } from '@adventures/collaboration';
 import { DraftBadge } from '../../components/draft-badge/draft-badge';
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PublicContentService, PublicPostList } from '../../services/public-content.service';
 import { SiteService } from '../../services/site.service';
 import { switchMap } from 'rxjs';
+import { bindSpinner } from '@adventures/core';
 
 /**
  * The list of published posts, newest first, with paging; also serves a category (/category/:name) or a tag (/tag/:name), the
@@ -26,6 +27,7 @@ export class PostList implements OnInit {
   protected readonly list = signal<PublicPostList | null>(null);
   protected readonly heading = signal('Posts');
   protected readonly isLoading = signal(true);
+  private readonly gears = bindSpinner(computed(() => this.isLoading() && !this.list()));
   protected readonly failed = signal(false);
 
   private category: string | null = null;
