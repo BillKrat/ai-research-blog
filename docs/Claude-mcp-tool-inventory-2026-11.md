@@ -1,4 +1,4 @@
-# MCP tool inventory and the two-layer plan (2026-11-22)
+# MCP tool inventory and the two-layer plan (2026-11-20)
 
 Groundwork for the human's tools vision (backlog, Features, first entry): the application's own tools work with no MCP server; an
 optional MCP server reuses them and adds the research tools. Read-only analysis of `McpServer.WebApi` (nothing was changed).
