@@ -20,6 +20,7 @@ builder.Services.AddHttpClient(McpServer.WebApi.Controllers.DiagnosticsControlle
     client.Timeout = TimeSpan.FromSeconds(15);
 }).AddCorrelationIdHandler();
 
+builder.Services.AddMemoryCache();
 builder.Services.AddCorrelationId();
 builder.Services.AddScoped<McpServer.WebApi.DiagnosticsApiClient>();
 

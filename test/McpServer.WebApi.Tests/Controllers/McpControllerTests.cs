@@ -356,6 +356,55 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
     }
 
     [Fact]
+    public async Task TheManifest_IsAskedForOncePerToken_NotOnceForEveryMessage()
+    {
+        var client = ClientWith("content.draft");
+        _app.Api.ResetForTests();
+
+        await RpcAsync(client, new { jsonrpc = "2.0", id = 1, method = "tools/list" });
+        await RpcAsync(client, new { jsonrpc = "2.0", id = 2, method = "tools/list" });
+        _app.Api.Respond = _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") };
+        await RpcAsync(client, new { jsonrpc = "2.0", id = 3, method = "tools/call", @params = new { name = "list_categories" } });
+
+        Assert.Equal(1, _app.Api.ManifestRequests);
+    }
+
+    [Fact]
+    public async Task AFailedManifest_IsNotRemembered_SoTheNextMessageAsksAgain()
+    {
+        var client = ClientWith("content.draft");
+        _app.Api.ManifestDown = true;
+        try
+        {
+            Assert.Empty(ListedNames(await RpcAsync(client, new { jsonrpc = "2.0", id = 1, method = "tools/list" })));
+        }
+        finally
+        {
+            _app.Api.ManifestDown = false;
+        }
+
+        Assert.NotEmpty(ListedNames(await RpcAsync(client, new { jsonrpc = "2.0", id = 2, method = "tools/list" })));
+    }
+
+    [Fact]
+    public async Task APlugInToolWithANewScope_IsReachableWithoutEditingTheController()
+    {
+        var original = _app.Api.Manifest;
+        try
+        {
+            _app.Api.Manifest = () => [.. original(), new Adventures.Tools.AppTool("sample_ping", "Pings the sample plug-in.", """{ "type": "object", "properties": {} }""", "plugin.sample.read", "GET", "api/sample/ping")];
+
+            var names = ListedNames(await RpcAsync(ClientWith("plugin.sample.read"), new { jsonrpc = "2.0", id = 1, method = "tools/list" }));
+
+            Assert.Equal(["sample_ping"], names);
+        }
+        finally
+        {
+            _app.Api.Manifest = original;
+        }
+    }
+
+    [Fact]
     public async Task ToolsCall_NamesEveryMissingRequiredArgument()
     {
         var answer = await RpcAsync(ClientWith("content.draft"), new { jsonrpc = "2.0", id = 5, method = "tools/call", @params = new { name = "update_draft_post", arguments = new { } } });

@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authorization;
 using McpServer.WebApi.BlogAi;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace McpServer.WebApi.Controllers;
 
@@ -20,8 +21,11 @@ namespace McpServer.WebApi.Controllers;
 [ApiController]
 [Route("mcp")]
 [Authorize]
-public sealed class McpController(DiagnosticsApiClient api, IAuthorizationService authorization, IBlogAiReader blogAi) : ControllerBase
+public sealed class McpController(DiagnosticsApiClient api, IAuthorizationService authorization, IBlogAiReader blogAi, IMemoryCache cache) : ControllerBase
 {
+    /// <summary>How long one token's tool list is remembered. Short, so an enabled or disabled plug-in shows up within a minute.</summary>
+    public static readonly TimeSpan ManifestLifetime = TimeSpan.FromSeconds(60);
+
     public const string ProtocolVersion = "2025-03-26";
     public const string DiagnosticsScope = DiagnosticsController.RequiredScope;
     public const string AuthoringScope = "content.draft";
@@ -82,7 +86,7 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
     public async Task<IActionResult> Post([FromBody] JsonElement body, CancellationToken cancellationToken)
     {
         // At least one of the two scopes is needed to use this endpoint at all; each tool then needs its own.
-        var scopes = await GrantedScopesAsync();
+        var scopes = await GrantedScopesAsync(cancellationToken);
         if (scopes.Count == 0)
         {
             return Forbid();
@@ -135,7 +139,7 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
     }
 
     /// <summary>Which of this server scopes the caller token holds (checked through the same scope policies the REST routes use).</summary>
-    private async Task<HashSet<string>> GrantedScopesAsync()
+    private async Task<HashSet<string>> GrantedScopesAsync(CancellationToken cancellationToken)
     {
         var granted = new HashSet<string>(StringComparer.Ordinal);
         foreach (var scope in new[] { DiagnosticsScope, AuthoringScope, BlogAiScope })
@@ -143,6 +147,19 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
             if ((await authorization.AuthorizeAsync(User, null, "Scope:" + scope)).Succeeded)
             {
                 granted.Add(scope);
+            }
+        }
+
+        if (granted.Count == 0)
+        {
+            // A plug-in tool may carry a scope this server has never heard of. The API already filtered its manifest by the token, so a scope
+            // that both the token and a listed tool carry is a real grant: no code change here when a plug-in brings a new scope.
+            var held = User.FindAll("scope")
+                .SelectMany(claim => claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                .ToHashSet(StringComparer.Ordinal);
+            foreach (var tool in (await ManifestAsync(cancellationToken)).Tools.Where(t => held.Contains(t.RequiredScope)))
+            {
+                granted.Add(tool.RequiredScope);
             }
         }
 
@@ -227,7 +244,7 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
     }
 
     /// <summary>One tool as the API's manifest (GET api/tools) describes it.</summary>
-    private sealed record ApiTool(string Name, string Description, JsonNode InputSchema, string Method, string Path, IReadOnlyList<string> Required)
+    private sealed record ApiTool(string Name, string Description, JsonNode InputSchema, string RequiredScope, string Method, string Path, IReadOnlyList<string> Required)
     {
         public JsonObject ToDefinition() => new() { ["name"] = Name, ["description"] = Description, ["inputSchema"] = InputSchema.DeepClone() };
     }
@@ -239,6 +256,24 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
     /// advertises what the API would refuse). An unreachable or refusing API gives an empty list and the reason, so the research tools still work.
     /// </summary>
     private async Task<Manifest> ManifestAsync(CancellationToken cancellationToken)
+    {
+        // Remembered per token for a minute: a tool call no longer asks the API for the list first. Only a good answer is kept.
+        var key = "mcp-manifest:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(Request.Headers.Authorization.ToString())));
+        if (cache.TryGetValue(key, out Manifest? remembered) && remembered is not null)
+        {
+            return remembered;
+        }
+
+        var fresh = await FetchManifestAsync(cancellationToken);
+        if (fresh.Problem is null)
+        {
+            cache.Set(key, fresh, ManifestLifetime);
+        }
+
+        return fresh;
+    }
+
+    private async Task<Manifest> FetchManifestAsync(CancellationToken cancellationToken)
     {
         var answer = await api.GetAsync("api/tools", Request.Headers.Authorization.ToString(), cancellationToken);
         if (answer.Unreachable)
@@ -263,6 +298,7 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
                     item.GetProperty("name").GetString()!,
                     item.GetProperty("description").GetString() ?? string.Empty,
                     schema,
+                    item.GetProperty("requiredScope").GetString() ?? string.Empty,
                     item.GetProperty("method").GetString()!,
                     item.GetProperty("path").GetString()!,
                     required));
