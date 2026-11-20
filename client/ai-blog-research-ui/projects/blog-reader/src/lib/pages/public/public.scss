@@ -55,3 +55,10 @@
     opacity: 0.75;
   }
 }
+
+// A widget zone (the footer today; header, left and right later): a labelled strip the page keeps for widgets, set apart from the content.
+.public__zone {
+  margin-top: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}

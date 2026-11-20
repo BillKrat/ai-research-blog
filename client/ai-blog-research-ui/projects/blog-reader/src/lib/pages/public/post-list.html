@@ -1,10 +1,6 @@
 <section class="public">
   <h2>{{ heading() }}</h2>
 
-  @if (cloud().length > 0) {
-    <adv-tag-cloud [tags]="cloud()" />
-  }
-
   @if (failed()) {
     <p role="alert">The posts could not be loaded. Try again in a moment.</p>
   } @else if (isLoading() && !list()) {
@@ -45,5 +41,12 @@
         <button type="button" (click)="go(result.page + 1)" [disabled]="result.page >= totalPages">Older</button>
       </nav>
     }
+  }
+
+  <!-- The footer zone: where footer widgets will be dropped (the tag cloud is the first one). A zone with nothing in it draws nothing. -->
+  @if (cloud().length > 0) {
+    <footer class="public__zone public__zone--footer" aria-label="Footer widgets">
+      <adv-tag-cloud [tags]="cloud()" />
+    </footer>
   }
 </section>

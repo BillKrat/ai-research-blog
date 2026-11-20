@@ -103,6 +103,44 @@ describe('Public site', () => {
     expect(root.querySelector('a.tag-cloud__edit')).toBeNull();
   });
 
+  it('PostList puts the tag cloud in the footer zone, below the posts and the pager (where widgets will be dropped)', () => {
+    const http = configure(routeStub({}, { kind: 'all' }));
+    const fixture = TestBed.createComponent(PostList);
+    fixture.detectChanges();
+
+    http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'AI Research Blog', tagline: '', postsPerPage: 1 });
+    http.expectOne((r) => r.url.endsWith('/api/public/posts')).flush({
+      posts: [{ title: 'A post', slug: 'a-post', description: '', datePublished: '2026-10-20T10:00:00Z', author: 'Claude', categories: [], tags: [] }],
+      page: 1,
+      pageSize: 1,
+      total: 3,
+    });
+    http.expectOne((r) => r.url.endsWith('/api/public/tags')).flush([{ name: 'MCP', posts: 3 }]);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const zone = root.querySelector('footer.public__zone--footer') as HTMLElement;
+    expect(zone.getAttribute('aria-label')).toBe('Footer widgets');
+    expect(zone.querySelector('adv-tag-cloud')).not.toBeNull();
+    const after = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(after(root.querySelector('article') as Element, zone)).toBe(true);
+    expect(after(root.querySelector('.public__pager') as Element, zone)).toBe(true);
+    expect(root.querySelector('section.public > adv-tag-cloud')).toBeNull();   // not under the heading any more
+  });
+
+  it('PostList has no footer zone when there is nothing to put in it', () => {
+    const http = configure(routeStub({}, { kind: 'all' }));
+    const fixture = TestBed.createComponent(PostList);
+    fixture.detectChanges();
+
+    http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'AI Research Blog', tagline: '', postsPerPage: 10 });
+    http.expectOne((r) => r.url.endsWith('/api/public/posts')).flush({ posts: [], page: 1, pageSize: 10, total: 0 });
+    http.expectOne((r) => r.url.endsWith('/api/public/tags')).flush([]);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('footer.public__zone--footer')).toBeNull();
+  });
+
   it('PostList shows no tag cloud on a category or a tag page, and does not ask for the tags', () => {
     const http = configure(routeStub({ name: 'Help' }, { kind: 'category' }));
     const fixture = TestBed.createComponent(PostList);
