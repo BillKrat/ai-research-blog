@@ -1,20 +1,9 @@
 <section class="admin-exceptions">
-  <h2>Exceptions</h2>
-
-  @for (message of errors(); track message) {
-    <p class="admin-exceptions__error" role="alert">{{ message }}</p>
-  }
-
-  <h3 class="admin-exceptions__occurrences">Occurrences</h3>
-
-  @if (drilled(); as kind) {
-    <p class="admin-exceptions__filter" role="status">
-      Showing the {{ model()?.rows?.length ?? 0 }} occurrences of <strong>{{ kind.exceptionType }}</strong>: {{ kind.messagePattern }}
-      <button type="button" (click)="showAll()">Show all</button>
-    </p>
-  }
-
-  <div class="admin-exceptions__actions">
+  <adv-page-header title="Exceptions">
+    <label class="admin-exceptions__toggle">
+      <input type="checkbox" [checked]="includePurged()" (change)="togglePurged($any($event.target).checked)" />
+      Show purged (history)
+    </label>
     <button mat-icon-button color="primary" type="button" (click)="ok()" [matTooltip]="'ok' | label" [attr.aria-label]="'ok' | label">
       <mat-icon>check</mat-icon>
     </button>
@@ -29,12 +18,11 @@
     >
       <mat-icon>delete_sweep</mat-icon>
     </button>
-  </div>
+  </adv-page-header>
 
-  <label class="admin-exceptions__toggle">
-    <input type="checkbox" [checked]="includePurged()" (change)="togglePurged($any($event.target).checked)" />
-    Show purged (history)
-  </label>
+  @for (message of errors(); track message) {
+    <p class="admin-exceptions__error" role="alert">{{ message }}</p>
+  }
 
   @if (isLoading()) {
     <p>Loading exceptions...</p>

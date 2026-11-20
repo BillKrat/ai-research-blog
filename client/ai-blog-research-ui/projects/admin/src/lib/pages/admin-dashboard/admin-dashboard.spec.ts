@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { SpinnerService } from '@adventures/core';
 import { AdminDashboard } from './admin-dashboard';
 
 describe('AdminDashboard', () => {
@@ -50,12 +51,46 @@ describe('AdminDashboard', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.dashboard__problem')?.textContent).toContain('could not be loaded');
   });
 
-  it('carries the API health pill, so the health check runs here and not while the menu loads', () => {
+  it('starts the gears, loads the dashboard first, checks health last, and stops the gears when health has answered', () => {
     const fixture = TestBed.createComponent(AdminDashboard);
-    fixture.detectChanges();
+    const spinner = TestBed.inject(SpinnerService);
     const http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
 
-    expect((fixture.nativeElement as HTMLElement).querySelector('adv-health-pill')).not.toBeNull();
-    expect(http.match((r) => r.url.endsWith('/api/health/detail')).length).toBe(1);
+    // while the dashboard loads: gears on, no health pill yet, no health call yet
+    expect(spinner.active()).toBe(true);
+    expect(root.querySelector('adv-health-pill')).toBeNull();
+    expect(http.match((r) => r.url.endsWith('/api/health/detail')).length).toBe(0);
+
+    http.expectOne((r) => r.url.endsWith('/api/admin/dashboard')).flush(answer);
+    fixture.detectChanges();
+
+    // the health check is the last thing started; the gears stay on until it answers
+    expect(root.querySelector('adv-health-pill')).not.toBeNull();
+    expect(spinner.active()).toBe(true);
+    http.expectOne((r) => r.url.endsWith('/api/health/detail')).flush({ status: 'Healthy', timestampUtc: new Date().toISOString() });
+    fixture.detectChanges();
+    expect(spinner.active()).toBe(false);
+  });
+
+  it('still checks health and stops the gears when the dashboard cannot be loaded', () => {
+    const fixture = TestBed.createComponent(AdminDashboard);
+    const spinner = TestBed.inject(SpinnerService);
+    const http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    http.expectOne((r) => r.url.endsWith('/api/admin/dashboard')).flush('no', { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/health/detail')).flush('no', { status: 500, statusText: 'Server Error' });
+    expect(spinner.active()).toBe(false);
+  });
+
+  it('leaves the gears off when the page is left before it finishes', () => {
+    const fixture = TestBed.createComponent(AdminDashboard);
+    const spinner = TestBed.inject(SpinnerService);
+    fixture.detectChanges();
+    fixture.destroy();
+    expect(spinner.active()).toBe(false);
   });
 });

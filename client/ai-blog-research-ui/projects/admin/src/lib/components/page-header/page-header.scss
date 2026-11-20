@@ -1,0 +1,22 @@
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0 0 0.75rem;
+
+  &__title {
+    margin: 0;
+  }
+
+  // the page's action buttons: right-justified, on the heading's line
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+}

@@ -1,11 +1,12 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EntityGrid, GridRequest, LabelPipe } from '@adventures/entity-ui';
-import { describeApiError, EntityDataModel, EntityGridModel, SpinnerService } from '@adventures/core';
+import { describeApiError, EntityDataModel, EntityGridModel, PageBannerService, SpinnerService } from '@adventures/core';
+import { PageHeader } from '../../components/page-header/page-header';
 import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
 
 /**
@@ -14,14 +15,15 @@ import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, Tria
  */
 @Component({
   selector: 'adv-admin-exceptions',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, EntityGrid],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, EntityGrid, PageHeader],
   templateUrl: './admin-exceptions.html',
   styleUrl: './admin-exceptions.scss',
 })
-export class AdminExceptions implements OnInit {
+export class AdminExceptions implements OnInit, OnDestroy {
   private readonly service = inject(AdminExceptionsService);
   private readonly router = inject(Router);
   private readonly spinner = inject(SpinnerService);
+  private readonly banner = inject(PageBannerService);
 
   protected readonly model = signal<EntityGridModel | null>(null);
   protected readonly isLoading = signal(true);
@@ -163,6 +165,25 @@ export class AdminExceptions implements OnInit {
     this.load();
   }
 
+  ngOnDestroy(): void {
+    this.banner.clear();
+  }
+
+  /** The standard banner under the site menu says which kind is being shown (and how many), with Show all beside it. */
+  private updateBanner(count: number): void {
+    const kind = this.drilled();
+    if (!kind) {
+      this.banner.clear();
+      return;
+    }
+
+    this.banner.show({
+      text: `Showing the ${count} occurrences of ${kind.exceptionType}: ${kind.messagePattern}`,
+      actionLabel: 'Show all',
+      action: () => this.showAll(),
+    });
+  }
+
   ok(): void {
     this.router.navigateByUrl('/');
   }
@@ -194,7 +215,7 @@ export class AdminExceptions implements OnInit {
     this.includePurged.set(true);
     this.page.set(1);
     this.load(true);
-    document.querySelector(".admin-exceptions__occurrences")?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    document.querySelector('.admin-shell__content .page-header')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }
 
   /** Leaves the drill-down: every occurrence again. */
@@ -233,6 +254,7 @@ export class AdminExceptions implements OnInit {
         }
 
         this.model.set(grid);
+        this.updateBanner(grid.paging?.totalCount ?? grid.rows.length);
         this.isLoading.set(false);
         this.service.refresh();
       },

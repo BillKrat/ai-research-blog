@@ -8,9 +8,11 @@ import { AdminMenuService } from '../../services/admin-menu.service';
  * The Comments page (the legacy BlogEngine one, trimmed for the beta): what readers wrote under posts, filtered by Pending or Approved,
  * with Approve, Unapprove and Delete for the ticked comments. Only approved comments are shown on the site. The text is shown as plain text.
  */
+import { PageHeader } from '../../components/page-header/page-header';
+
 @Component({
   selector: 'adv-admin-comments',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, PageHeader],
   templateUrl: './admin-comments.html',
   styleUrl: './admin-comments.scss',
 })

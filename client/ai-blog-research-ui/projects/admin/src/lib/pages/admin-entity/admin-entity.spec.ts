@@ -95,7 +95,7 @@ describe('AdminEntity', () => {
       actions: [{ name: 'publish', label: 'Publish', link: '/api/posts/p2/publish' }],
     });
     fixture.detectChanges();
-    const eyes = (fixture.nativeElement as HTMLElement).querySelectorAll('.admin-entity__top button[aria-label="Publish"]');
+    const eyes = (fixture.nativeElement as HTMLElement).querySelectorAll('adv-page-header button[aria-label="Publish"]');
 
     expect(eyes.length).toBe(1);   // the server action only, not a second button
   });

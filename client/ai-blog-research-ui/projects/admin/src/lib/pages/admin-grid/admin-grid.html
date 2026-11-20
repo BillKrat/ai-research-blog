@@ -1,6 +1,5 @@
 <section class="admin-grid">
-  <div class="admin-grid__head">
-    <h2>{{ title() }}</h2>
+  <adv-page-header [title]="title()">
     @for (filter of model()?.filters ?? []; track filter.field) {
       <label class="admin-grid__filter">
         <span>{{ filter.label }}</span>
@@ -23,7 +22,7 @@
         <mat-icon>add</mat-icon>
       </button>
     }
-  </div>
+  </adv-page-header>
 
   @for (message of errors(); track message) {
     <p class="admin-grid__error" role="alert">{{ message }}</p>

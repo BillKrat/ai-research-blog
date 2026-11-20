@@ -1,4 +1,13 @@
 <div class="admin-shell" [class.admin-shell--collapsed]="collapsed()">
+  @if (banner(); as b) {
+    <p class="admin-shell__banner" role="status">
+      <span>{{ b.text }}</span>
+      @if (b.actionLabel && b.action) {
+        <button type="button" (click)="b.action()">{{ b.actionLabel }}</button>
+      }
+    </p>
+  }
+
   <nav class="admin-shell__nav" aria-label="Admin">
     <button
       type="button"

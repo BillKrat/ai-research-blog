@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { PageBannerService } from '@adventures/core';
 import { AdminShell } from './admin-shell';
 
 describe('AdminShell', () => {
@@ -149,5 +150,36 @@ describe('AdminShell', () => {
 
       expect(shell().classList.contains('admin-shell--collapsed')).toBe(true);
     });
+  });
+});
+
+describe('AdminShell banner', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AdminShell],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+  });
+
+  it('shows the banner a page set, with its action, above the menu and the content, and removes it when cleared', () => {
+    const fixture = TestBed.createComponent(AdminShell);
+    const banner = TestBed.inject(PageBannerService);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.admin-shell__banner')).toBeNull();
+
+    let acted = false;
+    banner.show({ text: 'Showing the 4 occurrences of X', actionLabel: 'Show all', action: () => (acted = true) });
+    fixture.detectChanges();
+
+    const el = root.querySelector('.admin-shell__banner') as HTMLElement;
+    expect(el.textContent).toContain('Showing the 4 occurrences of X');
+    expect(el.compareDocumentPosition(root.querySelector('.admin-shell__nav') as HTMLElement) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    (el.querySelector('button') as HTMLButtonElement).click();
+    expect(acted).toBe(true);
+
+    banner.clear();
+    fixture.detectChanges();
+    expect(root.querySelector('.admin-shell__banner')).toBeNull();
   });
 });

@@ -133,6 +133,22 @@ public sealed class AdminExceptionsControllerTests
     }
 
     [Fact]
+    public void TheCountOfAKind_IsHowManyOccurrencesAreInTheLog_PurgedOnesIncluded()
+    {
+        var kinds = new[]
+        {
+            new Adventures.Common.Diagnostics.ExceptionSignatureSummary("k1", "Npgsql.NpgsqlException", "ssl", "frame", null, null, 2, "New"),
+            new Adventures.Common.Diagnostics.ExceptionSignatureSummary("k2", "Other", "x", "frame", null, null, 5, "New"),
+        };
+        var rows = new[] { "k1", "k1", "k1", "k1" }.Select((s, i) => new Adventures.Entities.EntityDataModel($"e{i}", new Dictionary<string, string?> { ["SignatureId"] = s })).ToArray();
+
+        var counted = AdminExceptionsController.WithLoggedCounts(kinds, rows);
+
+        Assert.Equal(4, counted.Single(k => k.Id == "k1").OccurrenceCount);
+        Assert.Equal(5, counted.Single(k => k.Id == "k2").OccurrenceCount); // nothing logged for it: the stored count stands
+    }
+
+    [Fact]
     public void Controller_NeedsTheDiagnosticsRight()
     {
         var guard = Assert.Single(

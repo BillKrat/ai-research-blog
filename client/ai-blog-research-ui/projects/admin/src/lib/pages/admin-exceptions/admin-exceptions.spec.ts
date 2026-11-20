@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { SpinnerService } from '@adventures/core';
+import { PageBannerService, SpinnerService } from '@adventures/core';
 import { AdminExceptions } from './admin-exceptions';
 
 describe('AdminExceptions kinds of failure', () => {
@@ -65,9 +65,10 @@ describe('AdminExceptions kinds of failure', () => {
     ]));
     fixture.detectChanges();
 
-    const banner = root.querySelector('.admin-exceptions__filter') as HTMLElement;
-    expect(banner.textContent).toContain('ClientReportedException');
-    expect(banner.textContent).toContain('2');
+    const banner = TestBed.inject(PageBannerService).banner();
+    expect(banner?.text).toContain('ClientReportedException');
+    expect(banner?.text).toContain('Showing the 2 occurrences');
+    expect(banner?.actionLabel).toBe('Show all');
     expect(root.textContent).toContain('boom 3');
     expect(root.textContent).not.toContain('TimeoutException slow');
   });
@@ -78,13 +79,13 @@ describe('AdminExceptions kinds of failure', () => {
     http.expectOne((r) => r.params.get('signature') === 'k1').flush(grid([]));
     fixture.detectChanges();
 
-    (root.querySelector('.admin-exceptions__filter button') as HTMLButtonElement).click();
+    TestBed.inject(PageBannerService).banner()!.action!();
     http.expectOne((r) => r.url.endsWith('/api/admin/exceptions') && !r.params.has('signature')).flush(grid([
       { id: 'e1', type: 'ClientReportedException', message: 'boom 1', signature: 'k1' },
     ]));
     fixture.detectChanges();
 
-    expect(root.querySelector('.admin-exceptions__filter')).toBeNull();
+    expect(TestBed.inject(PageBannerService).banner()).toBeNull();
   });
 
   it('keeps the drill-down when the purged history is switched on or off', () => {

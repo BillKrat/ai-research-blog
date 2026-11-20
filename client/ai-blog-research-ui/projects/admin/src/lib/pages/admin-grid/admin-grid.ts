@@ -15,9 +15,11 @@ import { TenantService } from '../../services/tenant.service';
  * grid requests (next, previous, sort, open) into a server-supplied link, a sorted first page, or a navigation to the entity
  * screen. Roles, Posts, Pages later are one route each.
  */
+import { PageHeader } from '../../components/page-header/page-header';
+
 @Component({
   selector: 'adv-admin-grid',
-  imports: [EntityGrid, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe],
+  imports: [PageHeader, EntityGrid, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './admin-grid.html',
   styleUrl: './admin-grid.scss',
 })

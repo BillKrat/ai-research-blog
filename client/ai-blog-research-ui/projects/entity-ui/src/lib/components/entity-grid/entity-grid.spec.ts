@@ -46,6 +46,24 @@ describe('EntityGrid', () => {
     expect(headers).toEqual(['User name', 'Email']);
   });
 
+  it('puts the Columns button at the bottom of the grid, just before Previous', () => {
+    const root = render(model()).nativeElement as HTMLElement;
+
+    const table = root.querySelector('table.entity-grid') as HTMLElement;
+    const gear = root.querySelector('.entity-grid__gear') as HTMLElement;
+    const previous = Array.from(root.querySelectorAll('.entity-grid__pager button'))[0] as HTMLElement;
+    expect(table.compareDocumentPosition(gear) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(gear.compareDocumentPosition(previous) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(root.querySelector('.entity-grid__toolbar')).toBeNull();
+  });
+
+  it('still shows the Columns button below a grid that has no pager', () => {
+    const root = render(model({ paging: undefined, links: undefined })).nativeElement as HTMLElement;
+
+    expect(root.querySelector('.entity-grid__pager')).toBeNull();
+    expect(root.querySelector('.entity-grid__footer .entity-grid__gear')).not.toBeNull();
+  });
+
   it('lets the gear show a column the server hid by default', () => {
     const fixture = render(model());
     const root = fixture.nativeElement as HTMLElement;

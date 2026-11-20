@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, output, signal } from '@angular/core';
 import { ApiProblemService } from '@adventures/core';
 import { HealthResponse, HealthService, describeFailures } from '../../services/health.service';
 
@@ -18,6 +18,10 @@ export class HealthPill implements OnInit, OnDestroy {
   private readonly health = inject(HealthService);
   private readonly apiProblem = inject(ApiProblemService);
   private timer: ReturnType<typeof setInterval> | null = null;
+  private announced = false;
+
+  /** Emitted once, when the first check has answered (well or badly), so a page can stop its spinner. */
+  readonly checked = output<void>();
 
   private readonly measured = signal<HealthState>('checking');
   protected readonly state = computed<HealthState>(() => (this.apiProblem.unreachable() ? 'unreachable' : this.measured()));
@@ -39,7 +43,10 @@ export class HealthPill implements OnInit, OnDestroy {
 
   private check(): void {
     this.health.check(true).subscribe({
-      next: (res) => this.show(res),
+      next: (res) => {
+        this.show(res);
+        this.announce();
+      },
       // A 503 (database failed) carries the same body as a 200: show what it says instead of a bare "unreachable".
       error: (error) => {
         if (error?.status === 503 && error.error?.status) {
@@ -49,8 +56,17 @@ export class HealthPill implements OnInit, OnDestroy {
           this.problem.set('');
           this.trace.set(null);
         }
+
+        this.announce();
       },
     });
+  }
+
+  private announce(): void {
+    if (!this.announced) {
+      this.announced = true;
+      this.checked.emit();
+    }
   }
 
   private show(res: HealthResponse): void {

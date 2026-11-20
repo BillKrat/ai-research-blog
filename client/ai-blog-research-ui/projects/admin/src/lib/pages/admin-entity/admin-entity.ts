@@ -19,9 +19,11 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  * the collection; saving it creates the entity and moves to its own screen. The form link comes from the grid row the user
  * opened; opened directly (a reload, a bookmark) it falls back to the collection path plus the id.
  */
+import { PageHeader } from '../../components/page-header/page-header';
+
 @Component({
   selector: 'adv-admin-entity',
-  imports: [NgTemplateOutlet, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation, RightsChecklist, PlatformSwitch],
+  imports: [PageHeader, NgTemplateOutlet, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation, RightsChecklist, PlatformSwitch],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',
 })

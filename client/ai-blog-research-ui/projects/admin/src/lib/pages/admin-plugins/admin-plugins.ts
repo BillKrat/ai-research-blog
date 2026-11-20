@@ -2,6 +2,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { describeApiError } from '@adventures/core';
 import { AdminMenuService } from '../../services/admin-menu.service';
+import { PageHeader } from '../../components/page-header/page-header';
 import { PluginState, PluginsService } from '../../services/plugins.service';
 
 /**
@@ -10,6 +11,7 @@ import { PluginState, PluginsService } from '../../services/plugins.service';
  */
 @Component({
   selector: 'adv-admin-plugins',
+  imports: [PageHeader],
   templateUrl: './admin-plugins.html',
   styleUrl: './admin-plugins.scss',
 })

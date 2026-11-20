@@ -2,6 +2,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { PageBannerService } from '@adventures/core';
 import { AdminMenuService } from '../../services/admin-menu.service';
 import { TenantService } from '../../services/tenant.service';
 
@@ -21,6 +22,9 @@ export class AdminShell implements OnInit {
   private readonly tenantService = inject(TenantService);
 
   protected readonly menu = this.menuService.menu;
+
+  /** What the current page says it is showing, drawn across the top of the admin area (see the standard page header). */
+  protected readonly banner = inject(PageBannerService).banner;
 
   /** Whether the menu shows icons only, to give the screen more room. Remembered in this browser (a per-viewer convenience; storage may be refused). */
   protected readonly collapsed = signal(AdminShell.readCollapsed());

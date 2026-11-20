@@ -63,17 +63,20 @@
   }
 }
 
-.entity-grid__toolbar {
+.entity-grid__footer {
+  margin-top: 0.75rem;
+}
+
+.entity-grid__bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  align-items: center;
+  gap: 1rem;
 }
 
 .entity-grid__columns {
   list-style: none;
-  margin: 0;
+  margin: 0 0 0.5rem;
   padding: 0.5rem 0.75rem;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
@@ -100,7 +103,6 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-top: 0.75rem;
 }
 
 .entity-grid__tools {

@@ -1,5 +1,7 @@
 <section class="admin-entity">
-  <h2>{{ title() }}{{ isNew() ? ': new' : '' }}</h2>
+  @if (!model()) {
+    <adv-page-header [title]="title() + (isNew() ? ': new' : '')" />
+  }
 
   @for (message of loadErrors(); track message) {
     <p class="admin-entity__error" role="alert">{{ message }}</p>
@@ -66,9 +68,12 @@
       </div>
     </ng-template>
 
+    <adv-page-header [title]="title() + (isNew() ? ': new' : '')">
+      <ng-container [ngTemplateOutlet]="actionBar" [ngTemplateOutletContext]="{ $implicit: true }" />
+    </adv-page-header>
+
     <adv-entity-form #entityForm [model]="form" (save)="onSave($event)">
       <div formToolbar class="admin-entity__top">
-      <ng-container [ngTemplateOutlet]="actionBar" [ngTemplateOutletContext]="{ $implicit: false }" />
 
       @if (oneTimeLogin(); as login) {
         <section class="admin-entity__onetime" role="status">

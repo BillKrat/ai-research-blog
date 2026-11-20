@@ -3,7 +3,7 @@
   // minmax(0, 1fr): a plain 1fr cannot shrink below its widest cell, which pushed the whole page (and the Add button) off the screen
   grid-template-columns: 14rem minmax(0, 1fr);
   gap: 2rem;
-  margin-top: 1.5rem;
+  margin-top: 0.75rem;
 
   @media (max-width: 800px) {
     grid-template-columns: 1fr;
@@ -44,6 +44,20 @@
       padding: 0 0.3rem;
       font-size: 0.65rem;
     }
+  }
+
+  // the standard banner: across the top of the admin area, under the site menu
+  &__banner {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.4rem 0.75rem;
+    border-radius: 0.4rem;
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
   }
 
   &__toggle {

@@ -1,7 +1,5 @@
 <section class="comments-admin">
-  <h1>Comments</h1>
-
-  <div class="comments-admin__bar">
+  <adv-page-header title="Comments">
     <label>
       Show
       <select #show aria-label="Show" (change)="setFilter(show.value)">
@@ -13,7 +11,7 @@
     <button type="button" class="comments-admin__approve" [disabled]="noneSelected()" (click)="act('approve')">Approve</button>
     <button type="button" class="comments-admin__unapprove" [disabled]="noneSelected()" (click)="act('unapprove')">Unapprove</button>
     <button type="button" class="comments-admin__delete" [disabled]="noneSelected()" (click)="act('delete')">Delete</button>
-  </div>
+  </adv-page-header>
 
   @if (problem()) {
     <p class="comments-admin__problem" role="alert">{{ problem() }}</p>
