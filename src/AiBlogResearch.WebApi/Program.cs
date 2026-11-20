@@ -277,9 +277,6 @@ try
     // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
     await nquadStore.SeedOnceAsync(
         Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), BlogConstants.Site.SeedName);
-    // The site-wide comments switch (CommentsEnabled, on by default); an existing store gets the row at the next start.
-    await nquadStore.SeedOnceAsync(
-        Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-023-comments-setting.nq"), BlogConstants.Site.CommentsSettingSeedName);
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
