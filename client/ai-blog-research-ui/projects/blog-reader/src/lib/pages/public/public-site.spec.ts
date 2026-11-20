@@ -82,6 +82,40 @@ describe('Public site', () => {
     expect(root.querySelector('.public__pager')).toBeNull();
   });
 
+  it('PostList shows the tag cloud on the Posts page: each tag with posts links to its posts, bigger the more it is used, with no edit links', () => {
+    const http = configure(routeStub({}, { kind: 'all' }));
+    const fixture = TestBed.createComponent(PostList);
+    fixture.detectChanges();
+
+    http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'AI Research Blog', tagline: '', postsPerPage: 10 });
+    http.expectOne((r) => r.url.endsWith('/api/public/posts')).flush({ posts: [], page: 1, pageSize: 10, total: 0 });
+    http.expectOne((r) => r.url.endsWith('/api/public/tags')).flush([
+      { name: 'MCP', posts: 8 },
+      { name: 'Angular', posts: 2 },
+      { name: 'Unused', posts: 0 },
+    ]);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const tags = Array.from(root.querySelectorAll('a.tag-cloud__tag')) as HTMLAnchorElement[];
+    expect(tags.map((a) => a.getAttribute('href'))).toEqual(['/tag/Angular', '/tag/MCP']); // alphabetical, unused tags left out
+    expect(parseFloat(tags[1].style.fontSize)).toBeGreaterThan(parseFloat(tags[0].style.fontSize));
+    expect(root.querySelector('a.tag-cloud__edit')).toBeNull();
+  });
+
+  it('PostList shows no tag cloud on a category or a tag page, and does not ask for the tags', () => {
+    const http = configure(routeStub({ name: 'Help' }, { kind: 'category' }));
+    const fixture = TestBed.createComponent(PostList);
+    fixture.detectChanges();
+
+    http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'AI Research Blog', tagline: '', postsPerPage: 10 });
+    http.expectOne((r) => r.url.endsWith('/api/public/posts')).flush({ posts: [], page: 1, pageSize: 10, total: 0 });
+    http.expectNone((r) => r.url.endsWith('/api/public/tags'));
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('adv-tag-cloud')).toBeNull();
+  });
+
   it('marks a draft in the list and in the menu (the server sends drafts only to an administrator), and nothing else', () => {
     const http = configure(routeStub({}, { kind: 'all' }));
     const list = TestBed.createComponent(PostList);

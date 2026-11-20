@@ -52,3 +52,21 @@ describe('Login return', () => {
     expect(auth.takeReturnUrl()).toBeNull();
   });
 });
+
+describe('Login layout', () => {
+  it('uses the standard page header for its title', () => {
+    sessionStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: new Map() } } },
+      ],
+    });
+    const fixture = TestBed.createComponent(Login);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('adv-page-header h2')?.textContent).toBe('Sign in');
+  });
+});

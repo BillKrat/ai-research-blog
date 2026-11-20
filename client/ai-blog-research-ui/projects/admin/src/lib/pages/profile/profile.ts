@@ -20,9 +20,11 @@ type DeleteState = 'idle' | 'deleting' | 'error';
  * when the backend schema grows. "Delete my account" exists specifically to demonstrate the
  * server's delete-own-account guard, which always rejects this exact call.
  */
+import { PageHeader } from '../../components/page-header/page-header';
+
 @Component({
   selector: 'adv-profile',
-  imports: [ReactiveFormsModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MatFormFieldModule, MatInputModule, EntityForm],
+  imports: [PageHeader, ReactiveFormsModule, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, MatFormFieldModule, MatInputModule, EntityForm],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })

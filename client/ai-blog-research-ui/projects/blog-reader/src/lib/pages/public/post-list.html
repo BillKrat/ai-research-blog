@@ -1,6 +1,10 @@
 <section class="public">
   <h2>{{ heading() }}</h2>
 
+  @if (cloud().length > 0) {
+    <adv-tag-cloud [tags]="cloud()" />
+  }
+
   @if (failed()) {
     <p role="alert">The posts could not be loaded. Try again in a moment.</p>
   } @else if (isLoading() && !list()) {

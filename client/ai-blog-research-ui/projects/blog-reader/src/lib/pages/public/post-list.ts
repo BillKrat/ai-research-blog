@@ -8,6 +8,7 @@ import { PublicContentService, PublicPostList } from '../../services/public-cont
 import { SiteService } from '../../services/site.service';
 import { switchMap } from 'rxjs';
 import { bindSpinner } from '@adventures/core';
+import { CloudTag, TagCloud } from '@adventures/entity-ui';
 
 /**
  * The list of published posts, newest first, with paging; also serves a category (/category/:name) or a tag (/tag/:name), the
@@ -15,7 +16,7 @@ import { bindSpinner } from '@adventures/core';
  */
 @Component({
   selector: 'app-post-list',
-  imports: [RouterLink, DatePipe, DraftBadge, ApprovalBadge],
+  imports: [RouterLink, DatePipe, DraftBadge, ApprovalBadge, TagCloud],
   templateUrl: './post-list.html',
   styleUrl: './public.scss',
 })
@@ -33,7 +34,23 @@ export class PostList implements OnInit {
   private category: string | null = null;
   private tag: string | null = null;
 
+  /** The tag cloud of the Posts page (not of a category or a tag page): every tag with at least one post, sized by use. */
+  protected readonly cloud = signal<CloudTag[]>([]);
+
   ngOnInit(): void {
+    if (this.route.snapshot.data['kind'] === 'all') {
+      this.content.tags().subscribe({
+        next: (terms) =>
+          this.cloud.set(
+            terms
+              .filter((term) => term.posts > 0)
+              .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+              .map((term) => ({ name: term.name, count: term.posts, link: ['/tag', term.name] })),
+          ),
+        error: () => this.cloud.set([]),
+      });
+    }
+
     // the same component serves /posts, /category/:name and /tag/:name, so react to the route, not just the first one
     this.route.paramMap.subscribe((params) => {
       this.category = this.route.snapshot.data['kind'] === 'category' ? params.get('name') : null;
