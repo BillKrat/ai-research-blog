@@ -64,6 +64,17 @@ public sealed class FeedControllerTests
     }
 
     [Fact]
+    public async Task ABareTenantDomain_IsLinkedAsWww()
+    {
+        var controller = new FeedController(new FakeContent(Post("one")), new FakeSettings(), new FakeTenant("example.org"));
+
+        var result = Assert.IsType<ContentResult>(await controller.Get(CancellationToken.None));
+
+        Assert.Contains("https://www.example.org/post/one", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("https://example.org", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task AsksForAtMostTwentyPosts()
     {
         var content = new FakeContent();
