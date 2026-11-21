@@ -42,11 +42,4 @@
       </nav>
     }
   }
-
-  <!-- The footer zone: where footer widgets will be dropped (the tag cloud is the first one). A zone with nothing in it draws nothing. -->
-  @if (cloud().length > 0) {
-    <footer class="public__zone public__zone--footer" aria-label="Footer widgets">
-      <adv-tag-cloud [tags]="cloud()" />
-    </footer>
-  }
 </section>
