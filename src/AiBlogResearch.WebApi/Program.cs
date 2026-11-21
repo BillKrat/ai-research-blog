@@ -91,6 +91,9 @@ try
     AppAssemblies.EnsureReferencedLoaded();
     // Plug-ins: exported IPluginModule from the host libraries and, when Plugins:Directory is set, from a folder of approved DLLs (see Adventures.MEF).
     builder.Services.AddPluginDiscovery(builder.Configuration, AppAssemblies.HostAssemblies());
+    // The in-process event bus for plug-ins: notifications run off the request for the plug-ins that are on for the tenant; interceptors may refuse (see Adventures.MEF).
+    builder.Services.AddPluginEvents();
+    builder.Services.AddSingleton<Adventures.MEF.IPluginEventContext, Adventures.WebApi.RequestTenantEventContext>();
     builder.Services.AddLifetimeServices();
 
     // User CRUDL runs on the newer, schema-driven Adventures.Entities/NQuadEntityRepository stack -
