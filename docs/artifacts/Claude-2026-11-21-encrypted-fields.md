@@ -8,7 +8,7 @@ Decision and reasons: [Claude-decision-2026-11-encrypted-fields.md](../Claude-de
 - `Adventures.MEF`: `PluginSettingKind.Secret`; `PluginSettings` encrypts secrets before storing, refuses with no key, keeps an empty secret field, clears on request; `GetForDisplayAsync` masks. New project edge `Adventures.MEF -> Adventures.Security` (recorded in the architecture guard).
 - `PluginsController`: GET returns `secretsSet`; PUT accepts `clear`.
 - Angular `adv-setting-fields`: password-style field (`autocomplete="new-password"`), "A value is set" / "Not set", Clear button; the Customize screen reloads after a save.
-- App host: `AddFieldEncryption(builder.Configuration)`; dev key in user-secrets, `CurrentKeyId=dev1` in `appsettings.Development.json`.
+- App host: `AddFieldEncryption(builder.Configuration)`; dev key and `CurrentKeyId` in user-secrets only.
 - Also (human request this session): the hard-coded tag cloud under the Posts list is removed; the footer zone widget is the only one.
 
 ```mermaid

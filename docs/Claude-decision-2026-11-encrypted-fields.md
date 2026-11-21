@@ -16,7 +16,7 @@ Status: built for plug-in settings (beta row 4). Owner: Claude. Threat addressed
 
 ## Production key (human step)
 
-Set in the SmarterASP site panel for the api site (never through chat): `Encryption__CurrentKeyId` = `k1`, `Encryption__Keys__k1` = 32 random bytes as base64. Until then a Secret setting cannot be saved on production (clear message), and nothing breaks. Local development uses `Encryption:Keys:dev1` in the shared user-secrets (generated with `Claude-secret.ps1 gen`) and `Encryption:CurrentKeyId=dev1` in `appsettings.Development.json`. A local run on the live store (`https-live`) encrypts with the dev key, which production cannot read: do not save real secrets from that profile.
+Set in the SmarterASP site panel for the api site (never through chat): `Encryption__CurrentKeyId` = `k1`, `Encryption__Keys__k1` = 32 random bytes as base64. Until then a Secret setting cannot be saved on production (clear message), and nothing breaks. Local development uses `Encryption:Keys:dev1` in the shared user-secrets (generated with `Claude-secret.ps1 gen`) and `Encryption:CurrentKeyId`=`dev1` beside it (both in user-secrets, never in a committed file: a fresh clone or CI has no key and simply runs with encryption not configured). A local run on the live store (`https-live`) encrypts with the dev key, which production cannot read: do not save real secrets from that profile.
 
 ## Not done
 
