@@ -179,4 +179,31 @@ public sealed class PluginDllHostTests : IDisposable
         Assert.Empty(report.Loaded);
         Assert.Contains(report.Failures, f => f.Source == "directory:" + Dll && f.Reason.Contains("approved list"));
     }
+
+    [Fact]
+    public async Task APluginsWidget_CanBePlacedInAZone_AndShowsOnThePublicPage_OnlyForTheTenantAndWhileItIsOn()
+    {
+        PlaceSample(approved: true);
+        using var factory = Host();
+        using (var scope = ScopeFor(factory, "acme.test"))
+        {
+            var placed = await scope.ServiceProvider.GetRequiredService<Adventures.Blog.IWidgetPlacements>()
+                .AddAsync("left", "sample-web.note", "Notes", new Dictionary<string, string> { ["Text"] = "hello <b>zone</b>" });
+            Assert.Equal("left", placed.Zone);
+        }
+
+        var shown = await ReadAsync(await As(factory, "acme.test", signedIn: false).GetAsync("/api/public/widgets/left"));
+        var other = await ReadAsync(await As(factory, "other.test", signedIn: false).GetAsync("/api/public/widgets/left"));
+        var wrongZone = await As(factory, "acme.test", signedIn: false).GetAsync("/api/public/widgets/sidebar");
+
+        var widget = Assert.Single(shown.EnumerateArray());
+        Assert.Equal("Notes", widget.GetProperty("title").GetString());
+        Assert.Contains("hello &lt;b&gt;zone&lt;/b&gt;", widget.GetProperty("html").GetString());
+        Assert.Equal(0, other.GetArrayLength());
+        Assert.Equal(HttpStatusCode.NotFound, wrongZone.StatusCode);
+
+        await SwitchAsync(factory, "acme.test", on: false);
+        var off = await ReadAsync(await As(factory, "acme.test", signedIn: false).GetAsync("/api/public/widgets/left"));
+        Assert.Equal(0, off.GetArrayLength());
+    }
 }

@@ -129,7 +129,7 @@ try
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
-    if (skipSeeding && StartupChecks.FindMissingSchemas(userQuads, [CollaborationConstants.SchemaIri, PluginConstants.SchemaIri, PluginConstants.SettingSchemaIri, BlogConstants.Content.VisitorCommentSchemaIri]) is { Count: > 0 } missingSchemas)
+    if (skipSeeding && StartupChecks.FindMissingSchemas(userQuads, [CollaborationConstants.SchemaIri, PluginConstants.SchemaIri, PluginConstants.SettingSchemaIri, WidgetConstants.SchemaIri, BlogConstants.Content.VisitorCommentSchemaIri]) is { Count: > 0 } missingSchemas)
     {
         await StartupChecks.RunReportingAppAsync(args, missingSchemas, builder.Environment.IsDevelopment(), liveData);
         return;
