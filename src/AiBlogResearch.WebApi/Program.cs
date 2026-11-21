@@ -89,6 +89,8 @@ try
     // (see Adventures.Common.Tests/MvpVmTests.cs) - picks up UserBll and UserPresenter below.
     // The scan only sees loaded assemblies, so load every referenced library first (see AppAssemblies).
     AppAssemblies.EnsureReferencedLoaded();
+    // Plug-ins: exported IPluginModule from the host libraries and, when Plugins:Directory is set, from a folder of approved DLLs (see Adventures.MEF).
+    builder.Services.AddPluginDiscovery(builder.Configuration, AppAssemblies.HostAssemblies());
     builder.Services.AddLifetimeServices();
 
     // User CRUDL runs on the newer, schema-driven Adventures.Entities/NQuadEntityRepository stack -
@@ -141,6 +143,12 @@ try
     builder.Services.AddAppEntities(userQuads, builder.Configuration, builder.Environment.IsDevelopment());
 
     var app = builder.Build();
+
+    // A plug-in or DLL that did not load is never silent: one warning per refusal here, and the whole report on the Plugins page.
+    foreach (var refused in app.Services.GetRequiredService<PluginLoadReport>().Failures)
+    {
+        app.Logger.LogWarning("Plug-in not loaded ({Source}): {Reason}", refused.Source, refused.Reason);
+    }
 
     await app.ApplyAsync(legacy, skipSeeding);
 

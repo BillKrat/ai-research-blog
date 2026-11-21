@@ -10,6 +10,12 @@ namespace AiBlogResearch.WebApi;
 /// </summary>
 internal static class AppAssemblies
 {
+    /// <summary>The host's own libraries (this application and the <c>Adventures.*</c> libraries it references) that plug-in discovery searches for exported plug-ins. Call after <see cref="EnsureReferencedLoaded"/>.</summary>
+    public static IReadOnlyList<Assembly> HostAssemblies() =>
+        AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a => !a.IsDynamic && a.GetName().Name is { } name && (name.StartsWith("Adventures.", StringComparison.Ordinal) || name.StartsWith("AiBlogResearch", StringComparison.Ordinal)))
+            .ToList();
+
     /// <summary>Loads each assembly this application references (the .NET platform's own are skipped) and returns how many it loaded or found loaded.</summary>
     public static int EnsureReferencedLoaded()
     {
