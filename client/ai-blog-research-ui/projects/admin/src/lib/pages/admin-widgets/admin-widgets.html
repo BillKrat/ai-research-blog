@@ -1,0 +1,70 @@
+<section class="admin-widgets">
+  <adv-page-header title="Widgets" />
+  <p class="admin-widgets__hint">
+    Widgets appear around the content of the public site. Add one to a zone, put them in the order you want, and edit the settings each one offers.
+    On a phone only the header and footer zones are shown.
+  </p>
+
+  @for (message of errors(); track message) {
+    <p class="admin-widgets__error" role="alert">{{ message }}</p>
+  }
+
+  @if (!isLoading()) {
+    <div class="admin-widgets__zones">
+      @for (zone of overview().zones; track zone) {
+        <section class="zone" [attr.data-zone]="zone">
+          <h3>{{ zoneName(zone) }}</h3>
+          <ul class="zone__list">
+            @for (placement of inZone(zone); track placement.id; let first = $first; let last = $last) {
+              <li class="placement" [class.placement--gone]="!placement.available">
+                <span class="placement__name">{{ nameOf(placement) }}</span>
+                @if (!placement.available) {
+                  <span class="placement__note">(not available: its plug-in is off or gone)</span>
+                }
+                <span class="placement__actions">
+                  <button type="button" [disabled]="first" [attr.aria-label]="'Move up ' + nameOf(placement)" (click)="move(placement, -1)">&#9650;</button>
+                  <button type="button" [disabled]="last" [attr.aria-label]="'Move down ' + nameOf(placement)" (click)="move(placement, 1)">&#9660;</button>
+                  <button type="button" [disabled]="!placement.available" [attr.aria-label]="'Edit ' + nameOf(placement)" (click)="edit(placement)">Edit</button>
+                  <button type="button" [attr.aria-label]="'Remove ' + nameOf(placement)" (click)="remove(placement)">Remove</button>
+                </span>
+              </li>
+            } @empty {
+              <li class="zone__empty">Nothing here yet.</li>
+            }
+          </ul>
+          <div class="zone__add">
+            <select [attr.aria-label]="'Widget to add to the ' + zoneName(zone) + ' zone'" (change)="choose(zone, $any($event.target).value)">
+              <option value="">Choose a widget...</option>
+              @for (widget of overview().available; track widget.definition.key) {
+                <option [value]="widget.definition.key" [selected]="choice()[zone] === widget.definition.key">{{ widget.definition.title }}</option>
+              }
+            </select>
+            <button type="button" data-action="add" [disabled]="!choice()[zone]" (click)="add(zone)">Add</button>
+          </div>
+        </section>
+      }
+    </div>
+
+    @if (editing(); as open) {
+      <form class="admin-widgets__edit" (submit)="$event.preventDefault(); save()">
+        <h3>Edit {{ nameOf(open) }}</h3>
+        <div class="setting-field">
+          <label for="placement-title">Title shown above the widget</label>
+          <input
+            id="placement-title"
+            name="placementTitle"
+            type="text"
+            maxlength="100"
+            [value]="editTitle()"
+            (input)="editTitle.set($any($event.target).value)"
+          />
+        </div>
+        <adv-setting-fields idPrefix="widget" [definitions]="editDefinitions()" [values]="editSettings()" (changed)="setSetting($event.name, $event.value)" />
+        <div class="admin-widgets__actions">
+          <button type="submit" data-action="save">Save</button>
+          <button type="button" (click)="cancel()">Cancel</button>
+        </div>
+      </form>
+    }
+  }
+</section>

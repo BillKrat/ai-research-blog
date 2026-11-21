@@ -5,6 +5,8 @@
 
 export * from './lib/services/public-content.service';
 export * from './lib/services/site.service';
+export * from './lib/services/widgets.service';
+export * from './lib/components/widget-zone/widget-zone';
 export * from './lib/components/site-nav/site-nav';
 export * from './lib/components/draft-badge/draft-badge';
 export * from './lib/components/content-tools/content-tools';

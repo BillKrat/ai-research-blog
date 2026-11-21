@@ -1,0 +1,50 @@
+@for (definition of definitions(); track definition.name) {
+  <div class="setting-field">
+    @switch (definition.kind) {
+      @case ('Lines') {
+        <label [attr.for]="idPrefix() + '-' + definition.name">{{ definition.label }}</label>
+        <textarea
+          [id]="idPrefix() + '-' + definition.name"
+          [name]="definition.name"
+          rows="4"
+          [maxLength]="definition.maxLength"
+          [value]="values()[definition.name] ?? ''"
+          (input)="emit(definition.name, $any($event.target).value)"
+        ></textarea>
+      }
+      @case ('Bool') {
+        <label class="setting-field__check">
+          <input
+            type="checkbox"
+            [name]="definition.name"
+            [checked]="values()[definition.name] === 'true'"
+            (change)="emit(definition.name, $any($event.target).checked ? 'true' : 'false')"
+          />
+          {{ definition.label }}
+        </label>
+      }
+      @case ('Number') {
+        <label [attr.for]="idPrefix() + '-' + definition.name">{{ definition.label }}</label>
+        <input
+          type="number"
+          [id]="idPrefix() + '-' + definition.name"
+          [name]="definition.name"
+          [value]="values()[definition.name] ?? ''"
+          (input)="emit(definition.name, $any($event.target).value)"
+        />
+      }
+      @default {
+        <label [attr.for]="idPrefix() + '-' + definition.name">{{ definition.label }}</label>
+        <input
+          type="text"
+          [id]="idPrefix() + '-' + definition.name"
+          [name]="definition.name"
+          [maxLength]="definition.maxLength"
+          [value]="values()[definition.name] ?? ''"
+          (input)="emit(definition.name, $any($event.target).value)"
+        />
+      }
+    }
+    <small class="setting-field__hint">{{ definition.description }}</small>
+  </div>
+}

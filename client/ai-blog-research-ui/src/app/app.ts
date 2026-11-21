@@ -7,14 +7,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
-import { SiteNav, SiteService } from '@adventures/blog-reader';
+import { SiteNav, SiteService, WidgetZone } from '@adventures/blog-reader';
 import { AdminExceptionsService, AdminMenuService, HealthService } from '@adventures/admin';
 import { API_BASE_URL, ApiProblemService, AuthService, SpinnerService } from '@adventures/core';
 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule, SiteNav],
+  imports: [RouterOutlet, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule, SiteNav, WidgetZone],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

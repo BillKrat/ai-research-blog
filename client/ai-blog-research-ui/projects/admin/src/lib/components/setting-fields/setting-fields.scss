@@ -1,0 +1,26 @@
+:host {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.setting-field {
+  display: grid;
+  gap: 0.25rem;
+
+  textarea,
+  input[type='text'],
+  input[type='number'] {
+    width: 100%;
+    font: inherit;
+  }
+
+  &__check {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  &__hint {
+    opacity: 0.75;
+  }
+}

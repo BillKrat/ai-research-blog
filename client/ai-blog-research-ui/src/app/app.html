@@ -76,7 +76,23 @@
 
   <adv-site-nav />
 
-  <router-outlet />
+  <!-- the public page has four widget zones around the content (a phone shows only the header and footer zones); the admin area has none.
+       The router outlet stays in one place so switching between the two never rebuilds it. -->
+  @if (!wide()) {
+    <adv-widget-zone zone="header" />
+  }
+  <div class="page__columns">
+    @if (!wide()) {
+      <adv-widget-zone class="page__side" zone="left" />
+    }
+    <main class="page__main"><router-outlet /></main>
+    @if (!wide()) {
+      <adv-widget-zone class="page__side" zone="right" />
+    }
+  </div>
+  @if (!wide()) {
+    <adv-widget-zone zone="footer" />
+  }
 </div>
 
 @if (spinner.active()) {

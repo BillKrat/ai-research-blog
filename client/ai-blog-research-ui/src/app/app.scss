@@ -127,3 +127,29 @@
     filter: drop-shadow(0 0 12px rgba(0, 0, 0, 0.5));
   }
 }
+
+/* The public page: left and right widget zones beside the content. A zone with no widgets closes itself; a phone shows only the header and footer zones. */
+.page__columns {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.page__main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.page__side {
+  flex: 0 0 14rem;
+}
+
+@media (max-width: 767px) {
+  .page__columns {
+    display: block;
+  }
+
+  .page__side {
+    display: none;
+  }
+}

@@ -65,6 +65,7 @@ export const routes: Routes = [
       ...adminCollection('settings', '/api/settings', 'Settings'),
       { path: 'plugins', loadComponent: () => import('@adventures/admin').then((m) => m.AdminPlugins) },
       { path: 'plugins/:key', loadComponent: () => import('@adventures/admin').then((m) => m.AdminPluginCustomize) },
+      { path: 'widgets', loadComponent: () => import('@adventures/admin').then((m) => m.AdminWidgets) },
       { path: 'decisions', loadComponent: () => import('@adventures/collaboration').then((m) => m.AdminDecisions) },
       { path: 'exceptions', loadComponent: () => import('@adventures/admin').then((m) => m.AdminExceptions) },
     ],

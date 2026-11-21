@@ -1,0 +1,29 @@
+import { Component, input, output } from '@angular/core';
+import { PluginSettingDefinition } from '../../services/plugins.service';
+
+/** The value of one field changed. */
+export interface SettingChange {
+  name: string;
+  value: string;
+}
+
+/**
+ * The fields of a list of declared settings (text, one value per line, a switch or a number), filled with the current values. It is the form of a
+ * plug-in's Customize screen and of a widget's placement, so a new plug-in or widget gets its form from its declaration with no client change.
+ */
+@Component({
+  selector: 'adv-setting-fields',
+  templateUrl: './setting-fields.html',
+  styleUrl: './setting-fields.scss',
+})
+export class SettingFields {
+  readonly definitions = input.required<PluginSettingDefinition[]>();
+  readonly values = input.required<Record<string, string>>();
+  /** Keeps ids unique when several forms are on one page. */
+  readonly idPrefix = input('f');
+  readonly changed = output<SettingChange>();
+
+  protected emit(name: string, value: string): void {
+    this.changed.emit({ name, value });
+  }
+}

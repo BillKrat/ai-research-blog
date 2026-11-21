@@ -1,0 +1,22 @@
+:host {
+  display: block;
+}
+
+:host(.widget-zone--empty) {
+  display: none;
+}
+
+.widget {
+  margin: 0 0 1.25rem;
+  overflow-wrap: anywhere;
+
+  &__title {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+  }
+
+  &__body ul {
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+}

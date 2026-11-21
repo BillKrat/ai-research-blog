@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { describeApiError, bindSpinner } from '@adventures/core';
 import { PageHeader } from '../../components/page-header/page-header';
+import { SettingFields } from '../../components/setting-fields/setting-fields';
 import { PluginSettingDefinition, PluginsService } from '../../services/plugins.service';
 
 /**
@@ -11,7 +12,7 @@ import { PluginSettingDefinition, PluginsService } from '../../services/plugins.
  */
 @Component({
   selector: 'adv-admin-plugin-customize',
-  imports: [PageHeader, RouterLink],
+  imports: [PageHeader, RouterLink, SettingFields],
   templateUrl: './admin-plugin-customize.html',
   styleUrl: './admin-plugin-customize.scss',
 })
