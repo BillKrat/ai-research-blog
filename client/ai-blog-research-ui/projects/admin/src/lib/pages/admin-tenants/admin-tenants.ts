@@ -37,6 +37,37 @@ export class AdminTenants implements OnInit {
     this.service.addAlias(entry.id, host, () => this.setDraft(entry.id, ''));
   }
 
+  /** The tenant whose delete confirmation is open, and what has been typed into it. */
+  protected readonly deleting = signal<string | null>(null);
+  protected readonly confirmText = signal('');
+
+  protected startDelete(tenantId: string): void {
+    this.confirmText.set('');
+    this.deleting.set(tenantId);
+  }
+
+  protected cancelDelete(): void {
+    this.deleting.set(null);
+    this.confirmText.set('');
+  }
+
+  /** True when what was typed is this tenant's domain (the server checks again; this only keeps the button honest). */
+  protected matches(entry: TenantHosts): boolean {
+    return this.hostOf(this.confirmText()) === this.hostOf(entry.domain) && this.hostOf(entry.domain) !== '';
+  }
+
+  protected confirmDelete(entry: TenantHosts): void {
+    if (!this.matches(entry)) {
+      return;
+    }
+
+    this.service.deleteTenant(entry.id, entry.name, this.confirmText().trim(), () => this.cancelDelete());
+  }
+
+  private hostOf(value: string): string {
+    return value.trim().replace(/^[a-z]+:\/\//i, '').split(/[/:?#]/)[0].toLowerCase();
+  }
+
   protected remove(tenantId: string, alias: string): void {
     this.service.removeAlias(tenantId, alias);
   }

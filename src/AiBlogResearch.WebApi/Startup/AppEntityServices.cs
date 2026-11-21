@@ -109,6 +109,7 @@ internal static class AppEntityServices
         // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
         services.AddNQuadPlatformAdministrators();
         services.AddScoped<ITenantAliasEditor, TenantAliasEditor>();
+        services.AddScoped<ITenantRemover, TenantRemover>();
         // The tenant switcher: a person acts in the tenants they belong to (a platform administrator in every one); the X-Acting-Tenant header is checked on every request.
         services.AddScoped<IActingTenants, ActingTenants>();
         services.AddScoped<IRightsResolver, RightsResolver>();

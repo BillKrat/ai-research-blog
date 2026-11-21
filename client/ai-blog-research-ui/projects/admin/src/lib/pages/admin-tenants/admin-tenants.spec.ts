@@ -87,6 +87,68 @@ describe('AdminTenants', () => {
     expect(page.querySelector('[role="status"]')?.textContent).toContain('Removed old.example');
   });
 
+  describe('deleting a tenant', () => {
+    function startDelete(page: HTMLElement, fixture: { detectChanges(): void }, name: string): void {
+      (page.querySelector(`button[aria-label="Delete ${name}"]`) as HTMLButtonElement).click();
+      fixture.detectChanges();
+    }
+
+    it('asks for the tenant domain to be typed, and only then enables the final button', () => {
+      const { fixture, page } = setup();
+      startDelete(page, fixture, 'Adventures Edge');
+      const confirmButton = page.querySelector('button[aria-label="Confirm delete of Adventures Edge"]') as HTMLButtonElement;
+
+      expect(confirmButton.disabled).toBe(true);
+      type(page, 'Type adventuresontheedge.net to confirm', 'adventuresontheedge');
+      fixture.detectChanges();
+      expect(confirmButton.disabled).toBe(true);
+      type(page, 'Type adventuresontheedge.net to confirm', ' AdventuresOnTheEdge.net ');
+      fixture.detectChanges();
+      expect(confirmButton.disabled).toBe(false);
+    });
+
+    it('deletes with the typed domain, reloads the list and says so', () => {
+      const { fixture, http, page } = setup();
+      startDelete(page, fixture, 'Adventures Edge');
+      type(page, 'Type adventuresontheedge.net to confirm', 'adventuresontheedge.net');
+      fixture.detectChanges();
+
+      (page.querySelector('button[aria-label="Confirm delete of Adventures Edge"]') as HTMLButtonElement).click();
+      const request = http.expectOne((r) => r.method === 'DELETE' && r.url.includes('/api/tenant/t2'));
+      expect(request.request.params.get('confirm') ?? new URL(request.request.urlWithParams, 'http://x').searchParams.get('confirm')).toBe('adventuresontheedge.net');
+      request.flush({ id: 't2', name: 'Adventures Edge', domain: 'adventuresontheedge.net', aliases: [] });
+      http.expectOne((r) => r.url.endsWith('/api/tenant/hosts')).flush([hosts[0]]);
+      fixture.detectChanges();
+
+      expect(page.textContent).not.toContain('Delete Adventures Edge');
+      expect(page.querySelector('[role="status"]')?.textContent).toContain('Deleted Adventures Edge');
+    });
+
+    it('shows the reason when the server refuses (the tenant you are working in, the last tenant)', () => {
+      const { fixture, http, page } = setup();
+      startDelete(page, fixture, 'DEV Main');
+      type(page, 'Type global-webnet.com to confirm', 'global-webnet.com');
+      fixture.detectChanges();
+
+      (page.querySelector('button[aria-label="Confirm delete of DEV Main"]') as HTMLButtonElement).click();
+      http.expectOne((r) => r.method === 'DELETE').flush('DEV Main is the tenant you are working in.', { status: 409, statusText: 'Conflict' });
+      fixture.detectChanges();
+
+      expect(page.querySelector('[role="alert"]')?.textContent).toContain('the tenant you are working in');
+    });
+
+    it('can be cancelled', () => {
+      const { fixture, http, page } = setup();
+      startDelete(page, fixture, 'Adventures Edge');
+
+      (page.querySelector('button[aria-label="Cancel delete of Adventures Edge"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(page.querySelector('button[aria-label="Confirm delete of Adventures Edge"]')).toBeNull();
+      http.expectNone((r) => r.method === 'DELETE');
+    });
+  });
+
   it('explains that the tenant of a request is decided by the address the API is reached on', () => {
     const { page } = setup();
 

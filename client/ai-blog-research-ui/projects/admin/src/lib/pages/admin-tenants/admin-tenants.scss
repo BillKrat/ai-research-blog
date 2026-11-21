@@ -54,3 +54,25 @@
     }
   }
 }
+
+.tenants__delete {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+
+  input {
+    flex: 1;
+    min-width: 12rem;
+    font: inherit;
+  }
+}
+
+.tenants__warning {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--mat-sys-error);
+}

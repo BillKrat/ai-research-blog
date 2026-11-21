@@ -39,6 +39,24 @@
         />
         <button type="button" [attr.aria-label]="'Add host name to ' + entry.name" (click)="add(entry)">Add</button>
       </div>
+      <div class="tenants__delete">
+        @if (deleting() === entry.id) {
+          <p class="tenants__warning">
+            Deleting {{ entry.name }} removes it from the tenant list and its domain and host names stop reaching anything. Its content is kept but unreachable.
+          </p>
+          <input
+            type="text"
+            [attr.aria-label]="'Type ' + entry.domain + ' to confirm'"
+            [placeholder]="'Type ' + entry.domain"
+            [value]="confirmText()"
+            (input)="confirmText.set($any($event.target).value)"
+          />
+          <button type="button" class="tenants__danger" [attr.aria-label]="'Confirm delete of ' + entry.name" [disabled]="!matches(entry)" (click)="confirmDelete(entry)">Delete tenant</button>
+          <button type="button" [attr.aria-label]="'Cancel delete of ' + entry.name" (click)="cancelDelete()">Cancel</button>
+        } @else {
+          <button type="button" class="tenants__delete-start" [attr.aria-label]="'Delete ' + entry.name" (click)="startDelete(entry.id)">Delete…</button>
+        }
+      </div>
     </article>
   }
 </section>

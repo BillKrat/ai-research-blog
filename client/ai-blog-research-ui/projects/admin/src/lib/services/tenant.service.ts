@@ -116,6 +116,23 @@ export class TenantService {
     });
   }
 
+  /**
+   * Deletes a tenant (a soft delete on the server: its domain and host names reach nothing afterwards). The tenant's own domain is sent as the confirmation; the server
+   * refuses the tenant being worked in, the tenant that owns this host and the last tenant, and says why.
+   */
+  deleteTenant(tenantId: string, name: string, confirm: string, done?: () => void): void {
+    this._problem.set('');
+    this._notice.set('');
+    this.http.delete(`${this.apiUrl}/api/tenant/${encodeURIComponent(tenantId)}`, { params: { confirm } }).subscribe({
+      next: () => {
+        this._notice.set(`Deleted ${name}. Its host names no longer reach anything.`);
+        this.loadHosts();
+        done?.();
+      },
+      error: (error) => this._problem.set(this.messageOf(error, 'The tenant was not deleted.')),
+    });
+  }
+
   /** Reads every tenant with its host names (platform administrators only; the server refuses anyone else). */
   loadHosts(): void {
     this.http.get<TenantHosts[]>(`${this.apiUrl}/api/tenant/hosts`).subscribe({
