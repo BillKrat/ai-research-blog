@@ -21,6 +21,7 @@ using Adventures.Identity.WebApi;
 using Adventures.Blog.Postgres;
 using Adventures.Collaboration;
 using Adventures.MEF;
+using Adventures.MEF.WebApi;
 
 // Bootstrap logger: catches and logs anything that goes wrong before the real Serilog pipeline
 // (which needs configuration/DI to be built) is up - including a crash inside WebApplication.CreateBuilder
@@ -90,7 +91,9 @@ try
     // The scan only sees loaded assemblies, so load every referenced library first (see AppAssemblies).
     AppAssemblies.EnsureReferencedLoaded();
     // Plug-ins: exported IPluginModule from the host libraries and, when Plugins:Directory is set, from a folder of approved DLLs (see Adventures.MEF).
-    builder.Services.AddPluginDiscovery(builder.Configuration, AppAssemblies.HostAssemblies());
+    builder.Services.AddPluginDiscovery(builder.Configuration, AppAssemblies.HostAssemblies(), [Adventures.MEF.WebApi.PluginWebRules.Validator]);
+    // A plug-in may bring API controllers: only under api/plugins/{key}/, never anonymous, switched off with the plug-in (the rules above refuse a plug-in that breaks them).
+    builder.Services.AddControllers().AddPluginControllers();
     // The in-process event bus for plug-ins: notifications run off the request for the plug-ins that are on for the tenant; interceptors may refuse (see Adventures.MEF).
     builder.Services.AddPluginEvents();
     builder.Services.AddSingleton<Adventures.MEF.IPluginEventContext, Adventures.WebApi.RequestTenantEventContext>();

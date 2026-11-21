@@ -19,6 +19,13 @@
 
   <ItemGroup>
 	<ProjectReference Include="..\..\src\AiBlogResearch.WebApi\AiBlogResearch.WebApi.csproj" />
+	<!-- Built, not referenced: the plug-in tests load it as a DLL from a plug-in directory, the way a developer's plug-in is loaded. -->
+	<ProjectReference Include="..\..\..\Adventures.Foundation\test\Adventures.MEF.SampleWebPlugin\Adventures.MEF.SampleWebPlugin.csproj" ReferenceOutputAssembly="false" OutputItemType="SampleWebPluginDll" />
   </ItemGroup>
+
+  <Target Name="CopySampleWebPlugin" AfterTargets="Build">
+	<Copy SourceFiles="@(SampleWebPluginDll)" DestinationFolder="$(OutDir)sample-web-plugin" />
+	<Copy SourceFiles="@(SampleWebPluginDll->'%(RootDir)%(Directory)Adventures.MEF.SampleWebPlugin.deps.json')" DestinationFolder="$(OutDir)sample-web-plugin" Condition="Exists('%(RootDir)%(Directory)Adventures.MEF.SampleWebPlugin.deps.json')" />
+  </Target>
 
 </Project>

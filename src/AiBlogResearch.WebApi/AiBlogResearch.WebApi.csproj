@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Blog\Adventures.Blog.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Collaboration\Adventures.Collaboration.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.MEF\Adventures.MEF.csproj" />
+    <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.MEF.WebApi\Adventures.MEF.WebApi.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Blog.Postgres\Adventures.Blog.Postgres.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Blog.Legacy\Adventures.Blog.Legacy.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Blog.WebApi\Adventures.Blog.WebApi.csproj" />

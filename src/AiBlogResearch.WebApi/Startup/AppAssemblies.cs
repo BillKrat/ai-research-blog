@@ -13,7 +13,8 @@ internal static class AppAssemblies
     /// <summary>The host's own libraries (this application and the <c>Adventures.*</c> libraries it references) that plug-in discovery searches for exported plug-ins. Call after <see cref="EnsureReferencedLoaded"/>.</summary>
     public static IReadOnlyList<Assembly> HostAssemblies() =>
         AppDomain.CurrentDomain.GetAssemblies()
-            .Where(a => !a.IsDynamic && a.GetName().Name is { } name && (name.StartsWith("Adventures.", StringComparison.Ordinal) || name.StartsWith("AiBlogResearch", StringComparison.Ordinal)))
+            // only the default load context: a plug-in DLL loaded from the plug-in directory lives in its own context and must not be mistaken for a host library
+            .Where(a => !a.IsDynamic && System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(a) == System.Runtime.Loader.AssemblyLoadContext.Default && a.GetName().Name is { } name && (name.StartsWith("Adventures.", StringComparison.Ordinal) || name.StartsWith("AiBlogResearch", StringComparison.Ordinal)))
             .ToList();
 
     /// <summary>Loads each assembly this application references (the .NET platform's own are skipped) and returns how many it loaded or found loaded.</summary>
