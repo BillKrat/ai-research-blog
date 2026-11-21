@@ -23,6 +23,8 @@ export class AdminPluginCustomize implements OnInit {
   protected readonly key = this.route.snapshot.paramMap.get('key') ?? '';
   protected readonly definitions = signal<PluginSettingDefinition[]>([]);
   protected readonly values = signal<Record<string, string>>({});
+  protected readonly secretsSet = signal<string[]>([]);
+  protected readonly clearing = signal<string[]>([]);
   protected readonly errors = signal<string[]>([]);
   protected readonly saved = signal(false);
   protected readonly isLoading = signal(true);
@@ -30,10 +32,16 @@ export class AdminPluginCustomize implements OnInit {
   private readonly gears = bindSpinner(this.isLoading);
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  private load(): void {
     this.api.getSettings(this.key).subscribe({
       next: (model) => {
         this.definitions.set(model.definitions);
         this.values.set({ ...model.values });
+        this.secretsSet.set(model.secretsSet ?? []);
+        this.clearing.set([]);
         this.isLoading.set(false);
       },
       error: (error) => {
@@ -41,6 +49,12 @@ export class AdminPluginCustomize implements OnInit {
         this.errors.set(error?.status === 404 ? ['This plug-in has no settings to customize.'] : describeApiError(error, "Couldn't load the settings."));
       },
     });
+  }
+
+  protected clearSecret(name: string): void {
+    this.saved.set(false);
+    this.clearing.update((all) => (all.includes(name) ? all : [...all, name]));
+    this.values.update((all) => ({ ...all, [name]: '' }));
   }
 
   protected set(name: string, value: string): void {
@@ -57,10 +71,11 @@ export class AdminPluginCustomize implements OnInit {
     this.isSaving.set(true);
     this.errors.set([]);
     this.saved.set(false);
-    this.api.saveSettings(this.key, this.values()).subscribe({
+    this.api.saveSettings(this.key, this.values(), this.clearing()).subscribe({
       next: () => {
         this.isSaving.set(false);
         this.saved.set(true);
+        this.load(); // a secret is never sent back, so ask again what is set
       },
       error: (error) => {
         this.isSaving.set(false);

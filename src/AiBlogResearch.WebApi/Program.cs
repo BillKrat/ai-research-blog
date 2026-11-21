@@ -96,6 +96,9 @@ try
     builder.Services.AddControllers().AddPluginControllers();
     // The in-process event bus for plug-ins: notifications run off the request for the plug-ins that are on for the tenant; interceptors may refuse (see Adventures.MEF).
     builder.Services.AddPluginEvents();
+    // Encrypted secrets (plug-in settings of kind Secret): keys come from Encryption:CurrentKeyId and Encryption:Keys:<id> (host secrets, never the store). With none set the app
+    // starts and a secret is refused, never stored as plain text; a bad key fails here, at start-up.
+    builder.Services.AddFieldEncryption(builder.Configuration);
     builder.Services.AddSingleton<Adventures.MEF.IPluginEventContext, Adventures.WebApi.RequestTenantEventContext>();
     builder.Services.AddLifetimeServices();
 

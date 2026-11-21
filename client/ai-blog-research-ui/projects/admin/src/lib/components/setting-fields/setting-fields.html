@@ -23,6 +23,29 @@
           {{ definition.label }}
         </label>
       }
+      @case ('Secret') {
+        <label [attr.for]="idPrefix() + '-' + definition.name">{{ definition.label }}</label>
+        <input
+          type="password"
+          autocomplete="new-password"
+          [id]="idPrefix() + '-' + definition.name"
+          [name]="definition.name"
+          [maxLength]="definition.maxLength"
+          [value]="values()[definition.name] ?? ''"
+          [placeholder]="isSet(definition.name) ? 'Leave empty to keep the saved value' : ''"
+          (input)="emit(definition.name, $any($event.target).value)"
+        />
+        <span class="setting-field__state">
+          @if (isClearing(definition.name)) {
+            The saved value will be removed when you save.
+          } @else if (isSet(definition.name)) {
+            A value is set.
+            <button type="button" class="setting-field__clear" (click)="cleared.emit(definition.name)">Clear</button>
+          } @else {
+            Not set.
+          }
+        </span>
+      }
       @case ('Number') {
         <label [attr.for]="idPrefix() + '-' + definition.name">{{ definition.label }}</label>
         <input

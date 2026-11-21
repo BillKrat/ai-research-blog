@@ -21,7 +21,20 @@ export class SettingFields {
   readonly values = input.required<Record<string, string>>();
   /** Keeps ids unique when several forms are on one page. */
   readonly idPrefix = input('f');
+  /** The secrets that already have a value (a secret field is empty and write-only; leaving it empty keeps the value). */
+  readonly secretsSet = input<string[]>([]);
+  /** The secrets marked for removal (they are removed when the form is saved). */
+  readonly clearing = input<string[]>([]);
   readonly changed = output<SettingChange>();
+  readonly cleared = output<string>();
+
+  protected isSet(name: string): boolean {
+    return this.secretsSet().includes(name);
+  }
+
+  protected isClearing(name: string): boolean {
+    return this.clearing().includes(name);
+  }
 
   protected emit(name: string, value: string): void {
     this.changed.emit({ name, value });

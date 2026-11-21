@@ -21,7 +21,7 @@ export interface PluginSettingDefinition {
   name: string;
   label: string;
   description: string;
-  kind: 'Text' | 'Lines' | 'Bool' | 'Number';
+  kind: 'Text' | 'Lines' | 'Bool' | 'Number' | 'Secret';
   default: string;
   maxLength: number;
 }
@@ -30,6 +30,8 @@ export interface PluginSettingDefinition {
 export interface PluginSettingsModel {
   definitions: PluginSettingDefinition[];
   values: Record<string, string>;
+  /** The secrets that have a value. A secret itself is never sent to the browser. */
+  secretsSet?: string[];
 }
 
 /** A plug-in that discovery loaded at start-up, and where it came from (assembly:Name or directory:File.dll). */
@@ -66,8 +68,8 @@ export class PluginsService {
     return this.http.get<PluginSettingsModel>(`${this.apiUrl}/api/plugins/${encodeURIComponent(key)}/settings`);
   }
 
-  saveSettings(key: string, values: Record<string, string>): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/api/plugins/${encodeURIComponent(key)}/settings`, { values });
+  saveSettings(key: string, values: Record<string, string>, clear: string[] = []): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/api/plugins/${encodeURIComponent(key)}/settings`, { values, clear });
   }
 
   loadReport(): Observable<PluginLoadReport> {

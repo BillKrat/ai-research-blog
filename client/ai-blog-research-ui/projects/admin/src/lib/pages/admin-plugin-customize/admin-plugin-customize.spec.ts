@@ -90,4 +90,99 @@ describe('AdminPluginCustomize', () => {
 
     expect((fixture.nativeElement as HTMLElement).querySelector('[role="alert"]')).not.toBeNull();
   });
+  describe('a Secret setting', () => {
+    const secretModel = {
+      definitions: [
+        { name: 'Greeting', label: 'Greeting', description: 'Plain.', kind: 'Text', default: 'hello', maxLength: 20 },
+        { name: 'Token', label: 'Token', description: 'An API token.', kind: 'Secret', default: '', maxLength: 40 },
+      ],
+      values: { Greeting: 'hello', Token: '' },
+      secretsSet: ['Token'],
+    };
+
+    function setupSecret(model = secretModel) {
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map([['key', 'sample']]) } } },
+        ],
+      });
+      const fixture = TestBed.createComponent(AdminPluginCustomize);
+      const http = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      http.expectOne((r) => r.url.endsWith('/api/plugins/sample/settings') && r.method === 'GET').flush(model);
+      fixture.detectChanges();
+      return { fixture, http, page: fixture.nativeElement as HTMLElement };
+    }
+
+    it('is a password-style field that never shows the stored value, only that one is set', () => {
+      const { page } = setupSecret();
+      const field = page.querySelector('input[name="Token"]') as HTMLInputElement;
+
+      expect(field.type).toBe('password');
+      expect(field.autocomplete).toBe('new-password');
+      expect(field.value).toBe('');
+      expect(page.textContent).toContain('A value is set');
+    });
+
+    it('says nothing is set yet when the secret has no value', () => {
+      const { page } = setupSecret({ ...secretModel, secretsSet: [] });
+
+      expect(page.textContent).toContain('Not set');
+      expect(page.querySelector('button.setting-field__clear')).toBeNull();
+    });
+
+    it('saves an empty secret field as empty (the server keeps the stored value) and sends a typed one', () => {
+      const { page, http } = setupSecret();
+
+      (page.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+      const first = http.expectOne((r) => r.method === 'PUT');
+      expect(first.request.body.values.Token).toBe('');
+      expect(first.request.body.clear ?? []).toEqual([]);
+      first.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('sends the typed secret', () => {
+      const { page, http } = setupSecret();
+      const field = page.querySelector('input[name="Token"]') as HTMLInputElement;
+      field.value = 'tok-new';
+      field.dispatchEvent(new Event('input'));
+
+      (page.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+      const request = http.expectOne((r) => r.method === 'PUT');
+      expect(request.request.body.values.Token).toBe('tok-new');
+      request.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('removes the secret only when Clear is pressed, and then shows Not set', () => {
+      const { fixture, page, http } = setupSecret();
+
+      (page.querySelector('button.setting-field__clear') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(page.textContent).toContain('will be removed');
+      (page.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+      const request = http.expectOne((r) => r.method === 'PUT');
+
+      expect(request.request.body.clear).toEqual(['Token']);
+      request.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('reads the settings again after a save, so the set state comes from the server', () => {
+      const { fixture, page, http } = setupSecret({ ...secretModel, secretsSet: [] });
+      const field = page.querySelector('input[name="Token"]') as HTMLInputElement;
+      field.value = 'tok-new';
+      field.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      (page.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+      http.expectOne((r) => r.method === 'PUT').flush(null, { status: 204, statusText: 'No Content' });
+      http.expectOne((r) => r.method === 'GET').flush({ ...secretModel, secretsSet: ['Token'] });
+      fixture.detectChanges();
+
+      expect((page.querySelector('input[name="Token"]') as HTMLInputElement).value).toBe('');
+      expect(page.textContent).toContain('A value is set');
+    });
+  });
 });
