@@ -17,7 +17,7 @@ Written at the human's request: he follows my recommendations and asked me to se
 | 7 | **Prompt Claude through MCP** (the diagnostics tool by exception id) | Small, makes the review loop cheaper; check the `headersHelper` first | small | Next up: Prompt Claude through MCP |
 | 8 | **Beta readiness list:** install guide proved on a spare domain, Beta testers role check, backup and restore note, release notes, accessibility pass, dependency and security review including the open advisories (tinymce 8 and mermaid 12.3 need the human's browser check) | A stranger can install and trust it | medium | Beta and release readiness; Install guide |
 | 9 | **Quad storage at scale** (measure per-user quads, own benchmark generator, spike, layout change, the cheap index wins) | Must be done before beta data exists, after the features above | large | `Claude-backlog-quad-storage.md` |
-| 10 | **Schema site `schema.global-webnet.com`** (navigated hierarchy of the data) and its certificate | Beta-critical, the last item (human, 2026-11-21); certificate bought and email-validated, install pending | medium | Quad-storage backlog, section 8 |
+| 10 | **Schema site `schema.global-webnet.com`** (navigated hierarchy of the data) and its certificate | Beta-critical, the last item (human, 2026-11-21); certificate installed and verified live 2026-11-21 (SSL.com, valid to 2027-06-07; renew by 2027-06) | medium | Quad-storage backlog, section 8 |
 | 11 | **Pristine beta store and data freeze** (clean database from seeds only, benchmark databases separate, rehearsed cutover) | Beta data must be clean before anyone uses it | medium | Quad-storage backlog, section 8 |
 
 ## AFTER BETA (stay in the backlog until the downstream project)
@@ -36,7 +36,7 @@ Written at the human's request: he follows my recommendations and asked me to se
 
 ## Standing items outside the order
 
-- Recheck the `schema.global-webnet.com` certificate each session start until it is installed.
+- `schema.global-webnet.com` certificate is installed (valid to 2027-06-07); renew it by 2027-06 (paid, not part of the free quota).
 - `backup --mirror` push stays skipped (it prunes old branches that the `_archive/` bundles hold).
 - Human-only: Anthropic key expiry date is 2027-02-01; the tinymce 8 browser check (item 8); any legal steps in memory.
 
