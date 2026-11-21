@@ -24,6 +24,7 @@ Written at the human's request: he follows my recommendations and asked me to se
 
 | Item | Why it waits |
 |---|---|
+| A stricter right per plug-in switch (the sanitiser first) and switches per blog instead of per domain | Needs several blogs per domain; backlog MEF entry item 8 |
 | Several blogs under a domain, sub-folders per blog, subscriptions to blogs, subscribed-blog search scope | The downstream project's founding feature; the beta keeps its tenant keys compatible (the design rule in the MEF entry, item 7) |
 | Subscriptions, usage meter, plans, who pays for AI beyond a bring-your-own key | Needs money and several blogs; the seams stay in every stage |
 | AI-assisted search and upload processing (Layer 2) | Costs per call; needs the usage seams |
