@@ -3,7 +3,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { describeApiError, bindSpinner } from '@adventures/core';
 import { AdminMenuService } from '../../services/admin-menu.service';
 import { PageHeader } from '../../components/page-header/page-header';
-import { PluginState, PluginsService } from '../../services/plugins.service';
+import { PluginLoadReport, PluginState, PluginsService } from '../../services/plugins.service';
 
 /**
  * The Plugins page: the built-in plug-ins (Developer Collaboration, Research Collaboration, Decisions) with a switch each. A plug-in that is
@@ -20,6 +20,7 @@ export class AdminPlugins implements OnInit {
   private readonly menu = inject(AdminMenuService);
 
   protected readonly plugins = signal<PluginState[]>([]);
+  protected readonly report = signal<PluginLoadReport>({ loaded: [], failures: [] });
   protected readonly errors = signal<string[]>([]);
   protected readonly isLoading = signal(true);
   private readonly gears = bindSpinner(this.isLoading);
@@ -50,6 +51,11 @@ export class AdminPlugins implements OnInit {
   }
 
   private load(): void {
+    // The discovery report is separate: if it cannot be read the plug-ins are still listed, with a message.
+    this.api.loadReport().subscribe({
+      next: (report) => this.report.set(report),
+      error: (error) => this.errors.update((all) => [...all, ...describeApiError(error, "Couldn't load the plug-in discovery report.")]),
+    });
     this.api.list().subscribe({
       next: (all) => {
         this.plugins.set(all);

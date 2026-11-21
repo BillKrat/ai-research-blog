@@ -41,5 +41,33 @@
         }
       </tbody>
     </table>
+
+    @if (report().loaded.length > 0) {
+      <section class="admin-plugins__found" aria-labelledby="found-heading">
+        <h3 id="found-heading">Found by discovery</h3>
+        <p class="admin-plugins__hint">Plug-ins loaded at start-up from the application's libraries or the plug-in directory.</p>
+        <ul>
+          @for (found of report().loaded; track found.key) {
+            <li>
+              <strong>{{ found.title }}</strong> {{ found.version }} <span class="admin-plugins__source">({{ found.source }})</span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (report().failures.length > 0) {
+      <section class="admin-plugins__refused" aria-labelledby="refused-heading">
+        <h3 id="refused-heading">Not loaded</h3>
+        <p class="admin-plugins__hint">These plug-in files or modules were refused at start-up. Nothing from them is running.</p>
+        <ul>
+          @for (failure of report().failures; track $index) {
+            <li>
+              <strong>{{ failure.source }}</strong>: {{ failure.reason }}
+            </li>
+          }
+        </ul>
+      </section>
+    }
   }
 </section>

@@ -45,9 +45,10 @@ flowchart LR
 
 - No plug-in directory exists on any host, and no real plug-in DLL has been loaded outside the tests; the first live use comes with the developer sample.
 - A plug-in cannot yet add controllers (needs MVC application parts) or widgets; stage 2 and 3 of the plan.
-- The Plugins screen in the admin does not show the report yet (the endpoint is there); the Customize screen is next.
+- Stage 1c (same day): the Plugins screen now shows what discovery loaded and what it refused (service call, two sections, a failing report request still lists the plug-ins; 4 new client tests, admin library 92 tests pass, production build 933.68 kB). Not seen in a browser.
+- The Customize screen is NOT built yet, on purpose: a settings store needs its own schema, seed, tenant registration and guard entries, and the first plug-in that needs settings is the HTML sanitiser, so the store is designed with that first real setting instead of as unused plumbing.
 - No blog post: a developer-facing post fits once the developer sample works end to end.
 
 ## Next
 
-Stage 1c: show the report on the Plugins screen and add the Customize screen (settings per plug-in, stored per tenant); then HTML sanitising as the first default-on plug-in.
+The sanitising plug-in (default on) with its Customize screen and a per-tenant settings store, designed against that first real setting.

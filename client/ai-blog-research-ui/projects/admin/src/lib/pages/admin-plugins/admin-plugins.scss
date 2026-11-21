@@ -20,3 +20,17 @@
     }
   }
 }
+
+.admin-plugins__refused {
+  margin-top: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-left: 4px solid var(--mat-sys-error);
+}
+
+.admin-plugins__found {
+  margin-top: 1.5rem;
+}
+
+.admin-plugins__source {
+  opacity: 0.7;
+}

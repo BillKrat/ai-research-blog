@@ -14,7 +14,27 @@ export interface PluginState {
   enabled: boolean;
 }
 
-/** The Plugins page's API: list the built-in plug-ins, switch one on or off (administrators only). */
+/** A plug-in that discovery loaded at start-up, and where it came from (assembly:Name or directory:File.dll). */
+export interface LoadedPlugin {
+  key: string;
+  title: string;
+  version: string;
+  source: string;
+}
+
+/** A plug-in file or module that discovery refused, with the reason. */
+export interface PluginLoadFailure {
+  source: string;
+  reason: string;
+}
+
+/** What plug-in discovery found at start-up. */
+export interface PluginLoadReport {
+  loaded: LoadedPlugin[];
+  failures: PluginLoadFailure[];
+}
+
+/** The Plugins page's API: list the plug-ins, read the discovery report, switch one on or off (administrators only). */
 @Injectable({ providedIn: 'root' })
 export class PluginsService {
   private readonly apiUrl = inject(API_BASE_URL);
@@ -22,6 +42,10 @@ export class PluginsService {
 
   list(): Observable<PluginState[]> {
     return this.http.get<PluginState[]>(`${this.apiUrl}/api/plugins`);
+  }
+
+  loadReport(): Observable<PluginLoadReport> {
+    return this.http.get<PluginLoadReport>(`${this.apiUrl}/api/plugins/load-report`);
   }
 
   setEnabled(key: string, enabled: boolean): Observable<void> {
