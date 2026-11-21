@@ -41,6 +41,48 @@ Each point names its source; the first is the main one.
 
 Sources: [Survey of RDF Stores and SPARQL Engines (arXiv 2102.13027)](https://arxiv.org/pdf/2102.13027) · [Storage, Indexing, Query Processing and Benchmarking in RDF Engines (arXiv 2009.10331)](https://arxiv.org/pdf/2009.10331) · [A Survey of RDF Data Management Systems (arXiv 1601.00707)](https://arxiv.org/pdf/1601.00707) · [RDF-3X paper](https://cs.uwaterloo.ca/~gweddell/cs848/papers/RDF-3X.pdf) · [Hexastore paper](https://cs.uwaterloo.ca/%7Egweddell/cs848/papers/Hexastore.pdf) · [Abadi et al. re-evaluation, PVLDB](https://www.doi.org/10.14778/1454159.1454227) · [pg_ripple architecture](https://grove.github.io/pg-ripple/operations/architecture.html) · [W3C RDF 1.2 N-Quads](https://www.w3.org/TR/rdf12-n-quads/) · [W3C RDF 1.2 Concepts](https://www.w3.org/TR/rdf12-concepts/). The search tool returned snippets, not full texts, so figures such as the five-fold index cost are as reported by those snippets.
 
+## 4a. Measurements (2026-11-21, read-only SELECTs on the live store through the vault)
+
+| What | Value |
+|---|---|
+| Whole database (the hosting panel's 8.53% of a 1000 MB quota) | 85.4 MB |
+| `app_n_quads` rows | 120,058 |
+| `app_n_quads` table / its indexes | 32.7 MB / 37.3 MB (70 MB together, about **611 bytes per quad**: 272 table, 311 indexes) |
+| Average length in characters: subject / predicate / object / graph | 72 / 50 / 51 / 40 |
+| Distinct subjects / predicates / objects / graphs | 14,606 / 198 / 8,516 / 11 |
+| Quads per subject | about 8 |
+| Largest indexes | `(subject, predicate)` 24.3 MB, primary key 4.7 MB, `(predicate, left(object,255))` 3.5 MB, `subject` 3.0 MB, `predicate` 1.0 MB, `graph` 0.8 MB |
+| Other tables | `app_media` 3.1 MB; the old `n_quads` table and the legacy `entities` tables are under 0.3 MB |
+
+What this says:
+
+- **The binding limit for beta is the 1000 MB quota, not query speed.** At 611 bytes per quad, the 915 MB of headroom holds about 1.5 million more quads at today's layout. Everything depends on quads per beta user, which is still unmeasured: 2,000 quads a user is roughly 750 users, but 120,000 a user (the figure in the scalability notes) is about 12.
+- **Predicates are only 198 distinct strings of about 50 characters, repeated across 120,000 rows.** Subjects average 8 quads each. Both are what a dictionary removes.
+- **Estimated dictionary layout (a rough estimate, not measured):** 56 to 72 bytes a row plus two or three narrow indexes of about 40 bytes an entry each gives about 170 to 190 bytes per quad, so about **3 times smaller** (70 MB would be about 22 MB plus about 3 MB of dictionary for roughly 23,000 distinct terms). The spike in step 3 must confirm it.
+- **Cheap wins, measured:** `ix_app_n_quads_subject` (3.0 MB) is covered by the `(subject, predicate)` index, and `ix_app_n_quads_predicate` (1.0 MB) by `(predicate, object)`; dropping both saves about 4 MB with no loss. `ix_app_n_quads_subject` is 3 MB against 24 MB for the composite although both hold all rows, which fits duplicate-key deduplication; it does not prove prefix compression of long strings.
+
+## 4b. The human's proposal and the options (2026-11-21)
+
+The human's view: the team must not let patterns and standards block the obvious improvement (the ISO 15926 tools became unusable through templates and SPARQL; the way out was to strip them and keep it simple, with no SPARQL). The proposal: a small **mapping table** of namespace prefixes and a short local id (`usr:` for `https://global-webnet.com/id/user/`, `1` for a person's GUID); the data table stores `usr:1`, not the full address; at sign-in take the person's short id and use it throughout; an export for an outside triple store is generated from the mapping when ever needed.
+
+Assessment:
+
+- **Agreed:** no SPARQL, only the four access patterns the store already has; full IRIs generated on export. The W3C text allows this as long as the abbreviation stays inside the store and is expanded wherever an IRI is expected (Concepts, 1.4); that is the same reason the export must expand every term.
+- **The idea is a two-level dictionary.** The prefix registry is one table of a few dozen rows; the local id (`1`) is a second table mapping a number to the original GUID. Storing the GUID once in the mapping is what makes the export possible, and it is exactly the dictionary I recommended. The quad table then holds only numbers.
+- **Where I would adjust it (to be decided in the spike):**
+  1. **Do not use a bare sequential number as the identity outside the store.** The GUID stays the identity in tokens, links, seeds, post bodies and the MCP tools, because a number is allocated per database: dev and live would give the same person different numbers, and seed files, tenant moves, imports and restores all carry GUIDs. The number is an internal handle that the store resolves (a per-process cache makes it cheap), so nothing above the store changes.
+  2. **The prefix registry must be fixed.** A prefix whose base address changes later is a migration of every row, so registered prefixes are append-only and carry a version; an IRI with no registered prefix is stored whole (schema.org, other domains).
+  3. **A literal with long text (a post body) stays out of the dictionary.**
+
+| Option | Per quad | Reads | Keeps the layers untouched | Notes |
+|---|---|---|---|---|
+| Today: full text | about 611 bytes | direct | yes | simplest, quota fills first |
+| A. Prefix plus GUID as text (`usr:c70b...`) | about 450 | direct, expand at the edge | yes | small gain, no id allocation, but still wide text indexes |
+| B. Prefix registry plus native uuid in a typed column | about 350 | direct | yes | no allocation; the quad table has several column types |
+| C. Full dictionary, one bigint per term, namespaces as a dictionary column (the human's idea made uniform) | about 170 to 190 (estimated) | one cached lookup | yes, if kept inside the store | best size and speed; most work; export is a join |
+
+Sizes for A and B are my estimates from the measured averages. Recommendation unchanged: measure per-user quads, try the cheap index wins now if wanted, and spike C against B before deciding.
+
 ## 5. Assessment (high level)
 
 1. **Keep full IRIs at the edges, not necessarily inside the table.** Import, export, the MCP tools, the collaboration items and the UI all keep full IRIs; they are standard and portable. Only the physical table changes.
@@ -54,7 +96,7 @@ Sources: [Survey of RDF Stores and SPARQL Engines (arXiv 2102.13027)](https://ar
 
 Each step is a small verified stage with a stage review; nothing starts until the foundation work is done.
 
-1. **Measure today.** Table and index sizes (`pg_total_relation_size`, `pg_indexes_size`), distinct subjects, predicates and graphs, average term length, and rows per user per activity. Read-only, through the vault, results into this file.
+1. **Measure today.** Sizes, distinct counts and term lengths are DONE (section 4a, 2026-11-21). Still to measure: quads per user and per post (and what a "state over time" quad stream would add), through the same read-only vault route.
 2. **Define the workload.** List the real query shapes from the store class and the app (by subject, by subject and predicate, by predicate and object, by graph, tenant relabel, export) and the expected growth per user, then set a target (rows, users, p95 latency) so "scalable" means a number.
 3. **Spike on a scratch database.** Build the dictionary plus narrow quad layout, load a synthetic dataset scaled to the target (and a copy of the current data), compare against today's table on the shapes from step 2, and test hash versus B-tree for the dictionary lookup. Include 64-bit hash collision handling in the design.
 4. **Decide.** Record the decision in a `Claude-decision-2026-11-quad-storage.md` file with the numbers; update the architecture reference.
