@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authorization;
-using McpServer.WebApi.BlogAi;
+using McpServer.WebApi.Tools;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -15,13 +15,13 @@ namespace McpServer.WebApi.Controllers;
 /// API's manifest (<c>GET api/tools</c>, filtered by the caller token's scopes and the enabled plug-ins), so a new tool needs no change
 /// here; a call is a request built from the manifest's route and sent to the API with the caller own token, and the API stays the single
 /// place that decides what is allowed (authoring cannot publish, whatever is asked). Its answer text comes back as the tool result (a
-/// refusal or an outage is a tool error, so the model sees the reason). The research tools (<c>blogai.read</c>) are this server's own:
+/// refusal or an outage is a tool error, so the model sees the reason). The research tools (<c>blogai.read</c>, <see cref="Tools.IMcpOnlyTool"/>, read-only by contract) are this server's own:
 /// they read the legacy store directly.
 /// </summary>
 [ApiController]
 [Route("mcp")]
 [Authorize]
-public sealed class McpController(DiagnosticsApiClient api, IAuthorizationService authorization, IBlogAiReader blogAi, IMemoryCache cache) : ControllerBase
+public sealed class McpController(DiagnosticsApiClient api, IAuthorizationService authorization, McpOnlyToolRegistry research, IMemoryCache cache) : ControllerBase
 {
     /// <summary>How long one token's tool list is remembered. Short, so an enabled or disabled plug-in shows up within a minute.</summary>
     public static readonly TimeSpan ManifestLifetime = TimeSpan.FromSeconds(60);
@@ -30,57 +30,8 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
     public const string DiagnosticsScope = DiagnosticsController.RequiredScope;
     public const string AuthoringScope = "content.draft";
 
-    /// <summary>Read-only access to the legacy BlogEngine.NET (BlogAI) database, as the named queries of <see cref="BlogAiCatalog"/>.</summary>
-    public const string BlogAiScope = "blogai.read";
-
-    /// <summary>The research-only tools this server owns (they read the legacy store directly, so they exist only here), with the scope that unlocks each. Every other tool comes from the API's manifest.</summary>
-    public static readonly IReadOnlyList<(string Scope, JsonObject Definition)> ResearchTools =
-    [
-        .. BlogAiCatalog.Queries.Select(q => (BlogAiScope, BlogAiTool(q))),
-        (BlogAiScope, new JsonObject
-        {
-            ["name"] = RowsToolName,
-            ["description"] = "One page of rows of a legacy table, every column except secrets, ordered by the table's identity column. For the schema-faithful migration. Only the wave tables are readable (see the table enum). Read-only.",
-            ["inputSchema"] = new JsonObject
-            {
-                ["type"] = "object",
-                ["properties"] = new JsonObject
-                {
-                    ["table"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(BlogAiTables.All.Select(t => (JsonNode)t.Name).ToArray()), ["description"] = "The legacy table." },
-                    ["offset"] = new JsonObject { ["type"] = "integer", ["description"] = "Rows to skip (default 0)." },
-                    ["limit"] = new JsonObject { ["type"] = "integer", ["description"] = $"Rows per page (1-{BlogAiTables.MaxPageSize}, default {BlogAiTables.DefaultPageSize})." },
-                },
-                ["required"] = new JsonArray("table"),
-            },
-        }),
-    ];
-
-    public const string RowsToolName = "blogai_rows";
-
-    private static JsonObject BlogAiTool(BlogAiQuery query)
-    {
-        var properties = new JsonObject();
-        foreach (var parameter in query.Parameters)
-        {
-            properties[parameter.Name] = new JsonObject
-            {
-                ["type"] = parameter.Kind == "int" ? "integer" : "string",
-                ["description"] = parameter.Description,
-            };
-        }
-
-        return new JsonObject
-        {
-            ["name"] = query.Name,
-            ["description"] = query.Description + " Read-only.",
-            ["inputSchema"] = new JsonObject
-            {
-                ["type"] = "object",
-                ["properties"] = properties,
-                ["required"] = new JsonArray(query.Parameters.Where(p => p.Required).Select(p => (JsonNode)p.Name).ToArray()),
-            },
-        };
-    }
+    /// <summary>Read-only access to the legacy BlogEngine.NET (BlogAI) database, through the MCP-only research tools (<see cref="IMcpOnlyTool"/>).</summary>
+    public const string BlogAiScope = ResearchTools.Scope;
 
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] JsonElement body, CancellationToken cancellationToken)
@@ -125,9 +76,9 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
                     listed.Add(tool.ToDefinition());
                 }
 
-                foreach (var research in ResearchTools.Where(t => scopes.Contains(t.Scope)))
+                foreach (var researchTool in research.VisibleTo(scopes))
                 {
-                    listed.Add(JsonNode.Parse(research.Definition.ToJsonString()));
+                    listed.Add(new JsonObject { ["name"] = researchTool.Name, ["description"] = researchTool.Description, ["inputSchema"] = researchTool.InputSchema });
                 }
 
                 return Ok(Result(id, new JsonObject { ["tools"] = listed }));
@@ -173,23 +124,18 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
             return Error(id, -32602, "tools/call needs params.name.");
         }
 
-        var research = ResearchTools.FirstOrDefault(t => t.Definition["name"]!.GetValue<string>() == name);
-        if (research.Definition is not null && !scopes.Contains(research.Scope))
-        {
-            return ToolResult(id, $"This token does not carry the '{research.Scope}' scope that '{name}' needs.", isError: true);
-        }
-
         var arguments = parameters.TryGetProperty("arguments", out var a) && a.ValueKind == JsonValueKind.Object ? a : default;
-        string? Text(string key) => arguments.ValueKind == JsonValueKind.Object && arguments.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
-        if (name == RowsToolName)
+        // The MCP-only research tools (read-only by contract) answer here; everything else is the API's manifest below.
+        if (research.Find(name) is { } researchTool)
         {
-            return await CallBlogAiRowsAsync(id, arguments, cancellationToken);
-        }
+            if (!scopes.Contains(researchTool.RequiredScope))
+            {
+                return ToolResult(id, $"This token does not carry the '{researchTool.RequiredScope}' scope that '{name}' needs.", isError: true);
+            }
 
-        if (BlogAiCatalog.Find(name) is { } blogAiQuery)
-        {
-            return await CallBlogAiAsync(id, blogAiQuery, arguments, cancellationToken);
+            var outcome = await researchTool.InvokeAsync(arguments, cancellationToken);
+            return ToolResult(id, outcome.Text, outcome.IsError);
         }
 
         // Every other tool is described by the API's manifest (its route, method and input schema): build the request from that.
@@ -309,63 +255,6 @@ public sealed class McpController(DiagnosticsApiClient api, IAuthorizationServic
         catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException)
         {
             return new Manifest([], "The API's tool list could not be read.");
-        }
-    }
-
-    /// <summary>One page of one allowlisted legacy table. An unknown table, or a bad number, is reported as such.</summary>
-    private async Task<JsonObject> CallBlogAiRowsAsync(JsonNode? id, JsonElement arguments, CancellationToken cancellationToken)
-    {
-        if (!blogAi.IsConfigured)
-        {
-            return ToolResult(id, "The legacy database is not configured on this server (ConnectionStrings:BlogAi).", isError: true);
-        }
-
-        string? Text(string key) => arguments.ValueKind == JsonValueKind.Object && arguments.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
-        int Number(string key, int fallback) => arguments.ValueKind == JsonValueKind.Object && arguments.TryGetProperty(key, out var v) && v.TryGetInt32(out var n) ? n : fallback;
-
-        if (BlogAiTables.Find(Text("table") ?? string.Empty) is not { } table)
-        {
-            return ToolResult(id, $"table must be one of: {string.Join(", ", BlogAiTables.All.Select(t => t.Name))}.", isError: true);
-        }
-
-        try
-        {
-            return ToolResult(id, await blogAi.ReadRowsAsync(table, Number("offset", 0), Number("limit", BlogAiTables.DefaultPageSize), cancellationToken), isError: false);
-        }
-        catch (Microsoft.Data.SqlClient.SqlException e)
-        {
-            return ToolResult(id, $"The legacy database refused the query (SQL error {e.Number}); the read-only login may be missing a grant on {table.Name}.", isError: true);
-        }
-    }
-
-    /// <summary>Runs one legacy-data query. A bad argument is reported as such; anything else is logged by the exception handler and answered without detail.</summary>
-    private async Task<JsonObject> CallBlogAiAsync(JsonNode? id, BlogAiQuery query, JsonElement arguments, CancellationToken cancellationToken)
-    {
-        if (!blogAi.IsConfigured)
-        {
-            return ToolResult(id, "The legacy database is not configured on this server (ConnectionStrings:BlogAi).", isError: true);
-        }
-
-        var supplied = new Dictionary<string, string?>(StringComparer.Ordinal);
-        if (arguments.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var property in arguments.EnumerateObject())
-            {
-                supplied[property.Name] = property.Value.ValueKind == JsonValueKind.String ? property.Value.GetString() : property.Value.GetRawText();
-            }
-        }
-
-        try
-        {
-            return ToolResult(id, await blogAi.RunAsync(query, supplied, cancellationToken), isError: false);
-        }
-        catch (BlogAiArgumentException e)
-        {
-            return ToolResult(id, e.Message, isError: true);
-        }
-        catch (Microsoft.Data.SqlClient.SqlException e)
-        {
-            return ToolResult(id, $"The legacy database refused the query (SQL error {e.Number}).", isError: true);
         }
     }
 

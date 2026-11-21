@@ -12,6 +12,7 @@ builder.Services.AddSharedJwtAuthentication(builder.Configuration);
 builder.Services.AddRequestHardening(builder.Configuration);
 builder.Services.AddScopeAuthorization("mcp.hello", McpServer.WebApi.Controllers.DiagnosticsController.RequiredScope, McpServer.WebApi.Controllers.McpController.AuthoringScope, McpServer.WebApi.Controllers.McpController.BlogAiScope);
 builder.Services.AddSingleton<McpServer.WebApi.BlogAi.IBlogAiReader, McpServer.WebApi.BlogAi.BlogAiReader>();
+builder.Services.AddSingleton(sp => new McpServer.WebApi.Tools.McpOnlyToolRegistry(McpServer.WebApi.Tools.ResearchTools.Create(sp.GetRequiredService<McpServer.WebApi.BlogAi.IBlogAiReader>())));
 
 // The API owns the exception store and the log files; the diagnostics tool asks it (Api:BaseUrl), carrying the request id.
 builder.Services.AddHttpClient(McpServer.WebApi.Controllers.DiagnosticsController.ApiClientName, (services, client) =>

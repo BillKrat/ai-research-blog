@@ -117,3 +117,5 @@ plug-in has a **Customize** screen (as BlogEngine's Plugins page does); that is 
 sanitiser's allow-list, live there. Design notes for when it is built: today's TinyMCE post HTML is sanitised on save and on serve by fixed code,
 which moves behind this seam with the same default; turning it off needs a high right (not Editor) and is per tenant; the Plugins page shows a
 plain warning when it is off. Same pattern for widget HTML (`IWidget`).
+
+**Status (2026-11-21):** stage 3 is built: see `docs/artifacts/Claude-2026-11-21-research-tools-mcp-only.md`. The developer sample (stage 4) waits for the widget and zone plan.
