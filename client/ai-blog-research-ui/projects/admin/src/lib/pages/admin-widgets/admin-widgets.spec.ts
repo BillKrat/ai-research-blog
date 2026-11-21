@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { SpinnerService } from '@adventures/core';
 import { AdminWidgets } from './admin-widgets';
 
 describe('AdminWidgets', () => {
@@ -110,5 +111,38 @@ describe('AdminWidgets', () => {
     fixture.detectChanges();
 
     expect(page.querySelector('[role="alert"]')).not.toBeNull();
+  });
+
+  it('keeps the controls disabled, and the global spinner on, while a change is on its way, then lets go when the layout is back', () => {
+    const { fixture, http, page } = setup();
+    const spinner = TestBed.inject(SpinnerService);
+    expect(spinner.active()).toBe(false);
+
+    (zone(page, 'left').querySelector('li.placement:nth-child(2) button[aria-label^="Move up"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(spinner.active()).toBe(true);
+    expect(Array.from(page.querySelectorAll('button')).every((b) => (b as HTMLButtonElement).disabled)).toBe(true);
+
+    http.expectOne((r) => r.url.endsWith('/api/widgets/placements/p2/move')).flush(null, { status: 204, statusText: 'No Content' });
+    expect(spinner.active()).toBe(true);
+    reload(http);
+    fixture.detectChanges();
+
+    expect(spinner.active()).toBe(false);
+    expect(Array.from(page.querySelectorAll('button')).some((b) => !(b as HTMLButtonElement).disabled)).toBe(true);
+  });
+
+  it('lets go of the spinner and the controls when a change is refused', () => {
+    const { fixture, http, page } = setup();
+    const spinner = TestBed.inject(SpinnerService);
+
+    (zone(page, 'left').querySelector('li.placement:nth-child(1) button[aria-label^="Remove"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(spinner.active()).toBe(true);
+    http.expectOne((r) => r.method === 'DELETE').flush('no', { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+
+    expect(spinner.active()).toBe(false);
   });
 });

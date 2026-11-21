@@ -25,6 +25,9 @@ export class AdminWidgets implements OnInit {
   protected readonly errors = signal<string[]>([]);
   protected readonly isLoading = signal(true);
   private readonly gears = bindSpinner(this.isLoading);
+  /** True while a change is on its way and the layout is being read again: the controls are disabled and the global spinner turns. */
+  protected readonly busy = signal(false);
+  private readonly busyGears = bindSpinner(this.busy);
   protected readonly choice = signal<Record<string, string>>({});
   protected readonly editing = signal<WidgetPlacement | null>(null);
   protected readonly editTitle = signal('');
@@ -100,12 +103,16 @@ export class AdminWidgets implements OnInit {
   /** Runs a change, then reads the layout again; a refusal shows its reason and changes nothing on screen. */
   private run(request: Observable<unknown>, after?: () => void): void {
     this.errors.set([]);
+    this.busy.set(true);
     request.subscribe({
       next: () => {
         after?.();
         this.load();
       },
-      error: (error) => this.errors.set(describeApiError(error, "Couldn't change the widgets.")),
+      error: (error) => {
+        this.busy.set(false);
+        this.errors.set(describeApiError(error, "Couldn't change the widgets."));
+      },
     });
   }
 
@@ -114,9 +121,11 @@ export class AdminWidgets implements OnInit {
       next: (overview) => {
         this.overview.set(overview);
         this.isLoading.set(false);
+        this.busy.set(false);
       },
       error: (error) => {
         this.isLoading.set(false);
+        this.busy.set(false);
         this.errors.set(describeApiError(error, "Couldn't load the widgets."));
       },
     });

@@ -74,4 +74,17 @@ describe('WidgetZone', () => {
     expect(inside.defaultPrevented).toBe(true);
     expect(outside.defaultPrevented).toBe(false);
   });
+
+  it('stays hidden, and says it is still loading, until its answer arrives, then shows (no widget pops in at the wrong place)', () => {
+    const { fixture, http, page } = setup('left');
+
+    expect(page.classList.contains('widget-zone--empty')).toBe(true);
+    expect(page.getAttribute('data-loaded')).toBe('false');
+
+    http.expectOne((r) => r.url.endsWith('/api/public/widgets/left')).flush([widget('1', 'Shown', '<p>x</p>')]);
+    fixture.detectChanges();
+
+    expect(page.getAttribute('data-loaded')).toBe('true');
+    expect(page.classList.contains('widget-zone--empty')).toBe(false);
+  });
 });

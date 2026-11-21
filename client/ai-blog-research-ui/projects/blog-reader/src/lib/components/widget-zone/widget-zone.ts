@@ -16,6 +16,7 @@ import { RenderedWidget, WidgetsService } from '../../services/widgets.service';
   host: {
     '[class.widget-zone--empty]': 'empty()',
     '[attr.data-zone]': 'zone()',
+    '[attr.data-loaded]': 'loaded()',
     '(click)': 'follow($event)',
   },
 })
@@ -28,12 +29,20 @@ export class WidgetZone implements OnInit {
 
   protected readonly widgets = signal<{ id: string; title: string; html: SafeHtml }[]>([]);
   protected readonly empty = computed(() => this.widgets().length === 0);
+  /** False until the answer (or the failure) has arrived: the zone stays hidden until then, so nothing shows in the wrong place while the page loads. */
+  protected readonly loaded = signal(false);
 
   ngOnInit(): void {
     this.api.zone(this.zone()).subscribe({
       next: (all: RenderedWidget[]) =>
-        this.widgets.set(all.map((w) => ({ id: w.id, title: w.title, html: this.sanitizer.bypassSecurityTrustHtml(w.html) }))),
-      error: () => this.widgets.set([]),
+        {
+          this.widgets.set(all.map((w) => ({ id: w.id, title: w.title, html: this.sanitizer.bypassSecurityTrustHtml(w.html) })));
+          this.loaded.set(true);
+        },
+      error: () => {
+        this.widgets.set([]);
+        this.loaded.set(true);
+      },
     });
   }
 

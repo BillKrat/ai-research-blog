@@ -116,3 +116,68 @@ describe('App RSS link', () => {
     expect(link!.getAttribute('href')).toMatch(/\/api\/public\/feed$/);
   });
 });
+
+describe('App layout switch', () => {
+  // A screen that is slow to open (a guard that does not answer yet): the layout must already be the new area's, so the new screen never
+  // shows for a moment in the old area's layout (full width with no zones, or the narrow public column) and then jumps.
+  const pending = () => new Promise<boolean>(() => undefined);
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([
+          { path: 'admin/slow', canActivate: [pending], children: [] },
+          { path: 'slow-public', canActivate: [pending], children: [] },
+          { path: '**', children: [] },
+        ]),
+      ],
+    }).compileComponents();
+  });
+
+  it('switches to the admin layout as soon as the route is recognised, before the admin screen has opened', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    await router.navigateByUrl('/posts');
+    fixture.detectChanges();
+
+    void router.navigateByUrl('/admin/slow');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    fixture.detectChanges();
+
+    expect(((fixture.nativeElement as HTMLElement).querySelector('.page') as HTMLElement).classList.contains('page--wide')).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).querySelector('adv-widget-zone')).toBeNull();
+  });
+
+  it('switches to the public layout, with its zones, as soon as the route is recognised, before the public screen has opened', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    await router.navigateByUrl('/admin/roles');
+    fixture.detectChanges();
+    expect(((fixture.nativeElement as HTMLElement).querySelector('.page') as HTMLElement).classList.contains('page--wide')).toBe(true);
+
+    void router.navigateByUrl('/slow-public');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    fixture.detectChanges();
+
+    expect(((fixture.nativeElement as HTMLElement).querySelector('.page') as HTMLElement).classList.contains('page--wide')).toBe(false);
+    expect((fixture.nativeElement as HTMLElement).querySelectorAll('adv-widget-zone').length).toBe(4);
+  });
+
+  it('keeps the old layout when a navigation is refused (a redirect to sign-in is a new navigation that decides again)', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    await router.navigateByUrl('/posts');
+    fixture.detectChanges();
+
+    await router.navigateByUrl('/login');
+    fixture.detectChanges();
+
+    expect(((fixture.nativeElement as HTMLElement).querySelector('.page') as HTMLElement).classList.contains('page--wide')).toBe(false);
+  });
+});

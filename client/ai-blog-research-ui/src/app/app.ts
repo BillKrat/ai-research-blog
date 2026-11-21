@@ -1,7 +1,7 @@
 ﻿// Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, RoutesRecognized, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -75,6 +75,11 @@ export class App implements OnInit {
     // leaving the settings screen: read them again, so a title just saved shows without a browser refresh
     let lastUrl = this.router.url;
     this.wide.set(lastUrl.startsWith('/admin'));
+    // The layout (full width with no widget zones in the admin area, the reading column with zones on the public site) changes as soon as the
+    // route is recognised, before the new screen opens, so a screen never shows for a moment in the previous area's layout and then jumps.
+    this.router.events.pipe(filter((event) => event instanceof RoutesRecognized)).subscribe((event) => {
+      this.wide.set(event.urlAfterRedirects.startsWith('/admin'));
+    });
     this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event) => {
       this.wide.set(event.urlAfterRedirects.startsWith('/admin'));
       if (lastUrl.startsWith('/admin/settings') && !event.urlAfterRedirects.startsWith('/admin/settings')) {

@@ -61,3 +61,13 @@ flowchart LR
 - **Four requests per public page view** (one per zone), uncached; one request for all zones or a short cache is the first optimisation if the load shows up.
 - **A widget's settings are stored in clear text**, like plug-in settings; credentials wait for encrypted fields.
 - **The Widgets screen has no widget preview**; the public page is the preview.
+
+## Follow-up from the human's first live look (2026-11-21, same day)
+
+1. **Widgets screen, moving is slow (5 to 6 seconds):** each change is one request and the layout is read again. Not fixed (low priority by the human; the plan is drag and drop that marks the page changed and saves once). Now the **global spinner** turns for the whole change and every control is disabled until the layout is back, so nothing can be clicked twice.
+2. **Content jumped when switching from Admin to Posts:** the cause was the layout switching too late. The page changed from the full-width admin layout to the reading column with zones only when navigation had finished, so the Posts list showed for a moment in the admin layout and then jumped. The layout now switches as soon as the route is recognised, before the new screen opens (tests with a screen that is slow to open). Each zone also stays hidden until its answer has arrived and then fades in.
+3. **Tag cloud as pills:** the tag cloud widget now draws BlogEngine-style pills, each tag with its post-count badge and its link, sized by use (five size classes). Tags used by fewer posts than a **Fewest posts** setting (default 2) are hidden; the setting is editable on the placement. Text box and category list are unchanged.
+
+Found on the way (a real defect): the sanitiser plug-in was stripping **every CSS class** from widget and post HTML, so the cloud's pills would have been unstyled. It now keeps the blog's own widget classes (the tag cloud and term lists) and `aria-label`, and any class the owner adds on the sanitiser's Customize screen (**Extra allowed CSS classes**, validated; names belonging to the app's own interface, such as overlay, dialog, busy and admin classes, are refused so content cannot dress up as the app). Any other class is still stripped.
+
+Verified: Foundation Blog suite 209, Architecture 23; client projects core 53, entity-ui 62, collaboration 30, blog-reader 38, admin 109, app 39; app host tests 22 and API tests 55; production build 954.09 kB. The McpServer test project could not be run locally because the local McpServer.WebApi was running and locks its output (this change does not touch it); CI runs it.

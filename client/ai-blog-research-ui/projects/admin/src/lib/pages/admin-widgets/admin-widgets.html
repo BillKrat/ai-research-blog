@@ -22,10 +22,10 @@
                   <span class="placement__note">(not available: its plug-in is off or gone)</span>
                 }
                 <span class="placement__actions">
-                  <button type="button" [disabled]="first" [attr.aria-label]="'Move up ' + nameOf(placement)" (click)="move(placement, -1)">&#9650;</button>
-                  <button type="button" [disabled]="last" [attr.aria-label]="'Move down ' + nameOf(placement)" (click)="move(placement, 1)">&#9660;</button>
-                  <button type="button" [disabled]="!placement.available" [attr.aria-label]="'Edit ' + nameOf(placement)" (click)="edit(placement)">Edit</button>
-                  <button type="button" [attr.aria-label]="'Remove ' + nameOf(placement)" (click)="remove(placement)">Remove</button>
+                  <button type="button" [disabled]="first || busy()" [attr.aria-label]="'Move up ' + nameOf(placement)" (click)="move(placement, -1)">&#9650;</button>
+                  <button type="button" [disabled]="last || busy()" [attr.aria-label]="'Move down ' + nameOf(placement)" (click)="move(placement, 1)">&#9660;</button>
+                  <button type="button" [disabled]="!placement.available || busy()" [attr.aria-label]="'Edit ' + nameOf(placement)" (click)="edit(placement)">Edit</button>
+                  <button type="button" [disabled]="busy()" [attr.aria-label]="'Remove ' + nameOf(placement)" (click)="remove(placement)">Remove</button>
                 </span>
               </li>
             } @empty {
@@ -33,13 +33,13 @@
             }
           </ul>
           <div class="zone__add">
-            <select [attr.aria-label]="'Widget to add to the ' + zoneName(zone) + ' zone'" (change)="choose(zone, $any($event.target).value)">
+            <select [disabled]="busy()" [attr.aria-label]="'Widget to add to the ' + zoneName(zone) + ' zone'" (change)="choose(zone, $any($event.target).value)">
               <option value="">Choose a widget...</option>
               @for (widget of overview().available; track widget.definition.key) {
                 <option [value]="widget.definition.key" [selected]="choice()[zone] === widget.definition.key">{{ widget.definition.title }}</option>
               }
             </select>
-            <button type="button" data-action="add" [disabled]="!choice()[zone]" (click)="add(zone)">Add</button>
+            <button type="button" data-action="add" [disabled]="!choice()[zone] || busy()" (click)="add(zone)">Add</button>
           </div>
         </section>
       }
@@ -61,8 +61,8 @@
         </div>
         <adv-setting-fields idPrefix="widget" [definitions]="editDefinitions()" [values]="editSettings()" (changed)="setSetting($event.name, $event.value)" />
         <div class="admin-widgets__actions">
-          <button type="submit" data-action="save">Save</button>
-          <button type="button" (click)="cancel()">Cancel</button>
+          <button type="submit" data-action="save" [disabled]="busy()">Save</button>
+          <button type="button" [disabled]="busy()" (click)="cancel()">Cancel</button>
         </div>
       </form>
     }

@@ -1,9 +1,20 @@
 :host {
   display: block;
+  animation: widget-zone-in 0.2s ease-out;
 }
 
 :host(.widget-zone--empty) {
   display: none;
+}
+
+@keyframes widget-zone-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .widget {
@@ -14,9 +25,78 @@
     margin: 0 0 0.5rem;
     font-size: 1rem;
   }
+}
 
-  &__body ul {
+// Widget HTML comes from the server as plain markup, so its styles reach it through ng-deep.
+.widget__body {
+  ::ng-deep ul.widget-terms {
     margin: 0;
     padding-left: 1.1rem;
+  }
+
+  // The tag cloud, the way BlogEngine drew it: each tag a pill with its post count, sized by use (the server picks the size class).
+  ::ng-deep ul.tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.75rem;
+    margin: 0;
+    padding: 0.25rem 0;
+    list-style: none;
+  }
+
+  ::ng-deep .tag-cloud__item {
+    display: inline-flex;
+    max-width: 100%;
+  }
+
+  ::ng-deep .tag-cloud__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.2em 0.35em 0.2em 0.8em;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 999px;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+    color: var(--mat-sys-primary);
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--mat-sys-surface-container-high);
+      border-color: var(--mat-sys-primary);
+    }
+  }
+
+  ::ng-deep .tag-cloud__count {
+    min-width: 1.6em;
+    padding: 0.1em 0.5em;
+    border-radius: 999px;
+    background: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+    font-size: 0.6em;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  ::ng-deep .tag-cloud__size-1 {
+    font-size: 0.9rem;
+  }
+
+  ::ng-deep .tag-cloud__size-2 {
+    font-size: 1.1rem;
+  }
+
+  ::ng-deep .tag-cloud__size-3 {
+    font-size: 1.35rem;
+  }
+
+  ::ng-deep .tag-cloud__size-4 {
+    font-size: 1.65rem;
+  }
+
+  ::ng-deep .tag-cloud__size-5 {
+    font-size: 2rem;
   }
 }
