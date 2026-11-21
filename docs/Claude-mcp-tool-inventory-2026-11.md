@@ -119,3 +119,5 @@ which moves behind this seam with the same default; turning it off needs a high 
 plain warning when it is off. Same pattern for widget HTML (`IWidget`).
 
 **Status (2026-11-21):** stage 3 is built: see `docs/artifacts/Claude-2026-11-21-research-tools-mcp-only.md`. The developer sample (stage 4) waits for the widget and zone plan.
+
+Plug-in discovery (human, 2026-11-21): MEF finds plug-ins, widgets and tools in referenced projects AND in a plug-in directory of DLLs; load failures are reported, not skipped; keep a per-blog scope possible (see the backlog entry "Widgets and plug-ins through MEF", items 6 and 7).
