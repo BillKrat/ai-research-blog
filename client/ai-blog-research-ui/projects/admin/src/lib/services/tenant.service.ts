@@ -48,6 +48,10 @@ export class TenantService {
   private readonly _problem = signal('');
   readonly problem = this._problem.asReadonly();
 
+  private readonly _notice = signal('');
+  /** What the last change did, in plain words (cleared when the next one starts). */
+  readonly notice = this._notice.asReadonly();
+
   load(): void {
     this.http.get<CurrentTenant>(`${this.apiUrl}/api/tenant/current`).subscribe({
       next: (current) => this._current.set(current),
@@ -76,10 +80,15 @@ export class TenantService {
   }
 
   /** Makes a host name reach the tenant (it mirrors the tenant's domain). The server refuses a name that already reaches another tenant. */
-  addAlias(tenantId: string, host: string): void {
+  addAlias(tenantId: string, host: string, done?: () => void): void {
     this._problem.set('');
+    this._notice.set('');
     this.http.put<string[]>(`${this.apiUrl}/api/tenant/${encodeURIComponent(tenantId)}/aliases`, { host }).subscribe({
-      next: () => this.loadHosts(),
+      next: () => {
+        this._notice.set(`Added ${this.nameOf(host)}. It works now.`);
+        this.loadHosts();
+        done?.();
+      },
       error: (error) => this._problem.set(this.messageOf(error, 'The host was not added.')),
     });
   }
@@ -97,17 +106,26 @@ export class TenantService {
 
   removeAlias(tenantId: string, host: string): void {
     this._problem.set('');
+    this._notice.set('');
     this.http.delete<string[]>(`${this.apiUrl}/api/tenant/${encodeURIComponent(tenantId)}/aliases/${encodeURIComponent(host)}`).subscribe({
-      next: () => this.loadHosts(),
+      next: () => {
+        this._notice.set(`Removed ${host}.`);
+        this.loadHosts();
+      },
       error: (error) => this._problem.set(this.messageOf(error, 'The host was not removed.')),
     });
   }
 
-  private loadHosts(): void {
+  /** Reads every tenant with its host names (platform administrators only; the server refuses anyone else). */
+  loadHosts(): void {
     this.http.get<TenantHosts[]>(`${this.apiUrl}/api/tenant/hosts`).subscribe({
       next: (all) => this._all.set(all),
       error: () => this._all.set([]),
     });
+  }
+
+  private nameOf(host: string): string {
+    return host.replace(/^[a-z]+:\/\//i, '').split(/[/:?#]/)[0].toLowerCase();
   }
 
   private messageOf(error: unknown, fallback: string): string {

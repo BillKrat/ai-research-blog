@@ -1,0 +1,44 @@
+<section class="tenants">
+  <adv-page-header title="Tenants" />
+
+  <p class="tenants__intro">
+    A host name decides whose site and data a visit reaches. Add a site's <strong>temporary address</strong> (for example
+    <code>http://your-account-site1.atempurl.com</code>; the scheme is ignored) or another domain to the tenant it should show. The API then also lets that
+    site's browser call it. A host name can belong to only one tenant. A change works straight away.
+  </p>
+
+  @if (notice()) {
+    <p class="tenants__notice" role="status">{{ notice() }}</p>
+  }
+  @if (problem()) {
+    <p class="tenants__problem" role="alert">{{ problem() }}</p>
+  }
+
+  @for (entry of tenants(); track entry.id) {
+    <article class="tenants__card">
+      <h3>{{ entry.name }}</h3>
+      <p class="tenants__domain">Domain: <strong>{{ entry.domain }}</strong></p>
+      <ul class="tenants__aliases" [attr.aria-label]="'Host names of ' + entry.name">
+        @for (alias of entry.aliases; track alias) {
+          <li>
+            {{ alias }}
+            <button type="button" class="tenants__remove" [attr.aria-label]="'Remove ' + alias" (click)="remove(entry.id, alias)">&times;</button>
+          </li>
+        } @empty {
+          <li class="tenants__none">No other host names.</li>
+        }
+      </ul>
+      <div class="tenants__add">
+        <input
+          type="text"
+          [attr.aria-label]="'New host name for ' + entry.name"
+          placeholder="host name or address"
+          [value]="draft()[entry.id] ?? ''"
+          (input)="setDraft(entry.id, $any($event.target).value)"
+          (keydown.enter)="add(entry)"
+        />
+        <button type="button" [attr.aria-label]="'Add host name to ' + entry.name" (click)="add(entry)">Add</button>
+      </div>
+    </article>
+  }
+</section>

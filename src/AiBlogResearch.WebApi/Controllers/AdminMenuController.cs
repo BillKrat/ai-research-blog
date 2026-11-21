@@ -35,6 +35,7 @@ public static class AdminMenuDefinitions
         new("System", "settings", "Settings", "/admin/settings", "settings", RequiredRight: Rights.SettingsManage, Order: 2),
         new("System", "plugins", "Plugins", "/admin/plugins", "extension", RequiredRight: Rights.PluginsManage, Order: 3),
         new("System", "widgets", "Widgets", "/admin/widgets", "widgets", RequiredRight: Rights.SettingsManage, Order: 4),
+        new("System", "tenants", "Tenants", "/admin/tenants", "domain", RequiredRight: Rights.PlatformManage, Order: 5),
     ];
 
     /// <summary>The menu entries a plug-in contributes: the entry is listed only while one of its plug-ins is on.</summary>

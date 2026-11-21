@@ -37,3 +37,7 @@ Register the temporary address as an alias on the tenant (Admin > Tenants, host 
 ## Not done (rest of T4)
 
 Adding the temporary address as an alias automatically at first run; a tenant on its own domain with its own API choice (the Origin-selects-public-tenant design in the backlog, which does narrow T1 and needs its own threat tests); a new tenant on a domain; the working default before any domain exists; per-tenant sharing settings.
+
+## Follow-up the same day: Admin > Tenants and instant effect (human request)
+
+The human found there was nowhere to type the temporary address. Built: **Admin > Tenants** (System menu, platform right): each tenant with its domain and host names, a field and Add button per tenant (a pasted address with `http://` is fine, the server keeps only the host name), Remove on each name, the server's refusal shown (a name can belong to only one tenant), and a status line saying the change works now. `TenantCacheInvalidator` (singleton in `Adventures.WebApi`): the per-host tenant answers and the CORS list carry its change token, and adding or removing a host name fires it, so nothing waits out the 60 seconds (per process: a second server instance would). Tests: invalidation for the tenant middleware, the CORS provider and the controller; 6 page tests; client 121, whole Foundation, host 28, API 55; production build 962 kB.
