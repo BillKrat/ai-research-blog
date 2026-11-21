@@ -104,3 +104,45 @@ describe('AdminPlugins discovery report', () => {
     expect(page.querySelector('[role="alert"]')).not.toBeNull();
   });
 });
+
+describe('AdminPlugins sanitiser warning', () => {
+  function setup(enabled: boolean) {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    const fixture = TestBed.createComponent(AdminPlugins);
+    const http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.endsWith('/api/plugins') && r.method === 'GET')
+      .flush([{ key: 'html-sanitizer', title: 'HTML sanitising', description: 'd', version: '1.0.0', priority: 5, enabled }]);
+    http.expectOne((r) => r.url.endsWith('/api/plugins/load-report')).flush({ loaded: [], failures: [] });
+    fixture.detectChanges();
+    return { fixture, http, page: fixture.nativeElement as HTMLElement };
+  }
+
+  it('warns plainly when HTML sanitising is switched off', () => {
+    const { page } = setup(false);
+
+    const warning = page.querySelector('.admin-plugins__warning');
+    expect(warning).not.toBeNull();
+    expect(warning!.textContent).toContain('script');
+  });
+
+  it('shows no warning while HTML sanitising is on', () => {
+    const { page } = setup(true);
+
+    expect(page.querySelector('.admin-plugins__warning')).toBeNull();
+  });
+
+  it('shows the warning as soon as the switch is turned off', () => {
+    const { fixture, http, page } = setup(true);
+
+    const input = page.querySelector('input[role="switch"]') as HTMLInputElement;
+    input.checked = false;
+    input.dispatchEvent(new Event('change'));
+    http.expectOne((r) => r.url.endsWith('/api/plugins/html-sanitizer/disable')).flush(null);
+    http.expectOne((r) => r.url.endsWith('/api/admin/menu')).flush({ sections: [] });
+    fixture.detectChanges();
+
+    expect(page.querySelector('.admin-plugins__warning')).not.toBeNull();
+  });
+});

@@ -26,22 +26,9 @@ namespace AiBlogResearch.WebApi;
 
 internal static class AppStartupUpgrades
 {
+    // legacy: the collaboration plug-ins are fixed off by LegacyModePlugins (nothing is written here, there is no tenant at start-up)
     public static async Task ApplyAsync(this WebApplication app, bool legacy, bool skipSeeding)
     {
-        if (legacy)
-        {
-            // The legacy tables have no place for collaboration items: its plug-ins are switched off (the Plugins page shows them off).
-            using var pluginScope = app.Services.CreateScope();
-            var plugins = pluginScope.ServiceProvider.GetRequiredService<IPlugins>();
-            foreach (var definition in CollaborationPlugins.Definitions)
-            {
-                if (await plugins.IsEnabledAsync(definition.Key))
-                {
-                    await plugins.SetEnabledAsync(definition.Key, false);
-                }
-            }
-        }
-
         if (!skipSeeding)
         {
             // Improved default rights for roles still at their first shipped values (a seed cannot supersede a stored value); an edited role is left alone.

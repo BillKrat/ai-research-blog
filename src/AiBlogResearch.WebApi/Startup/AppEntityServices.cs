@@ -99,7 +99,7 @@ internal static class AppEntityServices
             CollaborationConstants.DefaultGraph, s => new CollaborationItem(s), tenantScoped: true);
         services.AddNQuadEntityRepository(
             SchemaDal.Load(userQuads, PluginConstants.SchemaIri), PluginConstants.BaseIri, PluginConstants.TypeIri,
-            CollaborationConstants.DefaultGraph, s => new Plugin(s));
+            CollaborationConstants.DefaultGraph, s => new Plugin(s), tenantScoped: true);
         // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
         services.AddNQuadPlatformAdministrators();
         services.AddScoped<ITenantAliasEditor, TenantAliasEditor>();

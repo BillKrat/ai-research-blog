@@ -9,6 +9,13 @@
     <p class="admin-plugins__error" role="alert">{{ message }}</p>
   }
 
+  @if (sanitiserOff()) {
+    <p class="admin-plugins__warning" role="note">
+      HTML sanitising is switched off for this site. Posts and pages are saved and shown exactly as written, so anyone who can edit them can run script
+      for every visitor, including a script that steals a signed-in administrator's session. Keep it off only if you alone write for this site.
+    </p>
+  }
+
   @if (isLoading()) {
     <!-- the global gears (spinner) run while this loads -->
   } @else {

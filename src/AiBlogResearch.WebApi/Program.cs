@@ -134,6 +134,8 @@ try
     {
         // The whole Legacy switch: the SQL Dals are registered first, so the repository registrations below add no Dal for these types.
         builder.Services.AddBlogLegacy(legacySql!, Guid.TryParse(builder.Configuration["Legacy:BlogId"], out var legacyBlogId) ? legacyBlogId : null);
+        // No stored plug-in state in this mode: the collaboration plug-ins are fixed off (see LegacyModePlugins), replacing what used to be written at start-up.
+        builder.Services.AddScoped<Adventures.MEF.IPlugins, LegacyModePlugins>();
         Log.Information("Data mode: Legacy (BlogEngine SQL Server for posts, pages, categories and tags; collaboration off)");
     }
     // Uploaded images: in the same PostgreSQL database as the content (survives a redeploy, travels with the backup); memory for the in-memory development store.
