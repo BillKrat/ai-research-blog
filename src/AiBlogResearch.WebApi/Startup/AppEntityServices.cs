@@ -117,6 +117,7 @@ internal static class AppEntityServices
         services.AddScoped<IEntityBll<Tenant>>(provider => new EntityBll<Tenant>(provider.GetRequiredService<IEntityDal<Tenant>>()));
         services.AddScoped<IEntityBll<Organization>>(provider => new EntityBll<Organization>(provider.GetRequiredService<IEntityDal<Organization>>()));
         services.AddScoped<ITenantResolver, TenantResolver>();
+        services.AddScoped<ITenantHostSource, TenantHostSource>();
         // T1: the tenant of each request is decided from the host the server saw (Tenancy:Enforcement = Off, Report (default) or Enforce; Tenancy:FallbackDomain only in Development).
         services.AddTenancy(configuration, isDevelopment);
         // T2: posts, pages, categories, tags, comments, collaboration items and site settings live in the request tenant's own graph; every tenant is equal and a host with no tenant sees none of it.

@@ -32,16 +32,9 @@ internal static class AppPlatformServices
     public static IServiceCollection AddAppPlatform(this IServiceCollection services, IConfiguration configuration, bool isDevelopment)
     {
             var allowedOrigins = Adventures.WebApi.SiteDomain.AllowedOrigins(configuration, isDevelopment).ToArray();
-            services.AddCors(options =>
-            {
-                options.AddPolicy(AngularCorsPolicy, policy =>
-                {
-                    policy.WithOrigins(allowedOrigins)
-                        .AllowAnyHeader()
-                        .WithExposedHeaders(CorrelationIdMiddleware.HeaderName)
-                        .AllowAnyMethod();
-                });
-            });
+            // The sites that may call the API: the fixed origins above plus every domain, www host and alias registered on a tenant (read from the data, kept 60 s),
+            // so a site's temporary address works as soon as it is registered, with no wildcard and no redeploy.
+            services.AddTenantCors(AngularCorsPolicy, allowedOrigins);
 
             services.AddControllers()
                 .AddBlogControllers()
