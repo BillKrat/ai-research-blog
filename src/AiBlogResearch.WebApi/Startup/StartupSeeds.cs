@@ -86,6 +86,9 @@ internal static class StartupSeeds
         // The on/off state of the built-in plug-ins (a plug-in with no stored state is on).
         await store.SeedOnceAsync(
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-016-plugins.nq"), PluginConstants.SeedName);
+        // The settings an administrator customizes for a plug-in (the HTML sanitiser allow-list is the first); one row per plug-in and setting, per tenant.
+        await store.SeedOnceAsync(
+            Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-024-plugin-settings.nq"), PluginConstants.SettingSeedName);
         // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
         await store.SeedOnceAsync(
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), BlogConstants.Site.SeedName);

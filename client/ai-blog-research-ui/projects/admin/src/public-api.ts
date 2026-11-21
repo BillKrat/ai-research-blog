@@ -16,6 +16,7 @@ export * from './lib/pages/admin-shell/admin-shell';
 export * from './lib/pages/admin-grid/admin-grid';
 export * from './lib/pages/admin-entity/admin-entity';
 export * from './lib/pages/admin-plugins/admin-plugins';
+export * from './lib/pages/admin-plugin-customize/admin-plugin-customize';
 export * from './lib/pages/admin-exceptions/admin-exceptions';
 export * from './lib/pages/admin-dashboard/admin-dashboard';
 export * from './lib/components/health-pill/health-pill';

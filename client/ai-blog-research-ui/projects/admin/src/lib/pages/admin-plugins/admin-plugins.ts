@@ -2,6 +2,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { describeApiError, bindSpinner } from '@adventures/core';
 import { AdminMenuService } from '../../services/admin-menu.service';
+import { RouterLink } from '@angular/router';
 import { PageHeader } from '../../components/page-header/page-header';
 import { PluginLoadReport, PluginState, PluginsService } from '../../services/plugins.service';
 
@@ -11,7 +12,7 @@ import { PluginLoadReport, PluginState, PluginsService } from '../../services/pl
  */
 @Component({
   selector: 'adv-admin-plugins',
-  imports: [PageHeader],
+  imports: [PageHeader, RouterLink],
   templateUrl: './admin-plugins.html',
   styleUrl: './admin-plugins.scss',
 })

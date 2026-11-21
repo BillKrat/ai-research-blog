@@ -2,6 +2,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { AdminPlugins } from './admin-plugins';
 
 describe('AdminPlugins', () => {
@@ -144,5 +145,31 @@ describe('AdminPlugins sanitiser warning', () => {
     fixture.detectChanges();
 
     expect(page.querySelector('.admin-plugins__warning')).not.toBeNull();
+  });
+});
+
+describe('AdminPlugins customize link', () => {
+  function setup(hasSettings: boolean) {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
+    const fixture = TestBed.createComponent(AdminPlugins);
+    const http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.endsWith('/api/plugins') && r.method === 'GET')
+      .flush([{ key: 'html-sanitizer', title: 'HTML sanitising', description: 'd', version: '1.0.0', priority: 5, enabled: true, hasSettings }]);
+    http.expectOne((r) => r.url.endsWith('/api/plugins/load-report')).flush({ loaded: [], failures: [] });
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('links a plug-in that has settings to its Customize screen', () => {
+    const link = setup(true).querySelector('a[href$="/admin/plugins/html-sanitizer"]');
+
+    expect(link).not.toBeNull();
+    expect(link!.textContent).toContain('Customize');
+  });
+
+  it('shows no Customize link for a plug-in without settings', () => {
+    expect(setup(false).querySelector('a[href*="/admin/plugins/"]')).toBeNull();
   });
 });

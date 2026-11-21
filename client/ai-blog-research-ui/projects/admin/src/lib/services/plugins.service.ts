@@ -12,6 +12,24 @@ export interface PluginState {
   version: string;
   priority: number;
   enabled: boolean;
+  /** True when the plug-in declares settings, so its Customize screen exists. */
+  hasSettings?: boolean;
+}
+
+/** One setting a plug-in declares, as its Customize screen shows it. */
+export interface PluginSettingDefinition {
+  name: string;
+  label: string;
+  description: string;
+  kind: 'Text' | 'Lines' | 'Bool' | 'Number';
+  default: string;
+  maxLength: number;
+}
+
+/** A plug-in's declared settings and the value of each now (the default where none is saved). */
+export interface PluginSettingsModel {
+  definitions: PluginSettingDefinition[];
+  values: Record<string, string>;
 }
 
 /** A plug-in that discovery loaded at start-up, and where it came from (assembly:Name or directory:File.dll). */
@@ -42,6 +60,14 @@ export class PluginsService {
 
   list(): Observable<PluginState[]> {
     return this.http.get<PluginState[]>(`${this.apiUrl}/api/plugins`);
+  }
+
+  getSettings(key: string): Observable<PluginSettingsModel> {
+    return this.http.get<PluginSettingsModel>(`${this.apiUrl}/api/plugins/${encodeURIComponent(key)}/settings`);
+  }
+
+  saveSettings(key: string, values: Record<string, string>): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/api/plugins/${encodeURIComponent(key)}/settings`, { values });
   }
 
   loadReport(): Observable<PluginLoadReport> {

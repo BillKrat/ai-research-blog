@@ -15,7 +15,7 @@ public sealed class LegacyModePlugins(IEnumerable<PluginDefinition> definitions)
 
     public Task<IReadOnlyList<PluginState>> ListAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<PluginState>>(definitions
-            .Select(p => new PluginState(p.Key, p.Title, p.Description, p.Version, p.Priority, !AlwaysOff.Contains(p.Key)))
+            .Select(p => new PluginState(p.Key, p.Title, p.Description, p.Version, p.Priority, !AlwaysOff.Contains(p.Key), p.Settings is { Count: > 0 }))
             .OrderBy(p => p.Priority)
             .ToList());
 

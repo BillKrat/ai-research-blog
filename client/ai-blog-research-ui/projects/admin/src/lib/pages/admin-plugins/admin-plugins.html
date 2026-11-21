@@ -26,6 +26,7 @@
           <th>Description</th>
           <th>Version</th>
           <th>Enabled</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -43,6 +44,11 @@
                 [attr.aria-label]="(plugin.enabled ? 'Switch off ' : 'Switch on ') + plugin.title"
                 (change)="toggle(plugin, $any($event.target).checked)"
               />
+            </td>
+            <td>
+              @if (plugin.hasSettings) {
+                <a [routerLink]="['/admin/plugins', plugin.key]">Customize</a>
+              }
             </td>
           </tr>
         }

@@ -1,0 +1,70 @@
+<section class="plugin-customize">
+  <adv-page-header title="Customize plug-in" />
+  <p class="plugin-customize__back"><a routerLink="/admin/plugins">Back to Plugins</a></p>
+
+  @for (message of errors(); track message) {
+    <p class="plugin-customize__error" role="alert">{{ message }}</p>
+  }
+
+  @if (!isLoading() && definitions().length > 0) {
+    <form class="plugin-customize__form" (submit)="save($event)">
+      @for (definition of definitions(); track definition.name) {
+        <div class="plugin-customize__field">
+          @switch (definition.kind) {
+            @case ('Lines') {
+              <label [attr.for]="'f-' + definition.name">{{ definition.label }}</label>
+              <textarea
+                [id]="'f-' + definition.name"
+                [name]="definition.name"
+                rows="4"
+                [maxLength]="definition.maxLength"
+                [value]="values()[definition.name] ?? ''"
+                (input)="set(definition.name, $any($event.target).value)"
+              ></textarea>
+            }
+            @case ('Bool') {
+              <label class="plugin-customize__check">
+                <input
+                  type="checkbox"
+                  [name]="definition.name"
+                  [checked]="values()[definition.name] === 'true'"
+                  (change)="set(definition.name, $any($event.target).checked ? 'true' : 'false')"
+                />
+                {{ definition.label }}
+              </label>
+            }
+            @case ('Number') {
+              <label [attr.for]="'f-' + definition.name">{{ definition.label }}</label>
+              <input
+                type="number"
+                [id]="'f-' + definition.name"
+                [name]="definition.name"
+                [value]="values()[definition.name] ?? ''"
+                (input)="set(definition.name, $any($event.target).value)"
+              />
+            }
+            @default {
+              <label [attr.for]="'f-' + definition.name">{{ definition.label }}</label>
+              <input
+                type="text"
+                [id]="'f-' + definition.name"
+                [name]="definition.name"
+                [maxLength]="definition.maxLength"
+                [value]="values()[definition.name] ?? ''"
+                (input)="set(definition.name, $any($event.target).value)"
+              />
+            }
+          }
+          <small class="plugin-customize__hint">{{ definition.description }}</small>
+        </div>
+      }
+
+      <div class="plugin-customize__actions">
+        <button type="submit" [disabled]="isSaving()">Save</button>
+        @if (saved()) {
+          <span class="plugin-customize__saved" role="status">Saved.</span>
+        }
+      </div>
+    </form>
+  }
+</section>

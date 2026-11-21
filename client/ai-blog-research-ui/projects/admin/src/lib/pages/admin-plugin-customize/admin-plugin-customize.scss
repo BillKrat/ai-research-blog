@@ -1,0 +1,43 @@
+.plugin-customize {
+  &__error {
+    color: var(--mat-sys-error);
+  }
+
+  &__form {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 48rem;
+  }
+
+  &__field {
+    display: grid;
+    gap: 0.25rem;
+
+    textarea,
+    input[type='text'],
+    input[type='number'] {
+      width: 100%;
+      font: inherit;
+    }
+  }
+
+  &__check {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  &__hint {
+    opacity: 0.75;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  &__saved {
+    color: var(--mat-sys-primary);
+  }
+}
