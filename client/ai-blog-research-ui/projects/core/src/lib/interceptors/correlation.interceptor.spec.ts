@@ -2,7 +2,7 @@
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { correlationHeader, correlationInterceptor } from './correlation.interceptor';
+import { correlationHeader, correlationInterceptor, newCorrelationId } from './correlation.interceptor';
 
 describe('correlationInterceptor', () => {
   let http: HttpClient;
@@ -24,6 +24,22 @@ describe('correlationInterceptor', () => {
     expect(ids[0]).toMatch(/^[0-9a-f]{32}$/);
     expect(ids[1]).toMatch(/^[0-9a-f]{32}$/);
     expect(ids[0]).not.toBe(ids[1]);
+  });
+
+  it('still gives an id on a plain-http page, where the browser has no crypto.randomUUID (a temporary host address)', () => {
+    const original = crypto.randomUUID;
+    Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true });
+    try {
+      http.get('/api/health').subscribe();
+      http.get('/api/health').subscribe();
+
+      const ids = controller.match('/api/health').map((request) => request.request.headers.get(correlationHeader));
+      expect(ids[0]).toMatch(/^[0-9a-f]{32}$/);
+      expect(ids[0]).not.toBe(ids[1]);
+      expect(newCorrelationId()).toMatch(/^[0-9a-f]{32}$/);
+    } finally {
+      Object.defineProperty(crypto, 'randomUUID', { value: original, configurable: true });
+    }
   });
 
   it('keeps an id the caller already set', () => {

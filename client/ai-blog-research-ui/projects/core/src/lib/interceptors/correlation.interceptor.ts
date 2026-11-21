@@ -7,7 +7,12 @@ export const correlationHeader = 'X-Correlation-Id';
 
 /** A new id for one request: 32 hex characters, the same shape the server mints, so the two are indistinguishable in the logs. */
 export function newCorrelationId(): string {
-  return crypto.randomUUID().replaceAll('-', '');
+  // crypto.randomUUID exists only on secure pages (https or localhost); a site on its temporary http address has getRandomValues but not randomUUID.
+  if (typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID().replaceAll('-', '');
+  }
+
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
