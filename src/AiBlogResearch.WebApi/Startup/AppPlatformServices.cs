@@ -49,8 +49,8 @@ internal static class AppPlatformServices
             services.AddRequestHardening(configuration);
             services.AddSingleton(_ => new HealthSnapshotCache(HealthSnapshotCache.WindowFrom(configuration), TimeProvider.System));
 
-            services.AddOptions<M2MClientsOptions>()
-                .Bind(configuration.GetSection(M2MClientsOptions.SectionName));
+            // Each machine client's secret is named for its purpose (ClientSecret__ClaudeAuthor); the older position-based M2MClients__Clients__n__Secret still works.
+            services.AddM2MClients(configuration);
             services.AddSingleton<IClientSecretHasher, ClientSecretHasher>();
             services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
             services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search", McpDiagnosticsController.RequiredScope, Adventures.Blog.WebApi.AuthoringController.RequiredScope);

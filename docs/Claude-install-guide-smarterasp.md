@@ -39,7 +39,7 @@ Still ours to remove by hand if you publish a fork: the example text in `README.
 |---|---|---|
 | api | `ConnectionStrings__Postgres` | the connection string from step 2 |
 | api | `Jwt__SigningKey` | a long random value (generate one; never reuse ours) |
-| api | `M2MClients__Clients__<n>__Secret` | one random secret per machine client you switch on; bound by position, never insert, only append |
+| api | `ClientSecret__<ClientId in PascalCase>`, for example `ClientSecret__ClaudeAuthor` | one random secret per machine client you switch on (clients are listed in `appsettings.json`; no secret = the client is inactive). The older `M2MClients__Clients__<n>__Secret` still works |
 | api | `Anthropic__ApiKey` | optional; only for "Ask Claude" on exceptions |
 | mcp | the same signing and client settings it needs to validate the API's tokens | see the MCP site's settings file |
 
