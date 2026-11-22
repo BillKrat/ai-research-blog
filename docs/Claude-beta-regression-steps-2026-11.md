@@ -57,8 +57,15 @@ Legend: **S** = steps, **E** = expected result. Nothing below has been seen in a
 - S: A search with more than 10 results; Next, Previous, reload on page 2. E: paging works and the address keeps the search.
 - S: More than 20 searches in a minute. E: a "searching too fast" message, then it works again.
 
+### A10. Prompt Claude through MCP (row 7), review `artifacts/Claude-2026-11-22-prompt-claude-through-mcp.md`
+- Needs: the API and MCP servers deployed (new tool `get_exception`), and a new Claude Code session in the workspace (the `adventures-diagnostics` server in `.mcp.json` is read at start; approve it when asked).
+- S: In a new Claude Code session run `/mcp`. E: `adventures-diagnostics` is connected (the headers helper ran; no password prompt). If it does not connect, the `headersHelper` field is the first suspect.
+- S: Admin > Exceptions, click Prompt Claude on a row, read the text, paste it into that session. E: Claude calls `get_exception` with the row's entry id, then `diagnose_request` with the correlation id when there is one, and reports the cause; a row with no correlation id is traced through `exception_signatures` and `recent_exceptions`.
+- S: Look at the prompt text. E: it names the ids and the message, no stack trace, no secret; the vault script command is still there as a fallback.
+- S: Without the `mcp.diagnostics.read` scope (an anonymous call to `/api/diagnostics/exception/<id>`). E: 401.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
-Prompt Claude through MCP (row 7), the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
+the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 
 ## C. Standing regression areas to include in the final DCP (already live, re-check after the merge)
 Sign-in and first-password change; roles and rights per tenant; tenant switcher and host aliases; posts and pages (both editors, publish, slugs, images); public site (home, posts, pages, categories, tags, menu, RSS, old BlogEngine addresses); comments with moderation; collaboration items; plug-ins, Customize, widgets and the four zones; Exceptions and Diagnose; health; the MCP tool list.

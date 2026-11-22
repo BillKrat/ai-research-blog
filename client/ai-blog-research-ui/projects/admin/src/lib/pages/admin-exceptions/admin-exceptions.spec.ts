@@ -178,4 +178,43 @@ describe('AdminExceptions kinds of failure', () => {
     http.expectOne((r) => r.params.get('signature') === 'k1').flush('no', { status: 500, statusText: 'Server Error' });
     expect(spinner.active()).toBe(false);
   });
+
+  describe('Prompt Claude through MCP', () => {
+    const row = (values: Record<string, string>) => ({ entityId: 'e-123', values });
+    const component = () => open().fixture.componentInstance as unknown as { promptFor(r: { entityId: string; values: Record<string, string> }): string };
+
+    it('has Claude read the exception through the MCP tools, by the entry id, then trace the request by its correlation id', () => {
+      const text = component().promptFor(row({ ExceptionType: 'System.TimeoutException', Message: 'slow', CorrelationId: 'corr-9', SignatureId: 'k2' }));
+
+      expect(text).toContain('get_exception');
+      expect(text).toContain('e-123');
+      expect(text).toContain('diagnose_request');
+      expect(text).toContain('corr-9');
+    });
+
+    it('still works for a row with no correlation id: the entry id and the recent and signature tools', () => {
+      const text = component().promptFor(row({ ExceptionType: 'System.InvalidOperationException', Message: 'at startup' }));
+
+      expect(text).toContain('get_exception');
+      expect(text).toContain('e-123');
+      expect(text).toContain('exception_signatures');
+      expect(text).not.toContain('diagnose_request with');
+      expect(text).toContain('none (recorded outside a request');
+    });
+
+    it('keeps the vault script as a fallback for a session without the MCP server, and never carries a secret', () => {
+      const text = component().promptFor(row({ CorrelationId: 'corr-9' }));
+
+      expect(text).toContain('Claude-diagnose.ps1');
+      expect(text).toContain('Claude-secret.ps1 run');
+      expect(text).not.toMatch(/Bearer|clientSecret|password/i);
+    });
+
+    it('names the message and the ids, not the stack trace', () => {
+      const text = component().promptFor(row({ Message: 'boom', StackTrace: 'at Secret.Frame.Method()' }));
+
+      expect(text).toContain('boom');
+      expect(text).not.toContain('Secret.Frame');
+    });
+  });
 });
