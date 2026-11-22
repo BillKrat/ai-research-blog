@@ -71,6 +71,9 @@ Legend: **S** = steps, **E** = expected result. Nothing below has been seen in a
 - S: With the setting empty (the default), open the API on an unknown host. E: refused (404) exactly as before. A bare IP or `localhost` host with the setting on: still refused.
 - Not built, so not tested: reusing another domain's data (backlog).
 
+### A12. Seamless install and multi-site onboarding, DECIDED 2026-11-22, not built yet (`Claude-decision-2026-11-tenant-onboarding.md`)
+Steps are added here as each of its four stages lands. The target behaviour to regression-test at the end: a fresh install opens and signs in with Admin/Admin on the first host; a second domain shows the setup page and a platform administrator chooses attach (alias) or a new site with its own Admin/Admin; two tenants each have their own Admin; nobody signs in across tenants; an unknown host never creates a site by itself.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 
