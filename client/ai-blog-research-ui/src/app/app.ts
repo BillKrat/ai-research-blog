@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { SiteNav, SiteService, WidgetZone } from '@adventures/blog-reader';
-import { AdminExceptionsService, AdminMenuService, HealthService } from '@adventures/admin';
+import { AdminExceptionsService, AdminMenuService, HealthService, SetupService } from '@adventures/admin';
 import { API_BASE_URL, ApiProblemService, AuthService, SpinnerService } from '@adventures/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LabelPipe, LanguageLoader } from '@adventures/entity-ui';
@@ -49,6 +49,7 @@ export class App implements OnInit {
 
   private readonly site = inject(SiteService);
   private readonly language = inject(LanguageLoader);
+  private readonly setup = inject(SetupService);
   protected readonly apiProblem = inject(ApiProblemService);
   /** The turning gears shown over the page while any screen has asked for them. */
   protected readonly spinner = inject(SpinnerService);
@@ -109,6 +110,15 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this.site.get().subscribe();
+    // An address that reaches no site is sent to the setup page (the server names no site in this answer).
+    this.setup.status().subscribe({
+      next: (status) => {
+        if (status.needsSetup && !this.router.url.startsWith('/setup')) {
+          void this.router.navigateByUrl('/setup');
+        }
+      },
+      error: () => undefined,
+    });
     this.language.load().subscribe();
     // leaving the settings screen: read them again, so a title just saved shows without a browser refresh
     let lastUrl = this.router.url;

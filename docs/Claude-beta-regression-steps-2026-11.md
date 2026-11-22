@@ -98,6 +98,15 @@ Steps are added here as each of its four stages lands.
 - S: With `Hosting:ServeClient=false` on the site, open `/`. E: the JSON banner, as before.
 - S: Our own live layout (www and api., `DEPLOY_MODE` unset). E: nothing changes; the two split workflows run as before.
 
+### A14. Onboarding stage 3, setup page for an unattached address, review `artifacts/Claude-2026-11-22-onboarding-stage-3-setup-page.md`
+- S: With a site already set up, open the app on an address that is bound to the same site in IIS or the panel but is NOT a registered alias (for example a second temporary address). E: the client loads and sends you to `/setup`; it names no site before you sign in.
+- S: On `/setup` sign in with the site's domain, a platform administrator's user name and the wrong password. E: a plain refusal, the same for a wrong site or a person who is not a platform administrator. Try ten quick attempts. E: rate limited.
+- S: Sign in with a site's default Admin that has never changed its password. E: it tells you to change the password on that site first.
+- S: Sign in correctly. E: you can choose a site and Attach. Attach. E: "Done"; open the site: the address shows that site and signs in with that site's accounts. The Tenants screen lists the address as an alias.
+- S: On another unattached address choose Start a new site and give a name. E: a separate site with its own Admin/Admin (change forced at the first sign-in); the platform administrator who set it up is not an administrator of it; the Tenants screen lists it.
+- S: With a setup token (browser tools or a script), call `/api/posts` or `/api/tenant/hosts`. E: 403. Call `/api/setup/sites` after the address has been attached. E: 404.
+- S: Open `/setup` on an address that already reaches a site. E: "This address needs no setup".
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 

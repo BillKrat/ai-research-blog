@@ -36,3 +36,5 @@ export * from './lib/pages/admin-languages/admin-languages';
 export * from './lib/services/mail-admin.service';
 export * from './lib/services/maintenance-admin.service';
 export * from './lib/pages/admin-maintenance/admin-maintenance';
+export * from './lib/services/setup.service';
+export * from './lib/pages/setup/setup';

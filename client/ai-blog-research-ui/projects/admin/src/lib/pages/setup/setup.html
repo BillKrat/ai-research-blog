@@ -1,0 +1,70 @@
+<section class="setup">
+  <adv-page-header [title]="'setupTitle' | label" />
+
+  @switch (step()) {
+    @case ('checking') {
+      <p class="setup__note" role="status">{{ 'setupChecking' | label }}</p>
+    }
+    @case ('notNeeded') {
+      <p class="setup__note" role="status">{{ 'setupNotNeeded' | label }}</p>
+    }
+    @case ('signIn') {
+      <p class="setup__note">{{ 'setupIntro' | label: host() }}</p>
+      <form class="setup__form" [formGroup]="signInForm" (ngSubmit)="signIn()">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'setupSite' | label }}</mat-label>
+          <input matInput formControlName="site" autocomplete="off" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'setupUserName' | label }}</mat-label>
+          <input matInput formControlName="userName" autocomplete="username" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'setupPassword' | label }}</mat-label>
+          <input matInput type="password" formControlName="password" autocomplete="current-password" />
+        </mat-form-field>
+        @if (error(); as key) {
+          <p class="setup__error" role="alert">{{ key | label }}</p>
+        }
+        <button mat-flat-button type="submit" [disabled]="signInForm.invalid || busy()" [matTooltip]="'signIn' | label" [attr.aria-label]="'signIn' | label">
+          <span><mat-icon>login</mat-icon> {{ 'signIn' | label }}</span>
+        </button>
+      </form>
+    }
+    @case ('choose') {
+      <p class="setup__note">{{ 'setupChoose' | label: host() }}</p>
+      <form class="setup__form" [formGroup]="attachForm" (ngSubmit)="attach()">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'setupAttachTo' | label }}</mat-label>
+          <mat-select formControlName="tenantId">
+            @for (site of sites(); track site.id) {
+              <mat-option [value]="site.id">{{ site.name }} ({{ site.domain }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-flat-button type="submit" [disabled]="attachForm.invalid || busy()" [matTooltip]="'setupAttach' | label" [attr.aria-label]="'setupAttach' | label">
+          <span><mat-icon>link</mat-icon> {{ 'setupAttach' | label }}</span>
+        </button>
+      </form>
+      <p class="setup__note">{{ 'setupNewNote' | label }}</p>
+      <form class="setup__form" [formGroup]="newForm" (ngSubmit)="startNew()">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'setupSiteName' | label }}</mat-label>
+          <input matInput formControlName="name" maxlength="80" />
+        </mat-form-field>
+        <button mat-stroked-button type="submit" [disabled]="newForm.invalid || busy()" [matTooltip]="'setupNew' | label" [attr.aria-label]="'setupNew' | label">
+          <span><mat-icon>add_circle</mat-icon> {{ 'setupNew' | label }}</span>
+        </button>
+      </form>
+      @if (error(); as key) {
+        <p class="setup__error" role="alert">{{ key | label }}</p>
+      }
+    }
+    @case ('done') {
+      <p class="setup__note" role="status">{{ (result() === 'attached' ? 'setupAttached' : 'setupCreated') | label }}</p>
+      <a mat-flat-button href="/" [matTooltip]="'setupOpenSite' | label" [attr.aria-label]="'setupOpenSite' | label">
+        <span><mat-icon>open_in_new</mat-icon> {{ 'setupOpenSite' | label }}</span>
+      </a>
+    }
+  }
+</section>
