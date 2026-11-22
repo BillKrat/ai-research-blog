@@ -30,6 +30,7 @@ export const routes: Routes = [
   { path: 'post/:year/:month/:day/:slug/rate/:stars', redirectTo: legacyPostRedirect },
   { path: 'post/:slug', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostView) },
   { path: 'page/:slug', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PageView) },
+  { path: 'search', loadComponent: () => import('@adventures/blog-reader').then((m) => m.SearchPage) },
   { path: 'category/:name', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'category' } },
   { path: 'tag/:name', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'tag' } },
   { path: 'login', loadComponent: () => import('@adventures/admin').then((m) => m.Login) },

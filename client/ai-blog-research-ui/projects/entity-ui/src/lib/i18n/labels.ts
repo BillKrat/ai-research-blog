@@ -117,6 +117,7 @@ export const LABELS = {
   sendTest: 'Send a test message',
   exportContent: 'Download a backup of posts and pages',
   clearCache: 'Clear the cache',
+  search: 'Search',
 } as const;
 
 export type LabelKey = keyof typeof LABELS;

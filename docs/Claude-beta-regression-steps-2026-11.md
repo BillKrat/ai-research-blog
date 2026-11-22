@@ -50,8 +50,15 @@ Legend: **S** = steps, **E** = expected result. Nothing below has been seen in a
 - S: Website `javascript:alert(1)`, `example.org`, or with a space; Picture `data:image/png;base64,AAAA` or `//evil.example/x.png`; About me over 1000 characters. E: each refused with a message on that field, nothing saved.
 - S: Leave all three empty and save. E: fine (all optional); existing users and sign-in are unaffected.
 
+### A9. Basic search (row 6), review `artifacts/Claude-2026-11-22-basic-search.md`
+- S: Header search icon opens /search. Search a word in a post title, one only in a post's text, one only in a tag. E: each post is found; the title hit ranks first; each hit links to the post or page.
+- S: Two words. E: only items with both. A word that is only in a draft or an unpublished page. E: not found.
+- S: One letter; a 101-character query; `.*`; `<script>`. E: a message for the first two; no results and no error for the others; nothing shown as markup.
+- S: A search with more than 10 results; Next, Previous, reload on page 2. E: paging works and the address keeps the search.
+- S: More than 20 searches in a minute. E: a "searching too fast" message, then it works again.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
-Basic search (row 6), Prompt Claude through MCP (row 7), the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
+Prompt Claude through MCP (row 7), the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 
 ## C. Standing regression areas to include in the final DCP (already live, re-check after the merge)
 Sign-in and first-password change; roles and rights per tenant; tenant switcher and host aliases; posts and pages (both editors, publish, slugs, images); public site (home, posts, pages, categories, tags, menu, RSS, old BlogEngine addresses); comments with moderation; collaboration items; plug-ins, Customize, widgets and the four zones; Exceptions and Diagnose; health; the MCP tool list.

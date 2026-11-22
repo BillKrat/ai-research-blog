@@ -1,0 +1,45 @@
+.search {
+  &__form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+    input {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__error {
+    color: var(--mat-sys-error);
+  }
+
+  &__list {
+    list-style: none;
+    padding: 0;
+  }
+
+  &__hit {
+    margin-bottom: 1.25rem;
+  }
+
+  &__title {
+    font-weight: 600;
+  }
+
+  &__meta {
+    margin-left: 0.5rem;
+    opacity: 0.7;
+  }
+
+  &__snippet {
+    margin: 0.25rem 0 0;
+    opacity: 0.9;
+  }
+
+  &__pager {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+}

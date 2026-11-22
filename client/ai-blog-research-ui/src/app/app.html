@@ -22,6 +22,9 @@
     </div>
 
     <div class="page__header-actions">
+      <a mat-icon-button routerLink="/search" [matTooltip]="'search' | label" [attr.aria-label]="'search' | label">
+        <mat-icon>search</mat-icon>
+      </a>
       <a mat-icon-button [href]="feedUrl" aria-label="RSS feed" title="RSS feed">
         <mat-icon>rss_feed</mat-icon>
       </a>
