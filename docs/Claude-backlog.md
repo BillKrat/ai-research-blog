@@ -131,3 +131,12 @@ Done from the 2026-10-24 review: F-1 (fallback authorization), F-2 (token rate l
 - **Deploy trigger misses Foundation-only changes (found 2026-10-20).** `deploy-webapi.yml` runs on changes under `src/AiBlogResearch.WebApi/**` (and ServiceDefaults); a change only in `Adventures.Foundation` (the API compiles it in) does not trigger it, so the API stays on the old code until someone runs the workflow by hand (`gh workflow run`, as done for the stage 1 deploy). Options: add a scheduled or repository-dispatch trigger from Foundation's main, or a cheap marker file in this repo that a Foundation merge bumps.
 - Move schema IRIs to `https://schema.global-webnet.com/<area>/<name>` (deliberate migration; see `AGENTS.md`).
 - Check TLS on `schema.global-webnet.com` before 2026-11-15; calendar the 2027-01-09 free-cert expiry.
+
+## Tenant auto-create, emulate and guest demos (human, 2026-11-22)
+
+Filed from the human's chat; part 1 belongs to T4 (working order item 6), part 2 is a later stage.
+
+1. **Auto-created tenant per unknown host.** A host that is in the trusted host bindings and has no tenant gets a tenant record seeded with a working default, so every supported host (temporary or real) is listed in Admin > Tenants. Rate-limit and cap the number of tenants; never create from an untrusted `Host` header.
+2. **Emulate (alias) drop-down.** A real domain attaches as a host alias to an existing tenant (for example a temporary `dtempurl.com` address that holds the data). Data is not copied. Re-pointing needs the platform right and a confirmation. A dropped real domain leaves the tenant and its data in place. Use case: the legacy photography blog on `billkrat-001-site6.dtempurl.com`, to be migrated before BlogEngine.net is retired.
+3. **Guest demo sandboxes.** A guest enters by a signed, single-use, expiring invite link (not by IP) and gets their own seeded sandbox tenant with mock data. Tenant features are read-only through a `Guest` role built from rights, with no special cases. A purge physically deletes guest sandbox tenants unused for N days: flagged sandboxes only, dry run first, counts logged, tested against a restore. Open question: meter or block guest AI usage (beta cost seams).
+4. **Invite requests with Claude screening: private repo.** Default is invitation only (no request form). The request form and Claude screening ship in the private repo as an enable/disable feature, off by default, through the AI door and usage meter seams. The public app keeps only the invite-only default and the guest invite link.
