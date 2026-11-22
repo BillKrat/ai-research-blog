@@ -110,6 +110,14 @@ Steps are added here as each of its four stages lands.
 ### A15. Onboarding stage 4, the install guide and the listing text (documents only)
 - S: Read `Claude-install-guide-smarterasp.md` from the top as someone who has never seen the project: the two install paths, the first sign-in section (fresh install, a second address and the setup page), the one-site section, the listing text at the end. E: every step matches what A12, A13 and A14 do; tell me anything that is wrong or unclear. The listing text is a draft and has not been sent to SmarterASP.
 
+### A16. Install proof run, one site on a real second host (2026-11-22; steps 1 to 4 below are done by Claude, 5 onward by the human)
+- Done and verified by Claude: the one-site build uploaded by FTP, the app starts, the first request created the first site (default site settings answer), the client and deep links load with the page policy, anonymous admin routes answer 401, an unknown path is not the page.
+- Found and fixed on the real store: the first site's Admin person had no Id (`Id is required`), invisible to the fake-based tests; a first-run step that fails is now logged and never a 500.
+- S: Open the site's temporary address and go to /login. Sign in as `Admin` with the default password. E: you are held on the profile page until you choose a new password; after that the Dashboard and the admin menu load.
+- S: Open Admin > Tenants. E: one tenant named for the temporary host, the platform switch is on for Admin.
+- S: Open Admin > Users. E: only Admin. Create a second administrator before changing anything else.
+- Then: api site (split layout) and mcp site, as in the install guide.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 
