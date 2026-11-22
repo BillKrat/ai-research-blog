@@ -11,7 +11,7 @@ import { SiteNav, SiteService, WidgetZone } from '@adventures/blog-reader';
 import { AdminExceptionsService, AdminMenuService, HealthService } from '@adventures/admin';
 import { API_BASE_URL, ApiProblemService, AuthService, SpinnerService } from '@adventures/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { LabelPipe } from '@adventures/entity-ui';
+import { LabelPipe, LanguageLoader } from '@adventures/entity-ui';
 
 
 const CHOICE_KEY = 'adv.colorMode';
@@ -48,6 +48,7 @@ export class App implements OnInit {
   private readonly adminMenu = inject(AdminMenuService);
 
   private readonly site = inject(SiteService);
+  private readonly language = inject(LanguageLoader);
   protected readonly apiProblem = inject(ApiProblemService);
   /** The turning gears shown over the page while any screen has asked for them. */
   protected readonly spinner = inject(SpinnerService);
@@ -106,6 +107,7 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this.site.get().subscribe();
+    this.language.load().subscribe();
     // leaving the settings screen: read them again, so a title just saved shows without a browser refresh
     let lastUrl = this.router.url;
     this.wide.set(lastUrl.startsWith('/admin'));
@@ -118,6 +120,11 @@ export class App implements OnInit {
       this.wide.set(event.urlAfterRedirects.startsWith('/admin'));
       if (lastUrl.startsWith('/admin/settings') && !event.urlAfterRedirects.startsWith('/admin/settings')) {
         this.site.refresh();
+        this.language.load().subscribe();
+      }
+      // leaving the language files screen: the table in use may have changed
+      if (lastUrl.startsWith('/admin/languages') && !event.urlAfterRedirects.startsWith('/admin/languages')) {
+        this.language.load().subscribe();
       }
       lastUrl = event.urlAfterRedirects;
     });

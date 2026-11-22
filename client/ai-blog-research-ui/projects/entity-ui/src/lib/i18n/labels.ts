@@ -111,6 +111,7 @@ export const LABELS = {
   addComment: 'Add comment',
   ask: 'Ask',
   backlog: 'Backlog',
+  loadEnglish: 'Load the English texts',
 } as const;
 
 export type LabelKey = keyof typeof LABELS;

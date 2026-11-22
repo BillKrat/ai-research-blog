@@ -240,3 +240,20 @@ describe('App colour mode', () => {
     expect(document.body.style.colorScheme).toBe('light');
   });
 });
+
+describe('App language', () => {
+  it('reads the texts of the site language at start-up and puts them in the label table', async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+
+    http.expectOne((r) => r.url.endsWith('/api/public/labels')).flush({ language: 'de', labels: { signIn: 'Anmelden' } });
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[aria-label="Anmelden"]')).not.toBeNull();
+  });
+});

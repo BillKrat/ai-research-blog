@@ -11,3 +11,4 @@ export * from './lib/components/html-content/html-content';
 export * from './lib/i18n/labels';
 export * from './lib/components/busy/busy';
 export * from './lib/components/tag-cloud/tag-cloud';
+export * from './lib/i18n/language-loader';

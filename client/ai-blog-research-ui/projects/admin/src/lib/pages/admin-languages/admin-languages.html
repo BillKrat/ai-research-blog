@@ -1,0 +1,52 @@
+<section class="languages">
+  <adv-page-header title="Languages" />
+  <p class="languages__hint">
+    Each language file is a table that gives the text for a key: the words on buttons and their hover text. A key a file leaves out shows in English.
+    Choose the language the site shows with the Language setting under Settings.
+  </p>
+
+  @for (message of errors(); track message) {
+    <p class="languages__error" role="alert">{{ message }}</p>
+  }
+
+  <h3>Stored languages</h3>
+  <ul class="languages__list">
+    @for (item of languages(); track item.language) {
+      <li class="languages__item">
+        {{ item.language }} ({{ item.count }} texts)
+        <button type="button" [attr.data-action]="'open-' + item.language" (click)="open(item.language)" [matTooltip]="'editNamed' | label: item.language" [attr.aria-label]="'editNamed' | label: item.language">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </li>
+    } @empty {
+      <li class="languages__none">No language file yet: the site shows English.</li>
+    }
+  </ul>
+
+  <form class="languages__editor" (submit)="$event.preventDefault(); save()">
+    <label>
+      Language code (for example de or pt-br)
+      <input name="code" [value]="code()" (input)="code.set($any($event.target).value)" maxlength="10" autocomplete="off" />
+    </label>
+    <label>
+      Table of texts
+      <textarea name="table" [value]="table()" (input)="table.set($any($event.target).value)" rows="16" spellcheck="false"></textarea>
+    </label>
+    <div class="languages__actions">
+      <button type="button" data-action="english" (click)="useEnglish()" [matTooltip]="'loadEnglish' | label" [attr.aria-label]="'loadEnglish' | label">
+        <mat-icon>translate</mat-icon> {{ 'loadEnglish' | label }}
+      </button>
+      <button type="submit" data-action="save" [matTooltip]="'save' | label" [attr.aria-label]="'save' | label">
+        <mat-icon>save</mat-icon> {{ 'save' | label }}
+      </button>
+      @if (isStored()) {
+        <button type="button" data-action="remove" (click)="remove()" [matTooltip]="'remove' | label" [attr.aria-label]="'remove' | label">
+          <mat-icon>delete</mat-icon> {{ 'remove' | label }}
+        </button>
+      }
+      @if (saved()) {
+        <span class="languages__saved" role="status">Saved.</span>
+      }
+    </div>
+  </form>
+</section>

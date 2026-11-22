@@ -31,3 +31,5 @@ export * from './lib/pages/admin-tenants/admin-tenants';
 export * from './lib/pages/login/login';
 export * from './lib/pages/profile/profile';
 export * from './lib/pages/admin-tags/admin-tags';
+export * from './lib/services/languages-admin.service';
+export * from './lib/pages/admin-languages/admin-languages';
