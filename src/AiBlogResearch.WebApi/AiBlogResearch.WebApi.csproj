@@ -41,6 +41,7 @@
 
   <ItemGroup>
     <None Include="..\..\..\Adventures.Foundation\src\Adventures.Data.NQuad\Sql\seed\seed.nq" Link="Sql\seed\seed.nq" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\..\Adventures.Foundation\src\Adventures.Data.NQuad\Sql\seed\seed-install.nq" Link="Sql\seed\seed-install.nq" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

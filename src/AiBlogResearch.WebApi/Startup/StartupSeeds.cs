@@ -27,7 +27,7 @@ namespace AiBlogResearch.WebApi;
 internal static class StartupSeeds
 {
     /// <summary>Initializes the store and applies the baseline and every named seed once; returns whether the baseline was applied just now.</summary>
-    public static async Task<bool> ApplyAsync(INQuadStore store)
+    public static async Task<bool> ApplyAsync(INQuadStore store, string baselineFile = "seed.nq")
     {
         var seeded = false;
         if (store is INQuadStoreInitializer initializer)
@@ -35,7 +35,7 @@ internal static class StartupSeeds
             await initializer.InitializeAsync();
         }
 
-        var nquadSeedPath = Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed.nq");
+        var nquadSeedPath = Path.Combine(AppContext.BaseDirectory, "Sql", "seed", baselineFile);
         seeded = await store.SeedOnceAsync(nquadSeedPath, "baseline");
         // Named, once-only seeds added after the baseline (each ships as its own file, never merged into seed.nq).
         await store.SeedOnceAsync(

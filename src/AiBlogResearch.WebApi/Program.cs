@@ -128,7 +128,7 @@ try
     }
     if (!skipSeeding)
     {
-        seeded = await StartupSeeds.ApplyAsync(nquadStore);
+        seeded = await StartupSeeds.ApplyAsync(nquadStore, SeedProfile.BaselineFile(builder.Configuration, builder.Environment.IsDevelopment()));
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
