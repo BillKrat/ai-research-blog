@@ -37,6 +37,7 @@ public static class AdminMenuDefinitions
         new("System", "settings", "Settings", "/admin/settings", "settings", RequiredRight: Rights.SettingsManage, Order: 2),
         new("System", "plugins", "Plugins", "/admin/plugins", "extension", RequiredRight: Rights.PluginsManage, Order: 3),
         new("System", "mail", "E-mail", "/admin/plugins/mail", "mail", RequiredRight: Rights.PluginsManage, Order: 4),
+        new("System", "maintenance", "Maintenance", "/admin/maintenance", "build", RequiredRight: Rights.SettingsManage, Order: 8),
         new("System", "widgets", "Widgets", "/admin/widgets", "widgets", RequiredRight: Rights.SettingsManage, Order: 5),
         new("System", "languages", "Languages", "/admin/languages", "translate", RequiredRight: Rights.SettingsManage, Order: 6),
         new("System", "tenants", "Tenants", "/admin/tenants", "domain", RequiredRight: Rights.PlatformManage, Order: 7),

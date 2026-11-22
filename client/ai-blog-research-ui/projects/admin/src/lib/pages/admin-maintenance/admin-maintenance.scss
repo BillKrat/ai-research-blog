@@ -1,0 +1,13 @@
+.maintenance {
+  &__error {
+    color: var(--mat-sys-error);
+  }
+
+  &__card {
+    max-width: 40rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 0.5rem;
+  }
+}

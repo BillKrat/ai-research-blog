@@ -67,6 +67,7 @@ export const routes: Routes = [
       { path: 'plugins/:key', loadComponent: () => import('@adventures/admin').then((m) => m.AdminPluginCustomize) },
       { path: 'widgets', loadComponent: () => import('@adventures/admin').then((m) => m.AdminWidgets) },
       { path: 'languages', loadComponent: () => import('@adventures/admin').then((m) => m.AdminLanguages) },
+      { path: 'maintenance', loadComponent: () => import('@adventures/admin').then((m) => m.AdminMaintenance) },
       { path: 'tenants', loadComponent: () => import('@adventures/admin').then((m) => m.AdminTenants) },
       { path: 'decisions', loadComponent: () => import('@adventures/collaboration').then((m) => m.AdminDecisions) },
       { path: 'exceptions', loadComponent: () => import('@adventures/admin').then((m) => m.AdminExceptions) },

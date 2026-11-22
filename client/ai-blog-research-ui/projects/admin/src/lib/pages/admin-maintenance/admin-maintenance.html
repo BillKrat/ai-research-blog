@@ -1,0 +1,26 @@
+<section class="maintenance">
+  <adv-page-header title="Maintenance" />
+
+  @for (message of errors(); track message) {
+    <p class="maintenance__error" role="alert">{{ message }}</p>
+  }
+  @if (status()) {
+    <p class="maintenance__status" role="status">{{ status() }}</p>
+  }
+
+  <div class="maintenance__card">
+    <h3>Backup</h3>
+    <p>A JSON file with every post and page (drafts included, proposed revisions left out). It names no user and holds no password.</p>
+    <button type="button" data-action="export" [disabled]="busy()" (click)="exportContent()" [matTooltip]="'exportContent' | label" [attr.aria-label]="'exportContent' | label">
+      <mat-icon>download</mat-icon> {{ 'exportContent' | label }}
+    </button>
+  </div>
+
+  <div class="maintenance__card">
+    <h3>Cache</h3>
+    <p>Clears what the server remembers about which site each address reaches. It is read again on the next request; nothing is lost.</p>
+    <button type="button" data-action="clear-cache" [disabled]="busy()" (click)="clearCache()" [matTooltip]="'clearCache' | label" [attr.aria-label]="'clearCache' | label">
+      <mat-icon>cleaning_services</mat-icon> {{ 'clearCache' | label }}
+    </button>
+  </div>
+</section>

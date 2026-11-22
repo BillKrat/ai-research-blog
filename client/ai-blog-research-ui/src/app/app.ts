@@ -98,6 +98,8 @@ export class App implements OnInit {
       }
     });
     effect(() => this.applyTheme());
+    // An allowed analytics script on the public pages only (never in the admin area: a script there could read the administrator's sign-in).
+    effect(() => this.applyTrackingScript(this.site.settings().trackingScriptUrl, this.wide()));
   }
 
   logout(): void {
@@ -136,6 +138,23 @@ export class App implements OnInit {
   toggleTheme(): void {
     this.isDark.update((dark) => !dark);
     writeMode(CHOICE_KEY, this.isDark() ? 'dark' : 'light');
+  }
+
+  private applyTrackingScript(url: string | undefined, inAdmin: boolean): void {
+    const existing = document.querySelector('script[data-adv-tracking]');
+    const wanted = !inAdmin && typeof url === 'string' && url.startsWith('https://') ? url : null;
+    if (existing && (wanted === null || existing.getAttribute('src') !== wanted)) {
+      existing.remove();
+    }
+
+    if (wanted !== null && !document.querySelector('script[data-adv-tracking]')) {
+      const script = document.createElement('script');
+      script.async = true;
+      script.defer = true;
+      script.setAttribute('data-adv-tracking', 'true');
+      script.src = wanted;
+      document.head.appendChild(script);
+    }
   }
 
   private applyTheme(): void {

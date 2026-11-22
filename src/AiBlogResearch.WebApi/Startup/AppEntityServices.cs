@@ -142,6 +142,8 @@ internal static class AppEntityServices
             BlogConstants.Site.DefaultGraph, s => new SiteSetting(s), tenantScoped: true);
         // E-mail: a mail server on a private network is refused unless the operator allows it (Mail:AllowPrivateHosts).
         services.AddSingleton(new MailOptions { AllowPrivateHosts = configuration.GetValue<bool>("Mail:AllowPrivateHosts") });
+        // The hosts a tracking script may come from (Site:AllowedScriptHosts); none means no tracking script is ever served.
+        services.AddSingleton(new SiteOptions { AllowedScriptHosts = configuration.GetSection("Site:AllowedScriptHosts").Get<string[]>() ?? [] });
         services.AddBlog();
         services.AddCollaboration();
         services.AddNQuadRelations();

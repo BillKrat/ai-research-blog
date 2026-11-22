@@ -39,8 +39,14 @@ Legend: **S** = steps, **E** = expected result. Nothing below has been seen in a
 - S: "Tell me about new comments" on, post a visitor comment. E: a note arrives at the sender address; with the server wrong the comment is still accepted at once.
 - Needs: the production encryption key set (human step) or saving the password is refused.
 
+### A7. Tracking script, content export and clear cache (row 12 parity stage 4), review `artifacts/Claude-2026-11-22-tracking-script-export-and-cache.md`
+- S: Set the `TrackingScriptUrl` setting to an https address with NO operator list configured, reload a public page. E: no script tag (feature off until the operator allows a host).
+- S: Set `Site__AllowedScriptHosts__0` to that host, restart, reload a public page. E: exactly one async script tag; none under /admin; an http address, a look-alike host or `javascript:` adds nothing; clearing the setting removes the tag.
+- S: Admin > System > Maintenance > Download a backup. E: a JSON file with posts, pages and drafts; no user names, ids of users or passwords; proposed revisions absent.
+- S: Clear the cache. E: confirmation; the site keeps working; a just-changed host name is seen at once.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
-Parity stages 4 and 5 (head and tracking script with Export and Clear cache, Profile fields), basic search (row 6), Prompt Claude through MCP (row 7), the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
+Parity stage 5 (Profile fields), basic search (row 6), Prompt Claude through MCP (row 7), the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 
 ## C. Standing regression areas to include in the final DCP (already live, re-check after the merge)
 Sign-in and first-password change; roles and rights per tenant; tenant switcher and host aliases; posts and pages (both editors, publish, slugs, images); public site (home, posts, pages, categories, tags, menu, RSS, old BlogEngine addresses); comments with moderation; collaboration items; plug-ins, Customize, widgets and the four zones; Exceptions and Diagnose; health; the MCP tool list.

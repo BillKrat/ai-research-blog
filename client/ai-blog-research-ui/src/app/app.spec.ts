@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { SiteService } from '@adventures/blog-reader';
 import { App } from './app';
 
 describe('App layout width', () => {
@@ -255,5 +256,58 @@ describe('App language', () => {
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).querySelector('[aria-label="Anmelden"]')).not.toBeNull();
+  });
+});
+
+describe('App tracking script', () => {
+  const setup = async () => {
+    document.querySelectorAll('script[data-adv-tracking]').forEach((s) => s.remove());
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: '**', children: [] }])],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    const router = TestBed.inject(Router);
+    const answer = (trackingScriptUrl?: string) => {
+      http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'T', tagline: '', postsPerPage: 10, trackingScriptUrl });
+      fixture.detectChanges();
+    };
+    return { fixture, router, answer };
+  };
+  const scripts = () => Array.from(document.querySelectorAll('script[data-adv-tracking]')) as HTMLScriptElement[];
+
+  afterEach(() => scripts().forEach((s) => s.remove()));
+
+  it('loads the allowed https script once on a public page', async () => {
+    const { fixture, router, answer } = await setup();
+    await router.navigateByUrl('/posts');
+    answer('https://plausible.io/js/script.js');
+    fixture.detectChanges();
+
+    expect(scripts().map((s) => s.src)).toEqual(['https://plausible.io/js/script.js']);
+    expect(scripts()[0].async).toBe(true);
+  });
+
+  it('never loads it inside the admin area, where a script could read the administrator sign-in', async () => {
+    const { fixture, router, answer } = await setup();
+    await router.navigateByUrl('/admin/dashboard');
+    answer('https://plausible.io/js/script.js');
+    fixture.detectChanges();
+
+    expect(scripts()).toEqual([]);
+  });
+
+  it('ignores an address that is not https, and nothing when there is none', async () => {
+    const { fixture, router, answer } = await setup();
+    await router.navigateByUrl('/posts');
+    answer('http://plausible.io/js/script.js');
+    fixture.detectChanges();
+    expect(scripts()).toEqual([]);
+
+    TestBed.inject(SiteService).settings.set({ title: 'T', tagline: '', postsPerPage: 10, trackingScriptUrl: 'javascript:alert(1)' });
+    fixture.detectChanges();
+    expect(scripts()).toEqual([]);
   });
 });

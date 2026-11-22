@@ -34,3 +34,5 @@ export * from './lib/pages/admin-tags/admin-tags';
 export * from './lib/services/languages-admin.service';
 export * from './lib/pages/admin-languages/admin-languages';
 export * from './lib/services/mail-admin.service';
+export * from './lib/services/maintenance-admin.service';
+export * from './lib/pages/admin-maintenance/admin-maintenance';
