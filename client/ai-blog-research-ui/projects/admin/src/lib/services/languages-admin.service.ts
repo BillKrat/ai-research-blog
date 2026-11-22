@@ -24,6 +24,11 @@ export class LanguagesAdminService {
     return this.http.get<LanguageSummary[]>(`${this.apiUrl}/api/languages`);
   }
 
+  /** The texts the server itself produces (menu names and so on) with their English defaults: more keys a language file can translate. */
+  catalog(): Observable<Record<string, string>> {
+    return this.http.get<Record<string, string>>(`${this.apiUrl}/api/languages/catalog`);
+  }
+
   read(language: string): Observable<LanguageTable> {
     return this.http.get<LanguageTable>(`${this.apiUrl}/api/languages/${encodeURIComponent(language)}`);
   }

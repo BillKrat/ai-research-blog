@@ -48,9 +48,24 @@ describe('AdminLanguages', () => {
   });
 
   it('fills the editor with every English text on request, so a translator has the whole list of keys', () => {
-    const { page, press } = setup([]);
+    const { http, page, press, fixture } = setup([]);
 
     press('english');
+    http.expectOne((r) => r.url.endsWith('/api/languages/catalog')).flush({ 'menu.posts': 'Posts' });
+    fixture.detectChanges();
+
+    const table = JSON.parse((page.querySelector('textarea[name="table"]') as HTMLTextAreaElement).value);
+    expect(Object.keys(table).length).toBe(Object.keys(LABELS).length + 1);
+    expect(table['menu.posts']).toBe('Posts');
+    expect(table['save']).toBe('Save');
+  });
+
+  it('still offers the screens keys when the server catalog cannot be read', () => {
+    const { http, page, press, fixture } = setup([]);
+
+    press('english');
+    http.expectOne((r) => r.url.endsWith('/api/languages/catalog')).flush('x', { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
 
     expect(Object.keys(JSON.parse((page.querySelector('textarea[name="table"]') as HTMLTextAreaElement).value)).length).toBe(Object.keys(LABELS).length);
   });

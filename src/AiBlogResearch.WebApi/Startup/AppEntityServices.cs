@@ -1,4 +1,5 @@
 // Startup composition: entity repositories, tenancy, rights and the blog and collaboration features (moved out of Program.cs, no behaviour change).
+using AiBlogResearch.WebApi.Controllers;
 using Adventures.Common.Diagnostics;
 using Adventures.Data;
 using Adventures.Data.Postgres;
@@ -110,6 +111,8 @@ internal static class AppEntityServices
         services.AddNQuadEntityRepository(
             SchemaDal.Load(userQuads, LanguageConstants.SchemaIri), LanguageConstants.BaseIri, LanguageConstants.TypeIri,
             LanguageConstants.DefaultGraph, s => new LanguageFile(s), tenantScoped: true);
+        // The server's own words (the admin menu names) are declared with their English text so a language file can translate them.
+        AdminMenuDefinitions.DeclareTexts(services);
         // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
         services.AddNQuadPlatformAdministrators();
         services.AddScoped<ITenantAliasEditor, TenantAliasEditor>();

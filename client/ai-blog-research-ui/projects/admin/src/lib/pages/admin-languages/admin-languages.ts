@@ -45,10 +45,14 @@ export class AdminLanguages implements OnInit {
     });
   }
 
+  /** Every key with its English text: the screens' own texts and the ones the server produces. A catalog that cannot be read leaves the screens' keys. */
   protected useEnglish(): void {
-    this.table.set(JSON.stringify(LABELS, null, 2));
     this.errors.set([]);
     this.saved.set(false);
+    this.api.catalog().subscribe({
+      next: (server) => this.table.set(JSON.stringify({ ...LABELS, ...server }, null, 2)),
+      error: () => this.table.set(JSON.stringify(LABELS, null, 2)),
+    });
   }
 
   protected save(): void {
