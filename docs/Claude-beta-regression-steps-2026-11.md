@@ -72,7 +72,14 @@ Legend: **S** = steps, **E** = expected result. Nothing below has been seen in a
 - Not built, so not tested: reusing another domain's data (backlog).
 
 ### A12. Seamless install and multi-site onboarding, DECIDED 2026-11-22, not built yet (`Claude-decision-2026-11-tenant-onboarding.md`)
-Steps are added here as each of its four stages lands. The target behaviour to regression-test at the end: a fresh install opens and signs in with Admin/Admin on the first host; a second domain shows the setup page and a platform administrator chooses attach (alias) or a new site with its own Admin/Admin; two tenants each have their own Admin; nobody signs in across tenants; an unknown host never creates a site by itself.
+Steps are added here as each of its four stages lands.
+
+**Stage 1 (built, user names per tenant), review `artifacts/Claude-2026-11-22-onboarding-stage-1-per-tenant-user-names.md`:**
+- S: In tenant A, Admin > Users, add a person named `owner2`, set a first password. In tenant B (its own domain, Admin > Users as a platform administrator acting in B, or on B's own host), add a person also named `owner2`, set a different first password. E: both are created; the Users list of each tenant shows only its own `owner2`; adding a second `owner2` in the same tenant is refused.
+- S: Sign in at A's address as `owner2` with A's password, then at B's address with B's password. E: each lands in its own tenant, sees only its own content and people, and A's password does not work at B.
+- S: A's `owner2` opens Profile. E: A's profile (name, email), not B's. Give each a role in its own tenant only: the rights match that tenant's role.
+- S: A platform administrator switches to act in B. E: still looked up as themselves (platform right kept), not as B's person.
+- S: An existing single person such as Admin or Claude signs in. E: nothing changes. The target behaviour to regression-test at the end: a fresh install opens and signs in with Admin/Admin on the first host; a second domain shows the setup page and a platform administrator chooses attach (alias) or a new site with its own Admin/Admin; two tenants each have their own Admin; nobody signs in across tenants; an unknown host never creates a site by itself.
 
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
