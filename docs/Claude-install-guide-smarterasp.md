@@ -43,6 +43,19 @@ Still ours to remove by hand if you publish a fork: the example text in `README.
 | api | `Anthropic__ApiKey` | optional; only for "Ask Claude" on exceptions |
 | mcp | the same signing and client settings it needs to validate the API's tokens | see the MCP site's settings file |
 
+**Which variable goes where (each site has its own pool; set them in SmarterASP Pool Manager > the pool > Environment Variables, then restart the site).** Names use a double underscore; values are never put in a repository.
+
+| Variable | One-site install (whole app) | api site | mcp site | Note |
+|---|---|---|---|---|
+| `ConnectionStrings__Postgres` | required | required (same database) | not used | the database the site stores everything in; empty database on a fresh install |
+| `Jwt__SigningKey` | required | required | required, **identical** to the api's | a long random value (for example 48 random bytes, base64); tokens the api issues are checked by the mcp site with it |
+| `Site__Domain` | recommended | recommended | recommended | your bare domain, for example `example.com`. The shipped `appsettings.json` points at the project's own domain (`McpServer:BaseUrl`, `Api:BaseUrl`, CORS), so without it a site would call the wrong mcp or api; with it, the api and mcp addresses become `https://api.<domain>/` and `https://mcp.<domain>/` and the allowed browser origins follow. Still used for the CORS origins, the addresses between sites and the sign-in fallback when no tenant matches; the tenant of a request itself comes from the host |
+| `ClientSecret__ClaudeAuthor` (and `...ClaudeDiagnostics`, `...ClaudeResearch`) | only to let that client in | only to let that client in | not used | one random secret per machine client you switch on; no value, no access |
+| `Anthropic__ApiKey` (+ `Anthropic__Model`, `Anthropic__MaxCallsPerHour`) | optional | optional | not used | only for Ask Claude on exceptions |
+| `ConnectionStrings__BlogAi` | not used | not used | optional | only for the read-only legacy BlogEngine research tools; leave unset elsewhere |
+
+Nothing else is required: the environment name, the seed profile (an install seed on any non-development host) and the client switch have working defaults.
+
 If the API shows a 503 "reporting app", a required secret is missing and the page names it. If sign-in answers 500, the API cannot reach the database.
 
 **On GitHub (repository secrets):** `FOUNDATION_TOKEN` (only if your Adventures.Foundation fork is private: a fine-grained token with read-only Contents access to that one repository); `SMARTERASP_FTP_SERVER`; `SMARTERASP_FTP_USERNAME` and `SMARTERASP_FTP_PASSWORD` (client site); `SMARTERASP_API_FTP_USERNAME` and `SMARTERASP_API_FTP_PASSWORD`; `SMARTERASP_MCP_FTP_USERNAME` and `SMARTERASP_MCP_FTP_PASSWORD`. Use the scoped users from step 3.
