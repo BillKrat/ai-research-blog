@@ -43,7 +43,12 @@ public sealed class TenantContentIsolationTests
             builder.UseSetting("Jwt:SigningKey", "0123456789abcdef0123456789abcdef0123456789abcdef");
             builder.UseSetting("NQuadStore:Provider", "Memory");
             builder.UseSetting("Tenancy:CacheSeconds", "0");
-            builder.ConfigureTestServices(services => services.AddScoped<ITenantResolver>(_ => new TwoTenants()));
+            // hermetic: an unknown host here must not try to make a first site in a real sign-in store
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddScoped<ITenantResolver>(_ => new TwoTenants());
+                services.AddScoped<IFirstRunSite, NoFirstRunSite>();
+            });
         });
 
     private static HttpClient As(WebApplicationFactory<Program> factory, string host)
