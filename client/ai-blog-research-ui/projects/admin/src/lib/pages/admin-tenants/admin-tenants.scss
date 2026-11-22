@@ -76,3 +76,10 @@
   margin: 0;
   color: var(--mat-sys-error);
 }
+
+.tenants__new {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 34rem;
+  margin: 1rem 0 1.5rem;
+}

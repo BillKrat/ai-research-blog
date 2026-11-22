@@ -27,6 +27,21 @@ export class AdminTenants implements OnInit {
     this.service.loadHosts();
   }
 
+  protected readonly newName = signal('');
+  protected readonly newDomain = signal('');
+
+  protected createTenant(): void {
+    if (this.newName().trim() === '' || this.newDomain().trim() === '') {
+      this.service.fail('Give the new tenant a name and a domain.');
+      return;
+    }
+
+    this.service.createTenant(this.newName().trim(), this.newDomain().trim(), () => {
+      this.newName.set('');
+      this.newDomain.set('');
+    });
+  }
+
   protected setDraft(tenantId: string, value: string): void {
     this.draft.update((all) => ({ ...all, [tenantId]: value }));
   }

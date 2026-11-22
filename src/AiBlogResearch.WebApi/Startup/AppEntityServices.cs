@@ -117,6 +117,8 @@ internal static class AppEntityServices
         services.AddNQuadPlatformAdministrators();
         services.AddScoped<ITenantAliasEditor, TenantAliasEditor>();
         services.AddScoped<ITenantRemover, TenantRemover>();
+        services.AddScoped<ITenantCreator, TenantCreator>();
+        services.AddScoped<ITenantFirstRun, TenantFirstRun>();
         // The tenant switcher: a person acts in the tenants they belong to (a platform administrator in every one); the X-Acting-Tenant header is checked on every request.
         services.AddScoped<IActingTenants, ActingTenants>();
         services.AddScoped<IRightsResolver, RightsResolver>();

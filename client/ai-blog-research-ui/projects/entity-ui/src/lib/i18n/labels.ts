@@ -118,6 +118,7 @@ export const LABELS = {
   exportContent: 'Download a backup of posts and pages',
   clearCache: 'Clear the cache',
   search: 'Search',
+  createTenant: 'Create tenant',
 } as const;
 
 export type LabelKey = keyof typeof LABELS;

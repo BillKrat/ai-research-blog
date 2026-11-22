@@ -14,6 +14,16 @@
     <p class="tenants__problem" role="alert">{{ problem() }}</p>
   }
 
+  <form class="tenants__new" (submit)="$event.preventDefault(); createTenant()">
+    <h3>New tenant</h3>
+    <p>A tenant has its own site, content and settings on its own domain. Point the domain's DNS and site binding at this site first; then give it a name and its domain.</p>
+    <input name="newTenantName" placeholder="Name, for example Photos by Di" maxlength="80" [value]="newName()" (input)="newName.set($any($event.target).value)" />
+    <input name="newTenantDomain" placeholder="Domain, for example photos.example.org" [value]="newDomain()" (input)="newDomain.set($any($event.target).value)" />
+    <button type="submit" data-action="create-tenant" [matTooltip]="'createTenant' | label" [attr.aria-label]="'createTenant' | label">
+      <mat-icon>add_business</mat-icon> {{ 'createTenant' | label }}
+    </button>
+  </form>
+
   @for (entry of tenants(); track entry.id) {
     <article class="tenants__card">
       <h3>{{ entry.name }}</h3>

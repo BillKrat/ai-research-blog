@@ -64,6 +64,13 @@ Legend: **S** = steps, **E** = expected result. Nothing below has been seen in a
 - S: Look at the prompt text. E: it names the ids and the message, no stack trace, no secret; the vault script command is still there as a fallback.
 - S: Without the `mcp.diagnostics.read` scope (an anonymous call to `/api/diagnostics/exception/<id>`). E: 401.
 
+### A11. T4b: create a tenant and the first-run alias (row 5), review `artifacts/Claude-2026-11-22-t4b-new-tenant-and-first-run.md`
+- S: Admin > Tenants > New tenant: a name and a domain such as `photos.example.org`, Create. E: a confirmation; the tenant is listed with its domain; the Tenants switcher offers it; its Posts list is empty; a Settings open creates its default settings.
+- S: Create with the domain of an existing tenant, one of its aliases, a name under one, `localhost`, `127.0.0.1`, a name with no dot, or an empty name. E: each refused with a reason, nothing created.
+- S (first run, needs a second host name that reaches the API site, for example a temporary address): set `Tenancy__AutoAliasToTenantDomain` to a tenant's domain in the host panel, restart, open the API on that unknown host. E: the host appears as an alias of that tenant (Tenants screen), the request works, and its preflight from the site on that address is answered; clear the setting afterwards.
+- S: With the setting empty (the default), open the API on an unknown host. E: refused (404) exactly as before. A bare IP or `localhost` host with the setting on: still refused.
+- Not built, so not tested: reusing another domain's data (backlog).
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 
