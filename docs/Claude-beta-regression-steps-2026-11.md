@@ -79,7 +79,15 @@ Steps are added here as each of its four stages lands.
 - S: Sign in at A's address as `owner2` with A's password, then at B's address with B's password. E: each lands in its own tenant, sees only its own content and people, and A's password does not work at B.
 - S: A's `owner2` opens Profile. E: A's profile (name, email), not B's. Give each a role in its own tenant only: the rights match that tenant's role.
 - S: A platform administrator switches to act in B. E: still looked up as themselves (platform right kept), not as B's person.
-- S: An existing single person such as Admin or Claude signs in. E: nothing changes. The target behaviour to regression-test at the end: a fresh install opens and signs in with Admin/Admin on the first host; a second domain shows the setup page and a platform administrator chooses attach (alias) or a new site with its own Admin/Admin; two tenants each have their own Admin; nobody signs in across tenants; an unknown host never creates a site by itself.
+- S: An existing single person such as Admin or Claude signs in. E: nothing changes.
+
+**Stage 2 (built, the empty-store first site), review `artifacts/Claude-2026-11-22-onboarding-stage-2-first-site.md`. The first step is the real proof, it has only been tested with fakes:**
+- S: Create a scratch Postgres database (never the shared dev or the live one), point `ConnectionStrings:Postgres` at it, set `Seed:Profile=install` (or run non-Development), start the API, and call `GET /api/public/site` on a host name that reaches it (for example a hosts-file name with a dot). E: the sign-in tables exist; the log says the host is now the first site; a tenant exists with that domain; the Admin screen shows it.
+- S: Open the site on that host and sign in as `Admin` with `Admin`. E: you are sent to change the password; the new password works; the old `Admin` no longer does; you are the platform administrator (Tenants screen visible).
+- S: Request the API on `api.<that domain>` and `www.<that domain>`. E: the same tenant (the site domain has no prefix).
+- S: With the store now holding a tenant, call the API on a second, different host. E: still refused (404), no second site is created.
+- S: Start the app against our normal databases (dev or live) with the new build. E: nothing changes (the baseline is already applied), no tenant or person is created, no password changes.
+- S: Delete nothing, restart the fresh install twice. E: no second Admin, no password reset. The target behaviour to regression-test at the end: a fresh install opens and signs in with Admin/Admin on the first host; a second domain shows the setup page and a platform administrator chooses attach (alias) or a new site with its own Admin/Admin; two tenants each have their own Admin; nobody signs in across tenants; an unknown host never creates a site by itself.
 
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.

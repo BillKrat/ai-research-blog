@@ -1,4 +1,5 @@
 // Startup composition: entity repositories, tenancy, rights and the blog and collaboration features (moved out of Program.cs, no behaviour change).
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using AiBlogResearch.WebApi.Controllers;
 using Adventures.Common.Diagnostics;
 using Adventures.Data;
@@ -119,6 +120,8 @@ internal static class AppEntityServices
         services.AddScoped<ITenantRemover, TenantRemover>();
         services.AddScoped<ITenantCreator, TenantCreator>();
         services.AddScoped<ITenantFirstRun, TenantFirstRun>();
+        // The first site of a fresh install needs the sign-in store; the identity services register the real one, a host without it gets this no-op (the middleware always asks).
+        services.TryAddScoped<IFirstRunSite, NoFirstRunSite>();
         // The tenant switcher: a person acts in the tenants they belong to (a platform administrator in every one); the X-Acting-Tenant header is checked on every request.
         services.AddScoped<IActingTenants, ActingTenants>();
         services.AddScoped<IRightsResolver, RightsResolver>();
