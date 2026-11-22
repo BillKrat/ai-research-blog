@@ -24,7 +24,7 @@ flowchart LR
 
 ## Questions for the human
 1. (Answered: moderation may be switched off.)
-2. Is a feed with full post text wanted at beta?
+2. (Answered: the feed with full post text is in the backlog for later.)
 
 ## Test steps
 1. Admin > Settings: set CommentsCloseAfterDays to 30; a post older than that shows the form but refuses a comment with the limit message.
