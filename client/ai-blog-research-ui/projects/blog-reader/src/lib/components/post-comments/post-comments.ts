@@ -24,6 +24,9 @@ export class PostComments implements OnInit {
   /** False when an administrator turned comments off for the whole site: the form goes, the comments that exist stay. */
   protected readonly open = computed(() => this.site.settings().commentsEnabled !== false);
 
+  /** False only when an administrator switched moderation off: then the page must not promise a review. */
+  protected readonly moderated = computed(() => this.site.settings().commentsModerate !== false);
+
   readonly slug = input.required<string>();
 
   protected readonly comments = signal<PublicComment[]>([]);

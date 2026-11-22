@@ -119,4 +119,15 @@ describe('PostComments', () => {
 
     expect(root.querySelector('form')).not.toBeNull();
   });
+
+  it('says comments wait for approval by default', () => {
+    const { root } = render();
+    expect(root.querySelector('.comments__hint')?.textContent).toContain('after they have been approved');
+  });
+
+  it('does not promise an approval when the site publishes comments at once', () => {
+    TestBed.inject(SiteService).settings.set({ title: 'T', tagline: '', postsPerPage: 10, commentsModerate: false });
+    const { root } = render();
+    expect(root.querySelector('.comments__hint')).toBeNull();
+  });
 });
