@@ -1,6 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { PageHeader } from '../../components/page-header/page-header';
 import { TenantHosts, TenantService } from '../../services/tenant.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 /**
  * Admin > Tenants (platform administrators): each tenant with the host names that reach it, and a field to add one (for example a site's temporary address).
@@ -8,7 +11,7 @@ import { TenantHosts, TenantService } from '../../services/tenant.service';
  */
 @Component({
   selector: 'adv-admin-tenants',
-  imports: [PageHeader],
+  imports: [PageHeader, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './admin-tenants.html',
   styleUrl: './admin-tenants.scss',
 })

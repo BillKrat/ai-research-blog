@@ -4,6 +4,9 @@ import { describeApiError, bindSpinner } from '@adventures/core';
 import { PageHeader } from '../../components/page-header/page-header';
 import { SettingFields } from '../../components/setting-fields/setting-fields';
 import { AvailableWidget, WidgetPlacement, WidgetsAdminService, WidgetsOverview } from '../../services/widgets-admin.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 const ZONE_NAMES: Record<string, string> = { header: 'Header', left: 'Left', right: 'Right', footer: 'Footer' };
 
@@ -14,7 +17,7 @@ const ZONE_NAMES: Record<string, string> = { header: 'Header', left: 'Left', rig
  */
 @Component({
   selector: 'adv-admin-widgets',
-  imports: [PageHeader, SettingFields],
+  imports: [PageHeader, SettingFields, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './admin-widgets.html',
   styleUrl: './admin-widgets.scss',
 })

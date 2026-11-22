@@ -10,6 +10,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { SiteNav, SiteService, WidgetZone } from '@adventures/blog-reader';
 import { AdminExceptionsService, AdminMenuService, HealthService } from '@adventures/admin';
 import { API_BASE_URL, ApiProblemService, AuthService, SpinnerService } from '@adventures/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 
 const CHOICE_KEY = 'adv.colorMode';
@@ -35,7 +37,7 @@ function writeMode(key: string, mode: 'dark' | 'light'): void {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule, SiteNav, WidgetZone],
+  imports: [RouterOutlet, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule, SiteNav, WidgetZone, MatTooltipModule, LabelPipe],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

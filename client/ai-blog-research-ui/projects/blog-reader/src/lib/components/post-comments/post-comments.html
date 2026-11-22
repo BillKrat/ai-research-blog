@@ -34,7 +34,7 @@
         <input #website name="website" type="text" tabindex="-1" autocomplete="off" />
       </label>
     </div>
-    <button type="submit" [disabled]="sending()">Send comment</button>
+    <button type="submit" [disabled]="sending()" [matTooltip]="'sendComment' | label" [attr.aria-label]="'sendComment' | label"><mat-icon>send</mat-icon> {{ 'sendComment' | label }}</button>
     <p class="comments__hint">Comments appear after they have been approved.</p>
     @if (notice()) {
       <p class="comments__notice" role="status">{{ notice() }}</p>

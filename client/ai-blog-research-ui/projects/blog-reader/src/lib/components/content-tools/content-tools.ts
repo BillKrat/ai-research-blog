@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { AuthService, describeApiError, EntityApiService, ProfileService } from '@adventures/core';
+import { LabelPipe } from '@adventures/entity-ui';
 
 /**
  * Add, Edit and Delete for the post or page a signed-in user is reading. Anonymous visitors see nothing. The public API carries
@@ -14,7 +15,7 @@ import { AuthService, describeApiError, EntityApiService, ProfileService } from 
  */
 @Component({
   selector: 'adv-content-tools',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './content-tools.html',
   styleUrl: './content-tools.scss',
 })

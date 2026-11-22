@@ -4,6 +4,9 @@ import { describeApiError, bindSpinner } from '@adventures/core';
 import { PageHeader } from '../../components/page-header/page-header';
 import { SettingFields } from '../../components/setting-fields/setting-fields';
 import { PluginSettingDefinition, PluginsService } from '../../services/plugins.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 /**
  * A plug-in's Customize screen: one field for each setting the plug-in declares (text, one value per line, a switch or a number), filled with
@@ -12,7 +15,7 @@ import { PluginSettingDefinition, PluginsService } from '../../services/plugins.
  */
 @Component({
   selector: 'adv-admin-plugin-customize',
-  imports: [PageHeader, RouterLink, SettingFields],
+  imports: [PageHeader, RouterLink, SettingFields, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './admin-plugin-customize.html',
   styleUrl: './admin-plugin-customize.scss',
 })

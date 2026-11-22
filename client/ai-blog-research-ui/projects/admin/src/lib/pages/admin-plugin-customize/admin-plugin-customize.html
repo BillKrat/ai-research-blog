@@ -11,7 +11,7 @@
       <adv-setting-fields [definitions]="definitions()" [values]="values()" [secretsSet]="secretsSet()" [clearing]="clearing()" (changed)="set($event.name, $event.value)" (cleared)="clearSecret($event)" />
 
       <div class="plugin-customize__actions">
-        <button type="submit" [disabled]="isSaving()">Save</button>
+        <button type="submit" [disabled]="isSaving()" [matTooltip]="'save' | label" [attr.aria-label]="'save' | label"><mat-icon>save</mat-icon> {{ 'save' | label }}</button>
         @if (saved()) {
           <span class="plugin-customize__saved" role="status">Saved.</span>
         }

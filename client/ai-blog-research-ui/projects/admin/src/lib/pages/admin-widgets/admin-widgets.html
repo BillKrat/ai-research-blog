@@ -22,10 +22,10 @@
                   <span class="placement__note">(not available: its plug-in is off or gone)</span>
                 }
                 <span class="placement__actions">
-                  <button type="button" [disabled]="first || busy()" [attr.aria-label]="'Move up ' + nameOf(placement)" (click)="move(placement, -1)">&#9650;</button>
-                  <button type="button" [disabled]="last || busy()" [attr.aria-label]="'Move down ' + nameOf(placement)" (click)="move(placement, 1)">&#9660;</button>
-                  <button type="button" [disabled]="!placement.available || busy()" [attr.aria-label]="'Edit ' + nameOf(placement)" (click)="edit(placement)">Edit</button>
-                  <button type="button" [disabled]="busy()" [attr.aria-label]="'Remove ' + nameOf(placement)" (click)="remove(placement)">Remove</button>
+                  <button type="button" [disabled]="first || busy()" [matTooltip]="'moveUpNamed' | label: nameOf(placement)" [attr.aria-label]="'moveUpNamed' | label: nameOf(placement)" (click)="move(placement, -1)"><mat-icon>arrow_upward</mat-icon></button>
+                  <button type="button" [disabled]="last || busy()" [matTooltip]="'moveDownNamed' | label: nameOf(placement)" [attr.aria-label]="'moveDownNamed' | label: nameOf(placement)" (click)="move(placement, 1)"><mat-icon>arrow_downward</mat-icon></button>
+                  <button type="button" [disabled]="!placement.available || busy()" [matTooltip]="'editNamed' | label: nameOf(placement)" [attr.aria-label]="'editNamed' | label: nameOf(placement)" (click)="edit(placement)"><mat-icon>edit</mat-icon> {{ 'edit' | label }}</button>
+                  <button type="button" [disabled]="busy()" [matTooltip]="'removeNamed' | label: nameOf(placement)" [attr.aria-label]="'removeNamed' | label: nameOf(placement)" (click)="remove(placement)"><mat-icon>delete</mat-icon> {{ 'remove' | label }}</button>
                 </span>
               </li>
             } @empty {
@@ -39,7 +39,7 @@
                 <option [value]="widget.definition.key" [selected]="choice()[zone] === widget.definition.key">{{ widget.definition.title }}</option>
               }
             </select>
-            <button type="button" data-action="add" [disabled]="!choice()[zone] || busy()" (click)="add(zone)">Add</button>
+            <button type="button" data-action="add" [disabled]="!choice()[zone] || busy()" (click)="add(zone)" [matTooltip]="'add' | label" [attr.aria-label]="'add' | label"><mat-icon>add</mat-icon> {{ 'add' | label }}</button>
           </div>
         </section>
       }
@@ -61,8 +61,8 @@
         </div>
         <adv-setting-fields idPrefix="widget" [definitions]="editDefinitions()" [values]="editSettings()" (changed)="setSetting($event.name, $event.value)" />
         <div class="admin-widgets__actions">
-          <button type="submit" data-action="save" [disabled]="busy()">Save</button>
-          <button type="button" [disabled]="busy()" (click)="cancel()">Cancel</button>
+          <button type="submit" data-action="save" [disabled]="busy()" [matTooltip]="'save' | label" [attr.aria-label]="'save' | label"><mat-icon>save</mat-icon> {{ 'save' | label }}</button>
+          <button type="button" [disabled]="busy()" (click)="cancel()" [matTooltip]="'cancel' | label" [attr.aria-label]="'cancel' | label"><mat-icon>close</mat-icon> {{ 'cancel' | label }}</button>
         </div>
       </form>
     }

@@ -9,10 +9,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '@adventures/core';
 
 import { PageHeader } from '../../components/page-header/page-header';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 @Component({
   selector: 'adv-login',
-  imports: [PageHeader, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule],
+  imports: [PageHeader, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

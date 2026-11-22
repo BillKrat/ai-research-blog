@@ -57,10 +57,10 @@
               <button
                 type="button"
                 class="admin-exceptions__drill"
-                [attr.aria-label]="'Show the ' + kind.occurrenceCount + ' occurrences of ' + kind.exceptionType"
-                title="Show these occurrences"
+                [attr.aria-label]="'showOccurrences' | label: kind.occurrenceCount : kind.exceptionType"
+                [matTooltip]="'showOccurrences' | label: kind.occurrenceCount : kind.exceptionType"
                 (click)="drill(kind)"
-              >{{ kind.occurrenceCount }}</button>
+              ><mat-icon>list</mat-icon> {{ kind.occurrenceCount }}</button>
             </td>
             <td>{{ kind.exceptionType }}</td>
             <td>{{ kind.messagePattern }}</td>

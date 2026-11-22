@@ -24,38 +24,38 @@
     <p class="conversation__awaiting" role="status">
       <mat-icon>edit_note</mat-icon>
       <span><strong>Changes requested.</strong> Write what you want changed below and send it; the author revises and it comes back for review.</span>
-      <button mat-stroked-button type="button" (click)="withdraw()" [disabled]="sending()">Cancel change request</button>
+      <button mat-stroked-button type="button" (click)="withdraw()" [disabled]="sending()" [matTooltip]="'cancelChangeRequest' | label" [attr.aria-label]="'cancelChangeRequest' | label"><mat-icon>undo</mat-icon> {{ 'cancelChangeRequest' | label }}</button>
     </p>
   }
 
   <div class="conversation__quick" role="group" aria-label="Quick replies">
     @if (actionLink('approve')) {
-      <button mat-stroked-button type="button" (click)="approve()" [disabled]="sending()" [class.conversation__quick--on]="approving()" [matTooltip]="'quickApprove' | label">
+      <button mat-stroked-button type="button" (click)="approve()" [disabled]="sending()" [class.conversation__quick--on]="approving()" [matTooltip]="'quickApprove' | label" [attr.aria-label]="'approve' | label">
         <mat-icon>thumb_up</mat-icon>
-        Approve
+        {{ 'approve' | label }}
       </button>
     }
     @if (actionLink('request-changes')) {
-      <button mat-stroked-button type="button" (click)="changeRequest()" [class.conversation__quick--on]="requestingChange()" [matTooltip]="'quickChangeRequest' | label">
+      <button mat-stroked-button type="button" (click)="changeRequest()" [class.conversation__quick--on]="requestingChange()" [matTooltip]="'quickChangeRequest' | label" [attr.aria-label]="'changeRequest' | label">
         <mat-icon>rate_review</mat-icon>
-        Change request
+        {{ 'changeRequest' | label }}
       </button>
     }
     @if (base() === 'posts') {
-      <button mat-stroked-button type="button" (click)="addComment()" [disabled]="sending()" [matTooltip]="'quickAddComment' | label">
+      <button mat-stroked-button type="button" (click)="addComment()" [disabled]="sending()" [matTooltip]="'quickAddComment' | label" [attr.aria-label]="'addComment' | label">
         <mat-icon>add_comment</mat-icon>
-        Add comment
+        {{ 'addComment' | label }}
       </button>
     } @else {
       @if (!actionLink('withdraw-changes')) {
-      <button mat-stroked-button type="button" (click)="ask()" [matTooltip]="'quickAsk' | label">
+      <button mat-stroked-button type="button" (click)="ask()" [matTooltip]="'quickAsk' | label" [attr.aria-label]="'ask' | label">
         <mat-icon>help</mat-icon>
-        Ask
+        {{ 'ask' | label }}
       </button>
       }
-      <button mat-stroked-button type="button" (click)="backlog()" [matTooltip]="'quickBacklog' | label">
+      <button mat-stroked-button type="button" (click)="backlog()" [matTooltip]="'quickBacklog' | label" [attr.aria-label]="'backlog' | label">
       <mat-icon>playlist_add</mat-icon>
-      Backlog
+      {{ 'backlog' | label }}
     </button>
     }
     <span class="conversation__tools">

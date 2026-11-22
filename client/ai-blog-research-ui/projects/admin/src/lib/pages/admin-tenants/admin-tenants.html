@@ -22,7 +22,7 @@
         @for (alias of entry.aliases; track alias) {
           <li>
             {{ alias }}
-            <button type="button" class="tenants__remove" [attr.aria-label]="'Remove ' + alias" (click)="remove(entry.id, alias)">&times;</button>
+            <button type="button" class="tenants__remove" [matTooltip]="'removeNamed' | label: alias" [attr.aria-label]="'removeNamed' | label: alias" (click)="remove(entry.id, alias)"><mat-icon>close</mat-icon></button>
           </li>
         } @empty {
           <li class="tenants__none">No other host names.</li>
@@ -37,7 +37,7 @@
           (input)="setDraft(entry.id, $any($event.target).value)"
           (keydown.enter)="add(entry)"
         />
-        <button type="button" [attr.aria-label]="'Add host name to ' + entry.name" (click)="add(entry)">Add</button>
+        <button type="button" [matTooltip]="'addHostNameTo' | label: entry.name" [attr.aria-label]="'addHostNameTo' | label: entry.name" (click)="add(entry)"><mat-icon>add</mat-icon> {{ 'add' | label }}</button>
       </div>
       <div class="tenants__delete">
         @if (deleting() === entry.id) {
@@ -51,10 +51,10 @@
             [value]="confirmText()"
             (input)="confirmText.set($any($event.target).value)"
           />
-          <button type="button" class="tenants__danger" [attr.aria-label]="'Confirm delete of ' + entry.name" [disabled]="!matches(entry)" (click)="confirmDelete(entry)">Delete tenant</button>
-          <button type="button" [attr.aria-label]="'Cancel delete of ' + entry.name" (click)="cancelDelete()">Cancel</button>
+          <button type="button" class="tenants__danger" [matTooltip]="'confirmDeleteOf' | label: entry.name" [attr.aria-label]="'confirmDeleteOf' | label: entry.name" [disabled]="!matches(entry)" (click)="confirmDelete(entry)"><mat-icon>delete_forever</mat-icon> {{ 'deleteTenant' | label }}</button>
+          <button type="button" [matTooltip]="'cancelDeleteOf' | label: entry.name" [attr.aria-label]="'cancelDeleteOf' | label: entry.name" (click)="cancelDelete()"><mat-icon>close</mat-icon> {{ 'cancel' | label }}</button>
         } @else {
-          <button type="button" class="tenants__delete-start" [attr.aria-label]="'Delete ' + entry.name" (click)="startDelete(entry.id)">Delete…</button>
+          <button type="button" class="tenants__delete-start" [matTooltip]="'deleteNamed' | label: entry.name" [attr.aria-label]="'deleteNamed' | label: entry.name" (click)="startDelete(entry.id)"><mat-icon>delete</mat-icon> {{ 'deleteStart' | label }}</button>
         }
       </div>
     </article>

@@ -4,7 +4,10 @@
       @for (message of apiProblem.messages(); track $index) {
         <p>{{ message }}</p>
       }
-      <button mat-button type="button" (click)="apiProblem.clear()">Dismiss</button>
+      <button mat-button type="button" (click)="apiProblem.clear()" [matTooltip]="'dismiss' | label" [attr.aria-label]="'dismiss' | label">
+        <mat-icon>close</mat-icon>
+        {{ 'dismiss' | label }}
+      </button>
     </section>
   }
   @if (liveData()) {
@@ -25,7 +28,8 @@
      <button
         mat-icon-button
         (click)="toggleTheme()"
-        [attr.aria-label]="isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+        [matTooltip]="(isDark() ? 'switchToLight' : 'switchToDark') | label"
+        [attr.aria-label]="(isDark() ? 'switchToLight' : 'switchToDark') | label"
       >
         <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
@@ -46,7 +50,7 @@
       }
 
       @if (isAuthenticated()) {
-        <button mat-button [matMenuTriggerFor]="userMenu" aria-label="Account menu">
+        <button mat-button [matMenuTriggerFor]="userMenu" [matTooltip]="'accountMenu' | label" [attr.aria-label]="'accountMenu' | label">
           <mat-icon>account_circle</mat-icon>
           {{ username() }}
         </button>
@@ -61,13 +65,13 @@
               <span>Admin</span>
             </a>
           }
-          <button mat-menu-item (click)="logout()">
+          <button mat-menu-item (click)="logout()" [matTooltip]="'logOut' | label" [attr.aria-label]="'logOut' | label">
             <mat-icon>logout</mat-icon>
-            <span>Log out</span>
+            <span>{{ 'logOut' | label }}</span>
           </button>
         </mat-menu>
       } @else {
-        <button mat-icon-button routerLink="/login" aria-label="Sign in">
+        <button mat-icon-button routerLink="/login" [matTooltip]="'signIn' | label" [attr.aria-label]="'signIn' | label">
           <mat-icon>login</mat-icon>
         </button>
       }

@@ -8,6 +8,9 @@ import { PublicContentService, PublicPostList } from '../../services/public-cont
 import { SiteService } from '../../services/site.service';
 import { switchMap } from 'rxjs';
 import { bindSpinner } from '@adventures/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 /**
  * The list of published posts, newest first, with paging; also serves a category (/category/:name) or a tag (/tag/:name), the
@@ -15,7 +18,7 @@ import { bindSpinner } from '@adventures/core';
  */
 @Component({
   selector: 'app-post-list',
-  imports: [RouterLink, DatePipe, DraftBadge, ApprovalBadge],
+  imports: [RouterLink, DatePipe, DraftBadge, ApprovalBadge, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './post-list.html',
   styleUrl: './public.scss',
 })

@@ -3,6 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { SiteService } from '../../services/site.service';
 import { PublicComment, PublicContentService } from '../../services/public-content.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 /**
  * The comments under a post: the approved ones (plain text only, never markup) and a form that sends a new one. A new comment waits for
@@ -10,7 +13,7 @@ import { PublicComment, PublicContentService } from '../../services/public-conte
  */
 @Component({
   selector: 'adv-post-comments',
-  imports: [DatePipe],
+  imports: [DatePipe, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './post-comments.html',
   styleUrl: './post-comments.scss',
 })

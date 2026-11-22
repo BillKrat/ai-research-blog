@@ -51,7 +51,7 @@ describe('AdminExceptions kinds of failure', () => {
     const { root } = open();
 
     const buttons = Array.from(root.querySelectorAll('button.admin-exceptions__drill')) as HTMLButtonElement[];
-    expect(buttons.map((b) => b.textContent?.trim())).toEqual(['155', '1']);
+    expect(buttons.map((b) => b.textContent?.replace('list', '').trim())).toEqual(['155', '1']);
     expect(buttons[0].getAttribute('aria-label')).toContain('155 occurrences of ClientReportedException');
   });
 
@@ -142,7 +142,7 @@ describe('AdminExceptions kinds of failure', () => {
     fixture.detectChanges();
     expect(root.textContent).toContain('Page 1 of 3');
 
-    (Array.from(root.querySelectorAll('.entity-grid__pager button')).find((b) => b.textContent === 'Next') as HTMLButtonElement).click();
+    (Array.from(root.querySelectorAll('.entity-grid__pager button')).find((b) => b.getAttribute('aria-label') === 'Next') as HTMLButtonElement).click();
     const next = http.expectOne((r) => r.url.endsWith('/api/admin/exceptions') && r.params.get('page') === '2');
     expect(next.request.params.get('signature')).toBe('k1');
     expect(next.request.params.get('includePurged')).toBe('true');
@@ -150,7 +150,7 @@ describe('AdminExceptions kinds of failure', () => {
     fixture.detectChanges();
     expect(root.textContent).toContain('Page 2 of 3');
 
-    (Array.from(root.querySelectorAll('.entity-grid__pager button')).find((b) => b.textContent === 'Previous') as HTMLButtonElement).click();
+    (Array.from(root.querySelectorAll('.entity-grid__pager button')).find((b) => b.getAttribute('aria-label') === 'Previous') as HTMLButtonElement).click();
     expect(http.expectOne((r) => r.params.get('page') === '1')).toBeTruthy();
   });
 

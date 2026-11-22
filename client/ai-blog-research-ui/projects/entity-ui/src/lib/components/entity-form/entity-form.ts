@@ -8,6 +8,9 @@ import { Busy } from '../busy/busy';
 import { VisualEditor } from '../visual-editor/visual-editor';
 import { HtmlEditor } from '../html-editor/html-editor';
 import { EntityApiService, EntityFieldSchema, EntityFormModel, LookupOption, SUPPORTED_CONTRACT_VERSION } from '@adventures/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '../../i18n/labels';
 
 /** How a field is drawn; decided from the server-supplied type name, never from the entity. */
 export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'refs' | 'markdown' | 'html' | 'choice';
@@ -22,7 +25,7 @@ export type ControlKind = 'text' | 'date' | 'number' | 'checkbox' | 'ref' | 'ref
  */
 @Component({
   selector: 'adv-entity-form',
-  imports: [Busy, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, VisualEditor, HtmlEditor],
+  imports: [Busy, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule, VisualEditor, HtmlEditor, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './entity-form.html',
   styleUrl: './entity-form.scss',
 })

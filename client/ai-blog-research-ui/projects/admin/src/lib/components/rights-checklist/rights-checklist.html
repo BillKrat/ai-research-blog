@@ -18,7 +18,7 @@
   </ul>
 
   @if (canEdit()) {
-    <button class="rights__save" type="button" [disabled]="saving() || !dirty()" (click)="save()">Save rights</button>
+    <button class="rights__save" type="button" [disabled]="saving() || !dirty()" (click)="save()" [matTooltip]="'saveRights' | label" [attr.aria-label]="'saveRights' | label"><mat-icon>save</mat-icon> {{ 'saveRights' | label }}</button>
   }
   @if (status() === 'saved') {
     <span class="rights__status" role="status">Saved.</span>

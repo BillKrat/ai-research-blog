@@ -1,17 +1,17 @@
 @if (auth.isAuthenticated() && (canAdd || canEdit || canDelete)) {
   <span class="content-tools" role="toolbar" [attr.aria-label]="'Manage this ' + noun">
     @if (canAdd) {
-    <button mat-icon-button type="button" (click)="add()" [matTooltip]="'Add a ' + noun" [attr.aria-label]="'Add a ' + noun">
+    <button mat-icon-button type="button" (click)="add()" [matTooltip]="'addNoun' | label: noun" [attr.aria-label]="'addNoun' | label: noun">
       <mat-icon>add</mat-icon>
     </button>
     }
     @if (canEdit) {
-    <button mat-icon-button type="button" (click)="edit()" [matTooltip]="'Edit this ' + noun" [attr.aria-label]="'Edit this ' + noun">
+    <button mat-icon-button type="button" (click)="edit()" [matTooltip]="'editNoun' | label: noun" [attr.aria-label]="'editNoun' | label: noun">
       <mat-icon>edit</mat-icon>
     </button>
     }
     @if (canDelete) {
-    <button mat-icon-button type="button" (click)="remove()" [matTooltip]="'Delete this ' + noun" [attr.aria-label]="'Delete this ' + noun">
+    <button mat-icon-button type="button" (click)="remove()" [matTooltip]="'deleteNoun' | label: noun" [attr.aria-label]="'deleteNoun' | label: noun">
       <mat-icon>delete</mat-icon>
     </button>
     }
