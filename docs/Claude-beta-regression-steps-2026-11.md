@@ -45,8 +45,13 @@ Legend: **S** = steps, **E** = expected result. Nothing below has been seen in a
 - S: Admin > System > Maintenance > Download a backup. E: a JSON file with posts, pages and drafts; no user names, ids of users or passwords; proposed revisions absent.
 - S: Clear the cache. E: confirmation; the site keeps working; a just-changed host name is seen at once.
 
+### A8. Profile fields (row 12 parity stage 5), review `artifacts/Claude-2026-11-22-profile-fields.md`
+- S: Open Profile. E: About me, Website and Picture address are on the form (seed 027 applies on the first start). Fill valid values (`https://example.org`, `/media/<uploaded image>`), Save, reload. E: kept.
+- S: Website `javascript:alert(1)`, `example.org`, or with a space; Picture `data:image/png;base64,AAAA` or `//evil.example/x.png`; About me over 1000 characters. E: each refused with a message on that field, nothing saved.
+- S: Leave all three empty and save. E: fine (all optional); existing users and sign-in are unaffected.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
-Parity stage 5 (Profile fields), basic search (row 6), Prompt Claude through MCP (row 7), the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
+Basic search (row 6), Prompt Claude through MCP (row 7), the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 
 ## C. Standing regression areas to include in the final DCP (already live, re-check after the merge)
 Sign-in and first-password change; roles and rights per tenant; tenant switcher and host aliases; posts and pages (both editors, publish, slugs, images); public site (home, posts, pages, categories, tags, menu, RSS, old BlogEngine addresses); comments with moderation; collaboration items; plug-ins, Customize, widgets and the four zones; Exceptions and Diagnose; health; the MCP tool list.

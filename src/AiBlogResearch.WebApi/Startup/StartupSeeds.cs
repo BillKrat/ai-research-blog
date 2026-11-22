@@ -47,6 +47,9 @@ internal static class StartupSeeds
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-004-identity.nq"), IdentityConstants.SeedName);
         await store.SeedOnceAsync(
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-005-identity-required.nq"), IdentityConstants.RequiredSeedName);
+        // About me, Website and Picture address on the User schema (the profile page is built from the schema, so it shows them).
+        await store.SeedOnceAsync(
+            Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-027-profile-fields.nq"), IdentityConstants.ProfileSeedName);
         // The content model (pages, posts, categories, tags): new schemas under the schema host, modelled on the BlogEngine admin.
         await store.SeedOnceAsync(
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-006-content.nq"), BlogConstants.Content.SeedName);
