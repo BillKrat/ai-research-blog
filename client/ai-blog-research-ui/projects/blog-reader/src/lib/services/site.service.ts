@@ -11,6 +11,8 @@ export interface SiteSettings {
   postsPerPage: number;
   /** False when comments are switched off for the whole site (an older API sends nothing, which means on). */
   commentsEnabled?: boolean;
+  /** The look a visitor starts with until they use the header toggle (an older API sends nothing, which means dark). */
+  colorMode?: 'dark' | 'light';
 }
 
 const DEFAULTS: SiteSettings = { title: 'AI Research Blog', tagline: '', postsPerPage: 10 };

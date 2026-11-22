@@ -12,6 +12,27 @@ import { AdminExceptionsService, AdminMenuService, HealthService } from '@advent
 import { API_BASE_URL, ApiProblemService, AuthService, SpinnerService } from '@adventures/core';
 
 
+const CHOICE_KEY = 'adv.colorMode';
+const SITE_KEY = 'adv.siteColorMode';
+
+/** Browser storage can be missing or refused (private windows); the page then simply starts from the defaults. */
+function readMode(key: string): 'dark' | 'light' | null {
+  try {
+    const value = localStorage.getItem(key);
+    return value === 'dark' || value === 'light' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeMode(key: string, mode: 'dark' | 'light'): void {
+  try {
+    localStorage.setItem(key, mode);
+  } catch {
+    // not remembered; the choice still applies for this visit
+  }
+}
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule, SiteNav, WidgetZone],
@@ -35,7 +56,8 @@ export class App implements OnInit {
   /** The site title, from the settings an administrator edits (the default until they are read). */
   protected readonly title = computed(() => this.site.settings().title);
   protected readonly tagline = computed(() => this.site.settings().tagline);
-  protected readonly isDark = signal(true);
+  /** Dark unless the visitor chose otherwise, or (before they ever did) the last site default this browser saw says light. */
+  protected readonly isDark = signal(readMode(CHOICE_KEY) !== 'light' && (readMode(CHOICE_KEY) === 'dark' || readMode(SITE_KEY) !== 'light'));
   /** True under /admin: the admin area uses the whole window (menu at the left edge); the public site keeps its reading width. */
   protected readonly wide = signal(false);
   protected readonly liveData = signal(false);
@@ -62,7 +84,17 @@ export class App implements OnInit {
       }
     });
 
-    this.applyTheme();
+    // The site default (Admin > Settings > ColorMode) applies to a visitor who has not used the toggle; their own choice wins.
+    effect(() => {
+      const mode = this.site.settings().colorMode;
+      if (mode === 'light' || mode === 'dark') {
+        writeMode(SITE_KEY, mode);
+        if (readMode(CHOICE_KEY) === null) {
+          this.isDark.set(mode === 'dark');
+        }
+      }
+    });
+    effect(() => this.applyTheme());
   }
 
   logout(): void {
@@ -94,7 +126,7 @@ export class App implements OnInit {
 
   toggleTheme(): void {
     this.isDark.update((dark) => !dark);
-    this.applyTheme();
+    writeMode(CHOICE_KEY, this.isDark() ? 'dark' : 'light');
   }
 
   private applyTheme(): void {
