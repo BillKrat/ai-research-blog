@@ -106,6 +106,10 @@ internal static class AppEntityServices
         services.AddNQuadEntityRepository(
             SchemaDal.Load(userQuads, WidgetConstants.SchemaIri), WidgetConstants.BaseIri, WidgetConstants.TypeIri,
             WidgetConstants.DefaultGraph, s => new WidgetPlacement(s), tenantScoped: true);
+        // The language files (one table of texts per language, per tenant) the site language picks from.
+        services.AddNQuadEntityRepository(
+            SchemaDal.Load(userQuads, LanguageConstants.SchemaIri), LanguageConstants.BaseIri, LanguageConstants.TypeIri,
+            LanguageConstants.DefaultGraph, s => new LanguageFile(s), tenantScoped: true);
         // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
         services.AddNQuadPlatformAdministrators();
         services.AddScoped<ITenantAliasEditor, TenantAliasEditor>();

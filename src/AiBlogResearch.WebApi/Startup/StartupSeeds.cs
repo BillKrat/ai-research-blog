@@ -92,6 +92,9 @@ internal static class StartupSeeds
         // Where each widget sits in the four zones (per tenant); the owner arranges them on the Widgets screen.
         await store.SeedOnceAsync(
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-025-widget-placements.nq"), WidgetConstants.SeedName);
+        // The language files an administrator keeps for the site language (per tenant).
+        await store.SeedOnceAsync(
+            Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-026-language-files.nq"), LanguageConstants.SeedName);
         // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
         await store.SeedOnceAsync(
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), BlogConstants.Site.SeedName);

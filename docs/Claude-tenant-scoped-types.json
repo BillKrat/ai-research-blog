@@ -5,6 +5,7 @@
   { "baseIri": "https://global-webnet.com/id/page/", "graph": "https://global-webnet.com/graph/content" },
   { "baseIri": "https://global-webnet.com/id/plugin/", "graph": "https://global-webnet.com/graph/collaboration" },
   { "baseIri": "https://global-webnet.com/id/plugin-setting/", "graph": "https://global-webnet.com/graph/collaboration" },
+  { "baseIri": "https://global-webnet.com/id/language-file/", "graph": "https://global-webnet.com/graph/i18n" },
   { "baseIri": "https://global-webnet.com/id/widget-placement/", "graph": "https://global-webnet.com/graph/widgets" },
   { "baseIri": "https://global-webnet.com/id/post/", "graph": "https://global-webnet.com/graph/content" },
   { "baseIri": "https://global-webnet.com/id/site-setting/", "graph": "https://global-webnet.com/graph/site" },
