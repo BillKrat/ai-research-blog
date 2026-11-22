@@ -56,6 +56,10 @@ internal static class AppPipeline
         // Without a handler an exception anywhere in the pipeline (authentication and authorization included) would fall
         // through to IIS's own bare error page with nothing logged.
         app.UseExceptionHandler(errorApp => errorApp.Run(UnhandledExceptionHandler.HandleAsync));
+        // Single-site mode: the client build in the web root is served by this host (assets and the page need no tenant).
+        var client = ClientSite.TryLoad(app.Environment.WebRootPath, app.Configuration);
+        client?.Use(app);
+
         // After the exception handler and the rate limiter, before authentication: a host that matches no tenant never reaches the controllers when enforcement is on.
         app.UseTenancy();
 
@@ -84,8 +88,15 @@ internal static class AppPipeline
                 .ExcludeFromDescription();
         }
 
-        // SmarterASP's free-SSL request (issue and renewal) requires the domain root to return HTTP 200.
-        app.MapGet("/", () => Results.Ok(new { service = "AiBlogResearch.WebApi", status = "ok" })).AllowAnonymous()
-            .ExcludeFromDescription();
+        // SmarterASP's free-SSL request (issue and renewal) requires the domain root to return HTTP 200 (with the client served here the page itself answers 200).
+        // With the client served here there is no banner: routing has already chosen an endpoint for "/", and the static files only answer a request that has none.
+        if (client is null)
+        {
+            app.MapGet("/", () => Results.Ok(new { service = "AiBlogResearch.WebApi", status = "ok" })).AllowAnonymous()
+                .ExcludeFromDescription();
+        }
+
+        // Last: client routes fall back to the page, everything else stays as it was.
+        client?.MapFallback(app);
     }
 }

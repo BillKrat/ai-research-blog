@@ -89,6 +89,15 @@ Steps are added here as each of its four stages lands.
 - S: Start the app against our normal databases (dev or live) with the new build. E: nothing changes (the baseline is already applied), no tenant or person is created, no password changes.
 - S: Delete nothing, restart the fresh install twice. E: no second Admin, no password reset. The target behaviour to regression-test at the end: a fresh install opens and signs in with Admin/Admin on the first host; a second domain shows the setup page and a platform administrator chooses attach (alias) or a new site with its own Admin/Admin; two tenants each have their own Admin; nobody signs in across tenants; an unknown host never creates a site by itself.
 
+### A13. Single-site mode, the API serves the client, review `artifacts/Claude-2026-11-22-single-site-mode.md`
+- S: Create a second SmarterASP site (a spare temporary address, for example the next `billkrat-001-siteN.dtempurl.com`) with its own database, set the repository variable `DEPLOY_MODE=single` and the API FTP secrets for that one site, run `deploy-single.yml`. E: the run is green, including its smoke test of `/api/health` and the page; the split workflows are skipped. (First ever run of this workflow: expect to fix small things.)
+- S: Open the temporary address. E: the client page loads over that one address; no `api.` host is involved; on a fresh database the first request makes the first site (onboarding stage 2) and `Admin/Admin` signs in and demands a new password.
+- S: Open a deep link (`/login`, `/admin/posts`) directly, and reload on it. E: the page loads (no 404). Open `/api/nope`. E: not the page.
+- S: Open the browser console on the site. E: no Content-Security-Policy violations; the fonts and icons render.
+- S: View the page's response headers. E: `Content-Security-Policy` starts `default-src 'self'` and lists one `sha256-` inline-script hash; an `/api/...` response still has `default-src 'none'`.
+- S: With `Hosting:ServeClient=false` on the site, open `/`. E: the JSON banner, as before.
+- S: Our own live layout (www and api., `DEPLOY_MODE` unset). E: nothing changes; the two split workflows run as before.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 
