@@ -32,6 +32,39 @@
       </div>
 
       <div class="dashboard__card">
+        <h2>Quick draft</h2>
+        <form class="dashboard__quick" (submit)="$event.preventDefault(); saveQuickDraft()">
+          <input name="quickTitle" placeholder="Title" maxlength="200" [value]="quickTitle()" (input)="quickTitle.set($any($event.target).value)" />
+          <textarea name="quickContent" rows="4" placeholder="Text" [value]="quickContent()" (input)="quickContent.set($any($event.target).value)"></textarea>
+          @for (message of quickErrors(); track message) {
+            <p class="dashboard__problem" role="alert">{{ message }}</p>
+          }
+          @if (quickSaved(); as saved) {
+            <p class="dashboard__saved" role="status">Draft saved: <a [routerLink]="['/admin/posts', saved.id]">{{ saved.title }}</a></p>
+          }
+          <button type="submit" data-action="quick-save" [disabled]="quickSaving()" [matTooltip]="'save' | label" [attr.aria-label]="'save' | label">
+            <mat-icon>save</mat-icon> {{ 'save' | label }}
+          </button>
+        </form>
+      </div>
+
+      <div class="dashboard__card">
+        <h2><a routerLink="/admin/comments">Latest comments</a></h2>
+        <ul>
+          @for (comment of m.latestComments; track comment.id) {
+            <li class="dashboard__comment">
+              <strong>{{ comment.author }}</strong> on {{ comment.postTitle }}
+              <span class="dashboard__status">{{ comment.status }}</span>
+              <br />
+              <span class="dashboard__excerpt">{{ comment.excerpt }}</span>
+            </li>
+          } @empty {
+            <li class="dashboard__empty">None</li>
+          }
+        </ul>
+      </div>
+
+      <div class="dashboard__card">
         <h2>Draft posts</h2>
         <ul>
           @for (item of m.draftPostList; track item.id) {

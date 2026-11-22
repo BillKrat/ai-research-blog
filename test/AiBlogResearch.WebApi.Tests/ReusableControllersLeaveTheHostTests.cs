@@ -14,7 +14,7 @@ public sealed class ReusableControllersLeaveTheHostTests
 {
     private static readonly string[] StillInTheHost =
     [
-        "AdminMenuController", "DashboardController", "RuntimeController",
+        "AdminMenuController", "DashboardController", "QuickDraftController", "RuntimeController",
     ];
 
     [Fact]

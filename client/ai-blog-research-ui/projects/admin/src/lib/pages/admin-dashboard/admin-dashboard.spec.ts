@@ -23,6 +23,7 @@ describe('AdminDashboard', () => {
     commentsPending: 4,
     draftPostList: [{ id: 'p1', title: 'Half written' }],
     draftPageList: [],
+    latestComments: [{ id: 'c1', author: 'Anna', postTitle: 'A post', status: 'Pending', created: '2026-11-22T10:00:00+00:00', excerpt: 'Nice post, thank you' }],
   };
 
   it('shows the counts, what waits for a person and the drafts, linking each draft to its editor', () => {
@@ -92,5 +93,73 @@ describe('AdminDashboard', () => {
     fixture.detectChanges();
     fixture.destroy();
     expect(spinner.active()).toBe(false);
+  });
+
+  function open() {
+    const fixture = TestBed.createComponent(AdminDashboard);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.url.endsWith('/api/admin/dashboard')).flush(answer);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const type = (selector: string, value: string) => {
+      const el = root.querySelector(selector) as HTMLInputElement | HTMLTextAreaElement;
+      el.value = value;
+      el.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    };
+    const save = () => {
+      (root.querySelector('[data-action="quick-save"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+    };
+    return { fixture, http, root, type, save };
+  }
+
+  it('lists the latest comments with who wrote them, on which post, their state and an excerpt', () => {
+    const { root } = open();
+    const comment = root.querySelector('.dashboard__comment') as HTMLElement;
+
+    expect(comment.textContent).toContain('Anna');
+    expect(comment.textContent).toContain('A post');
+    expect(comment.textContent).toContain('Pending');
+    expect(comment.textContent).toContain('Nice post, thank you');
+    expect(root.querySelector('a[href="/admin/comments"]')).not.toBeNull();
+  });
+
+  it('saves a quick draft and links to it, then reads the dashboard again so the counts follow', () => {
+    const { fixture, http, root, type, save } = open();
+    type('input[name="quickTitle"]', 'An idea');
+    type('textarea[name="quickContent"]', 'Some text');
+
+    save();
+    const post = http.expectOne((r) => r.url.endsWith('/api/admin/dashboard/quick-draft') && r.method === 'POST');
+    expect(post.request.body).toEqual({ title: 'An idea', content: 'Some text' });
+    post.flush({ id: 'new1', title: 'An idea' }, { status: 201, statusText: 'Created' });
+    fixture.detectChanges();
+
+    expect(root.querySelector('a[href="/admin/posts/new1"]')).not.toBeNull();
+    expect((root.querySelector('input[name="quickTitle"]') as HTMLInputElement).value).toBe('');
+    http.expectOne((r) => r.url.endsWith('/api/admin/dashboard') && r.method === 'GET').flush(answer);
+  });
+
+  it('asks for a title before sending anything', () => {
+    const { http, root, type, save } = open();
+    type('textarea[name="quickContent"]', 'Some text');
+
+    save();
+
+    http.expectNone((r) => r.url.endsWith('/quick-draft'));
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('title');
+  });
+
+  it('shows the reason when the draft cannot be saved', () => {
+    const { fixture, http, root, type, save } = open();
+    type('input[name="quickTitle"]', 'An idea');
+
+    save();
+    http.expectOne((r) => r.url.endsWith('/quick-draft')).flush(null, { status: 403, statusText: 'Forbidden' });
+    fixture.detectChanges();
+
+    expect(root.querySelector('[role="alert"]')?.textContent).toContain('permission');
   });
 });
