@@ -31,8 +31,16 @@ Legend: **S** = steps, **E** = expected result. Nothing below has been seen in a
 - S: Dashboard > Quick draft: title and text, Save. E: link to the draft, Draft posts count grows, the draft is not published and is yours. Empty title: refused. As a person without the write-a-post right: refused with a permission message.
 - S: Post a visitor comment. E: shown under Latest comments with author, post, state and excerpt, no e-mail address.
 
+### A6. E-mail settings and test-send (row 12 parity stage 2), review `artifacts/Claude-2026-11-22-mail-settings-and-test-send.md`
+- S: Admin > System > E-mail: sender, server, port 587, user, password, Use SSL on, Save; reopen. E: password blank with "A value is set"; nothing shows the password anywhere.
+- S: Test box with your own address, Send. E: a message arrives with the subject prefix; with a wrong password: a plain failure message, no password.
+- S: Save with port 22, a server like `mail.x.org:25` or `http://mail.x.org`, a sender with two addresses. E: each refused with a reason.
+- S: A server name that resolves to a private address (e.g. localhost), test. E: refused (unless `Mail:AllowPrivateHosts` is true).
+- S: "Tell me about new comments" on, post a visitor comment. E: a note arrives at the sender address; with the server wrong the comment is still accepted at once.
+- Needs: the production encryption key set (human step) or saving the password is refused.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
-Parity stages 2, 4, 5 (mail screen, head and tracking script with Export and Clear cache, Profile fields), basic search (row 6), Prompt Claude through MCP (row 7), the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
+Parity stages 4 and 5 (head and tracking script with Export and Clear cache, Profile fields), basic search (row 6), Prompt Claude through MCP (row 7), the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 
 ## C. Standing regression areas to include in the final DCP (already live, re-check after the merge)
 Sign-in and first-password change; roles and rights per tenant; tenant switcher and host aliases; posts and pages (both editors, publish, slugs, images); public site (home, posts, pages, categories, tags, menu, RSS, old BlogEngine addresses); comments with moderation; collaboration items; plug-ins, Customize, widgets and the four zones; Exceptions and Diagnose; health; the MCP tool list.

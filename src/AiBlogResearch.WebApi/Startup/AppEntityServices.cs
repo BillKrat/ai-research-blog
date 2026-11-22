@@ -140,6 +140,8 @@ internal static class AppEntityServices
         services.AddNQuadEntityRepository(
             SchemaDal.Load(userQuads, BlogConstants.Site.SettingSchemaIri), BlogConstants.Site.SettingBaseIri, BlogConstants.Site.SettingTypeIri,
             BlogConstants.Site.DefaultGraph, s => new SiteSetting(s), tenantScoped: true);
+        // E-mail: a mail server on a private network is refused unless the operator allows it (Mail:AllowPrivateHosts).
+        services.AddSingleton(new MailOptions { AllowPrivateHosts = configuration.GetValue<bool>("Mail:AllowPrivateHosts") });
         services.AddBlog();
         services.AddCollaboration();
         services.AddNQuadRelations();

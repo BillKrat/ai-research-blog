@@ -114,6 +114,7 @@ export const LABELS = {
   loadEnglish: 'Load the English texts',
   reviewProposal: 'Review the proposal for {0}',
   discardProposal: 'Discard the proposal',
+  sendTest: 'Send a test message',
 } as const;
 
 export type LabelKey = keyof typeof LABELS;

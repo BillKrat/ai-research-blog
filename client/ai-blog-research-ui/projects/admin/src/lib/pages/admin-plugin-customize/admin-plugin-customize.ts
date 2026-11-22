@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { describeApiError, bindSpinner } from '@adventures/core';
 import { PageHeader } from '../../components/page-header/page-header';
 import { SettingFields } from '../../components/setting-fields/setting-fields';
+import { MailAdminService } from '../../services/mail-admin.service';
 import { PluginSettingDefinition, PluginsService } from '../../services/plugins.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -22,6 +23,7 @@ import { LabelPipe } from '@adventures/entity-ui';
 export class AdminPluginCustomize implements OnInit {
   private readonly api = inject(PluginsService);
   private readonly route = inject(ActivatedRoute);
+  private readonly mail = inject(MailAdminService);
 
   protected readonly key = this.route.snapshot.paramMap.get('key') ?? '';
   protected readonly definitions = signal<PluginSettingDefinition[]>([]);
@@ -34,8 +36,34 @@ export class AdminPluginCustomize implements OnInit {
   protected readonly isSaving = signal(false);
   private readonly gears = bindSpinner(this.isLoading);
 
+  /** The E-mail plug-in alone has a test box: it checks the settings that are SAVED. */
+  protected readonly isMail = this.key === 'mail';
+  protected readonly testTo = signal('');
+  protected readonly testResult = signal('');
+  protected readonly testing = signal(false);
+
   ngOnInit(): void {
     this.load();
+  }
+
+  protected sendTest(): void {
+    this.testResult.set('');
+    if (this.testTo().trim() === '') {
+      this.testResult.set('Give an e-mail address to send the test message to.');
+      return;
+    }
+
+    this.testing.set(true);
+    this.mail.sendTest(this.testTo().trim()).subscribe({
+      next: () => {
+        this.testing.set(false);
+        this.testResult.set('Test message sent. Check that it arrived.');
+      },
+      error: (error) => {
+        this.testing.set(false);
+        this.testResult.set(describeApiError(error, "Couldn't send the test message.").join(' '));
+      },
+    });
   }
 
   private load(): void {
