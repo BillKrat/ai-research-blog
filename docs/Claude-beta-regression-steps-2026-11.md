@@ -107,6 +107,9 @@ Steps are added here as each of its four stages lands.
 - S: With a setup token (browser tools or a script), call `/api/posts` or `/api/tenant/hosts`. E: 403. Call `/api/setup/sites` after the address has been attached. E: 404.
 - S: Open `/setup` on an address that already reaches a site. E: "This address needs no setup".
 
+### A15. Onboarding stage 4, the install guide and the listing text (documents only)
+- S: Read `Claude-install-guide-smarterasp.md` from the top as someone who has never seen the project: the two install paths, the first sign-in section (fresh install, a second address and the setup page), the one-site section, the listing text at the end. E: every step matches what A12, A13 and A14 do; tell me anything that is wrong or unclear. The listing text is a draft and has not been sent to SmarterASP.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 

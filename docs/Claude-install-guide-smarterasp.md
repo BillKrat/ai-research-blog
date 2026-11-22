@@ -2,7 +2,11 @@
 
 **Status: draft written from how our own sites were built. Not yet proved on a fresh installation.** Every step marked *(ours)* is one we did on our own sites; *(unproved)* means we have not repeated it from scratch. The proof run uses a spare domain, written here as `<domain-name>`, and turns this draft into the real guide. For the cheap-hosting background see [Claude-developer-setup-guide.md](Claude-developer-setup-guide.md).
 
-**What you end up with:** three sites on one hosting account, `www.<domain-name>` (the Angular client), `api.<domain-name>` (the API) and `mcp.<domain-name>` (the MCP server), a PostgreSQL database, free HTTPS certificates, and GitHub Actions that test and then deploy on every merge to `main`. Running cost: about $38 a quarter for hosting plus an AI subscription if you use one.
+**Two ways to install (decided 2026-11-22, onboarding):**
+- **Evaluate on one address (easiest, no domain needed):** one SmarterASP site, the API serves the client, its temporary address is the whole app. Go straight to "One site, one address" near the end of this guide; stages 7 to 9 below are for the production layout.
+- **Production layout (what this project itself runs):** three sites and a domain, described next.
+
+**What you end up with (production layout):** three sites on one hosting account, `www.<domain-name>` (the Angular client), `api.<domain-name>` (the API) and `mcp.<domain-name>` (the MCP server), a PostgreSQL database, free HTTPS certificates, and GitHub Actions that test and then deploy on every merge to `main`. Running cost: about $38 a quarter for hosting plus an AI subscription if you use one.
 
 ## 0. Before you start
 - A SmarterASP.NET account with a plan that includes PostgreSQL, a registered domain name `<domain-name>` whose DNS you control, a GitHub account.
@@ -52,10 +56,11 @@ Push a branch: the `Tests` workflow runs the API, MCP and client suites on GitHu
 Merge to `main` (or run each deploy workflow by hand): MCP, then API, then client. Each API deploy takes the site offline for a moment (`app_offline.htm`) and the workflow then checks the health endpoint. Expect: all three runs green; `https://www.<domain-name>` shows the public site.
 
 ## 8. First sign-in and hardening *(ours, learned the hard way)*
-1. The first start seeds the store and creates `Admin` and `Claude` accounts with well-known default passwords, flagged to be changed. **Sign in as `Admin` at once and change the password** (profile page).
-2. For `Claude`: if you do not use an AI collaborator, set a strong password through Admin > Users > Set password or delete the person once another administrator exists. We found our own unchanged default account this way.
-3. Create a second administrator before you remove or demote anyone; the app refuses to remove the last one.
-4. Create the four named test people from [Claude-test-users.md](Claude-test-users.md) on a test copy, never on real customers' data.
+1. **A fresh install** (an empty store on a deployed host) makes the first site by itself: the first address that reaches the API becomes the first tenant, its `Admin` account is created with the well-known default password, flagged to be changed, and `Admin` becomes the platform administrator. It carries only the install seed (no sample posts, no Claude account). **Sign in as `Admin` at once and change the password**: the app will not let you do anything else until you do.
+2. The first site is made only when the store holds no tenant at all, so a running install can never be taken over this way.
+3. **Another address that reaches the API** (a second domain, or a temporary address you bound later) shows a setup page instead of a site. Sign in there with the domain, user name and password of a platform administrator of an existing site (whose default password has already been changed), then either **attach** the address to a site (it becomes an alias, so the same data answers on both) or **start a new site** (its own `Admin` with the default password, changed at its first sign-in). Nothing is ever created for an unknown address without a platform administrator doing it.
+4. Create a second administrator before you remove or demote anyone; the app refuses to remove the last one.
+5. If you use an AI collaborator, create that account yourself (Admin > Users) with a strong password; no default `Claude` account exists on an install. Create the four named test people from [Claude-test-users.md](Claude-test-users.md) on a test copy, never on real customers' data.
 
 ## 9. Check it works
 - `https://api.<domain-name>/api/health` answers healthy.
@@ -74,7 +79,7 @@ Merge to `main`; the gate tests, then the three workflows deploy only the part w
 
 ## What would make this install shorter (backlog)
 1. (Done on branch `claude-site-domain`.) The domain is now the single setting `Site__Domain` plus the variables `SITE_DOMAIN` and `FOUNDATION_REPO`.
-2. A first-run page that forces the default passwords to change and offers to remove the `Claude` account.
+2. (Done 2026-11-22.) The first sign-in forces the default password to change, and an install has no default `Claude` account.
 3. (Built 2026-10-29, `Claude-preflight.ps1` in the workspace root; proved only against our own domain until the proof run.) One script that checks every secret and DNS name before the first deploy: `.docsClaude-preflight.ps1 -Domain <domain-name> -Repo <you>/ai-research-blog -FoundationRepo <you>/Adventures.Foundation`.
 
 ## One site, one address: the evaluation path (single-site mode)
@@ -84,3 +89,7 @@ The easiest install is ONE SmarterASP site: the API serves the client itself, so
 ## Making the site's temporary address work on the first run with the split layout (T4b, operator override)
 
 Every SmarterASP site answers on a temporary address (`<account>-siteN.atempurl.com`) before a domain is attached, but the API only serves hosts that reach a tenant. Before anyone can sign in there is nobody to add the address as an alias, so the install has one explicit step: on the API site (and the MCP site if you use it) add the secret `Tenancy__AutoAliasToTenantDomain` with the domain of the tenant that should answer, for example the domain the seed created for your first site, restart the site, and open the temporary address once. The address becomes an alias of that tenant and works from then on (the API also allows the site on that address to call it). Then clear the setting again. It only ever aliases a real host name that no tenant reaches, never an IP address or localhost, and at most 10 per tenant. New tenants on other domains are created afterwards on Admin > Tenants > New tenant.
+
+## Listing text for a one-click install (draft for SmarterASP)
+
+**Name:** Adventures blog (AI starter kit). **What it is:** a blog and content site for people who want AI as a collaborator: posts and pages, comments with approval, search, an RSS feed, a Word-like editor, widgets and plug-ins, one admin for several sites on several domains, and an optional MCP server so an AI assistant can draft posts for you to review (it can never publish). **Install:** one site, one database. Open the site address; the first visit creates the site and you sign in with `Admin` and `Admin`, then choose a new password. **Needs:** ASP.NET Core 10 hosting, PostgreSQL. **Cost to run:** the hosting plan plus an AI subscription only if you use the AI features. **Licence:** BUSL-1.1 with a free grant for small operators (see LICENSE). Nothing is sent anywhere unless you configure an AI key or mail server yourself. This text is a draft and is not sent anywhere: the human decides what to send SmarterASP (ticket #3716417).
