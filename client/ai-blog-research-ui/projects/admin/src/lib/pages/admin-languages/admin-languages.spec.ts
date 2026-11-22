@@ -6,12 +6,13 @@ import { LABELS } from '@adventures/entity-ui';
 import { AdminLanguages } from './admin-languages';
 
 describe('AdminLanguages', () => {
-  function setup(stored = [{ language: 'de', count: 2 }]) {
+  function setup(stored = [{ language: 'de', count: 2 }], proposed: { language: string; count: number }[] = []) {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
     const fixture = TestBed.createComponent(AdminLanguages);
     const http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
     http.expectOne((r) => r.url.endsWith('/api/languages') && r.method === 'GET').flush(stored);
+    http.expectOne((r) => r.url.endsWith('/api/languages/proposals')).flush(proposed);
     fixture.detectChanges();
     const page = fixture.nativeElement as HTMLElement;
     const type = (selector: string, value: string) => {
@@ -82,6 +83,7 @@ describe('AdminLanguages', () => {
     fixture.detectChanges();
 
     http.expectOne((r) => r.url.endsWith('/api/languages') && r.method === 'GET').flush([{ language: 'de', count: 1 }]);
+    http.expectOne((r) => r.url.endsWith('/api/languages/proposals')).flush([]);
   });
 
   it('refuses a table that is not a JSON object of texts, and sends nothing', () => {
@@ -120,5 +122,47 @@ describe('AdminLanguages', () => {
     fixture.detectChanges();
 
     http.expectOne((r) => r.url.endsWith('/api/languages') && r.method === 'GET').flush([]);
+    http.expectOne((r) => r.url.endsWith('/api/languages/proposals')).flush([]);
+  });
+
+  it('lists the files Claude proposed, apart from the stored ones', () => {
+    const { page } = setup([{ language: 'de', count: 2 }], [{ language: 'fr', count: 5 }]);
+
+    expect(page.textContent).toContain('Proposed by Claude');
+    expect(page.querySelector('[data-action="review-fr"]')).not.toBeNull();
+  });
+
+  it('opens a proposal for review, and saving it applies the (possibly edited) table and drops the proposal', () => {
+    const { http, page, press, type, fixture } = setup([], [{ language: 'fr', count: 1 }]);
+
+    press('review-fr');
+    http.expectOne((r) => r.url.endsWith('/api/languages/fr/proposal') && r.method === 'GET').flush({ language: 'fr', labels: { save: 'Enregistrer' } });
+    fixture.detectChanges();
+    expect((page.querySelector('input[name="code"]') as HTMLInputElement).value).toBe('fr');
+    type('textarea[name="table"]', '{"save":"Sauvegarder"}');
+
+    press('save');
+    const put = http.expectOne((r) => r.url.endsWith('/api/languages/fr') && r.method === 'PUT');
+    expect(put.request.body).toEqual({ labels: { save: 'Sauvegarder' } });
+    put.flush(null, { status: 204, statusText: 'No Content' });
+    http.expectOne((r) => r.url.endsWith('/api/languages/fr/proposal') && r.method === 'DELETE').flush(null, { status: 204, statusText: 'No Content' });
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/languages') && r.method === 'GET').flush([{ language: 'fr', count: 1 }]);
+    http.expectOne((r) => r.url.endsWith('/api/languages/proposals')).flush([]);
+  });
+
+  it('discards a proposal without applying anything', () => {
+    const { http, press, fixture } = setup([], [{ language: 'fr', count: 1 }]);
+    press('review-fr');
+    http.expectOne((r) => r.url.endsWith('/api/languages/fr/proposal') && r.method === 'GET').flush({ language: 'fr', labels: { save: 'x' } });
+    fixture.detectChanges();
+
+    press('discard');
+    http.expectOne((r) => r.url.endsWith('/api/languages/fr/proposal') && r.method === 'DELETE').flush(null, { status: 204, statusText: 'No Content' });
+    fixture.detectChanges();
+
+    http.expectNone((r) => r.method === 'PUT');
+    http.expectOne((r) => r.url.endsWith('/api/languages') && r.method === 'GET').flush([]);
+    http.expectOne((r) => r.url.endsWith('/api/languages/proposals')).flush([]);
   });
 });

@@ -29,6 +29,19 @@ export class LanguagesAdminService {
     return this.http.get<Record<string, string>>(`${this.apiUrl}/api/languages/catalog`);
   }
 
+  /** The files Claude proposed through MCP, waiting for review: nothing is served until one is saved here. */
+  proposals(): Observable<LanguageSummary[]> {
+    return this.http.get<LanguageSummary[]>(`${this.apiUrl}/api/languages/proposals`);
+  }
+
+  readProposal(language: string): Observable<LanguageTable> {
+    return this.http.get<LanguageTable>(`${this.apiUrl}/api/languages/${encodeURIComponent(language)}/proposal`);
+  }
+
+  discardProposal(language: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/api/languages/${encodeURIComponent(language)}/proposal`);
+  }
+
   read(language: string): Observable<LanguageTable> {
     return this.http.get<LanguageTable>(`${this.apiUrl}/api/languages/${encodeURIComponent(language)}`);
   }

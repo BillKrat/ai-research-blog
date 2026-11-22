@@ -112,6 +112,8 @@ export const LABELS = {
   ask: 'Ask',
   backlog: 'Backlog',
   loadEnglish: 'Load the English texts',
+  reviewProposal: 'Review the proposal for {0}',
+  discardProposal: 'Discard the proposal',
 } as const;
 
 export type LabelKey = keyof typeof LABELS;

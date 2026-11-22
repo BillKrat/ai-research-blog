@@ -41,6 +41,7 @@ public sealed class RouteRightsGuardTests
         [nameof(AdminMenuController)] = "the menu lists only what the caller rights allow",
         [nameof(AuthoringController)] = "machine scope policy (content.draft)",
         [nameof(CollaborationAuthoringController)] = "machine scope policy (content.draft)",
+        [nameof(AuthorLanguagesController)] = "machine scope policy (content.draft): reads the keys and PROPOSES a language file, never applies one",
         [nameof(McpDiagnosticsController)] = "machine scope policy (mcp.diagnostics.read)",
     };
 
