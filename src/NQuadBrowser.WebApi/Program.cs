@@ -41,6 +41,9 @@ builder.Services.AddNQuadRelations();
 
 var app = builder.Build();
 
+// first of all: behind a CDN or proxy the visitor address and scheme come from the listed proxies only (Proxy:Trusted; off by default)
+app.UseTrustedProxies(app.Configuration);
+
 app.UseBrowserSecurityHeaders(app.Environment.IsDevelopment());
 app.UseRateLimiter();
 app.UseDefaultFiles();

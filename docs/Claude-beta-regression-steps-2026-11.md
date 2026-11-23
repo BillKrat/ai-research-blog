@@ -141,6 +141,14 @@ Steps are added here as each of its four stages lands.
 - S: Ask for a link for a person whose address was never confirmed. E: no mail, and the page says nothing is sent for an unconfirmed address and what to do; the API log has one line naming the person and the reason.
 - S: Ask from an address that is not a registered host (a stray temporary address). E: refused with a plain message, no mail.
 
+### A19. Running behind a proxy (`Proxy:Trusted`), review `artifacts/Claude-2026-11-23-running-behind-a-proxy.md`
+- S: Run locally with no `Proxy__Trusted` and send `curl.exe -H "X-Forwarded-For: 203.0.113.7" -H "X-Forwarded-Proto: https" http://localhost:<api port>/api/health`. E: behaves as before; the request line in the API console ends "from ::1" (or your own address), not 203.0.113.7.
+- S: Set `Proxy__Trusted` to `127.0.0.1` (and `::1`), restart, send the same curl. E: the request line ends "from 203.0.113.7".
+- S: Set it to `10.9.9.9` only (not your address), restart, send the same curl. E: the line shows your own address again (a header from a non-proxy is ignored).
+- S: Set it to `not-an-address`, start the API. E: it refuses to start with a message naming `Proxy:Trusted`.
+- S: Send `-H "X-Forwarded-Host: other.example.org"` with the trusted setting on. E: the site is still chosen by the host you called, never by that header.
+- S (live, after the CDN is fronted): sign in wrongly from two networks. E: each network has its own limit.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 

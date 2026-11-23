@@ -30,6 +30,8 @@ internal static class AppPipeline
     {
         const string AngularCorsPolicy = AppPlatformServices.AngularCorsPolicy;
 
+        // Before everything: behind a CDN or proxy the visitor address and scheme come from the listed proxies only (Proxy:Trusted, off by default), so the redirect and the rate limits see the visitor.
+        app.UseTrustedProxies(app.Configuration);
         // First in the pipeline: everything after it (request logging, the exception handler, controllers) logs under the id.
         app.UseCorrelationId();
         app.UseSecurityHeaders(app.Environment.IsDevelopment());
@@ -40,7 +42,12 @@ internal static class AppPipeline
                 await next(context);
             }
         });
-        app.UseSerilogRequestLogging();
+        // Each request line names the client address (the visitor behind a trusted proxy, see Proxy:Trusted), so visitors can be told apart in the log.
+        app.UseSerilogRequestLogging(options =>
+        {
+            options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms from {ClientIp}";
+            options.EnrichDiagnosticContext = (diagnosticContext, httpContext) => diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+        });
 
         // Configure the HTTP request pipeline.
         // UseCors must come before any Map* calls so it runs ahead of terminal

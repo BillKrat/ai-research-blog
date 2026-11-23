@@ -119,6 +119,17 @@ Every SmarterASP site answers on a temporary address (`<account>-siteN.atempurl.
 - **A CDN in its default mode is not a substitute for a certificate on the server:** it encrypts to the visitor, then speaks plain HTTP to your server (the app's https redirect then loops on every page except the root, and sign-in passwords cross the internet unencrypted on that leg). Use a mode that encrypts to the server, which needs a certificate there.
 - **The plan's free-certificate allowance can be used up.** The hosting service then answers only "did not queue the SSL request"; look at the SSL page in the panel, and have a certificate in mind (a purchased one, or a free origin certificate if the host lets you import one) before you move DNS.
 
+## Putting a CDN or reverse proxy in front (setting `Proxy__Trusted`)
+
+Behind a proxy the app sees the proxy's address for every visitor. Without telling it which proxy to believe, every visitor shares one rate-limit window (sign-in, comments, search) and the logs name only the proxy; with the proxy in plain-http mode the https redirect also loops. Tell the app which addresses are your proxy and it will take the visitor's address and scheme from the proxy's own headers, and from nobody else.
+
+1. Set the API site's setting `Proxy__Trusted` to the proxy's address ranges, comma separated, for example `198.51.100.0/24,203.0.113.0/24,2001:db8::/32`. Copy the ranges from your CDN's published list and keep them current; a range you leave out is simply not trusted (its visitors then share the proxy's limit again), a range you add wrongly lets that network choose its own address, so add only the proxy's.
+2. Leave it empty (the default) when nothing is in front of the app: then no forwarded header is believed from anyone.
+3. `Proxy__ForwardLimit` (default 1) is how many proxies in a row are believed, counted from the app. Keep 1 for one CDN; raise it only if two proxies chain in front of the app, and then list both.
+4. Use a mode that encrypts to the server (an origin certificate on the server; Cloudflare "Full (strict)"), as described above.
+5. Check: sign in wrongly six times from your own address and then from a phone on mobile data. Only your address is limited, not the phone's.
+6. The forwarded host is never used: the site is chosen by the host name the server received, so the proxy must pass the original host name through to the app (a CDN does by default). An invalid entry in `Proxy__Trusted` stops the app at start-up with a message naming the setting.
+
 ## Listing text for a one-click install (draft for SmarterASP)
 
 **Name:** Adventures blog (AI starter kit). **What it is:** a blog and content site for people who want AI as a collaborator: posts and pages, comments with approval, search, an RSS feed, a Word-like editor, widgets and plug-ins, one admin for several sites on several domains, and an optional MCP server so an AI assistant can draft posts for you to review (it can never publish). **Install:** one site, one database. Open the site address; the first visit creates the site and you sign in with `Admin` and `Admin`, then choose a new password. **Needs:** ASP.NET Core 10 hosting, PostgreSQL. **Cost to run:** the hosting plan plus an AI subscription only if you use the AI features. **Licence:** BUSL-1.1 with a free grant for small operators (see LICENSE). Nothing is sent anywhere unless you configure an AI key or mail server yourself. This text is a draft and is not sent anywhere: the human decides what to send SmarterASP (ticket #3716417).
