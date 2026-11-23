@@ -1,6 +1,6 @@
 # Decision: quad storage layout (beta row 9)
 
-Date: 2026-11-23. APPROVED by the human the same day ("Yes, build it"); implementation step 1 (the store, the factory, the hosts) is DONE, see `artifacts/Claude-2026-11-23-dictionary-quad-store.md`; tools, cutover and the pristine store are next. Owner of the decision: Claude. Plan and background: `Claude-backlog-quad-storage.md`. Tool: `docs/Claude-quad-bench` (workspace root). Raw results: below; run on the local dev PostgreSQL 17 (the VM), warm cache, synthetic blogs shaped from the measured live store (section 4c of the plan).
+Date: 2026-11-23. APPROVED by the human the same day ("Yes, build it"); implementation DONE: the store, the factory and the hosts (`artifacts/Claude-2026-11-23-dictionary-quad-store.md`), then the tools, the verified cutover copy and the rehearsal (`artifacts/Claude-2026-11-23-quad-tools-and-cutover.md`, runbook `Claude-cutover-quad-layout.md`); the LIVE cutover waits for the human. Owner of the decision: Claude. Plan and background: `Claude-backlog-quad-storage.md`. Tool: `docs/Claude-quad-bench` (workspace root). Raw results: below; run on the local dev PostgreSQL 17 (the VM), warm cache, synthetic blogs shaped from the measured live store (section 4c of the plan).
 
 ## Decision
 
