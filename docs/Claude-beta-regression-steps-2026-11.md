@@ -31,7 +31,7 @@ Legend: **S** = steps, **E** = expected result. Nothing below has been seen in a
 - S: Dashboard > Quick draft: title and text, Save. E: link to the draft, Draft posts count grows, the draft is not published and is yours. Empty title: refused. As a person without the write-a-post right: refused with a permission message.
 - S: Post a visitor comment. E: shown under Latest comments with author, post, state and excerpt, no e-mail address.
 
-### A6. E-mail settings and test-send (row 12 parity stage 2), review `artifacts/Claude-2026-11-22-mail-settings-and-test-send.md`
+### A6. E-mail settings and test-send (row 12 parity stage 2). TEST SEND PROVEN BY THE HUMAN 2026-11-23 (global-webnet.com mailbox); the rest of A6 not yet walked; review `artifacts/Claude-2026-11-22-mail-settings-and-test-send.md`
 - S: Admin > System > E-mail: sender, server, port 587, user, password, Use SSL on, Save; reopen. E: password blank with "A value is set"; nothing shows the password anywhere.
 - S: Test box with your own address, Send. E: a message arrives with the subject prefix; with a wrong password: a plain failure message, no password.
 - S: Save with port 22, a server like `mail.x.org:25` or `http://mail.x.org`, a sender with two addresses. E: each refused with a reason.
@@ -118,7 +118,7 @@ Steps are added here as each of its four stages lands.
 - S: Open Admin > Users. E: only Admin. Create a second administrator before changing anything else.
 - Then: api site (split layout) and mcp site, as in the install guide.
 
-### A17. E-mail address verification (password recovery step 2), review `artifacts/Claude-2026-11-23-email-verification.md`
+### A17. E-mail address verification (password recovery step 2). TESTED BY THE HUMAN 2026-11-23: passed, including the administrator send button; review `artifacts/Claude-2026-11-23-email-verification.md`
 - Needs the E-mail settings working first (A6): server, port 587, a mailbox, Save, then the test message arrives.
 - S: Profile with no e-mail saved. E: "Save an e-mail address above first".
 - S: Save an address you can read, reload Profile, press the verification mail button. E: "The mail is on its way"; a mail arrives with a link to `/verify-email?user=...&token=...` on the site you used.
@@ -129,7 +129,7 @@ Steps are added here as each of its four stages lands.
 - S: With the E-mail plug-in off or no server set, press the button. E: a plain message that mail is not set up (no server details).
 - S: Admin > Users, open a person whose saved address is not confirmed (you can be signed out of that person; this is the administrator doing it). E: the E-mail address section says "not confirmed" with a send button; press it, the mail arrives, open its link while signed out. E: confirmed; reload the person, it now says confirmed. A person with no saved address shows "Save one first".
 
-### A18. Forgot my password (password recovery step 3), review `artifacts/Claude-2026-11-23-forgot-password.md`
+### A18. Forgot my password (password recovery step 3). TESTED BY THE HUMAN 2026-11-23: passed (a mail read on the Mac needs its link opened in the Windows browser while the app runs in the VM); review `artifacts/Claude-2026-11-23-forgot-password.md`
 - Needs A6 (mail works) and A17 (an address confirmed on the account).
 - S: On the sign-in page press Forgot my password, type the user name, send. E: the same "link is on its way" text for a confirmed address, an unconfirmed one and a name that does not exist; a mail arrives only for the confirmed one (check the others receive nothing).
 - S: Type the e-mail address instead of the name. E: the same.
