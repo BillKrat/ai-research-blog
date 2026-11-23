@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommentAction, CommentsAdminService, ModerationComment } from '../../services/comments-admin.service';
-import { AdminMenuService } from '../../services/admin-menu.service';
+import { AdminMenuService } from '@adventures/core';
 
 /**
  * The Comments page (the legacy BlogEngine one, trimmed for the beta): what readers wrote under posts, filtered by Pending or Approved,

@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { API_BASE_URL } from '@adventures/core';
+import { API_BASE_URL } from '../api-base-url';
 
 /** Whether this address needs setting up. The server names no site here. */
 export interface SetupStatus {

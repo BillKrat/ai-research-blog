@@ -7,7 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { EntityGrid, GridRequest, LabelPipe } from '@adventures/entity-ui';
 import { describeApiError, EntityDataModel, EntityGridModel, PageBannerService, SpinnerService, bindSpinner } from '@adventures/core';
 import { PageHeader } from '../../components/page-header/page-header';
-import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
+import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '@adventures/core';
 
 /**
  * The administrator's exception log: a grid of the active exceptions (newest first), [OK] to leave, [Purge] to retire

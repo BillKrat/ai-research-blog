@@ -2,7 +2,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { REQUEST_TIMEOUT_MS } from '@adventures/core';
+import { REQUEST_TIMEOUT_MS } from '../interceptors/timeout.interceptor';
 import { AdminExceptionsService } from './admin-exceptions.service';
 
 describe('AdminExceptionsService', () => {

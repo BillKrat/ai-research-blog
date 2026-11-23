@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LabelKey, LabelPipe } from '@adventures/entity-ui';
 import { PageHeader } from '../../components/page-header/page-header';
-import { SetupService, SetupSite } from '../../services/setup.service';
+import { SetupService, SetupSite } from '@adventures/core';
 
 type Step = 'checking' | 'notNeeded' | 'signIn' | 'choose' | 'done';
 

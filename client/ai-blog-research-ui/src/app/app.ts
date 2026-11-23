@@ -8,8 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { SiteNav, SiteService, WidgetZone } from '@adventures/blog-reader';
-import { AdminExceptionsService, AdminMenuService, HealthService, SetupService } from '@adventures/admin';
-import { API_BASE_URL, ApiProblemService, AuthService, SpinnerService } from '@adventures/core';
+import { API_BASE_URL, AdminExceptionsService, AdminMenuService, ApiProblemService, AuthService, HealthService, SetupService, SpinnerService } from '@adventures/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LabelPipe, LanguageLoader } from '@adventures/entity-ui';
 

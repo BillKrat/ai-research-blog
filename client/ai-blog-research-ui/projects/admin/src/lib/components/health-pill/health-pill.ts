@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, inject, output, signal } from '@angular/core';
 import { ApiProblemService } from '@adventures/core';
-import { HealthResponse, HealthService, describeFailures } from '../../services/health.service';
+import { HealthResponse, HealthService, describeFailures } from '@adventures/core';
 
 type HealthState = 'checking' | 'healthy' | 'degraded' | 'unhealthy' | 'unreachable';
 
