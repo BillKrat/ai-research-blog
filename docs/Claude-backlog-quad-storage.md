@@ -1,6 +1,6 @@
 # Backlog: quad storage, scale and performance
 
-Status: BACKLOG, not started. Filed 2026-11-21 at the human's request. **Must be done before beta** (the human: refactoring after beta data exists is problematic), but only after the current foundational path is finished. It must not distract the work in progress.
+Status: STEPS 1 TO 4 DONE 2026-11-23 (measured, benchmarked, decided: hybrid layout, see `Claude-decision-2026-11-quad-storage.md`); implementation (step 5) waits for the human review. Filed 2026-11-21 at the human's request. **Must be done before beta** (the human: refactoring after beta data exists is problematic), but only after the current foundational path is finished. It must not distract the work in progress.
 
 Sources: the human's scalability notes (`Y:\Temp\scalability-concerns.txt`, an AI Q&A about storing full IRIs) and ISO 15926 notes (`Y:\Temp\iso-15926.txt`), the W3C RDF 1.2 N-Quads and Concepts drafts, and public research listed at the end. Items marked **(unverified)** came from a search summary or from memory and need a check before anyone relies on them.
 
