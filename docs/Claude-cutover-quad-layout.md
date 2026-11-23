@@ -2,6 +2,8 @@
 
 Beta rows 9 and 11. Written 2026-11-23 after the rehearsal on the local dev store (results at the end). The live site is untouched until the human says "go"; every step before the switch only reads the old table or writes to new tables beside it.
 
+**Route chosen by the human 2026-11-23: A (carry the content over).** The live dry run of step 2 was done the same day (read only): 120,521 rows in `app_n_quads`, **17,881 to copy and 102,640 excluded**, the excluded rows being exactly the audit records; nothing else is left behind. The order for the live cutover, none of which has started: (1) SmarterASP support fixes `global-webnet.com`; (2) the human agrees the merge to `main`, then Foundation first, the push, the mirror and the deploys, with the setting unset so the site keeps reading the old table (no behaviour change; the new code is only present); (3) step 1 (both backups); (4) a quiet window: stop the API site, step 3 (`copy -Apply`), set `NQuadStore__Layout=Dictionary`, start the site, step 5; (5) report back, keep the old table for a release.
+
 ## Two ways to start the new layout
 
 | | A. Carry the content over | B. Pristine start |
@@ -38,3 +40,7 @@ Set `NQuadStore__Layout` back to `Text` (or remove it) and restart: the site rea
 - **Size on real data:** 616 bytes a row in the text table against 327 in the dictionary layout for the same content (1.88 times smaller; the synthetic benchmark said 1.64).
 - **The real API** started on the copied store and on an empty store with the install seed. The pristine store holds 1,449 rows (schemas and defaults), no account names and no audit rows. The API answered the public endpoints identically on both layouts, but the dev store holds no published posts in the new format, so that comparison shows the endpoints work and not content equality; content equality is the matching hashes above.
 - **Not rehearsed:** the switch on the hosted site (it needs the human's go), the quiet-window procedure, a restore from the hosting panel backup.
+
+## Live dry run, 2026-11-23 (read only, route A)
+
+Rows per graph that the real `copy` would carry over (the live store, 120,521 rows): collaboration 195 plus 846 in the tenant graph; content 330 plus 1,944 in the tenant graph; email verification 5; i18n 23; legacy BlogEngine mirror 9,767; platform 2; site 31 plus 55; system 4,056; people 490; widgets 34 plus 76; the install marker graph 27: **17,881 in all**. Left out: 102,640 audit records (legacy 68,913, system 18,487, content 11,299, collaboration 3,577, people 345, site 19). The legacy graph is the one-time BlogEngine import (the human closed that migration on 2026-10-24); it travels along unless the human says to leave it.
