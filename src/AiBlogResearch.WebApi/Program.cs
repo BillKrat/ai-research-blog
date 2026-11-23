@@ -115,7 +115,7 @@ try
         || string.IsNullOrWhiteSpace(postgresConnection);
     INQuadStore nquadStore = useMemoryStore
         ? new InMemoryNQuadStore()
-        : new NpgsqlNQuadStore(postgresConnection!, builder.Configuration["NQuadStore:Table"] ?? "app_n_quads");
+        : NQuadStoreFactory.CreatePostgres(postgresConnection!, builder.Configuration["NQuadStore:Layout"], builder.Configuration["NQuadStore:Table"], builder.Configuration["NQuadStore:Prefix"]);
     var seeded = false;
     // Live data mode runs on the shared development store, so it applies pending seeds like any start (named seeds apply once and only add
     // schema and defaults). Set LiveData:SkipSeeding=true to leave the store untouched instead.

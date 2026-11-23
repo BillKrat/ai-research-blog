@@ -19,7 +19,7 @@ builder.Services.AddRequestHardening(builder.Configuration);
 var postgres = builder.Configuration.GetConnectionString("Postgres");
 INQuadStore store = string.IsNullOrWhiteSpace(postgres) || string.Equals(builder.Configuration["NQuadStore:Provider"], "Memory", StringComparison.OrdinalIgnoreCase)
     ? new InMemoryNQuadStore()
-    : new NpgsqlNQuadStore(postgres, builder.Configuration["NQuadStore:Table"] ?? "app_n_quads");
+    : NQuadStoreFactory.CreatePostgres(postgres, builder.Configuration["NQuadStore:Layout"], builder.Configuration["NQuadStore:Table"], builder.Configuration["NQuadStore:Prefix"]);
 if (store is InMemoryNQuadStore)
 {
     var seeds = Path.Combine(AppContext.BaseDirectory, "Sql", "seed");
