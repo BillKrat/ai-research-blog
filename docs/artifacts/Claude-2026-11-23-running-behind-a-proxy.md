@@ -33,7 +33,7 @@ Foundation: 14 new cases through the real forwarded-headers middleware built fro
 
 ## Not verified / open
 
-- Never run behind a real CDN: steps A19 do it locally with curl, then live once a CDN is fronted.
-- Each request log line now ends with the client address (`from <address>`); that is a log change with no automated test, and it keeps visitor addresses in the 14-day log files, so mention it in any privacy text.
-- The host tests do not start a host with the setting on (the unit tests cover the options and the middleware, not the pipeline order).
+- Never run behind a real CDN: the local steps of A19 were run by Claude on the real process; the live step (two networks) waits for a CDN.
+- Each request log line now ends with the client address (`from <address>`). Checked by hand on the real API process (trusted proxy: the forwarded address; not listed, nothing listed: the caller; a bad entry: the process stops with the message); it keeps visitor addresses in the 14-day log files, so mention it in any privacy text.
+- Four host tests now run the real pipeline with the setting on and off (visitors behind a listed proxy get their own sign-in window; a header from an unlisted caller buys nothing; a bad entry stops the host). The scheme half (https redirect behind a plain-http proxy) is covered by the unit tests only.
 - Keeping a CDN's published ranges current is the installer's job (documented).

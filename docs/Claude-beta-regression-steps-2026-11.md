@@ -141,7 +141,7 @@ Steps are added here as each of its four stages lands.
 - S: Ask for a link for a person whose address was never confirmed. E: no mail, and the page says nothing is sent for an unconfirmed address and what to do; the API log has one line naming the person and the reason.
 - S: Ask from an address that is not a registered host (a stray temporary address). E: refused with a plain message, no mail.
 
-### A19. Running behind a proxy (`Proxy:Trusted`), review `artifacts/Claude-2026-11-23-running-behind-a-proxy.md`
+### A19. Running behind a proxy (`Proxy:Trusted`). CLAUDE RAN THE LOCAL STEPS 2026-11-23 on the real API process (trusted: logs the forwarded address; not listed or nothing listed: logs the caller; bad entry: refuses to start naming the setting) and added 4 host tests; only the live CDN step is left; review `artifacts/Claude-2026-11-23-running-behind-a-proxy.md`
 - S: Run locally with no `Proxy__Trusted` and send `curl.exe -H "X-Forwarded-For: 203.0.113.7" -H "X-Forwarded-Proto: https" http://localhost:<api port>/api/health`. E: behaves as before; the request line in the API console ends "from ::1" (or your own address), not 203.0.113.7.
 - S: Set `Proxy__Trusted` to `127.0.0.1` (and `::1`), restart, send the same curl. E: the request line ends "from 203.0.113.7".
 - S: Set it to `10.9.9.9` only (not your address), restart, send the same curl. E: the line shows your own address again (a header from a non-proxy is ignored).
