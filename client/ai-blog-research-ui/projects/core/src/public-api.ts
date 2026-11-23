@@ -28,3 +28,4 @@ export * from './lib/services/health.service';
 export * from './lib/services/setup.service';
 export * from './lib/interceptors/server-error.interceptor';
 export * from './lib/services/email-verification.service';
+export * from './lib/services/password-reset.service';

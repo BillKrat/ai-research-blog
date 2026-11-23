@@ -34,3 +34,5 @@ export * from './lib/services/maintenance-admin.service';
 export * from './lib/pages/admin-maintenance/admin-maintenance';
 export * from './lib/pages/setup/setup';
 export * from './lib/pages/verify-email/verify-email';
+export * from './lib/pages/forgot-password/forgot-password';
+export * from './lib/pages/reset-password/reset-password';

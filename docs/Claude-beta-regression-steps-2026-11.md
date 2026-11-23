@@ -128,6 +128,17 @@ Steps are added here as each of its four stages lands.
 - S: Open a link with a changed character in the token. E: the same plain failure page, no reason given.
 - S: With the E-mail plug-in off or no server set, press the button. E: a plain message that mail is not set up (no server details).
 
+### A18. Forgot my password (password recovery step 3), review `artifacts/Claude-2026-11-23-forgot-password.md`
+- Needs A6 (mail works) and A17 (an address confirmed on the account).
+- S: On the sign-in page press Forgot my password, type the user name, send. E: the same "link is on its way" text for a confirmed address, an unconfirmed one and a name that does not exist; a mail arrives only for the confirmed one (check the others receive nothing).
+- S: Type the e-mail address instead of the name. E: the same.
+- S: Open the mailed link, choose a password under 12 characters. E: refused with the policy text and the link still works.
+- S: Choose a long password and type it twice. E: "Your password is changed"; sign in with it works, the old one fails, no forced change at the next sign-in; a locked-out account can sign in again.
+- S: Open the same link again. E: the plain "not valid any more" page. Same for an old link (over an hour) or one with a changed character.
+- S: Ask for a link, then change the address on Profile, then open the link. E: not valid any more.
+- S: Ask four times in an hour for the same person. E: no fourth mail; the page still answers the same.
+- S: Ask from an address that is not a registered host (a stray temporary address). E: refused with a plain message, no mail.
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 

@@ -40,6 +40,7 @@ public sealed class RouteRightsGuardTests
         [nameof(SetupController)] = "onboarding setup of a host that reaches no tenant: status and sign-in are anonymous (sign-in rate limited, one answer for every failure); every other action needs a setup token, which works on this API only (SetupTokenGuardMiddleware) and is re-checked against the platform switch on each call",
         [nameof(ProfileController)] ="the signed-in person edits their own profile",
         [nameof(EmailVerificationController)] = "the signed-in person verifies their own saved address (mail goes only to that address, link host checked against registered hosts); the confirm link is anonymous and answers every failure alike",
+        [nameof(PasswordResetController)] = "anonymous by nature (the person has lost the password): asking always answers 204 and mails only a verified address after the response, the link host is checked, one plain failure for every bad link, three mails an hour per person",
         [nameof(TenantController)] = "which tenant the domain names; display only",
         [nameof(AdminMenuController)] = "the menu lists only what the caller rights allow",
         [nameof(AuthoringController)] = "machine scope policy (content.draft)",
