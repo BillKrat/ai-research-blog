@@ -118,6 +118,16 @@ Steps are added here as each of its four stages lands.
 - S: Open Admin > Users. E: only Admin. Create a second administrator before changing anything else.
 - Then: api site (split layout) and mcp site, as in the install guide.
 
+### A17. E-mail address verification (password recovery step 2), review `artifacts/Claude-2026-11-23-email-verification.md`
+- Needs the E-mail settings working first (A6): server, port 587, a mailbox, Save, then the test message arrives.
+- S: Profile with no e-mail saved. E: "Save an e-mail address above first".
+- S: Save an address you can read, reload Profile, press the verification mail button. E: "The mail is on its way"; a mail arrives with a link to `/verify-email?user=...&token=...` on the site you used.
+- S: Open the link. E: "Your e-mail address is confirmed"; Profile now shows the address as confirmed. Open the same link again. E: the plain "not valid any more" page.
+- S: Change the saved address and Save. E: Profile shows it as not confirmed again.
+- S: Press the button four times within an hour. E: the fourth is refused with "Too many verification mails".
+- S: Open a link with a changed character in the token. E: the same plain failure page, no reason given.
+- S: With the E-mail plug-in off or no server set, press the button. E: a plain message that mail is not set up (no server details).
+
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 

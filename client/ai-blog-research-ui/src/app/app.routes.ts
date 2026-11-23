@@ -34,6 +34,7 @@ export const routes: Routes = [
   { path: 'category/:name', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'category' } },
   { path: 'tag/:name', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'tag' } },
   { path: 'setup', loadComponent: () => import('@adventures/admin').then((m) => m.Setup) },
+  { path: 'verify-email', loadComponent: () => import('@adventures/admin').then((m) => m.VerifyEmail) },
   { path: 'login', loadComponent: () => import('@adventures/admin').then((m) => m.Login) },
   {
     path: 'profile',

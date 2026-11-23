@@ -115,6 +115,8 @@ export const LABELS = {
   reviewProposal: 'Review the proposal for {0}',
   discardProposal: 'Discard the proposal',
   sendTest: 'Send a test message',
+  sendVerification: 'Send a verification mail',
+  sendingVerification: 'Sending...',
   exportContent: 'Download a backup of posts and pages',
   clearCache: 'Clear the cache',
   search: 'Search',

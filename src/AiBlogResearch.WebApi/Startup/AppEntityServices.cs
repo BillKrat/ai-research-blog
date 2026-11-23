@@ -116,6 +116,7 @@ internal static class AppEntityServices
         AdminMenuDefinitions.DeclareTexts(services);
         // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
         services.AddNQuadPlatformAdministrators();
+        services.AddNQuadEmailVerification();
         services.AddScoped<ITenantAliasEditor, TenantAliasEditor>();
         services.AddScoped<ITenantRemover, TenantRemover>();
         services.AddScoped<ITenantCreator, TenantCreator>();

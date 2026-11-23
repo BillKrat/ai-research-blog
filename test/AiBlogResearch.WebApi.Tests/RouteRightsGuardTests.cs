@@ -39,6 +39,7 @@ public sealed class RouteRightsGuardTests
         [nameof(PublicCommentsController)] = "anonymous: the approved comments of a post and the rate-limited comment form (new comments wait for approval)",
         [nameof(SetupController)] = "onboarding setup of a host that reaches no tenant: status and sign-in are anonymous (sign-in rate limited, one answer for every failure); every other action needs a setup token, which works on this API only (SetupTokenGuardMiddleware) and is re-checked against the platform switch on each call",
         [nameof(ProfileController)] ="the signed-in person edits their own profile",
+        [nameof(EmailVerificationController)] = "the signed-in person verifies their own saved address (mail goes only to that address, link host checked against registered hosts); the confirm link is anonymous and answers every failure alike",
         [nameof(TenantController)] = "which tenant the domain names; display only",
         [nameof(AdminMenuController)] = "the menu lists only what the caller rights allow",
         [nameof(AuthoringController)] = "machine scope policy (content.draft)",

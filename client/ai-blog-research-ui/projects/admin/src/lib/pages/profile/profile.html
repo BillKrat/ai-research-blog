@@ -70,6 +70,25 @@
       </button>
     </form>
 
+    <section class="profile__verify" aria-label="E-mail address">
+      <h3>E-mail address</h3>
+      @if (!verification()?.address) {
+        <p>Save an e-mail address above first, then you can confirm it here.</p>
+      } @else if (verification()!.verified) {
+        <p role="status"><mat-icon>verified</mat-icon> {{ verification()!.address }} is confirmed.</p>
+      } @else {
+        <p>{{ verification()!.address }} is not confirmed yet. We mail a link to it; opening the link proves it is yours.</p>
+        @if (verifyState() === 'sent') {
+          <p class="profile__status profile__status--success" role="status">The mail is on its way. Open the link in it, then reload this page.</p>
+        } @else if (verifyState() === 'error') {
+          <p class="profile__status profile__status--error" role="alert">{{ verifyError() }}</p>
+        }
+        <button mat-icon-button color="primary" type="button" (click)="sendVerification()" [disabled]="verifyState() === 'sending'" [matTooltip]="(verifyState() === 'sending' ? 'sendingVerification' : 'sendVerification') | label" [attr.aria-label]="(verifyState() === 'sending' ? 'sendingVerification' : 'sendVerification') | label">
+          <mat-icon>forward_to_inbox</mat-icon>
+        </button>
+      }
+    </section>
+
     @if (model()!.permissions?.canDelete !== false) {
       <div class="profile__danger-zone">
       @if (deleteState() === 'error') {
