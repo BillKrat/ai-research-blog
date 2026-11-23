@@ -8,6 +8,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Conversation } from '@adventures/collaboration';
 import { RightsChecklist } from '../../components/rights-checklist/rights-checklist';
 import { PlatformSwitch } from '../../components/platform-switch/platform-switch';
+import { EmailVerificationPanel } from '../../components/email-verification-panel/email-verification-panel';
 import { EntityForm, LabelPipe, RelationGrid } from '@adventures/entity-ui';
 import { describeApiError, EntityAction, EntityApiService, EntityFormModel, bindSpinner } from '@adventures/core';
 
@@ -23,7 +24,7 @@ import { PageHeader } from '../../components/page-header/page-header';
 
 @Component({
   selector: 'adv-admin-entity',
-  imports: [PageHeader, NgTemplateOutlet, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation, RightsChecklist, PlatformSwitch],
+  imports: [EmailVerificationPanel, PageHeader, NgTemplateOutlet, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe, RouterLink, EntityForm, RelationGrid, Conversation, RightsChecklist, PlatformSwitch],
   templateUrl: './admin-entity.html',
   styleUrl: './admin-entity.scss',
 })

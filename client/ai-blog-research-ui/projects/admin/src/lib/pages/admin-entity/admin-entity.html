@@ -109,6 +109,7 @@
 
     @if (hasPlatformSwitch) {
       <adv-platform-switch [userId]="form.entity.entityId" />
+      <adv-email-verification-panel [userId]="form.entity.entityId" />
     }
 
     @if (hasRightsChecklist) {

@@ -41,4 +41,4 @@ Foundation: reset service 14 cases, controller 6, account store 4, every suite a
 - Not seen in a browser; the reset mail has not gone through the real server (steps A18).
 - A shared address (two people with the same e-mail) is refused for the by-address lookup (the person must type the user name).
 - There is no per-address or per-network limit on asking beyond three mails an hour per person; mail from the asker's network is not limited.
-- The Users screen does not show the confirmed state yet.
+- The Users screen shows the confirmed state and lets an administrator send the confirmation mail (added after the first test, which showed the chicken-and-egg: no confirmed address, no reset, and no sign-in to confirm it). The server logs why a reset mail was not sent; the page tells everyone alike what to do.

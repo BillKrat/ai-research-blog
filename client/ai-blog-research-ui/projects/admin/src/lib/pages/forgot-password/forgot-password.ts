@@ -18,7 +18,7 @@ import { PageHeader } from '../../components/page-header/page-header';
     <section class="login">
       <adv-page-header [title]="'forgotPassword' | label" />
       @if (sent()) {
-        <p role="status">If that name or address belongs to an account with a confirmed e-mail address, a link to choose a new password is on its way. It works once and for one hour.</p>
+        <p role="status">If that name or address belongs to an account whose e-mail address has been confirmed, a link to choose a new password is on its way (it works once and for one hour). Nothing is sent for an address that was never confirmed: sign in and confirm it on your profile, or ask an administrator to send you the confirmation mail from Admin > Users.</p>
         <a routerLink="/login">Back to sign in</a>
       } @else {
         <p>Give your user name or the e-mail address saved on your profile. A link is mailed only to an address you have confirmed.</p>

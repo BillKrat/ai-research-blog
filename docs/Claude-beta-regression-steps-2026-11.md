@@ -127,6 +127,7 @@ Steps are added here as each of its four stages lands.
 - S: Press the button four times within an hour. E: the fourth is refused with "Too many verification mails".
 - S: Open a link with a changed character in the token. E: the same plain failure page, no reason given.
 - S: With the E-mail plug-in off or no server set, press the button. E: a plain message that mail is not set up (no server details).
+- S: Admin > Users, open a person whose saved address is not confirmed (you can be signed out of that person; this is the administrator doing it). E: the E-mail address section says "not confirmed" with a send button; press it, the mail arrives, open its link while signed out. E: confirmed; reload the person, it now says confirmed. A person with no saved address shows "Save one first".
 
 ### A18. Forgot my password (password recovery step 3), review `artifacts/Claude-2026-11-23-forgot-password.md`
 - Needs A6 (mail works) and A17 (an address confirmed on the account).
@@ -137,6 +138,7 @@ Steps are added here as each of its four stages lands.
 - S: Open the same link again. E: the plain "not valid any more" page. Same for an old link (over an hour) or one with a changed character.
 - S: Ask for a link, then change the address on Profile, then open the link. E: not valid any more.
 - S: Ask four times in an hour for the same person. E: no fourth mail; the page still answers the same.
+- S: Ask for a link for a person whose address was never confirmed. E: no mail, and the page says nothing is sent for an unconfirmed address and what to do; the API log has one line naming the person and the reason.
 - S: Ask from an address that is not a registered host (a stray temporary address). E: refused with a plain message, no mail.
 
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")

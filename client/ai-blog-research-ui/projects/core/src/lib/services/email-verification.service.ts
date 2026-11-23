@@ -24,6 +24,16 @@ export class EmailVerificationService {
     return this.http.post<void>(`${this.apiUrl}/api/email-verification/request`, { clientBase: window.location.origin });
   }
 
+  /** For an administrator: the saved address of another person and whether it is confirmed. */
+  statusOf(userId: string): Observable<VerificationStatus> {
+    return this.http.get<VerificationStatus>(`${this.apiUrl}/api/users/${encodeURIComponent(userId)}/email-verification`);
+  }
+
+  /** For an administrator: mails the confirmation link to the address saved on that person. */
+  requestFor(userId: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/api/users/${encodeURIComponent(userId)}/email-verification/request`, { clientBase: window.location.origin });
+  }
+
   confirm(user: string, token: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/api/email-verification/confirm`, { user, token });
   }

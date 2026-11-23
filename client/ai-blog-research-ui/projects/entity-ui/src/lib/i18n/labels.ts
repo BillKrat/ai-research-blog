@@ -119,6 +119,7 @@ export const LABELS = {
   sendResetLink: 'Send me a reset link',
   setNewPassword: 'Set the new password',
   sendVerification: 'Send a verification mail',
+  sendVerificationToPerson: 'Send the confirmation mail to this person',
   sendingVerification: 'Sending...',
   exportContent: 'Download a backup of posts and pages',
   clearCache: 'Clear the cache',
