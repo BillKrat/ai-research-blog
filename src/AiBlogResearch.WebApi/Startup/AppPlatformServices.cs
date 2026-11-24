@@ -53,26 +53,17 @@ internal static class AppPlatformServices
             services.AddM2MClients(configuration);
             services.AddSingleton<IClientSecretHasher, ClientSecretHasher>();
             services.AddSingleton<IClientCredentialStore, InMemoryClientCredentialStore>();
-            services.AddScopeAuthorization("mcp.postgres.query", "mcp.filesearch.search", McpDiagnosticsController.RequiredScope, Adventures.Blog.WebApi.AuthoringController.RequiredScope);
+            // The two scopes of the first hello-world (mcp.postgres.query, mcp.filesearch.search) guarded nothing and are no longer registered as policies (R4).
+            services.AddScopeAuthorization(McpDiagnosticsController.RequiredScope, Adventures.Blog.WebApi.AuthoringController.RequiredScope);
             services.AddRoleAuthorization(WellKnownClaims.TenantAdminRole);
 
             // McpServer:BaseUrl -> mcp.global-webnet.com. HealthController calls this over M2M auth (minting
             // its own "mcp-host" token in-process via IJwtTokenService, since this app IS the token issuer -
             // see docs/artifacts/2026-09-23-mcp-m2m-hello-world.md) to prove the cross-site M2M pipeline end
             // to end. A short timeout keeps a slow/unreachable mcp site from hanging /api/health itself.
-        #pragma warning disable EXTEXP0001 // RemoveAllResilienceHandlers is marked experimental; it is the supported way to opt one client out.
-            services.AddHttpClient("McpServer", (services, client) =>
-            {
-                var baseUrl = Adventures.WebApi.SiteDomain.McpBaseUrl(services.GetRequiredService<IConfiguration>())
-                    ?? throw new InvalidOperationException("McpServer:BaseUrl is not configured.");
-                client.BaseAddress = new Uri(baseUrl);
-                client.Timeout = TimeSpan.FromSeconds(10);
-            })
-            // This client only serves the health probe: no retries (the default resilience handler would turn one failure into
-            // eight seconds of waiting), so /api/health answers promptly and says what failed.
-            .RemoveAllResilienceHandlers()
-            .AddCorrelationIdHandler();
-        #pragma warning restore EXTEXP0001
+            // No retries: this client only serves the health probe, so /api/health answers promptly and says what failed (the default resilience handler would turn one failure into eight seconds of waiting).
+            services.AddServiceClient("McpServer", sp => new Uri(Adventures.WebApi.SiteDomain.McpBaseUrl(sp.GetRequiredService<IConfiguration>())
+                ?? throw new InvalidOperationException("McpServer:BaseUrl is not configured.")), TimeSpan.FromSeconds(10), noRetries: true);
             services.AddCorrelationId();
             services.AddFailureReporting();
             services.AddScoped<IDependencyProbes>(sp => new DependencyProbes(

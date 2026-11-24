@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AiBlogResearch.ServiceDefaults\AiBlogResearch.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Mcp.WebApi\Adventures.Mcp.WebApi.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Security\Adventures.Security.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Security.AspNetCore\Adventures.Security.AspNetCore.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.WebApi\Adventures.WebApi.csproj" />

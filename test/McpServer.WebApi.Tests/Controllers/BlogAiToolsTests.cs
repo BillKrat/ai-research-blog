@@ -14,13 +14,13 @@ using Xunit;
 namespace McpServer.WebApi.Tests.Controllers;
 
 /// <summary>The legacy-data (BlogAI) tools: the catalogue can only read, can never reach a secret column, and sits behind its own scope.</summary>
-public sealed class BlogAiToolsTests : IClassFixture<DiagnosticsControllerTests.TestApp>
+public sealed class BlogAiToolsTests : IClassFixture<McpTestHost.TestApp>
 {
     private const string SigningKey = "test-signing-key-for-hello-controller-integration-tests-32bytes+";
 
-    private readonly DiagnosticsControllerTests.TestApp _app;
+    private readonly McpTestHost.TestApp _app;
 
-    public BlogAiToolsTests(DiagnosticsControllerTests.TestApp app) => _app = app;
+    public BlogAiToolsTests(McpTestHost.TestApp app) => _app = app;
 
     public static TheoryData<string> QueryNames() => new(BlogAiCatalog.Queries.Select(q => q.Name));
 

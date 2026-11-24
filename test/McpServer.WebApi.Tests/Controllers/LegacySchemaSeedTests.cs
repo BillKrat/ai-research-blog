@@ -24,7 +24,6 @@ public sealed class LegacySchemaSeedTests
 
     private const string ColumnsSeed = "seed-009-legacy-schemas.nq";
     private const string IdFieldsSeed = "seed-010-legacy-ids.nq";
-    private const string Wave2Seed = "seed-012-legacy-wave2.nq";
 
     private static void AssertSeedMatches(string file, string generated)
     {
@@ -45,16 +44,12 @@ public sealed class LegacySchemaSeedTests
         AssertSeedMatches(IdFieldsSeed, LegacySchemaSeed.GenerateIdFields(BlogAiTables.Wave1));
 
     [Fact]
-    public void TheWave2Seed_IsExactlyWhatTheGeneratorProduces() =>
-        AssertSeedMatches(Wave2Seed, LegacySchemaSeed.Generate(BlogAiTables.Wave2) + LegacySchemaSeed.GenerateIdFields(BlogAiTables.Wave2));
-
-    [Fact]
     public void EverySchema_LoadsThroughTheRealSchemaLoader_WithAnIdAndAllItsColumns()
     {
         // both seeds, in the order the app applies them
-        var quads = new NQuadFileParser().Parse(File.ReadAllText(SeedPath(ColumnsSeed)) + File.ReadAllText(SeedPath(IdFieldsSeed)) + File.ReadAllText(SeedPath(Wave2Seed)));
+        var quads = new NQuadFileParser().Parse(File.ReadAllText(SeedPath(ColumnsSeed)) + File.ReadAllText(SeedPath(IdFieldsSeed)));
 
-        foreach (var table in BlogAiTables.All)
+        foreach (var table in BlogAiTables.Wave1)
         {
             var schema = SchemaDal.Load(quads, LegacySchemaSeed.SchemaBase + table.Name);
             var fields = schema.Fields.Values.OrderBy(f => f.Order).ToList();

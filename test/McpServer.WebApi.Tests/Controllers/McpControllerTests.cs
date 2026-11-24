@@ -10,13 +10,13 @@ using Xunit;
 namespace McpServer.WebApi.Tests.Controllers;
 
 /// <summary>The diagnostics tool over the MCP wire protocol: handshake, tool discovery, tool calls, and the same scope rule as the REST routes.</summary>
-public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTests.TestApp>
+public sealed class McpControllerTests : IClassFixture<McpTestHost.TestApp>
 {
     private const string SigningKey = "test-signing-key-for-hello-controller-integration-tests-32bytes+";
 
-    private readonly DiagnosticsControllerTests.TestApp _app;
+    private readonly McpTestHost.TestApp _app;
 
-    public McpControllerTests(DiagnosticsControllerTests.TestApp app) => _app = app;
+    public McpControllerTests(McpTestHost.TestApp app) => _app = app;
 
     private HttpClient ClientWith(params string[] scopes)
     {

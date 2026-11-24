@@ -4,6 +4,8 @@
 
 **Method:** every `.cs` file in both projects was read (1,570 lines in 20 files in the API host, 1,176 in 12 files in the MCP host), plus the sizes of the third host (`NQuadBrowser.WebApi`, 212 lines in 4 files), `AiBlogResearch.ServiceDefaults` (128) and the AppHost (30). The Foundation's seed layout and the scope strings were checked by search.
 
+**Status (2026-11-24):** decisions agreed by the human; R1 (shared hosting), R2 (features own registrations, seeds, start-up tasks) and R4 (MCP gateway library, observable MCP host) are built, see `docs/artifacts/Claude-2026-11-24-r1-shared-hosting.md`, `...-r2-features-own-their-registrations.md`, `...-r4-mcp-gateway.md`; R3, R5 and R6 remain.
+
 ## Headline
 
 1. **The hosts are almost entirely generic composition, not application code.** What is app-specific is the *choice* of features and the name. The rest is a recipe (logging, startup checks, store and seeds, entity registrations, CORS, JWT, hardening, pipeline order, the client site) that a second project would copy line for line, and it already has been copied twice inside this repository (see "Drift" below).

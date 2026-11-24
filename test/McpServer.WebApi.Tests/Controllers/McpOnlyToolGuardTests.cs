@@ -1,3 +1,4 @@
+using Adventures.Mcp.WebApi;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -110,7 +111,7 @@ public sealed class McpOnlyToolGuardTests
         // A tool that holds an HTTP client, the API client, a store or the configuration could write; the only thing it may be built from is
         // the read-only legacy reader (and the catalogue query it runs).
         var allowed = new[] { typeof(IBlogAiReader), typeof(BlogAiQuery) };
-        var tools = typeof(IMcpOnlyTool).Assembly.GetTypes().Where(t => typeof(IMcpOnlyTool).IsAssignableFrom(t) && t is { IsClass: true, IsAbstract: false }).ToList();
+        var tools = typeof(McpServer.WebApi.Tools.ResearchTools).Assembly.GetTypes().Where(t => typeof(IMcpOnlyTool).IsAssignableFrom(t) && t is { IsClass: true, IsAbstract: false }).ToList();
 
         Assert.NotEmpty(tools);
         foreach (var tool in tools)
@@ -136,7 +137,7 @@ public sealed class McpOnlyToolGuardTests
         var csproj = File.ReadAllText(FindUp("src/McpServer.WebApi/McpServer.WebApi.csproj"));
         var references = Regex.Matches(csproj, "<ProjectReference Include=\"([^\"]+)\"").Select(m => Path.GetFileNameWithoutExtension(m.Groups[1].Value.Replace('\\', '/'))).OrderBy(n => n).ToList();
 
-        Assert.Equal(["Adventures.Security", "Adventures.Security.AspNetCore", "Adventures.WebApi", "AiBlogResearch.ServiceDefaults"], references);
+        Assert.Equal(["Adventures.Mcp.WebApi", "Adventures.Security", "Adventures.Security.AspNetCore", "Adventures.WebApi", "AiBlogResearch.ServiceDefaults"], references);
 
         var packages = Regex.Matches(csproj, "<PackageReference Include=\"([^\"]+)\"").Select(m => m.Groups[1].Value).OrderBy(n => n).ToList();
         Assert.Equal(["Microsoft.Data.SqlClient", "System.Security.Cryptography.Pkcs"], packages);
