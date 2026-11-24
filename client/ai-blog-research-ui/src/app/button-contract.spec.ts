@@ -6,7 +6,7 @@ import { join } from 'node:path';
  * text) come from the label table by key (`'save' | label`), so a language file can replace them. Text the server supplies (the names of server-offered
  * actions) is the one exception and is listed below by expression. A new button that breaks this fails here, before it ships hard-coded English.
  */
-const SERVER_TEXT = ['action.label', 'b.actionLabel'];
+const SERVER_TEXT = ['action.label', 'b.actionLabel', 'section.label']; // section.label: the admin menu section names, which the server sends already in the site language
 
 const templates = (dir: string, found: string[] = []): string[] => {
   for (const name of readdirSync(dir)) {

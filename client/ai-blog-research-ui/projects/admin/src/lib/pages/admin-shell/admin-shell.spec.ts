@@ -25,18 +25,28 @@ describe('AdminShell', () => {
           {
             id: 'System',
             label: 'System',
-            items: [{ id: 'exceptions', label: 'Exceptions', route: '/admin/exceptions', icon: 'warning', available: true, badge: 3 }],
+            items: [
+              { id: 'exceptions', label: 'Exceptions', route: '/admin/exceptions', icon: 'warning', available: true, badge: 3 },
+              { id: 'maintenance', label: 'Maintenance', route: '/admin/maintenance', icon: 'build', available: true, badge: null },
+            ],
           },
         ],
       });
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
-    expect(Array.from(root.querySelectorAll('.admin-shell__heading')).map((h) => h.textContent?.trim())).toEqual(['Content', 'System']);
-    const link = root.querySelector('a.admin-shell__item') as HTMLAnchorElement;
+    const headings = Array.from(root.querySelectorAll('.admin-shell__heading')).map((h) => h.textContent ?? '');
+    expect(headings.length).toBe(2);
+    expect(headings[0]).toContain('Content');
+    expect(headings[1]).toContain('System');
+    (root.querySelectorAll('.admin-shell__heading button')[1] as HTMLButtonElement).click(); // the menu is an accordion: open System
+    fixture.detectChanges();
+    const link = root.querySelector('a.admin-shell__item') as HTMLAnchorElement; // the first entry of the open section
     expect(link.textContent).toContain('Exceptions');
     expect(link.getAttribute('href')).toBe('/admin/exceptions');
     expect(link.querySelector('.admin-shell__badge')?.textContent?.trim()).toBe('3');
+    (root.querySelectorAll('.admin-shell__heading button')[0] as HTMLButtonElement).click();
+    fixture.detectChanges();
     const soon = root.querySelector('.admin-shell__item--soon') as HTMLElement;
     expect(soon.textContent).toContain('Posts');
     expect(soon.tagName).toBe('SPAN');
@@ -113,7 +123,7 @@ describe('AdminShell', () => {
       toggle().click();
       fixture.detectChanges();
 
-      const link = root.querySelector('a.admin-shell__item') as HTMLAnchorElement;
+      const link = root.querySelector('a.admin-shell__item') as HTMLAnchorElement; // the first entry of the open section
       expect(link.getAttribute('href')).toBe('/admin/posts');
       expect(link.getAttribute('title')).toBe('Posts');
       expect(link.getAttribute('aria-label')).toBe('Posts');
@@ -181,5 +191,91 @@ describe('AdminShell banner', () => {
     banner.clear();
     fixture.detectChanges();
     expect(root.querySelector('.admin-shell__banner')).toBeNull();
+  });
+});
+
+describe('AdminShell as the legacy menu (DCP: user usage review)', () => {
+  const sections = [
+    { id: 'Dashboard', label: 'Dashboard', items: [{ id: 'dashboard', label: 'Dashboard', route: '/admin/dashboard', icon: 'dashboard', available: true, badge: null }] },
+    {
+      id: 'Content',
+      label: 'Content',
+      items: [
+        { id: 'posts', label: 'Posts', route: '/admin/posts', icon: 'article', available: true, badge: null },
+        { id: 'pages', label: 'Pages', route: '/admin/pages', icon: 'description', available: true, badge: null },
+      ],
+    },
+    { id: 'Collaboration', label: 'Collaboration', items: [{ id: 'collaboration', label: 'Collaboration', route: '/admin/collaboration', icon: 'forum', available: true, badge: 2 }, { id: 'decisions', label: 'Decisions', route: '/admin/decisions', icon: 'gavel', available: true, badge: null }] },
+  ];
+
+  beforeEach(async () => {
+    sessionStorage.setItem('auth.username', 'BillKrat');
+    await TestBed.configureTestingModule({
+      imports: [AdminShell],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+  });
+
+  function render() {
+    const fixture = TestBed.createComponent(AdminShell);
+    fixture.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne((r) => r.url.endsWith('/api/admin/menu')).flush({ sections });
+    fixture.detectChanges();
+    return { fixture, root: fixture.nativeElement as HTMLElement };
+  }
+
+  const headingButton = (root: HTMLElement, name: string) =>
+    Array.from(root.querySelectorAll('.admin-shell__heading button')).find((b) => b.textContent?.includes(name)) as HTMLButtonElement;
+
+  it('opens one section at a time, like the legacy menu: opening one closes the other', () => {
+    const { fixture, root } = render();
+
+    headingButton(root, 'Content').click();
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Posts');
+    expect(headingButton(root, 'Content').getAttribute('aria-expanded')).toBe('true');
+
+    headingButton(root, 'Collaboration').click();
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Decisions');
+    expect(root.textContent).not.toContain('Posts');
+    expect(headingButton(root, 'Content').getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('clicking the open section closes it', () => {
+    const { fixture, root } = render();
+    headingButton(root, 'Content').click();
+    fixture.detectChanges();
+
+    headingButton(root, 'Content').click();
+    fixture.detectChanges();
+
+    expect(root.textContent).not.toContain('Posts');
+  });
+
+  it('draws a section with a single entry as a direct link, with no accordion button', () => {
+    const { root } = render();
+
+    const direct = Array.from(root.querySelectorAll('a.admin-shell__heading-link')).map((a) => a.getAttribute('href'));
+    expect(direct).toEqual(['/admin/dashboard']);
+    expect(root.querySelector('.admin-shell__heading button[aria-expanded]')).not.toBeNull(); // the others are still accordions
+  });
+
+  it('shows the badge of a closed section on its heading so a waiting item is never hidden', () => {
+    const { root } = render();
+
+    expect(headingButton(root, 'Collaboration').querySelector('.admin-shell__badge')?.textContent?.trim()).toBe('2');
+  });
+
+  it('has a panel above the menu with Log off, Change password, Profile and View my blog', () => {
+    const { root } = render();
+
+    const panel = root.querySelector('.admin-shell__panel') as HTMLElement;
+    expect(panel.textContent).toContain('BillKrat');
+    const labels = Array.from(panel.querySelectorAll('a, button')).map((e) => e.getAttribute('aria-label'));
+    expect(labels).toEqual(['Log off', 'Change password', 'Profile', 'View my blog']);
+    expect((panel.querySelector('a[aria-label="Profile"]') as HTMLAnchorElement).getAttribute('href')).toBe('/profile');
+    expect((panel.querySelector('a[aria-label="Change password"]') as HTMLAnchorElement).getAttribute('href')).toBe('/profile#password');
+    expect((panel.querySelector('a[aria-label="View my blog"]') as HTMLAnchorElement).getAttribute('href')).toBe('/');
   });
 });

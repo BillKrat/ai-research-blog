@@ -37,3 +37,4 @@ export * from './lib/pages/verify-email/verify-email';
 export * from './lib/pages/forgot-password/forgot-password';
 export * from './lib/pages/reset-password/reset-password';
 export * from './lib/components/email-verification-panel/email-verification-panel';
+export * from './lib/pages/admin-about/admin-about';

@@ -59,6 +59,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', loadComponent: () => import('@adventures/admin').then((m) => m.AdminDashboard) },
       { path: 'comments', loadComponent: () => import('@adventures/admin').then((m) => m.AdminComments) },
+      { path: 'about', loadComponent: () => import('@adventures/admin').then((m) => m.AdminAbout) },
       ...adminCollection('users', '/api/users', 'Users'),
       ...adminCollection('roles', '/api/roles', 'Roles'),
       ...adminCollection('posts', '/api/posts', 'Posts'),

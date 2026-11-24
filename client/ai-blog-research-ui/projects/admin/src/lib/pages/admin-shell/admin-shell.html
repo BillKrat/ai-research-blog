@@ -19,10 +19,41 @@
     >
       <mat-icon aria-hidden="true">{{ collapsed() ? 'menu' : 'menu_open' }}</mat-icon>
     </button>
-    @for (section of menu().sections; track section.id) {
-      <section class="admin-shell__section">
-        <h2 class="admin-shell__heading">{{ section.label }}</h2>
-        <ul>
+    <div class="admin-shell__panel">
+      <span class="admin-shell__user" [attr.title]="username()"><mat-icon aria-hidden="true">account_circle</mat-icon><span class="admin-shell__label">{{ username() }}</span></span>
+      <span class="admin-shell__panel-actions">
+        <button type="button" mat-icon-button (click)="logOff()" [matTooltip]="'logOff' | label" [attr.aria-label]="'logOff' | label"><mat-icon>power_settings_new</mat-icon></button>
+        <a mat-icon-button routerLink="/profile" fragment="password" [matTooltip]="'changePassword' | label" [attr.aria-label]="'changePassword' | label"><mat-icon>vpn_key</mat-icon></a>
+        <a mat-icon-button routerLink="/profile" [matTooltip]="'profile' | label" [attr.aria-label]="'profile' | label"><mat-icon>person</mat-icon></a>
+        <a mat-icon-button routerLink="/" [matTooltip]="'viewMyBlog' | label" [attr.aria-label]="'viewMyBlog' | label"><mat-icon>public</mat-icon></a>
+      </span>
+    </div>    @for (section of menu().sections; track section.id) {
+      <section class="admin-shell__section" [class.admin-shell__section--open]="isOpen(section)">
+        <h2 class="admin-shell__heading">
+          @if (direct(section) && !collapsed()) {
+            <a class="admin-shell__heading-link" [routerLink]="section.items[0].route" routerLinkActive="admin-shell__heading-link--active">
+              @if (section.items[0].icon) {
+                <mat-icon aria-hidden="true">{{ section.items[0].icon }}</mat-icon>
+              }
+              {{ section.label }}
+              @if (section.items[0].badge) {
+                <span class="admin-shell__badge" [attr.aria-label]="section.items[0].badge + ' waiting'">{{ section.items[0].badge }}</span>
+              }
+            </a>
+          } @else if (collapsed()) {
+            {{ section.label }}
+          } @else {
+            <button type="button" class="admin-shell__heading-button" [attr.aria-expanded]="isOpen(section)" (click)="toggleSection(section)" [matTooltip]="section.label" [attr.aria-label]="section.label">
+              <mat-icon class="admin-shell__chevron" aria-hidden="true">{{ isOpen(section) ? 'expand_less' : 'expand_more' }}</mat-icon>
+              {{ section.label }}
+              @if (!isOpen(section) && waiting(section) > 0) {
+                <span class="admin-shell__badge" [attr.aria-label]="waiting(section) + ' waiting'">{{ waiting(section) }}</span>
+              }
+            </button>
+          }
+        </h2>
+        @if (isOpen(section) && !(direct(section) && !collapsed())) {
+          <ul>
           @for (item of section.items; track item.id) {
             <li>
               @if (item.available && item.route) {
@@ -45,10 +76,9 @@
                 </span>
               }
             </li>
-          }
-        </ul>
-      </section>
-    } @empty {
+          }          </ul>
+        }
+      </section>    } @empty {
       <p class="admin-shell__none">You do not have access to the admin area.</p>
     }
   </nav>

@@ -85,12 +85,81 @@
     padding: 0;
   }
 
+  // the legacy look: a section is a heading row you click to open; one is open at a time
   &__heading {
-    margin: 1rem 0 0.25rem;
+    margin: 0.25rem 0 0;
     font-size: 0.75rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+  }
+
+  &__heading-button,
+  &__heading-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.55rem 0.5rem;
+    border: 0;
+    border-radius: 0.4rem;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--mat-sys-surface-container-high);
+    }
+  }
+
+  &__heading-button .admin-shell__chevron {
+    order: 3;
+    margin-left: auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
     opacity: 0.7;
+  }
+
+  &__heading-button .admin-shell__badge {
+    order: 2;
+    margin-left: auto;
+  }
+
+  &__heading-link--active,
+  &__section--open > &__heading &__heading-button {
+    font-weight: 600;
+  }
+
+  &__section--open > ul {
+    margin: 0 0 0.5rem 0.75rem;
+  }
+
+  // the panel above the menu: who is signed in, and the four things a person does with their own account
+  &__panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  &__user {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+  }
+
+  &__panel-actions {
+    display: flex;
+    margin-left: auto;
   }
 
   &__item {

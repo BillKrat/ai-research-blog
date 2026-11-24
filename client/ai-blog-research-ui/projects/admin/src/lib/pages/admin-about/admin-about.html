@@ -1,0 +1,15 @@
+<section class="admin-about">
+  <adv-page-header title="About" />
+  <nav class="admin-about__help" aria-label="Help">
+    <mat-icon aria-hidden="true">help_outline</mat-icon>
+    <span>Help:</span>
+    @for (link of help; track link.href) {
+      <a [href]="link.href" target="_blank" rel="noopener noreferrer">{{ link.label }}</a>
+    }
+  </nav>
+  @if (failed()) {
+    <p role="alert">The README could not be read.</p>
+  } @else if (readme() !== null) {
+    <adv-markdown-content [markdown]="readme()" />
+  }
+</section>

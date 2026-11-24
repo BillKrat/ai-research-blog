@@ -54,8 +54,18 @@ public class AdminMenuPluginTests
 
         var model = Adventures.WebApi.AdminMenuBuilder.Build(ComposedMenu.Catalog().All, user, null, rights);
 
+        // the legacy BlogEngine groups (DCP, user usage review): Dashboard, Content, then a Collaboration group of our own, Custom, Users, Settings, System (what is new here) and About
         Assert.Equal(
-            ["Dashboard: dashboard", "Content: posts, collaboration, pages, categories, tags, comments, decisions", "Users: users, roles", "System: exceptions, settings, plugins, mail, widgets, languages, tenants, maintenance"],
+            [
+                "Dashboard: dashboard",
+                "Content: posts, comments, pages, categories, tags",
+                "Collaboration: collaboration, decisions",
+                "Custom: plugins, widgets, languages",
+                "Users: profile, roles, users",
+                "Settings: settings, mail",
+                "System: exceptions, maintenance, tenants",
+                "About: about",
+            ],
             model.Sections.Select(s => $"{s.Id}: {string.Join(", ", s.Items.Select(i => i.Id))}"));
     }
 }
