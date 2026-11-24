@@ -149,6 +149,14 @@ Steps are added here as each of its four stages lands.
 - S: Send `-H "X-Forwarded-Host: other.example.org"` with the trusted setting on. E: the site is still chosen by the host you called, never by that header.
 - S (live, after the CDN is fronted): sign in wrongly from two networks. E: each network has its own limit.
 
+## A20. Beta tester role and rights filtering (2026-11-24)
+Recipe: Admin > Roles, add a role "Beta tester" with exactly `admin.access`, `collaboration.read`, `collaboration.write` (pinned by `RoleRouteMatrixTests`). Give it to a test person.
+- S: Sign in as that person. E: the admin menu lists Dashboard and Collaboration only; no Posts, Pages, Users, Roles, Settings, Exceptions.
+- S: Open the Dashboard. E: every count is 0 and no draft titles, no reader comments are listed (the figures need the right to see what they count).
+- S: Open Collaboration, create an item, comment on one. E: works; there is no Approve or Request changes button (no `collaboration.review`).
+- S: Open a Posts or Users address by typing it. E: refused or empty, never the list.
+- S: As the same person call `GET /api/lookups?schema=<a role schema>` with their token. E: 403.
+- S: As an Editor, open a post form with categories and tags and a user form with roles. E: the choices still appear (lookups still open for anyone who manages or reads those).
 ## B. Still to build before the DCP (order from `Claude-beta-scope-2026-11.md`, "Working order from 2026-11-22")
 the rest of T4 (row 5), then rows 8 to 11 as listed there. Add each stage's steps above (or in a new section) as it lands.
 

@@ -29,6 +29,8 @@ public sealed class RoleRouteMatrixTests
         ],
         ["Reviewer"] = [Rights.AdminAccess, Rights.PostsRead, Rights.PagesRead, Rights.CollaborationRead, Rights.CollaborationWrite, Rights.CollaborationReview, Rights.DecisionsRead],
         ["Developer"] = [Rights.AdminAccess, Rights.PostsRead, Rights.CollaborationRead, Rights.CollaborationWrite, Rights.DiagnosticsRead],
+        // The beta tester recipe (backlog, beta readiness): create this role on Admin > Roles. They read and write collaboration items and comment, nothing else.
+        ["Beta tester"] = [Rights.AdminAccess, Rights.CollaborationRead, Rights.CollaborationWrite],
         ["(no role)"] = [],
     };
 
@@ -63,6 +65,7 @@ public sealed class RoleRouteMatrixTests
     [InlineData("Editor")]
     [InlineData("Reviewer")]
     [InlineData("Developer")]
+    [InlineData("Beta tester")]
     public void NoRoleButAdminReachesPeopleRolesSettingsPluginsOrAnAdminOnlyScreen(string role)
     {
         string[] adminOnly = [nameof(UsersController), nameof(RolesController)];
@@ -77,5 +80,22 @@ public sealed class RoleRouteMatrixTests
 
         Assert.Contains(nameof(CollaborationController), reach);
         Assert.DoesNotContain(nameof(PagesController), reach);
+    }
+
+    [Fact]
+    public void ABetaTesterReachesCollaborationAndNothingElse()
+    {
+        // every right-guarded admin controller they can open: the collaboration items (their conversation comments are guarded per action by collaboration.write)
+        // Dashboard and Lookups open on admin.access but filter inside by rights (Adventures.Blog.WebApi.Tests/DashboardRightsTests, Adventures.Identity.WebApi.Tests/LookupsRightsTests): a beta tester sees no counts and no choices.
+        string[] filteredInside = ["DashboardController", "LookupsController"];
+        Assert.Equal([nameof(CollaborationController)], Reachable("Beta tester").Except(filteredInside).Order());
+    }
+
+    [Fact]
+    public void ABetaTesterCannotApproveOrDecide_SoTheyCannotApproveTheirOwnFeedback()
+    {
+        Assert.DoesNotContain(Rights.CollaborationReview, Rights.Expand(Roles["Beta tester"]));
+        Assert.DoesNotContain(Rights.DecisionsRead, Rights.Expand(Roles["Beta tester"]));
+        Assert.DoesNotContain(Rights.PostsRead, Rights.Expand(Roles["Beta tester"]));
     }
 }
