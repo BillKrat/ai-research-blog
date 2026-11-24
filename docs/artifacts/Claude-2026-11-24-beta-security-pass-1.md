@@ -26,6 +26,10 @@ There is no shipped "Beta tester" role to seed: roles are data per tenant, creat
 
 Foundation full suite (new: dashboard rights 3, lookups rights 7), app API 68, host 51 pass. Not verified in a browser: the mermaid diagrams and the tester's menu and dashboard. Not deployed.
 
+## Accessibility scan, first result (axe-core 4.10.2 in the local browser pane, with the human's permission)
+
+Built client served by the API in memory mode on localhost, a pinned axe-core copy served from the same origin (nothing loaded from the internet, the page CSP unchanged). **Public posts page and sign-in page, dark colour mode: 0 violations** (32 and 37 checks passed, contrast included). **Not scanned:** the admin screens: the build's client points at the configured API address, not the local one, so I did not sign in (it would have sent a password to the wrong host). Next: scan the admin screens with the client proxied to the local API (`ng serve` with `BACKEND_URL`), and add axe to the screens you test by hand. The static template scan (no image without alt, no icon button without a label, no clickable div) is also clean.
+
 ## Order for the rest of the beta list (recommended)
 
 1. Your decision on TinyMCE (above), no code until then.
