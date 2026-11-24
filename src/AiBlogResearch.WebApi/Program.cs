@@ -70,7 +70,7 @@ try
     // Every line carries the request's CorrelationId (pushed by the middleware below into the LogContext). The text log is
     // for people; the compact JSON sibling (one JSON object per line, "CorrelationId" a top-level field) is for tools - an
     // MCP diagnostics tool filters it by id without parsing text.
-    builder.Host.UseAppSerilog();
+    builder.Host.UseAdventuresSerilog();
 
     builder.AddServiceDefaults();
 
@@ -88,10 +88,10 @@ try
 
     // Adventures.Ioc's reflection-based auto-registration for the Bll/Dal/Presenter MvpVm pattern
     // (see Adventures.Common.Tests/MvpVmTests.cs) - picks up UserBll and UserPresenter below.
-    // The scan only sees loaded assemblies, so load every referenced library first (see AppAssemblies).
-    AppAssemblies.EnsureReferencedLoaded();
+    // The scan only sees loaded assemblies, so load every referenced library first (see HostAssemblies).
+    HostAssemblies.EnsureReferencedLoaded(typeof(Program).Assembly);
     // Plug-ins: exported IPluginModule from the host libraries and, when Plugins:Directory is set, from a folder of approved DLLs (see Adventures.MEF).
-    builder.Services.AddPluginDiscovery(builder.Configuration, AppAssemblies.HostAssemblies(), [Adventures.MEF.WebApi.PluginWebRules.Validator]);
+    builder.Services.AddPluginDiscovery(builder.Configuration, HostAssemblies.Libraries("Adventures.", "AiBlogResearch"), [Adventures.MEF.WebApi.PluginWebRules.Validator]);
     // A plug-in may bring API controllers: only under api/plugins/{key}/, never anonymous, switched off with the plug-in (the rules above refuse a plug-in that breaks them).
     builder.Services.AddControllers().AddPluginControllers();
     // The in-process event bus for plug-ins: notifications run off the request for the plug-ins that are on for the tenant; interceptors may refuse (see Adventures.MEF).
@@ -132,7 +132,7 @@ try
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
-    if (skipSeeding && StartupChecks.FindMissingSchemas(userQuads, [CollaborationConstants.SchemaIri, PluginConstants.SchemaIri, PluginConstants.SettingSchemaIri, WidgetConstants.SchemaIri, BlogConstants.Content.VisitorCommentSchemaIri]) is { Count: > 0 } missingSchemas)
+    if (skipSeeding && StartupChecks.FindMissingSchemas(userQuads.Select(q => (q.Subject, q.Predicate, q.Object)), [CollaborationConstants.SchemaIri, PluginConstants.SchemaIri, PluginConstants.SettingSchemaIri, WidgetConstants.SchemaIri, BlogConstants.Content.VisitorCommentSchemaIri]) is { Count: > 0 } missingSchemas)
     {
         await StartupChecks.RunReportingAppAsync(args, missingSchemas, builder.Environment.IsDevelopment(), liveData);
         return;
