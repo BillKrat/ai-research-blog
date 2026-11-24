@@ -1,3 +1,5 @@
+using Adventures.WebApi;
+
 namespace NQuadBrowser.WebApi;
 
 public static class BrowserSecurityHeaders
@@ -10,24 +12,7 @@ public static class BrowserSecurityHeaders
     public const string ContentSecurityPolicy =
         "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
+    /// <summary>The shared security headers of <c>Adventures.WebApi</c> with this host's own policy (R6 of the host reuse review: the header set used to be a second copy here).</summary>
     public static IApplicationBuilder UseBrowserSecurityHeaders(this IApplicationBuilder app, bool isDevelopment) =>
-        app.Use(async (context, next) =>
-        {
-            context.Response.OnStarting(() =>
-            {
-                var headers = context.Response.Headers;
-                headers["X-Content-Type-Options"] = "nosniff";
-                headers["X-Frame-Options"] = "DENY";
-                headers["Referrer-Policy"] = "no-referrer";
-                headers["Content-Security-Policy"] = ContentSecurityPolicy;
-                headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()";
-                if (!isDevelopment && context.Request.IsHttps)
-                {
-                    headers["Strict-Transport-Security"] = "max-age=15552000";
-                }
-
-                return Task.CompletedTask;
-            });
-            await next();
-        });
+        app.UseSecurityHeaders(isDevelopment, ContentSecurityPolicy);
 }

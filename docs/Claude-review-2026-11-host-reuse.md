@@ -4,7 +4,7 @@
 
 **Method:** every `.cs` file in both projects was read (1,570 lines in 20 files in the API host, 1,176 in 12 files in the MCP host), plus the sizes of the third host (`NQuadBrowser.WebApi`, 212 lines in 4 files), `AiBlogResearch.ServiceDefaults` (128) and the AppHost (30). The Foundation's seed layout and the scope strings were checked by search.
 
-**Status (2026-11-24):** decisions agreed by the human; R1 (shared hosting), R2 (features own registrations, seeds, start-up tasks), R4 (MCP gateway library, observable MCP host) R3 (menu, dashboard, counts as contributions) and R5 (optional legacy research module) are built, see `docs/artifacts/Claude-2026-11-24-r5-legacy-research-module.md`, `docs/artifacts/Claude-2026-11-24-r1-shared-hosting.md`, `...-r2-features-own-their-registrations.md`, `...-r4-mcp-gateway.md`, `...-r3-menu-and-dashboard-contributions.md`; R6 remains.
+**Status (2026-11-24):** decisions agreed by the human; R1 (shared hosting), R2 (features own registrations, seeds, start-up tasks), R4 (MCP gateway library, observable MCP host) R3 (menu, dashboard, counts as contributions), R5 (optional legacy research module) and R6 (thin-host ratchet) are built, so the review is complete (before and after in `docs/artifacts/Claude-2026-11-24-r6-thin-host-ratchet.md`), see `docs/artifacts/Claude-2026-11-24-r6-thin-host-ratchet.md`, `docs/artifacts/Claude-2026-11-24-r5-legacy-research-module.md`, `docs/artifacts/Claude-2026-11-24-r1-shared-hosting.md`, `...-r2-features-own-their-registrations.md`, `...-r4-mcp-gateway.md`, `...-r3-menu-and-dashboard-contributions.md`.
 
 ## Headline
 
