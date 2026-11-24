@@ -34,6 +34,9 @@ public sealed class TrustedProxyHostTests
     private static WebApplicationFactory<Program> Host(string caller, string? trusted) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
+            // Legacy mode with an unused string, like the other host tests: native mode wants the Postgres identity connection, which only a developer machine has (user-secrets), so CI answered 500
+            builder.UseSetting("Data:Mode", "Legacy");
+            builder.UseSetting("ConnectionStrings:LegacySql", "Server=unused;Database=unused;User Id=u;Password=p;TrustServerCertificate=true");
             builder.UseSetting("Jwt:Issuer", "test");
             builder.UseSetting("Jwt:Audience", "test");
             builder.UseSetting("Jwt:SigningKey", "0123456789abcdef0123456789abcdef0123456789abcdef");
