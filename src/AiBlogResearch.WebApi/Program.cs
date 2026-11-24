@@ -128,7 +128,8 @@ try
     }
     if (!skipSeeding)
     {
-        seeded = await StartupSeeds.ApplyAsync(nquadStore, SeedProfile.BaselineFile(builder.Configuration, builder.Environment.IsDevelopment()));
+        seeded = await SeedRunner.ApplyAsync(nquadStore, SeedProfile.BaselineFile(builder.Configuration, builder.Environment.IsDevelopment()),
+            [.. DiagnosticsSeeds.All, .. IdentitySeeds.All, .. BlogSeeds.All, .. LegacySeeds.All, .. CollaborationSeeds.All, .. PluginSeeds.All]);
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();
@@ -161,7 +162,11 @@ try
         app.Logger.LogWarning("Plug-in not loaded ({Source}): {Reason}", refused.Source, refused.Reason);
     }
 
-    await app.ApplyAsync(legacy, skipSeeding);
+    // Start-up tasks the features registered (identity schema, role-rights upgrade, first platform administrator); none when live data mode skips seeding.
+    if (!skipSeeding)
+    {
+        await StartupTaskRunner.RunAsync(app.Services, legacy);
+    }
 
     app.UseAppPipeline();
 

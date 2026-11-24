@@ -47,6 +47,8 @@ internal static class AppIdentityServices
             services.AddScoped<IEntityRecordRepository, PostgresEntityRepository>();
             services.AddUserIdentity();
             services.AddPostgresUserCredentials();
+            // Start-up task: make sure the sign-in tables exist (runs before the identity upgrades registered with the entities).
+            services.AddIdentitySchemaStartupTask();
             // A fresh install makes its own sign-in tables, and the first host on an empty install becomes the first site with its own Admin (onboarding stage 2).
             services.AddSingleton(provider => new IdentitySchemaInitializer(provider.GetRequiredService<ISqlExecutor>()));
             services.AddScoped<IFirstPlatformAdministrator>(provider => provider.GetRequiredService<PlatformAdministratorBll>());

@@ -34,6 +34,7 @@
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Diagnostics.WebApi\Adventures.Diagnostics.WebApi.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Identity.WebApi\Adventures.Identity.WebApi.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Data.NQuad\Adventures.Data.NQuad.csproj" />
+    <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Entities.NQuad\Adventures.Entities.NQuad.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Data.NQuad.Postgres\Adventures.Data.NQuad.Postgres.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.WebApi\Adventures.WebApi.csproj" />
     <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Tools.WebApi\Adventures.Tools.WebApi.csproj" />
