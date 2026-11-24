@@ -1,7 +1,7 @@
 <table class="entity-grid">
   <thead>
     <tr>
-      @for (column of columns; track column.name) {
+      @for (column of columns; track column.name; let first = $first) {
         <th scope="col" [attr.aria-sort]="sortable ? ariaSort(column) : null">
           @if (sortable) {
             <button type="button" class="entity-grid__sort" (click)="sortBy(column)" [matTooltip]="'sortBy' | label: labelOf(column)" [attr.aria-label]="'sortBy' | label: labelOf(column)">
@@ -19,6 +19,9 @@
             {{ labelOf(column) }}
           }
         </th>
+        @if (first && hasActions) {
+          <th scope="col" class="entity-grid__actions-head"><span class="entity-grid__sr">Actions</span></th>
+        }
       }
       @if (hasMessage) {
         <th scope="col">Message</th>
@@ -35,7 +38,7 @@
         (click)="toggle(row.entityId)"
         (keydown.enter)="toggle(row.entityId)"
       >
-        @for (column of columns; track column.name) {
+        @for (column of columns; track column.name; let first = $first) {
           @if (isToggle(column) && rowLink(row)) {
             <td>
               <span
@@ -53,19 +56,12 @@
               </span>
             </td>
           } @else {
-            <td>{{ cell(row, column.name) }}</td>
+            <td>{{ listCell(row, column) }}</td>
           }
-        }
-        @if (hasMessage) {
-          <td class="entity-grid__message">{{ cell(row, 'Message') }}</td>
-        }
-      </tr>
-      @if (expandedId === row.entityId) {
-        <tr class="entity-grid__details">
-          <td [attr.colspan]="columns.length + (hasMessage ? 1 : 0)">
-            <div class="entity-grid__tools">
+          @if (first && hasActions) {
+            <td class="entity-grid__actions" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">
               @if (viewRoute(row); as route) {
-                <a mat-icon-button class="entity-grid__view" [routerLink]="route" [matTooltip]="'view' | label" [attr.aria-label]="'view' | label">
+                <a mat-icon-button class="entity-grid__view" [routerLink]="route" [target]="viewNewTab ? '_blank' : undefined" [attr.rel]="viewNewTab ? 'noopener noreferrer' : null" [matTooltip]="'view' | label" [attr.aria-label]="'view' | label">
                   <mat-icon>preview</mat-icon>
                 </a>
               }
@@ -74,7 +70,16 @@
                   <mat-icon>edit</mat-icon>
                 </button>
               }
-            </div>
+            </td>
+          }
+        }
+        @if (hasMessage) {
+          <td class="entity-grid__message">{{ cell(row, 'Message') }}</td>
+        }
+      </tr>
+      @if (expandedId === row.entityId) {
+        <tr class="entity-grid__details">
+          <td [attr.colspan]="columns.length + (hasActions ? 1 : 0) + (hasMessage ? 1 : 0)">
             <dl>
               @for (field of fields; track field.name) {
                 <dt>{{ labelOf(field) }}</dt>

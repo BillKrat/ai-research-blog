@@ -2,7 +2,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { TenantService } from '../../services/tenant.service';
 import { AdminGrid } from './admin-grid';
 
@@ -96,5 +96,52 @@ describe('AdminGrid everyone toggle', () => {
     plain.http.expectOne((r) => r.url.endsWith('/api/users')).flush(empty);
     plain.fixture.detectChanges();
     expect((plain.fixture.nativeElement as HTMLElement).querySelector('input[aria-label="Show everyone, all tenants"]')).toBeNull();
+  });
+});
+
+describe('AdminGrid lists of content (DCP: user usage review)', () => {
+  function setup(collection: string, title: string) {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: ActivatedRoute, useValue: { snapshot: { data: { collection, title } } } },
+      ],
+    });
+    const fixture = TestBed.createComponent(AdminGrid);
+    const http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    return { fixture, http };
+  }
+
+  const list = (collection: string, nameField: string, values: Record<string, string>) => ({
+    schema: { schemaIri: 'https://x/Thing', fields: [{ name: nameField, type: 'String', isRequired: true, label: nameField }, { name: 'Slug', type: 'String', isRequired: false, isListVisible: false }] },
+    rows: [{ entityId: 'r1', values }],
+    paging: { page: 1, pageSize: 15, totalCount: 1, totalPages: 1, sort: null, descending: false },
+    links: { self: collection, rows: { r1: `${collection}/r1` } },
+  });
+
+  it.each(['/api/posts', '/api/pages', '/api/categories'])('asks for fifteen rows a page for %s', (collection) => {
+    const { http } = setup(collection, 'List');
+
+    http.expectOne((r) => r.url.endsWith(collection) && r.params.get('pageSize') === '15').flush(list(collection, 'Title', { Title: 'A', Slug: 'a' }));
+  });
+
+  it('keeps the default page size for other lists', () => {
+    const { http } = setup('/api/users', 'Users');
+
+    http.expectOne((r) => r.url.endsWith('/api/users') && !r.params.has('pageSize')).flush(list('/api/users', 'UserName', { UserName: 'A' }));
+  });
+
+  it('gives a category a filter link to the posts of that category, in a new tab, next to its Edit icon', () => {
+    const { fixture, http } = setup('/api/categories', 'Categories');
+    http.expectOne((r) => r.url.endsWith('/api/categories')).flush(list('/api/categories', 'Name', { Name: 'Development log' }));
+    fixture.detectChanges();
+
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a.entity-grid__view') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/category/Development%20log');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect((fixture.nativeElement as HTMLElement).querySelector('button.entity-grid__open')).not.toBeNull();
   });
 });

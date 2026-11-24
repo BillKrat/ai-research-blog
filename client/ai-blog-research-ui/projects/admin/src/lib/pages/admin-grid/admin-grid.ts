@@ -41,13 +41,26 @@ export class AdminGrid implements OnInit {
   ngOnInit(): void {
     this.collection = this.route.snapshot.data['collection'] as string;
     this.title.set(this.route.snapshot.data['title'] as string);
-    this.load(this.api.grid(this.collection));
+    // posts, pages and categories list fifteen to a page (the DCP: a short list a person can see at a glance); other lists keep the server's size
+    this.load(this.api.grid(this.collection, AdminGrid.FifteenRows.includes(this.collection) ? { pageSize: 15 } : undefined));
   }
+
+  private static readonly FifteenRows = ['/api/posts', '/api/pages', '/api/categories'];
 
   /** New: the empty form of this collection (only offered when the server says the caller may create and gave a create link). */
   /** The public route prefix of this collection (posts and pages have a page on the site), or null. */
   protected get viewBase(): string | null {
-    return this.collection === '/api/posts' ? '/post' : this.collection === '/api/pages' ? '/page' : null;
+    return this.collection === '/api/posts' ? '/post' : this.collection === '/api/pages' ? '/page' : this.collection === '/api/categories' ? '/category' : null;
+  }
+
+  /** A category's public page is its list of posts, addressed by name; posts and pages by slug. */
+  protected get viewField(): string {
+    return this.collection === '/api/categories' ? 'Name' : 'Slug';
+  }
+
+  /** A category filter lists published posts (no sign-in needed) so it opens in a new tab; a post or page may be a draft, which only the signed-in person sees, so those stay in this tab. */
+  protected get viewNewTab(): boolean {
+    return this.collection === '/api/categories';
   }
 
   /** A platform administrator can list the people of every tenant on the Users screen, to find one and give them a role in the tenant being worked in. */

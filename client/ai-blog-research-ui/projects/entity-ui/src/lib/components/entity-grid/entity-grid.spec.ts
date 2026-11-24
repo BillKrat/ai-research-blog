@@ -43,7 +43,7 @@ describe('EntityGrid', () => {
     const root = render(model()).nativeElement as HTMLElement;
 
     const headers = Array.from(root.querySelectorAll('thead th')).map((th) => th.textContent?.replace(/arrow_upward|arrow_downward/g, '').trim());
-    expect(headers).toEqual(['User name', 'Email']);
+    expect(headers).toEqual(['User name', 'Email']); // no row links in this model: no Actions column
   });
 
   it('puts the Columns button at the bottom of the grid, just before Previous', () => {
@@ -195,67 +195,118 @@ describe('EntityGrid', () => {
     expect(requests).toEqual([]);
   });
 
-  it('offers a View icon (the public page, in the same tab) only for a row with a slug when the host names a public route', () => {
-    const grid = model({
+  function postsModel(): EntityGridModel {
+    return model({
       schema: {
         schemaIri: 'urn:posts',
         fields: [
           { name: 'Title', type: 'String', isRequired: true, label: 'Title', order: 1 },
-          { name: 'Slug', type: 'String', isRequired: false, label: 'Slug', order: 2, isListVisible: false },
+          { name: 'DatePublished', type: 'DateTimeOffset', isRequired: false, label: 'Date published', order: 2 },
+          { name: 'Slug', type: 'String', isRequired: false, label: 'Slug', order: 3, isListVisible: false },
         ],
       },
       rows: [
-        { entityId: 'p1', values: { Title: 'Has slug', Slug: 'has-slug' } },
-        { entityId: 'p2', values: { Title: 'No slug', Slug: '' } },
+        { entityId: 'p1', values: { Title: 'Has slug', Slug: 'has-slug', DatePublished: '2026-11-24T05:17:46.1134919+00:00' } },
+        { entityId: 'p2', values: { Title: 'No slug', Slug: '', DatePublished: '' } },
       ],
       paging: null,
       links: { self: '/api/posts', rows: { p1: '/api/posts/p1', p2: '/api/posts/p2' } },
     });
-    const withBase = TestBed.createComponent(EntityGrid);
-    withBase.componentInstance.model = grid;
-    withBase.componentInstance.viewBase = '/post';
-    withBase.componentInstance.ngOnChanges({ model: new SimpleChange(undefined, grid, true) });
-    withBase.detectChanges();
-    const root = withBase.nativeElement as HTMLElement;
-    const rows = Array.from(root.querySelectorAll('tbody tr.entity-grid__row')) as HTMLElement[];
+  }
 
-    rows[0].click();
-    withBase.detectChanges();
-    const link = root.querySelector('a.entity-grid__view') as HTMLAnchorElement;
+  function renderPosts(configure: (grid: EntityGrid) => void = (g) => (g.viewBase = '/post')): { fixture: ComponentFixture<EntityGrid>; root: HTMLElement } {
+    const grid = postsModel();
+    const fixture = TestBed.createComponent(EntityGrid);
+    fixture.componentInstance.model = grid;
+    configure(fixture.componentInstance);
+    fixture.componentInstance.ngOnChanges({ model: new SimpleChange(undefined, grid, true) });
+    fixture.detectChanges();
+    return { fixture, root: fixture.nativeElement as HTMLElement };
+  }
+
+  it('puts the View and Edit icons right after the title, in a column with no visible header, so nothing needs a second click', () => {
+    const { root } = renderPosts();
+
+    const headers = Array.from(root.querySelectorAll('thead th')).map((th) => th.textContent?.trim());
+    expect(headers).toEqual(['Title', 'Actions', 'Date published']); // the Actions heading is screen-reader only
+    expect(root.querySelector('thead th.entity-grid__actions-head .entity-grid__sr')).not.toBeNull();
+    const first = root.querySelector('tbody tr.entity-grid__row') as HTMLElement;
+    const cells = Array.from(first.querySelectorAll('td'));
+    expect(cells[1].classList.contains('entity-grid__actions')).toBe(true);
+    const link = cells[1].querySelector('a.entity-grid__view') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/post/has-slug');
-    expect(link.getAttribute('target')).toBeNull();   // same tab: a new tab would start without the sign-in, and a draft shows only to a signed-in administrator
-    expect(root.querySelector('.entity-grid__open')).not.toBeNull();   // the editor is still one click away
-
-    rows[1].click();
-    withBase.detectChanges();
-    expect(root.querySelector('a.entity-grid__view')).toBeNull();
-
-    const noBase = render(grid).nativeElement as HTMLElement;
-    (noBase.querySelector('tbody tr.entity-grid__row') as HTMLElement).click();
-    expect(noBase.querySelector('a.entity-grid__view')).toBeNull();
+    expect(link.getAttribute('target')).toBeNull(); // same tab: a new tab would start without the sign-in, and a draft shows only to a signed-in administrator
+    expect(cells[1].querySelector('button.entity-grid__open')).not.toBeNull();
   });
 
-  it('offers Open on a row only when the server gave a row link, and emits that link', () => {
-    const withLinks = model({ links: { self: '/api/users', rows: { u1: '/api/users/u1' } } });
-    const fixture = render(withLinks);
+  it('offers View only for a row with a slug when the host names a public route', () => {
+    const { root } = renderPosts();
+    const rows = Array.from(root.querySelectorAll('tbody tr.entity-grid__row')) as HTMLElement[];
+
+    expect(rows[0].querySelector('a.entity-grid__view')).not.toBeNull();
+    expect(rows[1].querySelector('a.entity-grid__view')).toBeNull();
+    expect(rows[1].querySelector('button.entity-grid__open')).not.toBeNull(); // the editor is there even without a public page
+
+    const none = renderPosts((g) => (g.viewBase = null)).root;
+    expect(none.querySelector('a.entity-grid__view')).toBeNull();
+  });
+
+  it('can point View at another field and open a new tab (the category filter: posts of that category, in a new tab)', () => {
+    const grid = model({
+      schema: { schemaIri: 'urn:categories', fields: [{ name: 'Name', type: 'String', isRequired: true, label: 'Name', order: 1 }] },
+      rows: [{ entityId: 'c1', values: { Name: 'Development log' } }],
+      paging: null,
+      links: { self: '/api/categories', rows: { c1: '/api/categories/c1' } },
+    });
+    const fixture = TestBed.createComponent(EntityGrid);
+    fixture.componentInstance.model = grid;
+    fixture.componentInstance.viewBase = '/category';
+    fixture.componentInstance.viewField = 'Name';
+    fixture.componentInstance.viewNewTab = true;
+    fixture.componentInstance.ngOnChanges({ model: new SimpleChange(undefined, grid, true) });
+    fixture.detectChanges();
+
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a.entity-grid__view') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/category/Development%20log');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toContain('noopener');
+  });
+
+  it('keeps the row details but puts no buttons in them', () => {
+    const { fixture, root } = renderPosts();
+
+    (root.querySelector('tbody tr.entity-grid__row') as HTMLElement).click();
+    fixture.detectChanges();
+
+    const details = root.querySelector('tr.entity-grid__details') as HTMLElement;
+    expect(details).not.toBeNull();
+    expect(details.querySelector('button, a')).toBeNull();
+    expect(details.textContent).toContain('Has slug');
+  });
+
+  it('shows a date in the list as ten characters (the day), and in full in the details', () => {
+    const { fixture, root } = renderPosts();
+
+    const cells = Array.from((root.querySelector('tbody tr.entity-grid__row') as HTMLElement).querySelectorAll('td'));
+    expect(cells[2].textContent?.trim()).toBe('2026-11-24');
+    (root.querySelector('tbody tr.entity-grid__row') as HTMLElement).click();
+    fixture.detectChanges();
+    expect((root.querySelector('tr.entity-grid__details') as HTMLElement).textContent).toContain('2026-11-24T05:17:46');
+  });
+
+  it('emits the row link when the Edit icon is clicked, without opening the details', () => {
+    const fixture = render(model({ links: { self: '/api/users', rows: { u1: '/api/users/u1' } } }));
     const root = fixture.nativeElement as HTMLElement;
     const requests: GridRequest[] = [];
     fixture.componentInstance.request.subscribe((r) => requests.push(r));
 
-    (root.querySelectorAll('tbody tr.entity-grid__row')[0] as HTMLElement).click();
+    (root.querySelector('tbody tr.entity-grid__row button.entity-grid__open') as HTMLButtonElement).click();
     fixture.detectChanges();
-    (root.querySelector('.entity-grid__open') as HTMLButtonElement).click();
+
     expect(requests).toEqual([{ kind: 'open', entityId: 'u1', link: '/api/users/u1' }]);
-
-    (root.querySelectorAll('tbody tr.entity-grid__row')[1] as HTMLElement).click();
-    fixture.detectChanges();
-    expect(root.querySelectorAll('.entity-grid__open').length).toBe(0); // one panel is open at a time, and u2 has no link
-
-    const noLinks = render(model({ links: { self: '/api/users' } })).nativeElement as HTMLElement;
-    (noLinks.querySelector('tbody tr.entity-grid__row') as HTMLElement).click();
-    expect(noLinks.querySelector('.entity-grid__open')).toBeNull();
+    expect(root.querySelector('tr.entity-grid__details')).toBeNull();
+    expect(root.querySelectorAll('tbody tr.entity-grid__row')[1].querySelector('button.entity-grid__open')).toBeNull(); // u2 has no link
   });
-
   describe('remembered columns', () => {
     beforeEach(() => {
       const store = new Map<string, string>();

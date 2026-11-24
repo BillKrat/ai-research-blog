@@ -45,6 +45,12 @@ export class EntityGrid implements OnChanges {
   /** A public route prefix (for example '/post'): a row with a Slug then offers a View icon that opens it on the site in a new tab. */
   @Input() viewBase: string | null = null;
 
+  /** The row field the public route ends with (a post or page: its Slug; a category: its Name). */
+  @Input() viewField = 'Slug';
+
+  /** Open the public page in a new tab (a category filter lists published posts, which need no sign-in; a draft does, so posts and pages stay in the same tab). */
+  @Input() viewNewTab = false;
+
   /** The user asked for another page or another sort order. */
   @Output() request = new EventEmitter<GridRequest>();
 
@@ -147,14 +153,25 @@ export class EntityGrid implements OnChanges {
   }
 
 /** The server-supplied form link of a row, when it gave one. */  protected rowLink(row: EntityGridModel['rows'][number]): string | null {    return this.model.links?.rows?.[row.entityId] ?? null;  }  protected open(row: EntityGridModel['rows'][number]): void {    const link = this.rowLink(row);    if (link) {      this.request.emit({ kind: 'open', entityId: row.entityId, link });    }  }
+  /** True when any row can be opened or viewed: the grid then has a header-less actions column right after the first column. */
+  protected get hasActions(): boolean {
+    return this.model.rows.some((row) => !!this.rowLink(row) || !!this.viewRoute(row));
+  }
+
+  /** A cell as the list shows it: a date or time is cut to the day (ten characters); the details panel shows it in full. */
+  protected listCell(row: EntityGridModel['rows'][number], column: EntityFieldSchema): string {
+    const text = this.cell(row, column.name);
+    return /^\d{4}-\d{2}-\d{2}T/.test(text) ? text.slice(0, 10) : text;
+  }
+
   protected isToggle(field: EntityFieldSchema): boolean {
     return this.toggleFields.includes(field.name);
   }
 
   /** The public route of a row (prefix and slug), or null when the host named none or the row has no slug. */
   protected viewRoute(row: EntityGridModel['rows'][number]): string[] | null {
-    const slug = row.values['Slug'];
-    return this.viewBase && slug ? [this.viewBase, slug] : null;
+    const value = row.values[this.viewField];
+    return this.viewBase && value ? [this.viewBase, value] : null;
   }
 
   protected isLocked(row: EntityGridModel['rows'][number]): boolean {

@@ -114,4 +114,22 @@
 
 .entity-grid__open {
   margin: 0;
+
+  // the actions sit beside the title and have no visible heading (the heading is for screen readers)
+  &__actions,
+  &__actions-head {
+    width: 1%;
+    white-space: nowrap;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  &__sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 }
