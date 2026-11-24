@@ -29,9 +29,21 @@ public sealed class ImportTests
     private static async Task<InMemoryNQuadStore> SeededStoreAsync()
     {
         var store = new InMemoryNQuadStore();
-        foreach (var seed in new[] { "seed.nq", "seed-006-content.nq", "seed-007-post-taxonomy.nq", "seed-008-post-revision.nq", "seed-009-legacy-schemas.nq", "seed-010-legacy-ids.nq", "seed-012-legacy-wave2.nq" })
+        foreach (var seed in new[] { "seed.nq", "seed-006-content.nq", "seed-007-post-taxonomy.nq", "seed-008-post-revision.nq", "seed-009-legacy-schemas.nq", "seed-010-legacy-ids.nq" })
         {
             await store.SeedFromFileAsync(SeedFile(seed));
+        }
+
+        // The wave 2 tables (settings, custom fields) have no seed file any more (no host applied it, deleted 2026-11-24): the import tool is tested against the schemas the generator produces for them.
+        var wave2 = Path.Combine(Path.GetTempPath(), "wave2-" + Guid.NewGuid().ToString("N") + ".nq");
+        try
+        {
+            await File.WriteAllTextAsync(wave2, LegacySchemaSeed.Generate(BlogAiTables.Wave2) + LegacySchemaSeed.GenerateIdFields(BlogAiTables.Wave2));
+            await store.SeedFromFileAsync(wave2);
+        }
+        finally
+        {
+            File.Delete(wave2);
         }
 
         return store;
