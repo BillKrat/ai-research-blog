@@ -30,39 +30,8 @@ internal static class AppPipeline
     {
         const string AngularCorsPolicy = AppPlatformServices.AngularCorsPolicy;
 
-        // Before everything: behind a CDN or proxy the visitor address and scheme come from the listed proxies only (Proxy:Trusted, off by default), so the redirect and the rate limits see the visitor.
-        app.UseTrustedProxies(app.Configuration);
-        // First in the pipeline: everything after it (request logging, the exception handler, controllers) logs under the id.
-        app.UseCorrelationId();
-        app.UseSecurityHeaders(app.Environment.IsDevelopment());
-        app.Use(async (context, next) =>
-        {
-            using (Serilog.Context.LogContext.PushProperty(CorrelationIdMiddleware.LogPropertyName, CorrelationIdMiddleware.Get(context)))
-            {
-                await next(context);
-            }
-        });
-        // Each request line names the client address (the visitor behind a trusted proxy, see Proxy:Trusted), so visitors can be told apart in the log.
-        app.UseSerilogRequestLogging(options =>
-        {
-            options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms from {ClientIp}";
-            options.EnrichDiagnosticContext = (diagnosticContext, httpContext) => diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
-        });
-
-        // Configure the HTTP request pipeline.
-        // UseCors must come before any Map* calls so it runs ahead of terminal
-        // middleware (health checks, controllers) and can attach CORS headers.
-        // The root stays reachable over plain HTTP: SmarterASP's free-SSL preflight requests it
-        // without following redirects, so redirecting "/" would fail issue and renewal.
-        app.UseWhen(context => !context.Request.Path.Equals("/"), branch => branch.UseHttpsRedirection());
-        app.UseCors(AngularCorsPolicy);
-        app.UseRateLimiter();
-
-        // One handler in every environment, so what a developer sees is what production does: the full exception goes to the
-        // log file and the exception log, the client gets a shielded body with a reference (see UnhandledExceptionHandler).
-        // Without a handler an exception anywhere in the pipeline (authentication and authorization included) would fall
-        // through to IIS's own bare error page with nothing logged.
-        app.UseExceptionHandler(errorApp => errorApp.Run(UnhandledExceptionHandler.HandleAsync));
+        // The shared front half (proxies, correlation id, headers, request log, https, CORS, rate limit, the one exception handler): Adventures.WebApi.HostPipeline.
+        app.UseAdventuresPreamble(AngularCorsPolicy);
         // Single-site mode: the client build in the web root is served by this host (assets and the page need no tenant).
         var client = ClientSite.TryLoad(app.Environment.WebRootPath, app.Configuration);
         client?.Use(app);
