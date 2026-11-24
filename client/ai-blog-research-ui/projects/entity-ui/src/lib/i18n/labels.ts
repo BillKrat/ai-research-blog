@@ -84,6 +84,7 @@ export const LABELS = {
   addWidget: 'Add',
   saveSettings: 'Save',
   edit: 'Edit',
+  customize: 'Customize',
   previous: 'Previous',
   next: 'Next',
   chooseColumns: 'Choose columns',

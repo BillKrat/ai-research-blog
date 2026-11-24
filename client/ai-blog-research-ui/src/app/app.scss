@@ -128,7 +128,7 @@
   }
 }
 
-/* The public page: left and right widget zones beside the content. A zone with no widgets closes itself; a phone shows only the header and footer zones. */
+/* The public page: left and right widget zones beside the content. A zone with no widgets closes itself; a phone shows the header and footer zones and drops the right zone below the content; the left zone stays hidden. */
 .page__columns {
   display: flex;
   align-items: flex-start;
@@ -149,7 +149,13 @@
     display: block;
   }
 
-  .page__side {
+  // a phone has no room beside the content: the left zone stays hidden and the right zone drops below the content, above the footer zone (DCP, user usage review)
+  .page__side--left {
     display: none;
+  }
+
+  .page__side--right {
+    flex: none;
+    margin-top: 1.5rem;
   }
 }

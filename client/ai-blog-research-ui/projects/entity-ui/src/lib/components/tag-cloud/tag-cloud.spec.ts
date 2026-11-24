@@ -13,6 +13,12 @@ class Host {
 }
 
 describe('tagSize', () => {
+  it('never draws a tag larger than an H2 heading (1.5rem): plug-in text must not pull the eye from posts and pages', () => {
+    expect(tagSize(100, 0, 100)).toBeLessThanOrEqual(1.5);
+    expect(tagSize(1, 1, 1)).toBeLessThanOrEqual(1.5);
+    expect(tagSize(0, 0, 100)).toBeGreaterThanOrEqual(0.85);
+  });
+
   it('grows with use: the most used tag is the biggest, the least used the smallest, in between in proportion', () => {
     expect(tagSize(10, 0, 10)).toBeGreaterThan(tagSize(5, 0, 10));
     expect(tagSize(5, 0, 10)).toBeGreaterThan(tagSize(0, 0, 10));

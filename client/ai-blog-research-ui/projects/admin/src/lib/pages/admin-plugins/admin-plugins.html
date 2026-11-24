@@ -47,7 +47,7 @@
             </td>
             <td>
               @if (plugin.hasSettings) {
-                <a [routerLink]="['/admin/plugins', plugin.key]">Customize</a>
+                <a mat-icon-button [routerLink]="['/admin/plugins', plugin.key]" [matTooltip]="'customize' | label" [attr.aria-label]="('customize' | label) + ' ' + plugin.title"><mat-icon>tune</mat-icon></a>
               }
             </td>
           </tr>

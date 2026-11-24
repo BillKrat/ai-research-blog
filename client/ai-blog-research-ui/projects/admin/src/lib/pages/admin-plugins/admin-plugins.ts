@@ -3,6 +3,10 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { describeApiError, bindSpinner } from '@adventures/core';
 import { AdminMenuService } from '@adventures/core';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 import { PageHeader } from '../../components/page-header/page-header';
 import { PluginLoadReport, PluginState, PluginsService } from '../../services/plugins.service';
 
@@ -12,7 +16,7 @@ import { PluginLoadReport, PluginState, PluginsService } from '../../services/pl
  */
 @Component({
   selector: 'adv-admin-plugins',
-  imports: [PageHeader, RouterLink],
+  imports: [PageHeader, RouterLink, MatButtonModule, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './admin-plugins.html',
   styleUrl: './admin-plugins.scss',
 })

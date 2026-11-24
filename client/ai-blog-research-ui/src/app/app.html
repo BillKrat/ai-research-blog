@@ -1,4 +1,4 @@
-﻿<div class="page" [class.page--wide]="wide()">
+<div class="page" [class.page--wide]="wide()">
   @if (apiProblem.messages().length > 0) {
     <section class="page__problem" role="alert">
       @for (message of apiProblem.messages(); track $index) {
@@ -90,11 +90,11 @@
   }
   <div class="page__columns">
     @if (!wide()) {
-      <adv-widget-zone class="page__side" zone="left" />
+      <adv-widget-zone class="page__side page__side--left" zone="left" />
     }
     <main class="page__main"><router-outlet /></main>
     @if (!wide()) {
-      <adv-widget-zone class="page__side" zone="right" />
+      <adv-widget-zone class="page__side page__side--right" zone="right" />
     }
   </div>
   @if (!wide()) {

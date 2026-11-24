@@ -166,7 +166,10 @@ describe('AdminPlugins customize link', () => {
     const link = setup(true).querySelector('a[href$="/admin/plugins/html-sanitizer"]');
 
     expect(link).not.toBeNull();
-    expect(link!.textContent).toContain('Customize');
+    // an icon, not a word (DCP): the text is the hover text and the accessible name
+    expect(link!.textContent?.replace('tune', '').trim()).toBe('');
+    expect(link!.getAttribute('aria-label')).toContain('Customize');
+    expect(link!.querySelector('mat-icon')).not.toBeNull();
   });
 
   it('shows no Customize link for a plug-in without settings', () => {

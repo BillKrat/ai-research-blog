@@ -10,8 +10,9 @@ export interface CloudTag {
   editLink?: unknown[];
 }
 
-const smallest = 0.9;
-const biggest = 2.4;
+// DCP (user usage review): plug-in text must not draw the eye from posts and pages, so the largest tag is no bigger than an H2 heading (1.5rem)
+const smallest = 0.85;
+const biggest = 1.5;
 
 /** The font size in rem for a tag used <paramref name="count"/> times when the least used tag has <paramref name="min"/> uses and the most used <paramref name="max"/>. */
 export function tagSize(count: number, min: number, max: number): number {
