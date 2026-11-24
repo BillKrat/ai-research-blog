@@ -12,7 +12,7 @@ For a long time every admin screen asked one question: **are you an administrato
 
 A **right** is one small thing a person may do, named like `posts.edit.any`, `users.manage` or `collaboration.review`. A **role** (Administrator, Editor, Reviewer...) is only a named bundle of rights. The code never asks "is this person an Editor?"; it asks "does this person hold `posts.edit.any`?". Change what the Editor role contains and every screen follows, with no code change.
 
-There are 23 rights today, kept in one catalog. The Administrator holds all of them, so nothing changed for the person running the site.
+There are a couple of dozen rights, kept in one catalog (the Roles screen lists them all, alphabetically). The Administrator holds all of them, so nothing changed for the person running the site.
 
 ## What changed in S2
 

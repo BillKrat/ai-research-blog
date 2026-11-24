@@ -6,7 +6,7 @@ tags: Revisions, Posts, Admin, MCP
 comments: true
 ---
 
-A published post is what visitors read, so nobody, human or AI tool, should be able to change it halfway. A **revision** is how a change is proposed instead: a hidden copy of the post that carries the changes, which an administrator reviews and then applies or throws away. This is also how Claude sends review summaries and corrections: the change arrives as a revision and you decide.
+A published post is what visitors read, so nobody, human or AI tool, should be able to change it halfway. A **revision** is how a change is proposed instead: a hidden copy of the post that carries the changes, which an administrator reviews and then applies or throws away. This is how Claude corrects or updates a post you have already published: the change arrives as a revision and you decide. (Review summaries and questions are different: they go to **Admin > Collaboration**, not into the blog.)
 
 ## The life of a revision
 

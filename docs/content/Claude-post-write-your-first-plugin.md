@@ -165,7 +165,7 @@ Finally point the host at the folder with the setting `Plugins:Directory` (in `a
 ## Things worth knowing
 
 - **Per blog:** switches, settings and event delivery are per tenant. A plug-in that is off for one blog hears nothing for that blog.
-- **Secrets:** events carry plain values only, never an exception object, and exception messages are scrubbed. Do not store a credential in a plug-in setting yet; encrypted settings are planned.
+- **Secrets:** events carry plain values only, never an exception object, and exception messages are scrubbed. A credential belongs in a setting of kind `PluginSettingKind.Secret`: it is encrypted at rest (AES-256-GCM with the host's key ring), shown on the Customize screen only as "set" and never sent back, and replaced or cleared there. A plain `Text` setting is stored readable, so never put a credential in one.
 - **Isolation:** a plug-in loads in its own context, cannot replace the app's libraries, and its private dependencies are hash-checked too.
 - **Tests:** the sample shows both sides. `PluginWebRulesTests` checks the rules; the host tests load the real DLL and check the API, tool, settings, per-blog switch and event handler.
 
