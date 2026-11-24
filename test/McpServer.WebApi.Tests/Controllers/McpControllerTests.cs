@@ -131,8 +131,8 @@ public sealed class McpControllerTests : IClassFixture<McpTestHost.TestApp>
         string[] Names(JsonElement answer) => answer.GetProperty("result").GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()!).ToArray();
         Assert.Equal(["diagnose_request", "get_exception", "recent_exceptions", "exception_signatures"], Names(diagnostics));
         // The order follows the API's manifest (feature by feature); what matters is the set.
-        Assert.Equal(new[] { "list_my_posts", "create_draft_post", "update_draft_post", "propose_revision", "list_post_comments", "add_post_comment", "list_my_collaboration", "get_collaboration_item", "create_collaboration_item", "update_collaboration_item", "list_collaboration_comments", "add_collaboration_comment", "list_categories", "list_tags", "create_category", "create_tag" }.Order(), Names(authoring).Order());
-        Assert.Equal(20, Names(both).Length);
+        Assert.Equal(new[] { "list_my_posts", "create_draft_post", "update_draft_post", "propose_revision", "list_post_comments", "add_post_comment", "list_my_collaboration", "list_collaboration", "get_collaboration_item", "create_collaboration_item", "update_collaboration_item", "list_collaboration_comments", "add_collaboration_comment", "list_categories", "list_tags", "create_category", "create_tag" }.Order(), Names(authoring).Order());
+        Assert.Equal(21, Names(both).Length);
     }
 
     [Fact]
