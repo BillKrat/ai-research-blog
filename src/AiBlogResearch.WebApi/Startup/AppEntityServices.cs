@@ -40,8 +40,6 @@ internal static class AppEntityServices
         services.AddBlogEntities(userQuads);
         services.AddCollaborationEntities(userQuads);
         services.AddPluginEntities(userQuads);
-        // The server's own words (the admin menu names) are declared with their English text so a language file can translate them.
-        AdminMenuDefinitions.DeclareTexts(services);
         // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
         services.AddNQuadPlatformAdministrators();
         services.AddNQuadEmailVerification();

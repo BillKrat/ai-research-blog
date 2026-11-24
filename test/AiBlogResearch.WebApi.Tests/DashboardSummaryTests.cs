@@ -1,4 +1,4 @@
-using AiBlogResearch.WebApi.Controllers;
+using Adventures.Blog.WebApi;
 using Xunit;
 
 namespace AiBlogResearch.WebApi.Tests;

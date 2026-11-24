@@ -13,13 +13,13 @@ public class AdminMenuPluginTests
     [Fact]
     public void With_every_plugin_on_the_whole_menu_is_listed()
     {
-        Assert.Equal(AdminMenuDefinitions.All.Count, AdminMenuDefinitions.Visible(AllKeys.ToHashSet()).Count);
+        Assert.Equal(ComposedMenu.Catalog().All.Count, ComposedMenu.Catalog().Visible(AllKeys.ToHashSet()).Count);
     }
 
     [Fact]
     public void Decisions_disappears_with_its_plugin()
     {
-        var visible = AdminMenuDefinitions.Visible(AllKeys.Where(k => k != CollaborationPlugins.Decisions).ToHashSet());
+        var visible = ComposedMenu.Catalog().Visible(AllKeys.Where(k => k != CollaborationPlugins.Decisions).ToHashSet());
 
         Assert.DoesNotContain(visible, item => item.Id == "decisions");
         Assert.Contains(visible, item => item.Id == "collaboration");
@@ -28,8 +28,8 @@ public class AdminMenuPluginTests
     [Fact]
     public void Collaboration_stays_while_either_kind_is_on_and_goes_when_both_are_off()
     {
-        Assert.Contains(AdminMenuDefinitions.Visible(new HashSet<string> { CollaborationPlugins.ResearchCollaboration }), item => item.Id == "collaboration");
-        Assert.DoesNotContain(AdminMenuDefinitions.Visible(new HashSet<string> { CollaborationPlugins.Decisions }), item => item.Id == "collaboration");
+        Assert.Contains(ComposedMenu.Catalog().Visible(new HashSet<string> { CollaborationPlugins.ResearchCollaboration }), item => item.Id == "collaboration");
+        Assert.DoesNotContain(ComposedMenu.Catalog().Visible(new HashSet<string> { CollaborationPlugins.Decisions }), item => item.Id == "collaboration");
     }
 
     [Theory]
@@ -37,12 +37,25 @@ public class AdminMenuPluginTests
     [InlineData("contacts")]
     public void Items_that_are_not_in_the_beta_are_not_listed(string id)
     {
-        Assert.DoesNotContain(AdminMenuDefinitions.All, item => item.Id == id);
+        Assert.DoesNotContain(ComposedMenu.Catalog().All, item => item.Id == id);
     }
 
     [Fact]
     public void The_plugins_page_itself_is_never_hidden()
     {
-        Assert.Contains(AdminMenuDefinitions.Visible(new HashSet<string>()), item => item.Id == "plugins");
+        Assert.Contains(ComposedMenu.Catalog().Visible(new HashSet<string>()), item => item.Id == "plugins");
+    }
+
+    [Fact]
+    public void The_composed_menu_is_the_menu_the_host_used_to_list_itself()
+    {
+        var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity([new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, "a")], "test"));
+        var rights = new HashSet<string>(Adventures.Entities.Rights.AllNames) { Adventures.Entities.Rights.AdminAccess, Adventures.Entities.Rights.PlatformManage };
+
+        var model = Adventures.WebApi.AdminMenuBuilder.Build(ComposedMenu.Catalog().All, user, null, rights);
+
+        Assert.Equal(
+            ["Dashboard: dashboard", "Content: posts, collaboration, pages, categories, tags, comments, decisions", "Users: users, roles", "System: exceptions, settings, plugins, mail, widgets, languages, tenants, maintenance"],
+            model.Sections.Select(s => $"{s.Id}: {string.Join(", ", s.Items.Select(i => i.Id))}"));
     }
 }

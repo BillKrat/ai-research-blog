@@ -50,7 +50,7 @@ public sealed class RouteRightsGuardTests
     };
 
     private static IEnumerable<Type> Controllers() =>
-        typeof(AiBlogResearch.WebApi.Controllers.DashboardController).Assembly.GetTypes().Concat(typeof(TenantController).Assembly.GetTypes()).Concat(typeof(AuthoringController).Assembly.GetTypes()).Concat(typeof(CollaborationController).Assembly.GetTypes()).Concat(typeof(HealthController).Assembly.GetTypes())
+        typeof(AiBlogResearch.WebApi.Controllers.RuntimeController).Assembly.GetTypes().Concat(typeof(TenantController).Assembly.GetTypes()).Concat(typeof(AuthoringController).Assembly.GetTypes()).Concat(typeof(CollaborationController).Assembly.GetTypes()).Concat(typeof(HealthController).Assembly.GetTypes())
             .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract);
 
     private static IEnumerable<MethodInfo> Actions(Type controller) =>
@@ -127,7 +127,7 @@ public sealed class RouteRightsGuardTests
                 AdminRightsAttribute admin => new[] { admin.Read, admin.Create, admin.Update, admin.Delete }.Where(r => r is not null).Select(r => r!),
                 _ => [],
             })
-            .Concat(AdminMenuDefinitions.All.Select(item => item.RequiredRight ?? string.Empty))
+            .Concat(ComposedMenu.Catalog().All.Select(item => item.RequiredRight ?? string.Empty))
             .Distinct()
             .ToList();
 

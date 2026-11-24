@@ -16,7 +16,7 @@ public class BlogControllersDiscoveryTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddControllers().AddApplicationPart(typeof(AiBlogResearch.WebApi.Controllers.DashboardController).Assembly).AddBlogControllers();
+        services.AddControllers().AddApplicationPart(typeof(AiBlogResearch.WebApi.Controllers.RuntimeController).Assembly).AddBlogControllers();
 
         using var provider = services.BuildServiceProvider();
         var manager = provider.GetRequiredService<ApplicationPartManager>();
@@ -27,6 +27,6 @@ public class BlogControllersDiscoveryTests
         Assert.Single(names, n => n == typeof(AuthoringController).FullName);
         Assert.Single(names, n => n == typeof(PostsController).FullName);
         Assert.Single(names, n => n == typeof(PublicController).FullName);
-        Assert.Contains(typeof(AiBlogResearch.WebApi.Controllers.DashboardController).FullName, names);
+        Assert.Contains(typeof(Adventures.Blog.WebApi.DashboardController).FullName, names);
     }
 }

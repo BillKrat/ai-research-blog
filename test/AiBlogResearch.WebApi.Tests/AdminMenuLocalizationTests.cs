@@ -3,7 +3,8 @@ using Adventures.Blog;
 using Adventures.Entities;
 using Adventures.Security;
 using Adventures.WebApi;
-using AiBlogResearch.WebApi.Controllers;
+using Adventures.Blog;
+using Adventures.Blog.WebApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Xunit;
@@ -26,17 +27,16 @@ public sealed class AdminMenuLocalizationTests
     {
         var user = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, "a")], "test"));
         var rights = new HashSet<string>(Rights.AllNames) { Rights.AdminAccess };
-        return AdminMenuBuilder.Build(AdminMenuDefinitions.All, user, null, rights);
+        return AdminMenuBuilder.Build(ComposedMenu.Catalog().All, user, null, rights);
     }
 
     [Fact]
     public void EveryMenuNameIsDeclaredWithItsEnglishText_SoTheLanguageScreenCanListIt()
     {
-        var services = new ServiceCollection();
-        AdminMenuDefinitions.DeclareTexts(services);
-        var declared = services.Select(d => d.ImplementationInstance).OfType<ServerTextDeclaration>().ToDictionary(d => d.Key, d => d.English);
+        var catalog = ComposedMenu.Catalog();
+        var declared = ComposedMenu.Provider().GetServices<IServerTextSource>().SelectMany(s => s.Declarations).ToDictionary(d => d.Key, d => d.English);
 
-        foreach (var item in AdminMenuDefinitions.All)
+        foreach (var item in catalog.All)
         {
             Assert.Equal(item.Label, declared[$"menu.{item.Id}"]);
             Assert.Equal(item.Section, declared[$"menu.section.{item.Section}"]);
@@ -48,7 +48,7 @@ public sealed class AdminMenuLocalizationTests
     {
         var localizer = new TableLocalizer(new() { ["menu.dashboard"] = "Übersicht", ["menu.section.Content"] = "Inhalt" });
 
-        var localized = AdminMenuDefinitions.Localize(Menu(), localizer);
+        var localized = AdminMenuLocalization.Localize(Menu(), localizer);
 
         Assert.Equal("Inhalt", localized.Sections.Single(s => s.Id == "Content").Label);
         Assert.Equal("System", localized.Sections.Single(s => s.Id == "System").Label);   // no German text: unchanged
@@ -61,7 +61,7 @@ public sealed class AdminMenuLocalizationTests
     {
         var before = Menu();
 
-        var after = AdminMenuDefinitions.Localize(before, new TableLocalizer(new() { ["menu.posts"] = "Beiträge" }));
+        var after = AdminMenuLocalization.Localize(before, new TableLocalizer(new() { ["menu.posts"] = "Beiträge" }));
 
         Assert.Equal(before.Sections.Select(s => s.Id), after.Sections.Select(s => s.Id));
         Assert.Equal(before.Sections.SelectMany(s => s.Items).Select(i => (i.Id, i.Route, i.Icon, i.Available, i.Badge)), after.Sections.SelectMany(s => s.Items).Select(i => (i.Id, i.Route, i.Icon, i.Available, i.Badge)));

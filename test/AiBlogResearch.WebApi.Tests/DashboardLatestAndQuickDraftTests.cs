@@ -5,7 +5,7 @@ using Adventures.Collaboration;
 using Adventures.Common.Exceptions;
 using Adventures.Entities;
 using Adventures.WebApi;
-using AiBlogResearch.WebApi.Controllers;
+using Adventures.Blog.WebApi;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;

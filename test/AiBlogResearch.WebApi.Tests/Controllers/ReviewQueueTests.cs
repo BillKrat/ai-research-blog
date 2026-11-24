@@ -1,6 +1,6 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
 using Adventures.Entities;
-using AiBlogResearch.WebApi.Controllers;
+using Adventures.Blog.WebApi;
 using Xunit;
 using Adventures.Blog;
 using Adventures.Collaboration;
@@ -44,7 +44,7 @@ public sealed class ReviewQueueTests
     {
         var content = new FakeContent(Post("A", PostApproval.NeedsReview), Post("B", PostApproval.Approved), Post("C", PostApproval.NeedsReview), Post("D", PostApproval.ChangesRequested), Post("E", null));
 
-        var waiting = await ReviewQueue.CountAsync(content, CancellationToken.None);
+        var waiting = await new PostsNeedingReviewCount(content).CountAsync(CancellationToken.None);
 
         Assert.Equal(2, waiting);
         Assert.Equal("Collaboration", content.CategoryAsked);
@@ -56,12 +56,12 @@ public sealed class ReviewQueueTests
     {
         var many = Enumerable.Range(1, 120).Select(i => Post($"P{i}", i % 2 == 0 ? PostApproval.NeedsReview : PostApproval.Approved)).ToArray();
 
-        Assert.Equal(60, await ReviewQueue.CountAsync(new FakeContent(many), CancellationToken.None));
+        Assert.Equal(60, await new PostsNeedingReviewCount(new FakeContent(many)).CountAsync(CancellationToken.None));
     }
 
     [Fact]
     public async Task NothingWaiting_IsZero()
     {
-        Assert.Equal(0, await ReviewQueue.CountAsync(new FakeContent(), CancellationToken.None));
+        Assert.Equal(0, await new PostsNeedingReviewCount(new FakeContent()).CountAsync(CancellationToken.None));
     }
 }
