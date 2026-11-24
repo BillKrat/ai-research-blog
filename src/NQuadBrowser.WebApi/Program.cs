@@ -19,7 +19,7 @@ builder.Services.AddRequestHardening(builder.Configuration);
 var postgres = builder.Configuration.GetConnectionString("Postgres");
 INQuadStore store = string.IsNullOrWhiteSpace(postgres) || string.Equals(builder.Configuration["NQuadStore:Provider"], "Memory", StringComparison.OrdinalIgnoreCase)
     ? new InMemoryNQuadStore()
-    : new NpgsqlNQuadStore(postgres, builder.Configuration["NQuadStore:Table"] ?? "app_n_quads");
+    : NQuadStoreFactory.CreatePostgres(postgres, builder.Configuration["NQuadStore:Layout"], builder.Configuration["NQuadStore:Table"], builder.Configuration["NQuadStore:Prefix"]);
 if (store is InMemoryNQuadStore)
 {
     var seeds = Path.Combine(AppContext.BaseDirectory, "Sql", "seed");
@@ -40,6 +40,9 @@ foreach (var type in types)
 builder.Services.AddNQuadRelations();
 
 var app = builder.Build();
+
+// first of all: behind a CDN or proxy the visitor address and scheme come from the listed proxies only (Proxy:Trusted; off by default)
+app.UseTrustedProxies(app.Configuration);
 
 app.UseBrowserSecurityHeaders(app.Environment.IsDevelopment());
 app.UseRateLimiter();

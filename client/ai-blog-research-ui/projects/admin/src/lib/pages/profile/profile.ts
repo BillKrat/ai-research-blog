@@ -8,7 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { EntityForm, LabelPipe } from '@adventures/entity-ui';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { AuthService, describeApiError, EntityDataModel, EntityFormModel, MyRight, ProfileService, bindSpinner } from '@adventures/core';
+import { AuthService, EmailVerificationService, VerificationStatus, describeApiError, EntityDataModel, EntityFormModel, MyRight, ProfileService, bindSpinner } from '@adventures/core';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 type DeleteState = 'idle' | 'deleting' | 'error';
@@ -32,6 +32,12 @@ export class Profile implements OnInit {
   private readonly profileService = inject(ProfileService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly verificationService = inject(EmailVerificationService);
+
+  /** The saved address and whether it is confirmed (the address verification cycle). */
+  protected readonly verification = signal<VerificationStatus | null>(null);
+  protected readonly verifyState = signal<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  protected readonly verifyError = signal('');
 
   /** True right after signing in with a seeded or reset password: the caption above the password form says so. */
   protected readonly mustChangePassword = this.authService.mustChangePassword;
@@ -58,6 +64,7 @@ export class Profile implements OnInit {
   protected readonly rights = signal<MyRight[]>([]);
 
   ngOnInit(): void {
+    this.loadVerification();
     this.profileService.getMyRights().subscribe({ next: (mine) => this.rights.set(mine.rights), error: () => this.rights.set([]) });
     this.profileService.getMyProfile().subscribe({
       next: (form) => {
@@ -81,10 +88,30 @@ export class Profile implements OnInit {
       next: (form) => {
         this.model.set(form);
         this.saveState.set('saved');
+        this.loadVerification();
       },
       error: (error) => {
         this.saveErrors.set(describeApiError(error, "Couldn't save your profile. Try again."));
         this.saveState.set('error');
+      },
+    });
+  }
+
+  private loadVerification(): void {
+    this.verificationService.status().subscribe({ next: (status) => this.verification.set(status), error: () => this.verification.set(null) });
+  }
+
+  sendVerification(): void {
+    if (this.verifyState() === 'sending') {
+      return;
+    }
+
+    this.verifyState.set('sending');
+    this.verificationService.request().subscribe({
+      next: () => this.verifyState.set('sent'),
+      error: (error) => {
+        this.verifyError.set(describeApiError(error, "Couldn't send the mail. Try again.").join(' '));
+        this.verifyState.set('error');
       },
     });
   }

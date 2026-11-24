@@ -22,9 +22,9 @@
           </select>
         </label>
       }
-      <button mat-stroked-button color="primary" type="submit" [disabled]="!canSubmit" [matTooltip]="(busy() ? 'working' : 'add') | label">
+      <button mat-stroked-button color="primary" type="submit" [disabled]="!canSubmit" [matTooltip]="(busy() ? 'working' : 'add') | label" [attr.aria-label]="(busy() ? 'working' : 'add') | label">
         <mat-icon>add</mat-icon>
-        Add
+        {{ 'add' | label }}
       </button>
     </form>
     @if (pending) {

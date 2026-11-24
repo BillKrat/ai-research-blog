@@ -30,6 +30,8 @@ internal static class AppPipeline
     {
         const string AngularCorsPolicy = AppPlatformServices.AngularCorsPolicy;
 
+        // Before everything: behind a CDN or proxy the visitor address and scheme come from the listed proxies only (Proxy:Trusted, off by default), so the redirect and the rate limits see the visitor.
+        app.UseTrustedProxies(app.Configuration);
         // First in the pipeline: everything after it (request logging, the exception handler, controllers) logs under the id.
         app.UseCorrelationId();
         app.UseSecurityHeaders(app.Environment.IsDevelopment());
@@ -40,7 +42,12 @@ internal static class AppPipeline
                 await next(context);
             }
         });
-        app.UseSerilogRequestLogging();
+        // Each request line names the client address (the visitor behind a trusted proxy, see Proxy:Trusted), so visitors can be told apart in the log.
+        app.UseSerilogRequestLogging(options =>
+        {
+            options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms from {ClientIp}";
+            options.EnrichDiagnosticContext = (diagnosticContext, httpContext) => diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+        });
 
         // Configure the HTTP request pipeline.
         // UseCors must come before any Map* calls so it runs ahead of terminal
@@ -56,6 +63,10 @@ internal static class AppPipeline
         // Without a handler an exception anywhere in the pipeline (authentication and authorization included) would fall
         // through to IIS's own bare error page with nothing logged.
         app.UseExceptionHandler(errorApp => errorApp.Run(UnhandledExceptionHandler.HandleAsync));
+        // Single-site mode: the client build in the web root is served by this host (assets and the page need no tenant).
+        var client = ClientSite.TryLoad(app.Environment.WebRootPath, app.Configuration);
+        client?.Use(app);
+
         // After the exception handler and the rate limiter, before authentication: a host that matches no tenant never reaches the controllers when enforcement is on.
         app.UseTenancy();
 
@@ -84,8 +95,15 @@ internal static class AppPipeline
                 .ExcludeFromDescription();
         }
 
-        // SmarterASP's free-SSL request (issue and renewal) requires the domain root to return HTTP 200.
-        app.MapGet("/", () => Results.Ok(new { service = "AiBlogResearch.WebApi", status = "ok" })).AllowAnonymous()
-            .ExcludeFromDescription();
+        // SmarterASP's free-SSL request (issue and renewal) requires the domain root to return HTTP 200 (with the client served here the page itself answers 200).
+        // With the client served here there is no banner: routing has already chosen an endpoint for "/", and the static files only answer a request that has none.
+        if (client is null)
+        {
+            app.MapGet("/", () => Results.Ok(new { service = "AiBlogResearch.WebApi", status = "ok" })).AllowAnonymous()
+                .ExcludeFromDescription();
+        }
+
+        // Last: client routes fall back to the page, everything else stays as it was.
+        client?.MapFallback(app);
     }
 }

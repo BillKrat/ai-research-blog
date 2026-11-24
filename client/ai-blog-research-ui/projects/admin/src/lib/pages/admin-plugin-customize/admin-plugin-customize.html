@@ -11,11 +11,25 @@
       <adv-setting-fields [definitions]="definitions()" [values]="values()" [secretsSet]="secretsSet()" [clearing]="clearing()" (changed)="set($event.name, $event.value)" (cleared)="clearSecret($event)" />
 
       <div class="plugin-customize__actions">
-        <button type="submit" [disabled]="isSaving()">Save</button>
+        <button type="submit" [disabled]="isSaving()" [matTooltip]="'save' | label" [attr.aria-label]="'save' | label"><mat-icon>save</mat-icon> {{ 'save' | label }}</button>
         @if (saved()) {
           <span class="plugin-customize__saved" role="status">Saved.</span>
         }
       </div>
     </form>
+
+    @if (isMail) {
+      <div class="plugin-customize__test">
+        <h3>Test the saved settings</h3>
+        <p>Save first; the test uses what is saved. It sends one message to the address you type.</p>
+        <input name="testTo" type="email" placeholder="you@example.org" [value]="testTo()" (input)="testTo.set($any($event.target).value)" />
+        <button type="button" data-action="send-test" [disabled]="testing()" (click)="sendTest()" [matTooltip]="'sendTest' | label" [attr.aria-label]="'sendTest' | label">
+          <mat-icon>send</mat-icon> {{ 'sendTest' | label }}
+        </button>
+        @if (testResult()) {
+          <p data-test-result role="status">{{ testResult() }}</p>
+        }
+      </div>
+    }
   }
 </section>

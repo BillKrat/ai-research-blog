@@ -42,7 +42,7 @@ describe('EntityGrid', () => {
   it('shows the server-flagged default columns with their labels, and not the hidden ones', () => {
     const root = render(model()).nativeElement as HTMLElement;
 
-    const headers = Array.from(root.querySelectorAll('thead th')).map((th) => th.textContent?.replace(/[▲▼]/g, '').trim());
+    const headers = Array.from(root.querySelectorAll('thead th')).map((th) => th.textContent?.replace(/arrow_upward|arrow_downward/g, '').trim());
     expect(headers).toEqual(['User name', 'Email']);
   });
 
@@ -75,7 +75,7 @@ describe('EntityGrid', () => {
     idBox.click();
     fixture.detectChanges();
 
-    const headers = Array.from(root.querySelectorAll('thead th')).map((th) => th.textContent?.replace(/[▲▼]/g, '').trim());
+    const headers = Array.from(root.querySelectorAll('thead th')).map((th) => th.textContent?.replace(/arrow_upward|arrow_downward/g, '').trim());
     expect(headers).toEqual(['Id', 'User name', 'Email']);
   });
 

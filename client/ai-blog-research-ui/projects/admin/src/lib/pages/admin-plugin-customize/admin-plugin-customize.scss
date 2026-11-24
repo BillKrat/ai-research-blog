@@ -41,3 +41,10 @@
     color: var(--mat-sys-primary);
   }
 }
+
+.plugin-customize__test {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 28rem;
+  margin-top: 1.5rem;
+}

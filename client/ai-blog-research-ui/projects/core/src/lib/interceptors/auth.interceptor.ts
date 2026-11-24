@@ -16,7 +16,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const token = authService.accessToken();
 
-  if (!token) {
+  // A request that already carries its own Authorization (the setup page sends a setup token) is left as it is.
+  if (!token || req.headers.has('Authorization')) {
     return next(req);
   }
 

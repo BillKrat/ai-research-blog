@@ -1,4 +1,6 @@
 // Startup composition: entity repositories, tenancy, rights and the blog and collaboration features (moved out of Program.cs, no behaviour change).
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using AiBlogResearch.WebApi.Controllers;
 using Adventures.Common.Diagnostics;
 using Adventures.Data;
 using Adventures.Data.Postgres;
@@ -106,10 +108,23 @@ internal static class AppEntityServices
         services.AddNQuadEntityRepository(
             SchemaDal.Load(userQuads, WidgetConstants.SchemaIri), WidgetConstants.BaseIri, WidgetConstants.TypeIri,
             WidgetConstants.DefaultGraph, s => new WidgetPlacement(s), tenantScoped: true);
+        // The language files (one table of texts per language, per tenant) the site language picks from.
+        services.AddNQuadEntityRepository(
+            SchemaDal.Load(userQuads, LanguageConstants.SchemaIri), LanguageConstants.BaseIri, LanguageConstants.TypeIri,
+            LanguageConstants.DefaultGraph, s => new LanguageFile(s), tenantScoped: true);
+        // The server's own words (the admin menu names) are declared with their English text so a language file can translate them.
+        AdminMenuDefinitions.DeclareTexts(services);
         // The platform administrator is a switch on the person (not a role, not tied to a tenant); only an existing platform administrator changes it.
         services.AddNQuadPlatformAdministrators();
+        services.AddNQuadEmailVerification();
+        services.AddPasswordReset();
         services.AddScoped<ITenantAliasEditor, TenantAliasEditor>();
         services.AddScoped<ITenantRemover, TenantRemover>();
+        services.AddScoped<ITenantCreator, TenantCreator>();
+        services.AddScoped<ITenantFirstRun, TenantFirstRun>();
+        // The first site of a fresh install needs the sign-in store; the identity services register the real one, a host without it gets this no-op (the middleware always asks).
+        services.TryAddScoped<IFirstRunSite, NoFirstRunSite>();
+        services.TryAddScoped<ISiteProvisioner, NoSiteProvisioner>();
         // The tenant switcher: a person acts in the tenants they belong to (a platform administrator in every one); the X-Acting-Tenant header is checked on every request.
         services.AddScoped<IActingTenants, ActingTenants>();
         services.AddScoped<IRightsResolver, RightsResolver>();
@@ -133,6 +148,10 @@ internal static class AppEntityServices
         services.AddNQuadEntityRepository(
             SchemaDal.Load(userQuads, BlogConstants.Site.SettingSchemaIri), BlogConstants.Site.SettingBaseIri, BlogConstants.Site.SettingTypeIri,
             BlogConstants.Site.DefaultGraph, s => new SiteSetting(s), tenantScoped: true);
+        // E-mail: a mail server on a private network is refused unless the operator allows it (Mail:AllowPrivateHosts).
+        services.AddSingleton(new MailOptions { AllowPrivateHosts = configuration.GetValue<bool>("Mail:AllowPrivateHosts") });
+        // The hosts a tracking script may come from (Site:AllowedScriptHosts); none means no tracking script is ever served.
+        services.AddSingleton(new SiteOptions { AllowedScriptHosts = configuration.GetSection("Site:AllowedScriptHosts").Get<string[]>() ?? [] });
         services.AddBlog();
         services.AddCollaboration();
         services.AddNQuadRelations();

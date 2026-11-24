@@ -1,6 +1,9 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { describeApiError } from '@adventures/core';
 import { RightInfo, RolesApiService } from '../../services/roles-api.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 /**
  * What a role allows, as a checklist of the server's rights catalog. A role stored as "*" shows every right ticked. Saving sends the
@@ -9,6 +12,7 @@ import { RightInfo, RolesApiService } from '../../services/roles-api.service';
  */
 @Component({
   selector: 'adv-rights-checklist',
+  imports: [MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './rights-checklist.html',
   styleUrl: './rights-checklist.scss',
 })

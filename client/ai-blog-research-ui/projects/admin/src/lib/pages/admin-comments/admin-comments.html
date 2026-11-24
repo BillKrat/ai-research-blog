@@ -8,9 +8,9 @@
         <option value="Approved">Approved</option>
       </select>
     </label>
-    <button type="button" class="comments-admin__approve" [disabled]="noneSelected()" (click)="act('approve')">Approve</button>
-    <button type="button" class="comments-admin__unapprove" [disabled]="noneSelected()" (click)="act('unapprove')">Unapprove</button>
-    <button type="button" class="comments-admin__delete" [disabled]="noneSelected()" (click)="act('delete')">Delete</button>
+    <button type="button" class="comments-admin__approve" [disabled]="noneSelected()" (click)="act('approve')" [matTooltip]="'approve' | label" [attr.aria-label]="'approve' | label"><mat-icon>check_circle</mat-icon> {{ 'approve' | label }}</button>
+    <button type="button" class="comments-admin__unapprove" [disabled]="noneSelected()" (click)="act('unapprove')" [matTooltip]="'unapprove' | label" [attr.aria-label]="'unapprove' | label"><mat-icon>unpublished</mat-icon> {{ 'unapprove' | label }}</button>
+    <button type="button" class="comments-admin__delete" [disabled]="noneSelected()" (click)="act('delete')" [matTooltip]="'delete' | label" [attr.aria-label]="'delete' | label"><mat-icon>delete</mat-icon> {{ 'delete' | label }}</button>
   </adv-page-header>
 
   @if (problem()) {

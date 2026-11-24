@@ -154,4 +154,53 @@ describe('AdminTenants', () => {
 
     expect(page.textContent).toContain('temporary address');
   });
+
+  describe('creating a tenant', () => {
+    function fill(page: HTMLElement, name: string, value: string): void {
+      const input = page.querySelector(`input[name="${name}"]`) as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+    }
+
+    it('creates a tenant from a name and a domain, says so, and reads the list again', () => {
+      const { fixture, http, page } = setup();
+      fill(page, 'newTenantName', ' Photos by Di ');
+      fill(page, 'newTenantDomain', 'https://photos.example.org/');
+      fixture.detectChanges();
+
+      (page.querySelector('[data-action="create-tenant"]') as HTMLButtonElement).click();
+      const post = http.expectOne((r) => r.url.endsWith('/api/tenant') && r.method === 'POST');
+      expect(post.request.body).toEqual({ name: 'Photos by Di', domain: 'https://photos.example.org/' });
+      post.flush({ id: 't3', name: 'Photos by Di', domain: 'photos.example.org', aliases: [] }, { status: 201, statusText: 'Created' });
+      http.expectOne((r) => r.url.endsWith('/api/tenant/hosts') && r.method === 'GET').flush(hosts);
+      fixture.detectChanges();
+
+      expect(page.querySelector('[role="status"]')?.textContent).toContain('Photos by Di');
+      expect((page.querySelector('input[name="newTenantName"]') as HTMLInputElement).value).toBe('');
+    });
+
+    it('asks for both fields before sending anything', () => {
+      const { fixture, http, page } = setup();
+      fill(page, 'newTenantName', 'Photos');
+      fixture.detectChanges();
+
+      (page.querySelector('[data-action="create-tenant"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      http.expectNone((r) => r.method === 'POST');
+      expect(page.querySelector('[role="alert"]')?.textContent).toContain('name and a domain');
+    });
+
+    it('shows the reason when the server refuses (the domain already reaches another tenant)', () => {
+      const { fixture, http, page } = setup();
+      fill(page, 'newTenantName', 'Thief');
+      fill(page, 'newTenantDomain', 'global-webnet.com');
+
+      (page.querySelector('[data-action="create-tenant"]') as HTMLButtonElement).click();
+      http.expectOne((r) => r.url.endsWith('/api/tenant') && r.method === 'POST').flush('global-webnet.com already reaches DEV Main.', { status: 409, statusText: 'Conflict' });
+      fixture.detectChanges();
+
+      expect(page.querySelector('[role="alert"]')?.textContent).toContain('already reaches DEV Main');
+    });
+  });
 });

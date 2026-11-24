@@ -51,12 +51,12 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
     }
 
     [Fact]
-    public async Task ToolsList_OffersTheThreeReadOnlyTools_WithInputSchemas()
+    public async Task ToolsList_OffersTheFourReadOnlyTools_WithInputSchemas()
     {
         var answer = await RpcAsync(ClientWith("mcp.diagnostics.read"), new { jsonrpc = "2.0", id = "a", method = "tools/list" });
 
         var tools = answer.GetProperty("result").GetProperty("tools").EnumerateArray().ToList();
-        Assert.Equal(["diagnose_request", "recent_exceptions", "exception_signatures"], tools.Select(t => t.GetProperty("name").GetString()));
+        Assert.Equal(["diagnose_request", "get_exception", "recent_exceptions", "exception_signatures"], tools.Select(t => t.GetProperty("name").GetString()));
         Assert.All(tools, t => Assert.Equal("object", t.GetProperty("inputSchema").GetProperty("type").GetString()));
         Assert.Equal("a", answer.GetProperty("id").GetString());
     }
@@ -129,10 +129,10 @@ public sealed class McpControllerTests : IClassFixture<DiagnosticsControllerTest
         var both = await RpcAsync(ClientWith("mcp.diagnostics.read", "content.draft"), new { jsonrpc = "2.0", id = 3, method = "tools/list" });
 
         string[] Names(JsonElement answer) => answer.GetProperty("result").GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()!).ToArray();
-        Assert.Equal(["diagnose_request", "recent_exceptions", "exception_signatures"], Names(diagnostics));
+        Assert.Equal(["diagnose_request", "get_exception", "recent_exceptions", "exception_signatures"], Names(diagnostics));
         // The order follows the API's manifest (feature by feature); what matters is the set.
         Assert.Equal(new[] { "list_my_posts", "create_draft_post", "update_draft_post", "propose_revision", "list_post_comments", "add_post_comment", "list_my_collaboration", "get_collaboration_item", "create_collaboration_item", "update_collaboration_item", "list_collaboration_comments", "add_collaboration_comment", "list_categories", "list_tags", "create_category", "create_tag" }.Order(), Names(authoring).Order());
-        Assert.Equal(19, Names(both).Length);
+        Assert.Equal(20, Names(both).Length);
     }
 
     [Fact]

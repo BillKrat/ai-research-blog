@@ -8,13 +8,35 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { SiteNav, SiteService, WidgetZone } from '@adventures/blog-reader';
-import { AdminExceptionsService, AdminMenuService, HealthService } from '@adventures/admin';
-import { API_BASE_URL, ApiProblemService, AuthService, SpinnerService } from '@adventures/core';
+import { API_BASE_URL, AdminExceptionsService, AdminMenuService, ApiProblemService, AuthService, HealthService, SetupService, SpinnerService } from '@adventures/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe, LanguageLoader } from '@adventures/entity-ui';
 
+
+const CHOICE_KEY = 'adv.colorMode';
+const SITE_KEY = 'adv.siteColorMode';
+
+/** Browser storage can be missing or refused (private windows); the page then simply starts from the defaults. */
+function readMode(key: string): 'dark' | 'light' | null {
+  try {
+    const value = localStorage.getItem(key);
+    return value === 'dark' || value === 'light' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeMode(key: string, mode: 'dark' | 'light'): void {
+  try {
+    localStorage.setItem(key, mode);
+  } catch {
+    // not remembered; the choice still applies for this visit
+  }
+}
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule, SiteNav, WidgetZone],
+  imports: [RouterOutlet, RouterLink, MatBadgeModule, MatButtonModule, MatIconModule, MatMenuModule, SiteNav, WidgetZone, MatTooltipModule, LabelPipe],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -25,6 +47,8 @@ export class App implements OnInit {
   private readonly adminMenu = inject(AdminMenuService);
 
   private readonly site = inject(SiteService);
+  private readonly language = inject(LanguageLoader);
+  private readonly setup = inject(SetupService);
   protected readonly apiProblem = inject(ApiProblemService);
   /** The turning gears shown over the page while any screen has asked for them. */
   protected readonly spinner = inject(SpinnerService);
@@ -35,7 +59,8 @@ export class App implements OnInit {
   /** The site title, from the settings an administrator edits (the default until they are read). */
   protected readonly title = computed(() => this.site.settings().title);
   protected readonly tagline = computed(() => this.site.settings().tagline);
-  protected readonly isDark = signal(true);
+  /** Dark unless the visitor chose otherwise, or (before they ever did) the last site default this browser saw says light. */
+  protected readonly isDark = signal(readMode(CHOICE_KEY) !== 'light' && (readMode(CHOICE_KEY) === 'dark' || readMode(SITE_KEY) !== 'light'));
   /** True under /admin: the admin area uses the whole window (menu at the left edge); the public site keeps its reading width. */
   protected readonly wide = signal(false);
   protected readonly liveData = signal(false);
@@ -62,7 +87,19 @@ export class App implements OnInit {
       }
     });
 
-    this.applyTheme();
+    // The site default (Admin > Settings > ColorMode) applies to a visitor who has not used the toggle; their own choice wins.
+    effect(() => {
+      const mode = this.site.settings().colorMode;
+      if (mode === 'light' || mode === 'dark') {
+        writeMode(SITE_KEY, mode);
+        if (readMode(CHOICE_KEY) === null) {
+          this.isDark.set(mode === 'dark');
+        }
+      }
+    });
+    effect(() => this.applyTheme());
+    // An allowed analytics script on the public pages only (never in the admin area: a script there could read the administrator's sign-in).
+    effect(() => this.applyTrackingScript(this.site.settings().trackingScriptUrl, this.wide()));
   }
 
   logout(): void {
@@ -72,6 +109,16 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this.site.get().subscribe();
+    // An address that reaches no site is sent to the setup page (the server names no site in this answer).
+    this.setup.status().subscribe({
+      next: (status) => {
+        if (status.needsSetup && !this.router.url.startsWith('/setup')) {
+          void this.router.navigateByUrl('/setup');
+        }
+      },
+      error: () => undefined,
+    });
+    this.language.load().subscribe();
     // leaving the settings screen: read them again, so a title just saved shows without a browser refresh
     let lastUrl = this.router.url;
     this.wide.set(lastUrl.startsWith('/admin'));
@@ -84,6 +131,11 @@ export class App implements OnInit {
       this.wide.set(event.urlAfterRedirects.startsWith('/admin'));
       if (lastUrl.startsWith('/admin/settings') && !event.urlAfterRedirects.startsWith('/admin/settings')) {
         this.site.refresh();
+        this.language.load().subscribe();
+      }
+      // leaving the language files screen: the table in use may have changed
+      if (lastUrl.startsWith('/admin/languages') && !event.urlAfterRedirects.startsWith('/admin/languages')) {
+        this.language.load().subscribe();
       }
       lastUrl = event.urlAfterRedirects;
     });
@@ -94,7 +146,24 @@ export class App implements OnInit {
 
   toggleTheme(): void {
     this.isDark.update((dark) => !dark);
-    this.applyTheme();
+    writeMode(CHOICE_KEY, this.isDark() ? 'dark' : 'light');
+  }
+
+  private applyTrackingScript(url: string | undefined, inAdmin: boolean): void {
+    const existing = document.querySelector('script[data-adv-tracking]');
+    const wanted = !inAdmin && typeof url === 'string' && url.startsWith('https://') ? url : null;
+    if (existing && (wanted === null || existing.getAttribute('src') !== wanted)) {
+      existing.remove();
+    }
+
+    if (wanted !== null && !document.querySelector('script[data-adv-tracking]')) {
+      const script = document.createElement('script');
+      script.async = true;
+      script.defer = true;
+      script.setAttribute('data-adv-tracking', 'true');
+      script.src = wanted;
+      document.head.appendChild(script);
+    }
   }
 
   private applyTheme(): void {

@@ -7,7 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { EntityGrid, GridRequest, LabelPipe } from '@adventures/entity-ui';
 import { describeApiError, EntityDataModel, EntityGridModel, PageBannerService, SpinnerService, bindSpinner } from '@adventures/core';
 import { PageHeader } from '../../components/page-header/page-header';
-import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '../../services/admin-exceptions.service';
+import { AdminExceptionsService, AiTriageResult, ExceptionSignatureSummary, TriageResult } from '@adventures/core';
 
 /**
  * The administrator's exception log: a grid of the active exceptions (newest first), [OK] to leave, [Purge] to retire
@@ -102,7 +102,7 @@ export class AdminExceptions implements OnInit, OnDestroy {
    * "Prompt Claude": a ready-to-paste request for a Claude Code session, built from the row on screen. It works for every row,
    * including the ones with no correlation id (a failure at startup happens before any request, so Diagnose and Ask Claude have
    * nothing to look up). Nothing is sent from here: the text is the administrator's to edit and paste. It names the ids and the
-   * message, not the stack trace; Claude reads the evidence itself through the MCP diagnostics tool.
+   * message, not the stack trace; Claude reads the evidence itself through the MCP diagnostics tools (get_exception, diagnose_request), or the vault script when MCP is not set up.
    */
   promptFor(row: EntityDataModel): string {
     const edited = this.promptEdits()[row.entityId];
@@ -128,7 +128,14 @@ export class AdminExceptions implements OnInit, OnDestroy {
       `- Correlation id: ${correlationId || 'none (recorded outside a request, for example at startup)'}`,
       `- Exception entry id: ${row.entityId}`,
       '',
-      'Read the evidence yourself rather than trusting this summary. From the workspace root:',
+      'Read the evidence yourself rather than trusting this summary. Use the MCP server "adventures-diagnostics" (read-only, registered in the workspace .mcp.json):',
+      '',
+      `1. Call get_exception with id "${row.entityId}" (when, type, message, request, user, correlation id and the kind of failure).`,
+      correlationId
+        ? `2. Call diagnose_request with correlationId "${correlationId}" (the exceptions, kinds and log lines of that request).`
+        : '2. There is no correlation id, so call exception_signatures and recent_exceptions and match this one by its signature id and time.',
+      '',
+      'If the MCP server is not available in this session, run this from the workspace root instead:',
       '',
       correlationId
         ? `.\\docs\\Claude-secret.ps1 run m2m/claude-diagnostics/claude-diagnostics -EnvVar CLAUDE_DIAG_SECRET -Exec powershell -ExecArgs "-NoProfile","-File",".\\docs\\Claude-diagnose.ps1","-CorrelationId","${correlationId}"`

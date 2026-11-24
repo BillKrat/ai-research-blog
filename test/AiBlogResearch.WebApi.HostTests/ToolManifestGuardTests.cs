@@ -35,9 +35,9 @@ public sealed class ToolManifestGuardTests : IClassFixture<WebApplicationFactory
         _factory.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>().ToList();
 
     [Fact]
-    public void The_nineteen_forwarding_tools_are_declared()
+    public void The_twenty_two_forwarding_tools_are_declared()
     {
-        Assert.Equal(19, Tools.Count);
+        Assert.Equal(22, Tools.Count);
         Assert.Equal(Tools.Count, Tools.Select(t => t.Name).Distinct().Count());
     }
 

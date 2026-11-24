@@ -3,7 +3,7 @@
     <p class="admin-shell__banner" role="status">
       <span>{{ b.text }}</span>
       @if (b.actionLabel && b.action) {
-        <button type="button" (click)="b.action()">{{ b.actionLabel }}</button>
+        <button type="button" (click)="b.action()" [matTooltip]="b.actionLabel" [attr.aria-label]="b.actionLabel"><mat-icon>bolt</mat-icon> {{ b.actionLabel }}</button>
       }
     </p>
   }
@@ -14,8 +14,8 @@
       class="admin-shell__toggle"
       (click)="toggle()"
       [attr.aria-expanded]="!collapsed()"
-      [attr.aria-label]="collapsed() ? 'Expand menu' : 'Collapse menu'"
-      [attr.title]="collapsed() ? 'Expand menu' : 'Collapse menu'"
+      [attr.aria-label]="(collapsed() ? 'expandMenu' : 'collapseMenu') | label"
+      [matTooltip]="(collapsed() ? 'expandMenu' : 'collapseMenu') | label"
     >
       <mat-icon aria-hidden="true">{{ collapsed() ? 'menu' : 'menu_open' }}</mat-icon>
     </button>

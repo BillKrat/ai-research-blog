@@ -4,14 +4,14 @@
       @for (column of columns; track column.name) {
         <th scope="col" [attr.aria-sort]="sortable ? ariaSort(column) : null">
           @if (sortable) {
-            <button type="button" class="entity-grid__sort" (click)="sortBy(column)">
+            <button type="button" class="entity-grid__sort" (click)="sortBy(column)" [matTooltip]="'sortBy' | label: labelOf(column)" [attr.aria-label]="'sortBy' | label: labelOf(column)">
               {{ labelOf(column) }}
               @switch (ariaSort(column)) {
                 @case ('ascending') {
-                  <span aria-hidden="true"> &#9650;</span>
+                  <mat-icon aria-hidden="true">arrow_upward</mat-icon>
                 }
                 @case ('descending') {
-                  <span aria-hidden="true"> &#9660;</span>
+                  <mat-icon aria-hidden="true">arrow_downward</mat-icon>
                 }
               }
             </button>
@@ -110,18 +110,18 @@
         <button
           type="button"
           class="entity-grid__gear"
-          aria-label="Choose columns"
+          [matTooltip]="'chooseColumns' | label" [attr.aria-label]="'chooseColumns' | label"
           [attr.aria-expanded]="gearOpen"
           (click)="gearOpen = !gearOpen"
         >
-          Columns
+          <mat-icon>view_column</mat-icon> {{ 'columns' | label }}
         </button>
       }
       @if (model.paging; as paging) {
         <nav class="entity-grid__pager" aria-label="Pages">
-          <button type="button" (click)="previous()" [disabled]="!model.links?.previous">Previous</button>
+          <button type="button" (click)="previous()" [disabled]="!model.links?.previous" [matTooltip]="'previous' | label" [attr.aria-label]="'previous' | label"><mat-icon>navigate_before</mat-icon> {{ 'previous' | label }}</button>
           <span>Page {{ paging.page }} of {{ paging.totalPages }} ({{ paging.totalCount }} in all)</span>
-          <button type="button" (click)="next()" [disabled]="!model.links?.next">Next</button>
+          <button type="button" (click)="next()" [disabled]="!model.links?.next" [matTooltip]="'next' | label" [attr.aria-label]="'next' | label"><mat-icon>navigate_next</mat-icon> {{ 'next' | label }}</button>
         </nav>
       }
     </div>

@@ -51,7 +51,7 @@ describe('AdminExceptions kinds of failure', () => {
     const { root } = open();
 
     const buttons = Array.from(root.querySelectorAll('button.admin-exceptions__drill')) as HTMLButtonElement[];
-    expect(buttons.map((b) => b.textContent?.trim())).toEqual(['155', '1']);
+    expect(buttons.map((b) => b.textContent?.replace('list', '').trim())).toEqual(['155', '1']);
     expect(buttons[0].getAttribute('aria-label')).toContain('155 occurrences of ClientReportedException');
   });
 
@@ -142,7 +142,7 @@ describe('AdminExceptions kinds of failure', () => {
     fixture.detectChanges();
     expect(root.textContent).toContain('Page 1 of 3');
 
-    (Array.from(root.querySelectorAll('.entity-grid__pager button')).find((b) => b.textContent === 'Next') as HTMLButtonElement).click();
+    (Array.from(root.querySelectorAll('.entity-grid__pager button')).find((b) => b.getAttribute('aria-label') === 'Next') as HTMLButtonElement).click();
     const next = http.expectOne((r) => r.url.endsWith('/api/admin/exceptions') && r.params.get('page') === '2');
     expect(next.request.params.get('signature')).toBe('k1');
     expect(next.request.params.get('includePurged')).toBe('true');
@@ -150,7 +150,7 @@ describe('AdminExceptions kinds of failure', () => {
     fixture.detectChanges();
     expect(root.textContent).toContain('Page 2 of 3');
 
-    (Array.from(root.querySelectorAll('.entity-grid__pager button')).find((b) => b.textContent === 'Previous') as HTMLButtonElement).click();
+    (Array.from(root.querySelectorAll('.entity-grid__pager button')).find((b) => b.getAttribute('aria-label') === 'Previous') as HTMLButtonElement).click();
     expect(http.expectOne((r) => r.params.get('page') === '1')).toBeTruthy();
   });
 
@@ -177,5 +177,44 @@ describe('AdminExceptions kinds of failure', () => {
     (root.querySelector('button.admin-exceptions__drill') as HTMLButtonElement).click();
     http.expectOne((r) => r.params.get('signature') === 'k1').flush('no', { status: 500, statusText: 'Server Error' });
     expect(spinner.active()).toBe(false);
+  });
+
+  describe('Prompt Claude through MCP', () => {
+    const row = (values: Record<string, string>) => ({ entityId: 'e-123', values });
+    const component = () => open().fixture.componentInstance as unknown as { promptFor(r: { entityId: string; values: Record<string, string> }): string };
+
+    it('has Claude read the exception through the MCP tools, by the entry id, then trace the request by its correlation id', () => {
+      const text = component().promptFor(row({ ExceptionType: 'System.TimeoutException', Message: 'slow', CorrelationId: 'corr-9', SignatureId: 'k2' }));
+
+      expect(text).toContain('get_exception');
+      expect(text).toContain('e-123');
+      expect(text).toContain('diagnose_request');
+      expect(text).toContain('corr-9');
+    });
+
+    it('still works for a row with no correlation id: the entry id and the recent and signature tools', () => {
+      const text = component().promptFor(row({ ExceptionType: 'System.InvalidOperationException', Message: 'at startup' }));
+
+      expect(text).toContain('get_exception');
+      expect(text).toContain('e-123');
+      expect(text).toContain('exception_signatures');
+      expect(text).not.toContain('diagnose_request with');
+      expect(text).toContain('none (recorded outside a request');
+    });
+
+    it('keeps the vault script as a fallback for a session without the MCP server, and never carries a secret', () => {
+      const text = component().promptFor(row({ CorrelationId: 'corr-9' }));
+
+      expect(text).toContain('Claude-diagnose.ps1');
+      expect(text).toContain('Claude-secret.ps1 run');
+      expect(text).not.toMatch(/Bearer|clientSecret|password/i);
+    });
+
+    it('names the message and the ids, not the stack trace', () => {
+      const text = component().promptFor(row({ Message: 'boom', StackTrace: 'at Secret.Frame.Method()' }));
+
+      expect(text).toContain('boom');
+      expect(text).not.toContain('Secret.Frame');
+    });
   });
 });

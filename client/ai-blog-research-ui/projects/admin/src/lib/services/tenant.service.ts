@@ -79,6 +79,26 @@ export class TenantService {
     this.acting.reload();
   }
 
+  /** Shows a problem on the Tenants screen (for a check the screen makes before it sends anything). */
+  fail(message: string): void {
+    this._notice.set('');
+    this._problem.set(message);
+  }
+
+  /** Creates a tenant on a domain from a name and the domain. The server refuses a domain another tenant already reaches, an address or localhost, and says why. */
+  createTenant(name: string, domain: string, done?: () => void): void {
+    this._problem.set('');
+    this._notice.set('');
+    this.http.post<TenantHosts>(`${this.apiUrl}/api/tenant`, { name, domain }).subscribe({
+      next: (created) => {
+        this._notice.set(`Created ${created.name} on ${created.domain}. Its domain works now; add the people who run it under Users.`);
+        this.loadHosts();
+        done?.();
+      },
+      error: (error) => this._problem.set(this.messageOf(error, 'The tenant was not created.')),
+    });
+  }
+
   /** Makes a host name reach the tenant (it mirrors the tenant's domain). The server refuses a name that already reaches another tenant. */
   addAlias(tenantId: string, host: string, done?: () => void): void {
     this._problem.set('');

@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { SiteService } from '@adventures/blog-reader';
 import { App } from './app';
 
 describe('App layout width', () => {
@@ -179,5 +180,134 @@ describe('App layout switch', () => {
     fixture.detectChanges();
 
     expect(((fixture.nativeElement as HTMLElement).querySelector('.page') as HTMLElement).classList.contains('page--wide')).toBe(false);
+  });
+});
+
+describe('App colour mode', () => {
+  const setup = async (storage: Record<string, string> = {}) => {
+    const store = new Map<string, string>(Object.entries(storage));
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => void store.set(key, value),
+      removeItem: (key: string) => void store.delete(key),
+    });
+    document.body.style.colorScheme = '';
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    const answerSite = (colorMode?: string) => {
+      http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'T', tagline: '', postsPerPage: 10, colorMode });
+      fixture.detectChanges();
+    };
+    return { fixture, answerSite };
+  };
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('starts dark when nothing says otherwise', async () => {
+    const { answerSite } = await setup();
+    answerSite();
+    expect(document.body.style.colorScheme).toBe('dark');
+  });
+
+  it('follows the site default for a visitor who has not used the toggle', async () => {
+    const { answerSite } = await setup();
+    answerSite('light');
+    expect(document.body.style.colorScheme).toBe('light');
+  });
+
+  it('keeps the visitor own choice over the site default', async () => {
+    const { answerSite } = await setup({ 'adv.colorMode': 'dark' });
+    answerSite('light');
+    expect(document.body.style.colorScheme).toBe('dark');
+  });
+
+  it('remembers the toggle in the browser, and from then on the site default no longer changes it', async () => {
+    const { fixture, answerSite } = await setup();
+    answerSite('light');
+    ((fixture.nativeElement as HTMLElement).querySelector('[aria-label="Switch to dark mode"]') as HTMLElement).click();
+    fixture.detectChanges();
+
+    expect(document.body.style.colorScheme).toBe('dark');
+    expect(localStorage.getItem('adv.colorMode')).toBe('dark');
+  });
+
+  it('paints the last known site default at start-up so a light site does not flash dark', async () => {
+    await setup({ 'adv.siteColorMode': 'light' });
+    expect(document.body.style.colorScheme).toBe('light');
+  });
+});
+
+describe('App language', () => {
+  it('reads the texts of the site language at start-up and puts them in the label table', async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+
+    http.expectOne((r) => r.url.endsWith('/api/public/labels')).flush({ language: 'de', labels: { signIn: 'Anmelden' } });
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[aria-label="Anmelden"]')).not.toBeNull();
+  });
+});
+
+describe('App tracking script', () => {
+  const setup = async () => {
+    document.querySelectorAll('script[data-adv-tracking]').forEach((s) => s.remove());
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: '**', children: [] }])],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    const router = TestBed.inject(Router);
+    const answer = (trackingScriptUrl?: string) => {
+      http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'T', tagline: '', postsPerPage: 10, trackingScriptUrl });
+      fixture.detectChanges();
+    };
+    return { fixture, router, answer };
+  };
+  const scripts = () => Array.from(document.querySelectorAll('script[data-adv-tracking]')) as HTMLScriptElement[];
+
+  afterEach(() => scripts().forEach((s) => s.remove()));
+
+  it('loads the allowed https script once on a public page', async () => {
+    const { fixture, router, answer } = await setup();
+    await router.navigateByUrl('/posts');
+    answer('https://plausible.io/js/script.js');
+    fixture.detectChanges();
+
+    expect(scripts().map((s) => s.src)).toEqual(['https://plausible.io/js/script.js']);
+    expect(scripts()[0].async).toBe(true);
+  });
+
+  it('never loads it inside the admin area, where a script could read the administrator sign-in', async () => {
+    const { fixture, router, answer } = await setup();
+    await router.navigateByUrl('/admin/dashboard');
+    answer('https://plausible.io/js/script.js');
+    fixture.detectChanges();
+
+    expect(scripts()).toEqual([]);
+  });
+
+  it('ignores an address that is not https, and nothing when there is none', async () => {
+    const { fixture, router, answer } = await setup();
+    await router.navigateByUrl('/posts');
+    answer('http://plausible.io/js/script.js');
+    fixture.detectChanges();
+    expect(scripts()).toEqual([]);
+
+    TestBed.inject(SiteService).settings.set({ title: 'T', tagline: '', postsPerPage: 10, trackingScriptUrl: 'javascript:alert(1)' });
+    fixture.detectChanges();
+    expect(scripts()).toEqual([]);
   });
 });

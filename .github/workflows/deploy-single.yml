@@ -1,0 +1,136 @@
+name: Deploy single site (API serves the client)
+
+# Single-site mode (onboarding decision 2026-11-22): ONE SmarterASP site holds the whole app. The Angular build is copied into the API's wwwroot and the API serves it, so one
+# address (a temporary dtempurl.com address while evaluating, a real domain later) is the entire install: no api. site, no cross-origin calls.
+#
+# Turn it on with the repository variable DEPLOY_MODE=single. Unset (the default, and how this project's own split www and api. deployment runs), the two split workflows
+# (deploy-webapi.yml and deploy-angular.yml) run and this one is skipped.
+#
+# The one site's FTP account goes in the API FTP secrets (SMARTERASP_FTP_SERVER, SMARTERASP_API_FTP_USERNAME, SMARTERASP_API_FTP_PASSWORD).
+# Optional repository variable SITE_URL: the address to smoke-test, for example https://your-account-site6.dtempurl.com (default https://<SITE_DOMAIN>).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/AiBlogResearch.WebApi/**"
+      - "src/AiBlogResearch.ServiceDefaults/**"
+      - "client/ai-blog-research-ui/**"
+      - ".github/workflows/deploy-single.yml"
+  workflow_dispatch: {}
+
+jobs:
+  test-api:
+    if: ${{ vars.DEPLOY_MODE == 'single' }}
+    uses: ./.github/workflows/test.yml
+    with:
+      suite: api
+
+  test-client:
+    if: ${{ vars.DEPLOY_MODE == 'single' }}
+    uses: ./.github/workflows/test.yml
+    with:
+      suite: client
+
+  build-and-deploy:
+    if: ${{ vars.DEPLOY_MODE == 'single' }}
+    needs: [test-api, test-client]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout Adventures.Foundation
+        env:
+          FOUNDATION_REPO: ${{ vars.FOUNDATION_REPO || 'BillKrat/Adventures.Foundation' }}
+          # Only needed when your Foundation fork is private: a token with read access to it (repository secret).
+          FOUNDATION_TOKEN: ${{ secrets.FOUNDATION_TOKEN }}
+        run: |
+          auth=()
+          if [ -n "$FOUNDATION_TOKEN" ]; then
+            header="$(printf 'x-access-token:%s' "$FOUNDATION_TOKEN" | base64 -w0)"
+            echo "::add-mask::$header"
+            auth=(-c "http.https://github.com/.extraheader=AUTHORIZATION: basic $header")
+          fi
+          git "${auth[@]}" clone --depth 1 --branch main "https://github.com/${FOUNDATION_REPO}.git" ../Adventures.Foundation
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: "npm"
+          cache-dependency-path: client/ai-blog-research-ui/package-lock.json
+
+      - name: Publish the API (Release)
+        run: dotnet publish src/AiBlogResearch.WebApi/AiBlogResearch.WebApi.csproj -c Release -o publish
+
+      # The client calls its own host, so its API address is empty (relative /api/... calls).
+      - name: Build the client for this one site
+        working-directory: client/ai-blog-research-ui
+        run: |
+          npm ci
+          sed -i "s|apiUrl: '[^']*'|apiUrl: ''|" src/environments/environment.production.ts
+          grep apiUrl src/environments/environment.production.ts
+          npm run build:libs
+          npx ng build ai-blog-research-ui
+
+      - name: Put the client into the API's web root
+        run: |
+          mkdir -p publish/wwwroot
+          cp -r client/ai-blog-research-ui/dist/ai-blog-research-ui/browser/. publish/wwwroot/
+          test -f publish/wwwroot/index.html
+
+      - name: Put the site offline for deployment
+        id: put_offline
+        run: |
+          printf '<html><body><h1>Maintenance</h1><p>Deployment in progress. Please retry shortly.</p></body></html>' > /tmp/app_offline.htm
+          curl --ftp-method nocwd --ftp-pasv -T /tmp/app_offline.htm \
+            --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
+            "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/app_offline.htm"
+          echo "uploaded=true" >> "$GITHUB_OUTPUT"
+          sleep 5
+
+      - name: Deploy to SmarterASP.NET via FTP
+        id: ftp_deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.SMARTERASP_FTP_SERVER }}
+          username: ${{ secrets.SMARTERASP_API_FTP_USERNAME }}
+          password: ${{ secrets.SMARTERASP_API_FTP_PASSWORD }}
+          protocol: ftp
+          local-dir: publish/
+          server-dir: /
+
+      - name: Bring the site back online
+        if: success() && steps.put_offline.outputs.uploaded == 'true'
+        run: |
+          curl --ftp-method nocwd --ftp-pasv --quote "DELE app_offline.htm" \
+            --user "${{ secrets.SMARTERASP_API_FTP_USERNAME }}:${{ secrets.SMARTERASP_API_FTP_PASSWORD }}" \
+            "ftp://${{ secrets.SMARTERASP_FTP_SERVER }}/"
+
+      # A green run never meant the app worked: the page and the API must both answer.
+      - name: Smoke test the deployed site
+        if: success()
+        env:
+          SITE_URL: ${{ vars.SITE_URL || format('https://{0}', vars.SITE_DOMAIN || 'global-webnet.com') }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsS "$SITE_URL/api/health" >/dev/null && curl -fsS "$SITE_URL/" | grep -q "<app-root"; then
+              echo "The API and the client page answered on attempt $attempt"
+              exit 0
+            fi
+            echo "Not healthy on attempt $attempt, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::The deployed site did not answer both /api/health and the client page - check logs/ on the server via FTP."
+          exit 1
+
+      - name: Keep the site offline after a failed deploy
+        if: steps.ftp_deploy.outcome == 'failure' && steps.put_offline.outputs.uploaded == 'true'
+        run: |
+          echo "Deployment failed after app_offline.htm was uploaded; the site remains offline to avoid serving a partial deployment."

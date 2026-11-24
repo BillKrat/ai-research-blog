@@ -32,6 +32,11 @@ describe('authInterceptor', () => {
     expect(controller.expectOne('/api/posts').request.headers.get('Authorization')).toBe('Bearer tok');
   });
 
+  it('leaves a request that carries its own Authorization alone (the setup token)', () => {
+    http.get('/api/setup/sites', { headers: { Authorization: 'Bearer setup' } }).subscribe();
+    expect(controller.expectOne('/api/setup/sites').request.headers.get('Authorization')).toBe('Bearer setup');
+  });
+
   it('drops the sign-in and goes to the login page, remembering the page, when the server answers 401', async () => {
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     let failed = false;

@@ -83,8 +83,8 @@
           </p>
           <p>
             <code>{{ login.password }}</code>
-            <button mat-stroked-button type="button" (click)="copyOneTime()">{{ oneTimeCopied() ? 'Copied' : 'Copy' }}</button>
-            <button mat-stroked-button type="button" (click)="closeOneTime()">Done</button>
+            <button mat-stroked-button type="button" (click)="copyOneTime()" [matTooltip]="(oneTimeCopied() ? 'copied' : 'copy') | label" [attr.aria-label]="(oneTimeCopied() ? 'copied' : 'copy') | label"><mat-icon>{{ oneTimeCopied() ? 'check' : 'content_copy' }}</mat-icon> {{ (oneTimeCopied() ? 'copied' : 'copy') | label }}</button>
+            <button mat-stroked-button type="button" (click)="closeOneTime()" [matTooltip]="'done' | label" [attr.aria-label]="'done' | label"><mat-icon>done</mat-icon> {{ 'done' | label }}</button>
           </p>
         </section>
       }
@@ -109,6 +109,7 @@
 
     @if (hasPlatformSwitch) {
       <adv-platform-switch [userId]="form.entity.entityId" />
+      <adv-email-verification-panel [userId]="form.entity.entityId" />
     }
 
     @if (hasRightsChecklist) {

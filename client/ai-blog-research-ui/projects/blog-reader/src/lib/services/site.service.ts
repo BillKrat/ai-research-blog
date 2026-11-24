@@ -11,6 +11,12 @@ export interface SiteSettings {
   postsPerPage: number;
   /** False when comments are switched off for the whole site (an older API sends nothing, which means on). */
   commentsEnabled?: boolean;
+  /** False when new comments are published at once (an older API sends nothing, which means they wait for approval). */
+  commentsModerate?: boolean;
+  /** One https analytics script the operator allowed (empty or missing: none). Loaded on public pages only. */
+  trackingScriptUrl?: string;
+  /** The look a visitor starts with until they use the header toggle (an older API sends nothing, which means dark). */
+  colorMode?: 'dark' | 'light';
 }
 
 const DEFAULTS: SiteSettings = { title: 'AI Research Blog', tagline: '', postsPerPage: 10 };

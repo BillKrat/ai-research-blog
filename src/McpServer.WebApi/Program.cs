@@ -27,6 +27,9 @@ builder.Services.AddScoped<McpServer.WebApi.DiagnosticsApiClient>();
 
 var app = builder.Build();
 
+// first of all: behind a CDN or proxy the visitor address and scheme come from the listed proxies only (Proxy:Trusted; off by default)
+app.UseTrustedProxies(app.Configuration);
+
 app.UseCorrelationId();
 app.UseSecurityHeaders(app.Environment.IsDevelopment());
 // The root stays reachable over plain HTTP and answers 200: SmarterASP's free-SSL preflight requests it without following

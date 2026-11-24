@@ -2,7 +2,11 @@
 
 **Status: draft written from how our own sites were built. Not yet proved on a fresh installation.** Every step marked *(ours)* is one we did on our own sites; *(unproved)* means we have not repeated it from scratch. The proof run uses a spare domain, written here as `<domain-name>`, and turns this draft into the real guide. For the cheap-hosting background see [Claude-developer-setup-guide.md](Claude-developer-setup-guide.md).
 
-**What you end up with:** three sites on one hosting account, `www.<domain-name>` (the Angular client), `api.<domain-name>` (the API) and `mcp.<domain-name>` (the MCP server), a PostgreSQL database, free HTTPS certificates, and GitHub Actions that test and then deploy on every merge to `main`. Running cost: about $38 a quarter for hosting plus an AI subscription if you use one.
+**Two ways to install (decided 2026-11-22, onboarding):**
+- **Evaluate on one address (easiest, no domain needed):** one SmarterASP site, the API serves the client, its temporary address is the whole app. Go straight to "One site, one address" near the end of this guide; stages 7 to 9 below are for the production layout.
+- **Production layout (what this project itself runs):** three sites and a domain, described next.
+
+**What you end up with (production layout):** three sites on one hosting account, `www.<domain-name>` (the Angular client), `api.<domain-name>` (the API) and `mcp.<domain-name>` (the MCP server), a PostgreSQL database, free HTTPS certificates, and GitHub Actions that test and then deploy on every merge to `main`. Running cost: about $38 a quarter for hosting plus an AI subscription if you use one.
 
 ## 0. Before you start
 - A SmarterASP.NET account with a plan that includes PostgreSQL, a registered domain name `<domain-name>` whose DNS you control, a GitHub account.
@@ -39,6 +43,19 @@ Still ours to remove by hand if you publish a fork: the example text in `README.
 | api | `Anthropic__ApiKey` | optional; only for "Ask Claude" on exceptions |
 | mcp | the same signing and client settings it needs to validate the API's tokens | see the MCP site's settings file |
 
+**Which variable goes where (each site has its own pool; set them in SmarterASP Pool Manager > the pool > Environment Variables, then restart the site).** Names use a double underscore; values are never put in a repository.
+
+| Variable | One-site install (whole app) | api site | mcp site | Note |
+|---|---|---|---|---|
+| `ConnectionStrings__Postgres` | required | required (same database) | not used | the database the site stores everything in; empty database on a fresh install |
+| `Jwt__SigningKey` | required | required | required, **identical** to the api's | a long random value (for example 48 random bytes, base64); tokens the api issues are checked by the mcp site with it |
+| `Site__Domain` | recommended | recommended | recommended | your bare domain, for example `example.com`. The shipped `appsettings.json` points at the project's own domain (`McpServer:BaseUrl`, `Api:BaseUrl`, CORS), so without it a site would call the wrong mcp or api; with it, the api and mcp addresses become `https://api.<domain>/` and `https://mcp.<domain>/` and the allowed browser origins follow. Still used for the CORS origins, the addresses between sites and the sign-in fallback when no tenant matches; the tenant of a request itself comes from the host |
+| `ClientSecret__ClaudeAuthor` (and `...ClaudeDiagnostics`, `...ClaudeResearch`) | only to let that client in | only to let that client in | not used | one random secret per machine client you switch on; no value, no access |
+| `Anthropic__ApiKey` (+ `Anthropic__Model`, `Anthropic__MaxCallsPerHour`) | optional | optional | not used | only for Ask Claude on exceptions |
+| `ConnectionStrings__BlogAi` | not used | not used | optional | only for the read-only legacy BlogEngine research tools; leave unset elsewhere |
+
+Nothing else is required: the environment name, the seed profile (an install seed on any non-development host) and the client switch have working defaults.
+
 If the API shows a 503 "reporting app", a required secret is missing and the page names it. If sign-in answers 500, the API cannot reach the database.
 
 **On GitHub (repository secrets):** `FOUNDATION_TOKEN` (only if your Adventures.Foundation fork is private: a fine-grained token with read-only Contents access to that one repository); `SMARTERASP_FTP_SERVER`; `SMARTERASP_FTP_USERNAME` and `SMARTERASP_FTP_PASSWORD` (client site); `SMARTERASP_API_FTP_USERNAME` and `SMARTERASP_API_FTP_PASSWORD`; `SMARTERASP_MCP_FTP_USERNAME` and `SMARTERASP_MCP_FTP_PASSWORD`. Use the scoped users from step 3.
@@ -52,10 +69,12 @@ Push a branch: the `Tests` workflow runs the API, MCP and client suites on GitHu
 Merge to `main` (or run each deploy workflow by hand): MCP, then API, then client. Each API deploy takes the site offline for a moment (`app_offline.htm`) and the workflow then checks the health endpoint. Expect: all three runs green; `https://www.<domain-name>` shows the public site.
 
 ## 8. First sign-in and hardening *(ours, learned the hard way)*
-1. The first start seeds the store and creates `Admin` and `Claude` accounts with well-known default passwords, flagged to be changed. **Sign in as `Admin` at once and change the password** (profile page).
-2. For `Claude`: if you do not use an AI collaborator, set a strong password through Admin > Users > Set password or delete the person once another administrator exists. We found our own unchanged default account this way.
-3. Create a second administrator before you remove or demote anyone; the app refuses to remove the last one.
-4. Create the four named test people from [Claude-test-users.md](Claude-test-users.md) on a test copy, never on real customers' data.
+1. **A fresh install** (an empty store on a deployed host) makes the first site by itself: the first address that reaches the API becomes the first tenant, its `Admin` account is created with the well-known default password, flagged to be changed, and `Admin` becomes the platform administrator. It carries only the install seed (no sample posts, no Claude account). **Sign in as `Admin` at once and change the password**: the app will not let you do anything else until you do.
+   **Record the new `Admin` password in a password manager before you do anything else.** "Forgot my password" on the sign-in page works only when the E-mail settings work and the address on the account has been confirmed (Profile > send the verification mail), so confirm it once the install is up. If it is lost and that is not set up, the person with host access runs the last-resort reset from the workspace tools: `reset-password -Tenant <your domain> -Account Admin` of `Claude-nquad-tool` (a dry run first, then `-Apply` in your own terminal; it prints one new password once and forces a change at the next sign-in). Never edit the database by hand.
+2. The first site is made only when the store holds no tenant at all, so a running install can never be taken over this way.
+3. **Another address that reaches the API** (a second domain, or a temporary address you bound later) shows a setup page instead of a site. Sign in there with the domain, user name and password of a platform administrator of an existing site (whose default password has already been changed), then either **attach** the address to a site (it becomes an alias, so the same data answers on both) or **start a new site** (its own `Admin` with the default password, changed at its first sign-in). Nothing is ever created for an unknown address without a platform administrator doing it.
+4. Create a second administrator before you remove or demote anyone; the app refuses to remove the last one.
+5. If you use an AI collaborator, create that account yourself (Admin > Users) with a strong password; no default `Claude` account exists on an install. Create the four named test people from [Claude-test-users.md](Claude-test-users.md) on a test copy, never on real customers' data.
 
 ## 9. Check it works
 - `https://api.<domain-name>/api/health` answers healthy.
@@ -74,5 +93,43 @@ Merge to `main`; the gate tests, then the three workflows deploy only the part w
 
 ## What would make this install shorter (backlog)
 1. (Done on branch `claude-site-domain`.) The domain is now the single setting `Site__Domain` plus the variables `SITE_DOMAIN` and `FOUNDATION_REPO`.
-2. A first-run page that forces the default passwords to change and offers to remove the `Claude` account.
+2. (Done 2026-11-22.) The first sign-in forces the default password to change, and an install has no default `Claude` account.
 3. (Built 2026-10-29, `Claude-preflight.ps1` in the workspace root; proved only against our own domain until the proof run.) One script that checks every secret and DNS name before the first deploy: `.docsClaude-preflight.ps1 -Domain <domain-name> -Repo <you>/ai-research-blog -FoundationRepo <you>/Adventures.Foundation`.
+
+## One site, one address: the evaluation path (single-site mode)
+
+The easiest install is ONE SmarterASP site: the API serves the client itself, so the site's own temporary address (`<account>-siteN.dtempurl.com`) is the whole application. Set the repository variable `DEPLOY_MODE` to `single`, put the one site's FTP account in the API FTP secrets, and run the **Deploy single site** workflow. Open the address: on a new database the first visit creates the site and you sign in with `Admin` and `Admin` (you are made to change the password at once). A domain is welcome but not required to evaluate; when you have one, bind it to the same site and attach it as an alias of the tenant (Admin > Tenants), and the same data answers on both addresses. The split layout (a `www` site for the client and an `api.` site for the API) is for production setups like this project's own and is the default when `DEPLOY_MODE` is not set.
+
+## Making the site's temporary address work on the first run with the split layout (T4b, operator override)
+
+Every SmarterASP site answers on a temporary address (`<account>-siteN.atempurl.com`) before a domain is attached, but the API only serves hosts that reach a tenant. Before anyone can sign in there is nobody to add the address as an alias, so the install has one explicit step: on the API site (and the MCP site if you use it) add the secret `Tenancy__AutoAliasToTenantDomain` with the domain of the tenant that should answer, for example the domain the seed created for your first site, restart the site, and open the temporary address once. The address becomes an alias of that tenant and works from then on (the API also allows the site on that address to call it). Then clear the setting again. It only ever aliases a real host name that no tenant reaches, never an IP address or localhost, and at most 10 per tenant. New tenants on other domains are created afterwards on Admin > Tenants > New tenant.
+
+## Traps found by the first real install (2026-11-22, one site on a temporary address)
+
+1. **A publish folder is not enough:** the pool needs its two required variables set before the first request, or the app stops with HTTP 500.30 and the reason is only in `logs/` on the site (`stdout_*.log`, `startup-*.log`, then `webapi-*.log` once it runs). Read those first.
+2. **Database port:** SmarterASP's hosted PostgreSQL answers on **6432** only; 5432 times out even though the panel's template shows it. A `SASL authentication failed` at start means the user name or password in `ConnectionStrings__Postgres` was refused: test the same login in the panel's pgAdmin first, and use a simple password (letters and digits) while installing.
+3. **Edit the right pool:** a pool is named in the panel by an alias you can change, and each site lists in exactly one pool. Set the variables on the pool whose Websites list shows your site, then restart it (a failed in-process start stays failed until the pool is restarted).
+4. **Replacing files on a running site:** the app holds its DLLs open. Upload `app_offline.htm` first, replace the files, then delete `app_offline.htm` (the deploy workflows do exactly this).
+5. **The first request makes the first site** (it needs the database and the identity tables, which the app creates). If `/api/public/site` still answers "No site is set up", read `logs/webapi-json-*.log` for the line "creating the first site ... failed".
+
+## DNS and certificates for your own domain (found 2026-11-22)
+
+- **Check where the domain is really delegated** before anything else: ask a public resolver for its NS records. A domain registered or moved through the host can already be delegated to a CDN (Cloudflare) even while the host's CDN switch says OFF, and the host's own DNS screen then edits a zone nobody asks.
+- **The free certificate needs the name to resolve directly to your server** (a plain A record, no proxy) and the site root to answer HTTP 200. A proxied record, or a second stray A record pointing at another address, fails the preflight.
+- **A CDN in its default mode is not a substitute for a certificate on the server:** it encrypts to the visitor, then speaks plain HTTP to your server (the app's https redirect then loops on every page except the root, and sign-in passwords cross the internet unencrypted on that leg). Use a mode that encrypts to the server, which needs a certificate there.
+- **The plan's free-certificate allowance can be used up.** The hosting service then answers only "did not queue the SSL request"; look at the SSL page in the panel, and have a certificate in mind (a purchased one, or a free origin certificate if the host lets you import one) before you move DNS.
+
+## Putting a CDN or reverse proxy in front (setting `Proxy__Trusted`)
+
+Behind a proxy the app sees the proxy's address for every visitor. Without telling it which proxy to believe, every visitor shares one rate-limit window (sign-in, comments, search) and the logs name only the proxy; with the proxy in plain-http mode the https redirect also loops. Tell the app which addresses are your proxy and it will take the visitor's address and scheme from the proxy's own headers, and from nobody else.
+
+1. Set the API site's setting `Proxy__Trusted` to the proxy's address ranges, comma separated, for example `198.51.100.0/24,203.0.113.0/24,2001:db8::/32`. Copy the ranges from your CDN's published list and keep them current; a range you leave out is simply not trusted (its visitors then share the proxy's limit again), a range you add wrongly lets that network choose its own address, so add only the proxy's.
+2. Leave it empty (the default) when nothing is in front of the app: then no forwarded header is believed from anyone.
+3. `Proxy__ForwardLimit` (default 1) is how many proxies in a row are believed, counted from the app. Keep 1 for one CDN; raise it only if two proxies chain in front of the app, and then list both.
+4. Use a mode that encrypts to the server (an origin certificate on the server; Cloudflare "Full (strict)"), as described above.
+5. Check: sign in wrongly six times from your own address and then from a phone on mobile data. Only your address is limited, not the phone's.
+6. The forwarded host is never used: the site is chosen by the host name the server received, so the proxy must pass the original host name through to the app (a CDN does by default). An invalid entry in `Proxy__Trusted` stops the app at start-up with a message naming the setting.
+
+## Listing text for a one-click install (draft for SmarterASP)
+
+**Name:** Adventures blog (AI starter kit). **What it is:** a blog and content site for people who want AI as a collaborator: posts and pages, comments with approval, search, an RSS feed, a Word-like editor, widgets and plug-ins, one admin for several sites on several domains, and an optional MCP server so an AI assistant can draft posts for you to review (it can never publish). **Install:** one site, one database. Open the site address; the first visit creates the site and you sign in with `Admin` and `Admin`, then choose a new password. **Needs:** ASP.NET Core 10 hosting, PostgreSQL. **Cost to run:** the hosting plan plus an AI subscription only if you use the AI features. **Licence:** BUSL-1.1 with a free grant for small operators (see LICENSE). Nothing is sent anywhere unless you configure an AI key or mail server yourself. This text is a draft and is not sent anywhere: the human decides what to send SmarterASP (ticket #3716417).

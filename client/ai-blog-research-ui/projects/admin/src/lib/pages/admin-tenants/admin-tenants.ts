@@ -1,6 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { PageHeader } from '../../components/page-header/page-header';
 import { TenantHosts, TenantService } from '../../services/tenant.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 /**
  * Admin > Tenants (platform administrators): each tenant with the host names that reach it, and a field to add one (for example a site's temporary address).
@@ -8,7 +11,7 @@ import { TenantHosts, TenantService } from '../../services/tenant.service';
  */
 @Component({
   selector: 'adv-admin-tenants',
-  imports: [PageHeader],
+  imports: [PageHeader, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './admin-tenants.html',
   styleUrl: './admin-tenants.scss',
 })
@@ -22,6 +25,21 @@ export class AdminTenants implements OnInit {
 
   ngOnInit(): void {
     this.service.loadHosts();
+  }
+
+  protected readonly newName = signal('');
+  protected readonly newDomain = signal('');
+
+  protected createTenant(): void {
+    if (this.newName().trim() === '' || this.newDomain().trim() === '') {
+      this.service.fail('Give the new tenant a name and a domain.');
+      return;
+    }
+
+    this.service.createTenant(this.newName().trim(), this.newDomain().trim(), () => {
+      this.newName.set('');
+      this.newDomain.set('');
+    });
   }
 
   protected setDraft(tenantId: string, value: string): void {

@@ -1,0 +1,22 @@
+.setup {
+  max-width: 520px;
+  margin: 0.75rem auto 0;
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  &__error {
+    color: var(--mat-sys-error);
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  &__note {
+    font-size: 0.9rem;
+    margin: 0 0 1rem;
+  }
+}

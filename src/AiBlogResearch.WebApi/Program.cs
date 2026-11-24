@@ -115,7 +115,7 @@ try
         || string.IsNullOrWhiteSpace(postgresConnection);
     INQuadStore nquadStore = useMemoryStore
         ? new InMemoryNQuadStore()
-        : new NpgsqlNQuadStore(postgresConnection!, builder.Configuration["NQuadStore:Table"] ?? "app_n_quads");
+        : NQuadStoreFactory.CreatePostgres(postgresConnection!, builder.Configuration["NQuadStore:Layout"], builder.Configuration["NQuadStore:Table"], builder.Configuration["NQuadStore:Prefix"]);
     var seeded = false;
     // Live data mode runs on the shared development store, so it applies pending seeds like any start (named seeds apply once and only add
     // schema and defaults). Set LiveData:SkipSeeding=true to leave the store untouched instead.
@@ -128,7 +128,7 @@ try
     }
     if (!skipSeeding)
     {
-        seeded = await StartupSeeds.ApplyAsync(nquadStore);
+        seeded = await StartupSeeds.ApplyAsync(nquadStore, SeedProfile.BaselineFile(builder.Configuration, builder.Environment.IsDevelopment()));
     }
     Log.Information("N-Quad store: {Provider} at {Store}{Live}; baseline seed {SeedState}", useMemoryStore ? "memory" : "postgres", LiveDataMode.Describe(postgresConnection), liveData ? " (LIVE DATA)" : "", seeded ? "applied" : "already applied");
     var userQuads = await nquadStore.QueryAsync();

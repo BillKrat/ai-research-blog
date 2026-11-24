@@ -57,7 +57,7 @@
             <div class="entity-form__rich-head">
               <span>{{ labelOf(field) }} (Markdown)</span>
               <span class="entity-form__rich-tools">
-                <button type="button" (click)="toggleSource(field.name)">{{ source()[field.name] ? 'Editor' : 'Markdown' }}</button>
+                <button type="button" (click)="toggleSource(field.name)" [matTooltip]="(source()[field.name] ? 'editorMode' : 'markdownMode') | label" [attr.aria-label]="(source()[field.name] ? 'editorMode' : 'markdownMode') | label"><mat-icon>{{ source()[field.name] ? 'edit_note' : 'code' }}</mat-icon> {{ (source()[field.name] ? 'editorMode' : 'markdownMode') | label }}</button>
               </span>
             </div>
             @if (!source()[field.name]) {

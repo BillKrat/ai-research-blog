@@ -36,9 +36,9 @@
 
     @if (totalPages > 1) {
       <nav class="public__pager" aria-label="Pages">
-        <button type="button" (click)="go(result.page - 1)" [disabled]="result.page <= 1">Newer</button>
+        <button type="button" (click)="go(result.page - 1)" [disabled]="result.page <= 1" [matTooltip]="'newer' | label" [attr.aria-label]="'newer' | label"><mat-icon>navigate_before</mat-icon> {{ 'newer' | label }}</button>
         <span>Page {{ result.page }} of {{ totalPages }}</span>
-        <button type="button" (click)="go(result.page + 1)" [disabled]="result.page >= totalPages">Older</button>
+        <button type="button" (click)="go(result.page + 1)" [disabled]="result.page >= totalPages" [matTooltip]="'older' | label" [attr.aria-label]="'older' | label">{{ 'older' | label }} <mat-icon>navigate_next</mat-icon></button>
       </nav>
     }
   }

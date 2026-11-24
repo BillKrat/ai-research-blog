@@ -1,5 +1,8 @@
 import { Component, input, output } from '@angular/core';
 import { PluginSettingDefinition } from '../../services/plugins.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 /** The value of one field changed. */
 export interface SettingChange {
@@ -13,6 +16,7 @@ export interface SettingChange {
  */
 @Component({
   selector: 'adv-setting-fields',
+  imports: [MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './setting-fields.html',
   styleUrl: './setting-fields.scss',
 })

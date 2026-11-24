@@ -175,7 +175,7 @@ describe('EntityForm', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
-    const buttons = () => Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.textContent?.trim());
+    const buttons = () => Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.getAttribute('aria-label'));
 
     expect(root.querySelector('adv-visual-editor')).not.toBeNull();
     expect(root.querySelector('textarea[aria-label="Content"]')).toBeNull();
@@ -256,7 +256,7 @@ describe('EntityForm', () => {
 
         expect(root.querySelector('adv-html-editor')).toBeNull();
         expect(root.querySelector('adv-visual-editor')).not.toBeNull();
-        expect(Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.textContent?.trim())).toEqual(['Markdown']);
+        expect(Array.from(root.querySelectorAll('.entity-form__rich-head button')).map((b) => b.getAttribute('aria-label'))).toEqual(['Markdown']);
       }
     });
   });
@@ -272,7 +272,7 @@ describe('EntityForm', () => {
       fixture.detectChanges();
       const root = fixture.nativeElement as HTMLElement;
       const click = async (label: string) => {
-        (Array.from(root.querySelectorAll('.entity-form__rich-head button')).find((b) => b.textContent?.trim() === label) as HTMLButtonElement).click();
+        (Array.from(root.querySelectorAll('.entity-form__rich-head button')).find((b) => b.getAttribute('aria-label') === label) as HTMLButtonElement).click();
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();

@@ -89,6 +89,12 @@ export class PublicContentService {
     return this.http.get<PublicPage | null>(`${this.base}/home`);
   }
 
+  /** Search of the published posts and pages (anonymous; the server limits the query and the rate). */
+  search(query: string, page = 1, pageSize = 10): Observable<SearchResult> {
+    const params = new HttpParams().set('q', query).set('page', page).set('pageSize', pageSize);
+    return this.http.get<SearchResult>(`${this.base}/search`, { params });
+  }
+
   menu(): Observable<PublicMenuItem[]> {
     return this.http.get<PublicMenuItem[]>(`${this.base}/menu`);
   }
@@ -125,4 +131,21 @@ export interface CommentSubmission {
   email: string;
   body: string;
   website: string;
+}
+
+/** One search hit: a post or a page with a short plain-text snippet. */
+export interface SearchHit {
+  kind: 'post' | 'page';
+  slug: string;
+  title: string;
+  snippet: string;
+  datePublished: string | null;
+}
+
+export interface SearchResult {
+  query: string;
+  total: number;
+  page: number;
+  pageSize: number;
+  hits: SearchHit[];
 }

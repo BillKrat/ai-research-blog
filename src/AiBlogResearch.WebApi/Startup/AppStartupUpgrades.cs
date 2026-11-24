@@ -31,6 +31,19 @@ internal static class AppStartupUpgrades
     {
         if (!skipSeeding)
         {
+            // The sign-in tables (CREATE ... IF NOT EXISTS: nothing changes where they exist). A host without the right to create them logs it and carries on.
+            if (!legacy)
+            {
+                try
+                {
+                    await app.Services.GetRequiredService<IdentitySchemaInitializer>().EnsureAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Could not make sure the sign-in tables exist (identity schema); continuing.");
+                }
+            }
+
             // Improved default rights for roles still at their first shipped values (a seed cannot supersede a stored value); an edited role is left alone.
             using var upgradeScope = app.Services.CreateScope();
             var upgraded = await RoleRightsUpgrade.ApplyAsync(upgradeScope.ServiceProvider.GetRequiredService<IEntityDal<Role>>());

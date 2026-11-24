@@ -2,7 +2,9 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, OnDestroy, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { API_BASE_URL, EntityGridModel, REQUEST_TIMEOUT_MS } from '@adventures/core';
+import { API_BASE_URL } from '../api-base-url';
+import { EntityGridModel } from '../models/entity-form.model';
+import { REQUEST_TIMEOUT_MS } from '../interceptors/timeout.interceptor';
 
 export interface TriageFinding {
   title: string;

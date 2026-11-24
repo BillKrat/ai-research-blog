@@ -40,7 +40,7 @@
             The saved value will be removed when you save.
           } @else if (isSet(definition.name)) {
             A value is set.
-            <button type="button" class="setting-field__clear" (click)="cleared.emit(definition.name)">Clear</button>
+            <button type="button" class="setting-field__clear" (click)="cleared.emit(definition.name)" [matTooltip]="'clear' | label" [attr.aria-label]="'clear' | label"><mat-icon>backspace</mat-icon> {{ 'clear' | label }}</button>
           } @else {
             Not set.
           }

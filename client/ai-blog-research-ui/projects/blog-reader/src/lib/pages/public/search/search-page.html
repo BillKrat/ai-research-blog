@@ -1,0 +1,39 @@
+<section class="search">
+  <h2>Search</h2>
+  <form class="search__form" (submit)="$event.preventDefault(); submit()">
+    <input name="q" type="search" maxlength="100" placeholder="Search posts and pages" [value]="typed()" (input)="typed.set($any($event.target).value)" />
+    <button type="submit" data-action="search" [disabled]="searching()" [matTooltip]="'search' | label" [attr.aria-label]="'search' | label">
+      <mat-icon>search</mat-icon> {{ 'search' | label }}
+    </button>
+  </form>
+
+  @for (message of errors(); track message) {
+    <p class="search__error" role="alert">{{ message }}</p>
+  }
+
+  @if (result(); as r) {
+    @if (r.total === 0) {
+      <p>Nothing was found for "{{ r.query }}".</p>
+    } @else {
+      <p class="search__count">{{ r.total }} {{ r.total === 1 ? 'result' : 'results' }} for "{{ r.query }}"</p>
+      <ol class="search__list">
+        @for (hit of r.hits; track hit.kind + hit.slug) {
+          <li class="search__hit">
+            <a class="search__title" [routerLink]="[hit.kind === 'post' ? '/post' : '/page', hit.slug]">{{ hit.title }}</a>
+            <span class="search__meta">{{ hit.kind === 'post' ? 'Post' : 'Page' }}@if (hit.datePublished) { · {{ hit.datePublished | date: 'yyyy-MM-dd' }} }</span>
+            <p class="search__snippet">{{ hit.snippet }}</p>
+          </li>
+        }
+      </ol>
+      @if (totalPages > 1) {
+        <nav class="search__pager" aria-label="Pages">
+          <button type="button" data-action="previous" [disabled]="r.page <= 1" (click)="go(-1)" [matTooltip]="'previous' | label" [attr.aria-label]="'previous' | label"><mat-icon>navigate_before</mat-icon> {{ 'previous' | label }}</button>
+          <span>Page {{ r.page }} of {{ totalPages }}</span>
+          <button type="button" data-action="next" [disabled]="r.page >= totalPages" (click)="go(1)" [matTooltip]="'next' | label" [attr.aria-label]="'next' | label">{{ 'next' | label }} <mat-icon>navigate_next</mat-icon></button>
+        </nav>
+      }
+    }
+  } @else if (!searching() && errors().length === 0) {
+    <p>Type what you are looking for and press Search.</p>
+  }
+</section>

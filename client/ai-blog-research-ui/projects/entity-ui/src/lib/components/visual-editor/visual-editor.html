@@ -1,20 +1,20 @@
 <div class="visual-editor">
   <div class="visual-editor__bar" role="toolbar" aria-label="Formatting">
-    <button type="button" (click)="bold()" [class.is-active]="active('bold')" matTooltip="Bold" aria-label="Bold"><mat-icon>format_bold</mat-icon></button>
-    <button type="button" (click)="italic()" [class.is-active]="active('italic')" matTooltip="Italic" aria-label="Italic"><mat-icon>format_italic</mat-icon></button>
-    <button type="button" (click)="strike()" [class.is-active]="active('strike')" matTooltip="Strikethrough" aria-label="Strikethrough"><mat-icon>strikethrough_s</mat-icon></button>
-    <button type="button" (click)="code()" [class.is-active]="active('code')" matTooltip="Inline code" aria-label="Inline code"><mat-icon>code</mat-icon></button>
+    <button type="button" (click)="bold()" [class.is-active]="active('bold')" [matTooltip]="'bold' | label" [attr.aria-label]="'bold' | label"><mat-icon>format_bold</mat-icon></button>
+    <button type="button" (click)="italic()" [class.is-active]="active('italic')" [matTooltip]="'italic' | label" [attr.aria-label]="'italic' | label"><mat-icon>format_italic</mat-icon></button>
+    <button type="button" (click)="strike()" [class.is-active]="active('strike')" [matTooltip]="'strikethrough' | label" [attr.aria-label]="'strikethrough' | label"><mat-icon>strikethrough_s</mat-icon></button>
+    <button type="button" (click)="code()" [class.is-active]="active('code')" [matTooltip]="'inlineCode' | label" [attr.aria-label]="'inlineCode' | label"><mat-icon>code</mat-icon></button>
     <span class="visual-editor__gap"></span>
-    <button type="button" (click)="heading(2)" [class.is-active]="active('heading', { level: 2 })" matTooltip="Heading" aria-label="Heading">H2</button>
-    <button type="button" (click)="heading(3)" [class.is-active]="active('heading', { level: 3 })" matTooltip="Sub-heading" aria-label="Sub-heading">H3</button>
-    <button type="button" (click)="bullets()" [class.is-active]="active('bulletList')" matTooltip="Bulleted list" aria-label="Bulleted list"><mat-icon>format_list_bulleted</mat-icon></button>
-    <button type="button" (click)="numbers()" [class.is-active]="active('orderedList')" matTooltip="Numbered list" aria-label="Numbered list"><mat-icon>format_list_numbered</mat-icon></button>
-    <button type="button" (click)="quote()" [class.is-active]="active('blockquote')" matTooltip="Quote" aria-label="Quote"><mat-icon>format_quote</mat-icon></button>
-    <button type="button" (click)="codeBlock()" [class.is-active]="active('codeBlock')" matTooltip="Code block (also for a Mermaid diagram)" aria-label="Code block"><mat-icon>data_object</mat-icon></button>
-    <button type="button" (click)="rule()" matTooltip="Divider line" aria-label="Divider line"><mat-icon>horizontal_rule</mat-icon></button>
+    <button type="button" (click)="heading(2)" [class.is-active]="active('heading', { level: 2 })" [matTooltip]="'heading' | label" [attr.aria-label]="'heading' | label"><mat-icon>looks_two</mat-icon></button>
+    <button type="button" (click)="heading(3)" [class.is-active]="active('heading', { level: 3 })" [matTooltip]="'subHeading' | label" [attr.aria-label]="'subHeading' | label"><mat-icon>looks_3</mat-icon></button>
+    <button type="button" (click)="bullets()" [class.is-active]="active('bulletList')" [matTooltip]="'bulletedList' | label" [attr.aria-label]="'bulletedList' | label"><mat-icon>format_list_bulleted</mat-icon></button>
+    <button type="button" (click)="numbers()" [class.is-active]="active('orderedList')" [matTooltip]="'numberedList' | label" [attr.aria-label]="'numberedList' | label"><mat-icon>format_list_numbered</mat-icon></button>
+    <button type="button" (click)="quote()" [class.is-active]="active('blockquote')" [matTooltip]="'quote' | label" [attr.aria-label]="'quote' | label"><mat-icon>format_quote</mat-icon></button>
+    <button type="button" (click)="codeBlock()" [class.is-active]="active('codeBlock')" [matTooltip]="'codeBlock' | label" [attr.aria-label]="'codeBlockName' | label"><mat-icon>data_object</mat-icon></button>
+    <button type="button" (click)="rule()" [matTooltip]="'dividerLine' | label" [attr.aria-label]="'dividerLine' | label"><mat-icon>horizontal_rule</mat-icon></button>
     <span class="visual-editor__gap"></span>
-    <button type="button" (click)="askLink()" [class.is-active]="active('link')" matTooltip="Link" aria-label="Link"><mat-icon>link</mat-icon></button>
-    <button type="button" (click)="picture.click()" [disabled]="uploading()" matTooltip="Picture" aria-label="Picture"><mat-icon>add_photo_alternate</mat-icon></button>
+    <button type="button" (click)="askLink()" [class.is-active]="active('link')" [matTooltip]="'link' | label" [attr.aria-label]="'link' | label"><mat-icon>link</mat-icon></button>
+    <button type="button" (click)="picture.click()" [disabled]="uploading()" [matTooltip]="'picture' | label" [attr.aria-label]="'picture' | label"><mat-icon>add_photo_alternate</mat-icon></button>
     <input #picture type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden (change)="upload($event)" />
   </div>
   @for (message of errors(); track message) {

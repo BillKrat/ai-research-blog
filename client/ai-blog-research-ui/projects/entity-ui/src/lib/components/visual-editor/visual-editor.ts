@@ -7,6 +7,7 @@ import { TableKit } from '@tiptap/extension-table';
 import { Markdown } from '@tiptap/markdown';
 import StarterKit from '@tiptap/starter-kit';
 import { describeApiError, MediaService } from '@adventures/core';
+import { LabelPipe } from '../../i18n/labels';
 
 /** Only these kinds of address may become a link: the web, mail, and a path on this site. Anything else (javascript:, data:, ...) is refused. */
 const SAFE_LINK = /^(https?:\/\/|mailto:|\/(?!\/)|#)/i;
@@ -19,7 +20,7 @@ const SAFE_LINK = /^(https?:\/\/|mailto:|\/(?!\/)|#)/i;
  */
 @Component({
   selector: 'adv-visual-editor',
-  imports: [MatIconModule, MatTooltipModule],
+  imports: [MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './visual-editor.html',
   styleUrl: './visual-editor.scss',
 })

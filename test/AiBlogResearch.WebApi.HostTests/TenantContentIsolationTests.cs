@@ -6,6 +6,7 @@ using Adventures.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -42,7 +43,12 @@ public sealed class TenantContentIsolationTests
             builder.UseSetting("Jwt:SigningKey", "0123456789abcdef0123456789abcdef0123456789abcdef");
             builder.UseSetting("NQuadStore:Provider", "Memory");
             builder.UseSetting("Tenancy:CacheSeconds", "0");
-            builder.ConfigureTestServices(services => services.AddScoped<ITenantResolver>(_ => new TwoTenants()));
+            // hermetic: an unknown host here must not try to make a first site in a real sign-in store
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddScoped<ITenantResolver>(_ => new TwoTenants());
+                services.AddScoped<IFirstRunSite, NoFirstRunSite>();
+            });
         });
 
     private static HttpClient As(WebApplicationFactory<Program> factory, string host)
@@ -73,6 +79,23 @@ public sealed class TenantContentIsolationTests
     private sealed class Fixed(string key) : IGraphScope
     {
         public string TenantKey { get; } = key;
+    }
+
+    /// <summary>
+    /// CI has no Postgres connection string (a developer machine has one in user-secrets, which hid this). A request for a known tenant must answer without it: the first-run services
+    /// that need the sign-in store are asked for only when a host reaches no tenant.
+    /// </summary>
+    [Fact]
+    public async Task AKnownTenantsPublicSite_AnswersWithoutAPostgresConnectionString()
+    {
+        using var factory = Host().WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, configuration) =>
+                configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:Postgres"] = null })));
+        await SeedPostAsync(factory, "acme-id", "Acme only post");
+
+        var response = await As(factory, "api.acme.test").GetAsync("/api/public/posts");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]

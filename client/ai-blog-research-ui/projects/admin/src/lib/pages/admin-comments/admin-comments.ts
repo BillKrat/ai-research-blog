@@ -2,17 +2,20 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommentAction, CommentsAdminService, ModerationComment } from '../../services/comments-admin.service';
-import { AdminMenuService } from '../../services/admin-menu.service';
+import { AdminMenuService } from '@adventures/core';
 
 /**
  * The Comments page (the legacy BlogEngine one, trimmed for the beta): what readers wrote under posts, filtered by Pending or Approved,
  * with Approve, Unapprove and Delete for the ticked comments. Only approved comments are shown on the site. The text is shown as plain text.
  */
 import { PageHeader } from '../../components/page-header/page-header';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 @Component({
   selector: 'adv-admin-comments',
-  imports: [DatePipe, RouterLink, PageHeader],
+  imports: [DatePipe, RouterLink, PageHeader, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './admin-comments.html',
   styleUrl: './admin-comments.scss',
 })

@@ -20,12 +20,13 @@
       <p class="login__error" role="alert">{{ message }}</p>
     }
 
-    <button mat-flat-button type="submit" [disabled]="form.invalid || isSubmitting()">
+    <button mat-flat-button type="submit" [disabled]="form.invalid || isSubmitting()" [matTooltip]="'signIn' | label" [attr.aria-label]="'signIn' | label">
       @if (isSubmitting()) {
         <mat-spinner diameter="20" />
       } @else {
-        Sign in
+        <span><mat-icon>login</mat-icon> {{ 'signIn' | label }}</span>
       }
     </button>
   </form>
+  <p class="login__forgot"><a routerLink="/forgot-password">{{ 'forgotPassword' | label }}</a></p>
 </section>

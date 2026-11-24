@@ -10,11 +10,14 @@ on:
 
 jobs:
   test:
+    # single-site mode (repository variable DEPLOY_MODE=single) deploys through deploy-single.yml instead
+    if: ${{ vars.DEPLOY_MODE != 'single' }}
     uses: ./.github/workflows/test.yml
     with:
       suite: client
 
   build-and-deploy:
+    if: ${{ vars.DEPLOY_MODE != 'single' }}
     needs: test
     runs-on: ubuntu-latest
     defaults:

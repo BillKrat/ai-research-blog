@@ -15,19 +15,19 @@ describe('AdminPluginCustomize', () => {
     values: { ExtraAllowedTags: 'details', AllowedUrlSchemes: 'http,https,mailto', Loud: 'false', Limit: '5' },
   };
 
-  function setup() {
+  function setup(key = 'html-sanitizer') {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map([['key', 'html-sanitizer']]) } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map([['key', key]]) } } },
       ],
     });
     const fixture = TestBed.createComponent(AdminPluginCustomize);
     const http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
-    http.expectOne((r) => r.url.endsWith('/api/plugins/html-sanitizer/settings') && r.method === 'GET').flush(model);
+    http.expectOne((r) => r.url.endsWith(`/api/plugins/${key}/settings`) && r.method === 'GET').flush(model);
     fixture.detectChanges();
     return { fixture, http, page: fixture.nativeElement as HTMLElement };
   }
@@ -183,6 +183,46 @@ describe('AdminPluginCustomize', () => {
 
       expect((page.querySelector('input[name="Token"]') as HTMLInputElement).value).toBe('');
       expect(page.textContent).toContain('A value is set');
+    });
+  });
+
+  describe('the E-mail plug-in', () => {
+    it('has no test box on other plug-ins', () => {
+      const { page } = setup('html-sanitizer');
+      expect(page.querySelector('[data-action="send-test"]')).toBeNull();
+    });
+
+    it('sends a test message to the address typed, and says it was sent', () => {
+      const { fixture, http, page } = setup('mail');
+      const to = page.querySelector('input[name="testTo"]') as HTMLInputElement;
+      to.value = 'me@example.net';
+      to.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      (page.querySelector('[data-action="send-test"]') as HTMLButtonElement).click();
+      const post = http.expectOne((r) => r.url.endsWith('/api/mail/test') && r.method === 'POST');
+      expect(post.request.body).toEqual({ to: 'me@example.net' });
+      post.flush(null, { status: 204, statusText: 'No Content' });
+      fixture.detectChanges();
+
+      expect(page.querySelector('[data-test-result]')?.textContent).toContain('sent');
+    });
+
+    it('shows the server reason when the test fails, and asks for an address first', () => {
+      const { fixture, http, page } = setup('mail');
+      (page.querySelector('[data-action="send-test"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      http.expectNone((r) => r.url.endsWith('/api/mail/test'));
+      expect(page.querySelector('[data-test-result]')?.textContent).toContain('address');
+
+      const to = page.querySelector('input[name="testTo"]') as HTMLInputElement;
+      to.value = 'me@example.net';
+      to.dispatchEvent(new Event('input'));
+      (page.querySelector('[data-action="send-test"]') as HTMLButtonElement).click();
+      http.expectOne((r) => r.url.endsWith('/api/mail/test')).flush('The mail server is not set.', { status: 409, statusText: 'Conflict' });
+      fixture.detectChanges();
+
+      expect(page.querySelector('[data-test-result]')?.textContent).toContain('not set');
     });
   });
 });

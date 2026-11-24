@@ -20,6 +20,11 @@ Written at the human's request: he follows my recommendations and asked me to se
 | 9 | **Quad storage at scale** (measure per-user quads, own benchmark generator, spike, layout change, the cheap index wins) | Must be done before beta data exists, after the features above | large | `Claude-backlog-quad-storage.md` |
 | 10 | **Schema site `schema.global-webnet.com`** (navigated hierarchy of the data) and its certificate | Beta-critical, the last item (human, 2026-11-21); certificate installed and verified live 2026-11-21 (SSL.com, valid to 2027-06-07; renew by 2027-06) | medium | Quad-storage backlog, section 8 |
 | 11 | **Pristine beta store and data freeze** (clean database from seeds only, benchmark databases separate, rehearsed cutover) | Beta data must be clean before anyone uses it | medium | Quad-storage backlog, section 8 |
+| 12 | **Admin menu parity with BlogEngine.NET (human, 2026-11-21): the BlogEngine admin menu groups and their children define what "done" means for beta.** First step is a parity matrix (each BlogEngine group and child: built here, gap that is beta, after beta, or excluded; Blogs and Contacts are the known exclusions), made from the 2026-10-20 admin review and a fresh read of the live admin in the human's browser (read-only); the matrix then reorders this table | It is the human's definition of done; every other row is checked against it | small (the matrix), then one row per gap | New: Backlog, Features, "Admin parity" |
+| 13 | **Icons on every button, with localized hover text (human, 2026-11-21)** (the label seam `i18n/labels.ts` exists; audit every button and menu entry, move all text behind label keys, serve the label table as data per language, let an administrator pick the site language, and a Claude MCP configuration option so a user can have Claude produce and apply their language file for review) | Consistent, learnable admin; the seam must be real before more screens are added | medium to large, 3 stages | New: Backlog, Features, "Icons and language files" |
+| 14 | **Site colour mode in Settings (human, 2026-11-21): a Dark or Light dropdown the administrator sets for the site** (the visitor's own toggle stays and wins once used) | The minimum the human wants for a site's look until themes exist | small | New: Backlog, Features, "Site colour mode" |
+
+**Working order from 2026-11-22 (full days 2026-11-22 and 2026-11-23):** (1) row 12, the parity matrix, first because it may reorder the rest; (2) row 14, the colour mode (small, visible); (3) row 13, icons and language files in stages; (4) row 6, basic search; (5) row 7, Prompt Claude through MCP; (6) row 5, the rest of T4 (the automatic alias at first run, a new tenant on its own domain, a working default before any domain, per-tenant sharing settings; the stage-4a CORS and Admin > Tenants with delete are built and live); (7) then rows 8 to 11 as before, plus any gaps the matrix finds. Built and live as of 2026-11-21 night: rows 1 to 4 (plug-ins, event bus, sample, widgets, encrypted fields for plug-in settings) and the first part of row 5.
 
 ## AFTER BETA (stay in the backlog until the downstream project)
 
@@ -30,7 +35,9 @@ Written at the human's request: he follows my recommendations and asked me to se
 | Subscriptions, usage meter, plans, who pays for AI beyond a bring-your-own key | Needs money and several blogs; the seams stay in every stage |
 | AI-assisted search and upload processing (Layer 2) | Costs per call; needs the usage seams |
 | Mail screen and notifications | Per-blog SMTP through the encrypted field; needs several blog owners to matter |
-| Localization beyond the label seam | The seam exists; translation is not a beta need |
+| Themes and templates (human, 2026-11-21: not matched for beta) | Added after the downstream private project is stood up; the theme support is built into the shared libraries (`Adventures.*` and the Angular libraries), so this app uses it from there. Until then row 14 (the colour mode) is the whole of it |
+| A migration from an existing BlogEngine.NET install to this app (human, 2026-11-21, optional) | Not a priority; do it only if it falls out of the legacy-mode and import work already done (the BlogAI mirror and import tooling), as a documented path rather than a feature |
+| Localization beyond the label seam (translated language files themselves) | Row 13 builds the mechanism and the Claude configuration option; the translations are the users' |
 | Performance thresholds and alerts | The benchmarks (item 9) come first and will say what to alert on |
 | Editing your own conversation entry, the "read by Claude" marker | Small comforts, no beta risk |
 | Richer typed controls, richer editor and media, admin shell port leftovers | Polish |
@@ -44,4 +51,4 @@ Written at the human's request: he follows my recommendations and asked me to se
 
 ## How I will work
 
-One session branch, one verified stage per commit with a stage review, a collaboration item only when the human needs to test something, merge and deploy on his word. I take the next row unless he redirects; item 1 is first.
+One session branch, one verified stage per commit with a stage review, a collaboration item only when the human needs to test something, merge and deploy on his word. I take the next item of the "Working order from 2026-11-22" paragraph unless he redirects.

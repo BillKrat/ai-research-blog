@@ -3,8 +3,10 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { PageBannerService } from '@adventures/core';
-import { AdminMenuService } from '../../services/admin-menu.service';
+import { AdminMenuService } from '@adventures/core';
 import { TenantService } from '../../services/tenant.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 /**
  * The admin area frame: the server-supplied menu on the left (sections, items, a count badge, items for screens that are not
@@ -13,7 +15,7 @@ import { TenantService } from '../../services/tenant.service';
  */
 @Component({
   selector: 'adv-admin-shell',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatIconModule],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './admin-shell.html',
   styleUrl: './admin-shell.scss',
 })

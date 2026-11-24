@@ -1,6 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { TenantService } from '../../services/tenant.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LabelPipe } from '@adventures/entity-ui';
 
 /**
  * The tenant the domain names, the tenants this person may work in, and (for a platform administrator) the host names. It lives on the
@@ -8,7 +10,7 @@ import { TenantService } from '../../services/tenant.service';
  */
 @Component({
   selector: 'adv-tenant-panel',
-  imports: [MatIconModule],
+  imports: [MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './tenant-panel.html',
   styleUrl: './tenant-panel.scss',
 })

@@ -27,7 +27,7 @@ namespace AiBlogResearch.WebApi;
 internal static class StartupSeeds
 {
     /// <summary>Initializes the store and applies the baseline and every named seed once; returns whether the baseline was applied just now.</summary>
-    public static async Task<bool> ApplyAsync(INQuadStore store)
+    public static async Task<bool> ApplyAsync(INQuadStore store, string baselineFile = "seed.nq")
     {
         var seeded = false;
         if (store is INQuadStoreInitializer initializer)
@@ -35,7 +35,7 @@ internal static class StartupSeeds
             await initializer.InitializeAsync();
         }
 
-        var nquadSeedPath = Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed.nq");
+        var nquadSeedPath = Path.Combine(AppContext.BaseDirectory, "Sql", "seed", baselineFile);
         seeded = await store.SeedOnceAsync(nquadSeedPath, "baseline");
         // Named, once-only seeds added after the baseline (each ships as its own file, never merged into seed.nq).
         await store.SeedOnceAsync(
@@ -47,6 +47,9 @@ internal static class StartupSeeds
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-004-identity.nq"), IdentityConstants.SeedName);
         await store.SeedOnceAsync(
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-005-identity-required.nq"), IdentityConstants.RequiredSeedName);
+        // About me, Website and Picture address on the User schema (the profile page is built from the schema, so it shows them).
+        await store.SeedOnceAsync(
+            Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-027-profile-fields.nq"), IdentityConstants.ProfileSeedName);
         // The content model (pages, posts, categories, tags): new schemas under the schema host, modelled on the BlogEngine admin.
         await store.SeedOnceAsync(
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-006-content.nq"), BlogConstants.Content.SeedName);
@@ -92,6 +95,9 @@ internal static class StartupSeeds
         // Where each widget sits in the four zones (per tenant); the owner arranges them on the Widgets screen.
         await store.SeedOnceAsync(
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-025-widget-placements.nq"), WidgetConstants.SeedName);
+        // The language files an administrator keeps for the site language (per tenant).
+        await store.SeedOnceAsync(
+            Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-026-language-files.nq"), LanguageConstants.SeedName);
         // The site settings (title, tagline, posts per page, legacy time zone) with their four defaults; an administrator edits them afterwards.
         await store.SeedOnceAsync(
             Path.Combine(AppContext.BaseDirectory, "Sql", "seed", "seed-011-site-settings.nq"), BlogConstants.Site.SeedName);

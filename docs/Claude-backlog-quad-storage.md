@@ -1,6 +1,6 @@
 # Backlog: quad storage, scale and performance
 
-Status: BACKLOG, not started. Filed 2026-11-21 at the human's request. **Must be done before beta** (the human: refactoring after beta data exists is problematic), but only after the current foundational path is finished. It must not distract the work in progress.
+Status: STEPS 1 TO 4 DONE 2026-11-23 (measured, benchmarked, decided: hybrid layout, see `Claude-decision-2026-11-quad-storage.md`); implementation (step 5) waits for the human review. Filed 2026-11-21 at the human's request. **Must be done before beta** (the human: refactoring after beta data exists is problematic), but only after the current foundational path is finished. It must not distract the work in progress.
 
 Sources: the human's scalability notes (`Y:\Temp\scalability-concerns.txt`, an AI Q&A about storing full IRIs) and ISO 15926 notes (`Y:\Temp\iso-15926.txt`), the W3C RDF 1.2 N-Quads and Concepts drafts, and public research listed at the end. Items marked **(unverified)** came from a search summary or from memory and need a check before anyone relies on them.
 
@@ -82,6 +82,38 @@ Assessment:
 | C. Full dictionary, one bigint per term, namespaces as a dictionary column (the human's idea made uniform) | about 170 to 190 (estimated) | one cached lookup | yes, if kept inside the store | best size and speed; most work; export is a join |
 
 Sizes for A and B are my estimates from the measured averages. Recommendation unchanged: measure per-user quads, try the cheap index wins now if wanted, and spike C against B before deciding.
+
+## 4c. Measurements, step 1 finished (2026-11-23, read-only SELECTs on the live store through the vault; counts and sizes only)
+
+| What | Value |
+|---|---|
+| `app_n_quads` rows / bytes with indexes | 120,521 / 73.7 MB |
+| Distinct subjects / graphs | 14,722 / 15 |
+| Quads per subject: median / p95 / max | 9 / 9 / 349 |
+| Long literals (over 255 characters) | 816 quads, 2.5 MB of text (post and page bodies, collaboration text) |
+
+**Finding: 85% of the store is dead audit data.** 102,640 of the 120,521 quads (11,367 subjects of kind `id/audit`, 4.4 MB of object text) are records of the audit feature that was removed on 2026-10-29 (owner decision, no audit trail). Nothing reads them. They are the dead weight that makes today's size look like 611 bytes a quad for the real content; without them the live content is about **17,900 quads**. Removing them is part of the pristine beta store (row 11) and needs the human's word first (a delete on the live store, after a verified `Claude-nquad-tool export`).
+
+Real content, quads per subject kind (live store, not audit):
+
+| Kind | Quads each | Note |
+|---|---|---|
+| Post (new store) | 15.7 | body text counted separately, avg about 7.5 KB |
+| Page | 19.8 | |
+| Comment | 6.0 | |
+| Collaboration item | 14.5 | |
+| Exception / exception signature | 8.9 / 20.4 | grows with failures; purged by the exception log rules |
+| Tag | 2.0 | |
+| Legacy BlogEngine mirror (`legacy/be_*`) | 4 to 17 | 78,680 quads in the legacy graph, imported once, read-only |
+
+**A beta blog, estimated from those numbers** (one tenant, 100 posts, 300 comments, 5 pages, 30 tags, 10 categories, 20 collaboration items, 3 people, site settings and widgets): about 1,570 + 1,800 + 100 + 60 + 50 + 290 + 300 = **4,000 quads, plus about 1 MB of body text**, so roughly 2.5 to 3.5 MB per blog at today's 611 bytes a quad (the text indexes dominate). The 1000 MB quota then holds roughly 300 blogs today; the dictionary layout (estimated 3 times smaller, to be proved) about 900.
+
+**Workload for the spike and benchmark (defaults taken 2026-11-23 on the human's standing rule that an unanswered recommended choice is agreed; change them in the decision file if he says otherwise):**
+
+- **Target:** 1,000 blogs (tenants) of the shape above, about 4 million quads, on the shared host, 70 MB of dictionary at most, p95 under 50 ms for each shape below on the local machine (the host is slower; the ratio between layouts is what is read).
+- **A blog or user does not get its own graph in this stage.** The graph stays per tenant and per kind (as built in T2); partitioning by graph is later.
+- **Long literals stay out of the dictionary** (body text over 255 characters in the quad table's own text column, or a side table), as already assumed.
+- **Query shapes** (the four combinations the store answers today, with what the app does with them): by subject (load one record); by subject and predicate (read one field); by predicate and object, optionally inside one graph (find a person by user name, a post by slug, every record of a type); by graph (list a tenant's kind); plus the batch insert, the tenant relabel and the export.
 
 ## 5. Assessment (high level)
 

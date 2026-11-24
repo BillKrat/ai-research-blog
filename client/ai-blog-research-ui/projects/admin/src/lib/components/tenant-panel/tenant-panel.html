@@ -36,7 +36,7 @@
           @for (alias of entry.aliases; track alias) {
             <span class="tenant-panel__alias">
               {{ alias }}
-              <button type="button" class="tenant-panel__alias-remove" [attr.aria-label]="'Remove ' + alias" (click)="removeAlias(entry.id, alias)">&times;</button>
+              <button type="button" class="tenant-panel__alias-remove" [matTooltip]="'removeNamed' | label: alias" [attr.aria-label]="'removeNamed' | label: alias" (click)="removeAlias(entry.id, alias)"><mat-icon>close</mat-icon></button>
             </span>
           }
         </p>
@@ -50,7 +50,7 @@
           }
         </select>
       </label>
-      <button type="button" class="tenant-panel__mirror" (click)="mirror(current.host, mirrorTarget.value)">Apply</button>
+      <button type="button" class="tenant-panel__mirror" (click)="mirror(current.host, mirrorTarget.value)" [matTooltip]="'apply' | label" [attr.aria-label]="'apply' | label"><mat-icon>check</mat-icon> {{ 'apply' | label }}</button>
       @if (problem()) {
         <p class="tenant-panel__problem" role="alert">{{ problem() }}</p>
       }
