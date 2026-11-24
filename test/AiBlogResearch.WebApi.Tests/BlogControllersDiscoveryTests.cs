@@ -16,7 +16,7 @@ public class BlogControllersDiscoveryTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddControllers().AddApplicationPart(typeof(AiBlogResearch.WebApi.Controllers.RuntimeController).Assembly).AddBlogControllers();
+        services.AddControllers().AddApplicationPart(typeof(Adventures.Hosting.RuntimeController).Assembly).AddBlogControllers();
 
         using var provider = services.BuildServiceProvider();
         var manager = provider.GetRequiredService<ApplicationPartManager>();

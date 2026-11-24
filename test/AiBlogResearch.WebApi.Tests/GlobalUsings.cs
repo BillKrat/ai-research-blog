@@ -1,0 +1,2 @@
+global using Adventures.Hosting;
+

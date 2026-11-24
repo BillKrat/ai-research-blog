@@ -1,4 +1,4 @@
-using AiBlogResearch.WebApi.Controllers;
+using Adventures.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Xunit;

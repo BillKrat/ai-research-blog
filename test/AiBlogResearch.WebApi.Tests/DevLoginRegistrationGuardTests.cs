@@ -11,9 +11,10 @@ public class DevLoginRegistrationGuardTests
     [Fact]
     public void AddDevLogin_is_called_once_and_only_inside_the_Legacy_branch()
     {
-        // the host's startup is Program.cs plus the composition modules under Startup/
+        // the host's startup is its Program.cs plus the composition library it calls (Adventures.Hosting in the Foundation)
         var project = Path.Combine(FindRoot(), "src", "AiBlogResearch.WebApi");
-        var startup = new[] { Path.Combine(project, "Program.cs") }.Concat(Directory.GetFiles(Path.Combine(project, "Startup"), "*.cs"));
+        var hosting = Path.Combine(Directory.GetParent(FindRoot())!.FullName, "Adventures.Foundation", "src", "Adventures.Hosting");
+        var startup = new[] { Path.Combine(project, "Program.cs") }.Concat(Directory.GetFiles(hosting, "*.cs", SearchOption.AllDirectories).Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")));
         var calls = startup
             .Select(file => (file, lines: File.ReadAllLines(file)))
             .SelectMany(x => x.lines.Select((line, index) => (x.file, x.lines, line, index)))

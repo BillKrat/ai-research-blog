@@ -20,7 +20,7 @@ public sealed class ReusableControllersLeaveTheHostTests
     [Fact]
     public void TheHostProjectDeclaresOnlyTheControllersListedHere()
     {
-        var found = typeof(AiBlogResearch.WebApi.Controllers.RuntimeController).Assembly.GetTypes()
+        var found = typeof(Adventures.Hosting.RuntimeController).Assembly.GetTypes()
             .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract)
             .Select(t => t.Name)
             .Order(StringComparer.Ordinal)

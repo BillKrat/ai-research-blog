@@ -5,7 +5,7 @@ using System.Reflection;
 using Adventures.Entities;
 using Adventures.Security;
 using Adventures.WebApi;
-using AiBlogResearch.WebApi.Controllers;
+using Adventures.Hosting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -50,7 +50,7 @@ public sealed class RouteRightsGuardTests
     };
 
     private static IEnumerable<Type> Controllers() =>
-        typeof(AiBlogResearch.WebApi.Controllers.RuntimeController).Assembly.GetTypes().Concat(typeof(TenantController).Assembly.GetTypes()).Concat(typeof(AuthoringController).Assembly.GetTypes()).Concat(typeof(CollaborationController).Assembly.GetTypes()).Concat(typeof(HealthController).Assembly.GetTypes())
+        typeof(Adventures.Hosting.RuntimeController).Assembly.GetTypes().Concat(typeof(TenantController).Assembly.GetTypes()).Concat(typeof(AuthoringController).Assembly.GetTypes()).Concat(typeof(CollaborationController).Assembly.GetTypes()).Concat(typeof(HealthController).Assembly.GetTypes())
             .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract);
 
     private static IEnumerable<MethodInfo> Actions(Type controller) =>

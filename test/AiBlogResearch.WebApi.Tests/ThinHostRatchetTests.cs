@@ -12,7 +12,7 @@ public sealed class ThinHostRatchetTests
 {
     public static TheoryData<string, int, string> Budgets => new()
     {
-        { "AiBlogResearch.WebApi", 620, "Adventures.Blog.Legacy,Adventures.Blog.Postgres,Adventures.Data.NQuad,Adventures.Data.NQuad.Postgres,Adventures.Data.Postgres,Adventures.Identity.Postgres" },
+        { "AiBlogResearch.WebApi", 30, "Adventures.Blog.Legacy" }, // only for LegacySeeds; the store choice lives in Adventures.Hosting
         { "McpServer.WebApi", 60, "" },
         { "NQuadBrowser.WebApi", 200, "Adventures.Data.NQuad,Adventures.Data.NQuad.Postgres" },
     };
