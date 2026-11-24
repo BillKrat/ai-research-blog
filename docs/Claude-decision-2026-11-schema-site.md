@@ -1,4 +1,6 @@
-# Decision (proposed): the schema site, beta row 10
+# Decision (proposed, DEFERRED until after beta): the schema site, was beta row 10
+
+**Status (2026-11-23, human):** deferred. The beta audience is a blog administrator or user, not a developer, so this waits until beta is declared; the five decisions below are open and nothing is built.
 
 Written 2026-11-23 for the human's review. Source: the human's 2026-11-21 brief ("one place where a developer sees schemas, tables, types and people at a glance; navigated, not hardcoded: parent and children like folders, built from the data, so dimensions nobody has thought of yet show up without code changes") and the schema IRI convention (`https://schema.global-webnet.com/<area>/<name>`, decided 2026-10-11 so the IRIs can become real, documented pages). Nothing is built yet.
 
