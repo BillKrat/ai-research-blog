@@ -3,8 +3,7 @@
 using Adventures.Mcp.WebApi;
 using Adventures.Security;
 using Adventures.WebApi;
-using McpServer.WebApi.BlogAi;
-using McpServer.WebApi.Tools;
+using Adventures.Blog.Legacy.Research;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,11 +24,10 @@ builder.Services.AddControllers().AddMcpControllers();
 builder.Services.AddSharedJwtAuthentication(builder.Configuration);
 builder.Services.AddRequestHardening(builder.Configuration);
 
-// The gateway: protocol, manifest cache, forwarding to the API (Api:BaseUrl) with the caller's token. This server's own research tools (read-only, legacy database) sit beside it.
-builder.Services.AddMcpGateway(new McpGatewayOptions { AdditionalScopes = [ResearchTools.Scope] });
-builder.Services.AddSingleton<IBlogAiReader, BlogAiReader>();
-// The research tools this server adds (replaces the gateway default registry, which is built from whatever IMcpOnlyTool services are registered).
-builder.Services.AddSingleton(sp => new McpOnlyToolRegistry(ResearchTools.Create(sp.GetRequiredService<IBlogAiReader>())));
+// The gateway: protocol, manifest cache, forwarding to the API (Api:BaseUrl) with the caller's token.
+builder.Services.AddMcpGateway(new McpGatewayOptions());
+// The optional legacy research module (read-only tools over the BlogEngine.NET database, ConnectionStrings:BlogAi); a host without this line has no SQL Server code on its path.
+builder.Services.AddBlogResearchTools();
 
 var app = builder.Build();
 

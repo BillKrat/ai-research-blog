@@ -2,8 +2,8 @@ using Adventures.Mcp.WebApi;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using McpServer.WebApi.BlogAi;
-using McpServer.WebApi.Tools;
+using Adventures.Blog.Legacy.Research;
+using Adventures.Blog.Legacy.Research;
 using Xunit;
 
 namespace McpServer.WebApi.Tests.Controllers;
@@ -111,7 +111,7 @@ public sealed class McpOnlyToolGuardTests
         // A tool that holds an HTTP client, the API client, a store or the configuration could write; the only thing it may be built from is
         // the read-only legacy reader (and the catalogue query it runs).
         var allowed = new[] { typeof(IBlogAiReader), typeof(BlogAiQuery) };
-        var tools = typeof(McpServer.WebApi.Tools.ResearchTools).Assembly.GetTypes().Where(t => typeof(IMcpOnlyTool).IsAssignableFrom(t) && t is { IsClass: true, IsAbstract: false }).ToList();
+        var tools = typeof(Adventures.Blog.Legacy.Research.ResearchTools).Assembly.GetTypes().Where(t => typeof(IMcpOnlyTool).IsAssignableFrom(t) && t is { IsClass: true, IsAbstract: false }).ToList();
 
         Assert.NotEmpty(tools);
         foreach (var tool in tools)
@@ -137,10 +137,15 @@ public sealed class McpOnlyToolGuardTests
         var csproj = File.ReadAllText(FindUp("src/McpServer.WebApi/McpServer.WebApi.csproj"));
         var references = Regex.Matches(csproj, "<ProjectReference Include=\"([^\"]+)\"").Select(m => Path.GetFileNameWithoutExtension(m.Groups[1].Value.Replace('\\', '/'))).OrderBy(n => n).ToList();
 
-        Assert.Equal(["Adventures.Mcp.WebApi", "Adventures.Security", "Adventures.Security.AspNetCore", "Adventures.WebApi", "AiBlogResearch.ServiceDefaults"], references);
+        Assert.Equal(["Adventures.Blog.Legacy.Research", "Adventures.Mcp.WebApi", "Adventures.Security", "Adventures.Security.AspNetCore", "Adventures.WebApi", "AiBlogResearch.ServiceDefaults"], references);
 
         var packages = Regex.Matches(csproj, "<PackageReference Include=\"([^\"]+)\"").Select(m => m.Groups[1].Value).OrderBy(n => n).ToList();
-        Assert.Equal(["Microsoft.Data.SqlClient", "System.Security.Cryptography.Pkcs"], packages);
+        Assert.Empty(packages); // R5: the SQL Server client lives in the optional research module, not in the host
+
+        // the module itself reaches nothing but the gateway contract and SQL Server through its own reader
+        var module = File.ReadAllText(FindUp("Adventures.Foundation/src/Adventures.Blog.Legacy.Research/Adventures.Blog.Legacy.Research.csproj"));
+        Assert.Equal(["Adventures.Mcp.WebApi"], Regex.Matches(module, "<ProjectReference Include=\"([^\"]+)\"").Select(m => Path.GetFileNameWithoutExtension(m.Groups[1].Value.Replace('\\', '/'))).OrderBy(n => n).ToList());
+        Assert.Equal(["Microsoft.Data.SqlClient", "System.Security.Cryptography.Pkcs"], Regex.Matches(module, "<PackageReference Include=\"([^\"]+)\"").Select(m => m.Groups[1].Value).OrderBy(n => n).ToList());
     }
 
     private static string FindUp(string relative)

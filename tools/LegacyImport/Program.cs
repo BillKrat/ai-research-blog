@@ -2,7 +2,7 @@
 using Adventures.Data.NQuad;
 using Adventures.Entities;
 using LegacyImport;
-using McpServer.WebApi.BlogAi;
+using Adventures.Blog.Legacy.Research;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Adventures.Blog;
