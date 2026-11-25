@@ -163,3 +163,7 @@ A platform administrator can act in any tenant but holds no rights there until a
 ## Tenants page: a Work in switcher and a clearer refusal (found 2026-11-25)
 
 Deleting a tenant was refused with "the tenant you are working in or reaching this site through" while the person was on a temporary address, because the browser remembers the Work in choice per web address and it still named the tenant being deleted. To do, tests first: (1) the Tenants page carries the same Work in switcher as the Dashboard panel; (2) the refusal says which of the two applies (you are working in it: switch with Work in; or this address belongs to it: open another of its addresses).
+
+## Ship the web.config with the client; index.html must not be cached for a year (found 2026-11-25)
+
+The SmarterASP static site served `index.html` with `Cache-Control: max-age=31536000`, so browsers kept an old page (and with it old script files) for up to a year; every new build looked "not deployed" until the address was changed (a query string) to force a fresh copy. Fixed by hand on the second installation with a `web.config` that sets `DisableCache` for `index.html` and keeps the deep-link rewrite (the hashed script and style files stay cached long). To do: ship that file in `client/ai-blog-research-ui/public/web.config` so every install gets it, after comparing it with the live www site's own `web.config` (do not overwrite settings it may carry), and add the check to `Claude-verify.ps1` (index.html answers a no-cache header).
