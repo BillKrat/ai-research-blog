@@ -93,9 +93,13 @@ export class TenantService {
   createTenant(name: string, domain: string, done?: () => void): void {
     this._problem.set('');
     this._notice.set('');
-    this.http.post<TenantHosts>(`${this.apiUrl}/api/tenant`, { name, domain }).subscribe({
+    this.http.post<TenantHosts & { signIn?: { userName: string; password: string; mustChangePassword: boolean } | null }>(`${this.apiUrl}/api/tenant`, { name, domain }).subscribe({
       next: (created) => {
-        this._notice.set(`Created ${created.name} on ${created.domain}. Its domain works now; add the people who run it under Users.`);
+        this._notice.set(
+          created.signIn
+            ? `Created ${created.name} on ${created.domain}. Sign in at ${created.domain} as ${created.signIn.userName} with the password ${created.signIn.password}; you are asked to change it at once.`
+            : `Created ${created.name} on ${created.domain}. Its domain works now; add the people who run it under Users.`,
+        );
         this.loadHosts();
         done?.();
       },

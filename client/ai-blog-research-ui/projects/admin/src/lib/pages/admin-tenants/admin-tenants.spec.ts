@@ -179,6 +179,25 @@ describe('AdminTenants', () => {
       expect((page.querySelector('input[name="newTenantName"]') as HTMLInputElement).value).toBe('');
     });
 
+    it('tells where to sign in and with what when the new tenant came with its own Admin', () => {
+      const { fixture, http, page } = setup();
+      fill(page, 'newTenantName', 'Photos by Di');
+      fill(page, 'newTenantDomain', 'photos.example.org');
+      fixture.detectChanges();
+
+      (page.querySelector('[data-action="create-tenant"]') as HTMLButtonElement).click();
+      http
+        .expectOne((r) => r.url.endsWith('/api/tenant') && r.method === 'POST')
+        .flush({ id: 't3', name: 'Photos by Di', domain: 'photos.example.org', aliases: [], signIn: { userName: 'Admin', password: 'Admin', mustChangePassword: true } }, { status: 201, statusText: 'Created' });
+      http.expectOne((r) => r.url.endsWith('/api/tenant/hosts') && r.method === 'GET').flush(hosts);
+      fixture.detectChanges();
+
+      const notice = page.querySelector('[role="status"]')?.textContent ?? '';
+      expect(notice).toContain('photos.example.org');
+      expect(notice).toContain('Admin');
+      expect(notice).toContain('change');
+    });
+
     it('asks for both fields before sending anything', () => {
       const { fixture, http, page } = setup();
       fill(page, 'newTenantName', 'Photos');

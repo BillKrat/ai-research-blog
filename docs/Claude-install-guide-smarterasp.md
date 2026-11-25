@@ -119,6 +119,10 @@ The address a visit arrives on decides which tenant (which configuration, conten
 
 **Note (2026-11-25):** the second installation was afterwards put back to the split layout (web, API and MCP sites on their temporary addresses with the real domain on the web site), by the owner's choice, so that the free certificates of the temporary addresses carry the API and MCP legs. In that layout the installation is ONE tenant: the real domain and the three temporary addresses are host names of it. Single-site tests continue on separate sites.
 
+## Several web sites on one shared API address: each its own tenant (`Tenancy__OriginHint`)
+
+In the split layout the API chooses the tenant from the address it was called on, so web sites that call the same API address all show one tenant. Set `Tenancy__OriginHint` to `Registered` on the API site and a browser site that is a registered host name of a tenant (its domain, an alias or the `www.` form) gets that tenant through the shared address: the page on the real domain and the page on the temporary address become two configurations with no second API name and no extra certificate. The rule, its limits and the threats are in `docs/Claude-decision-2026-11-origin-hint.md`. It never applies to an unknown address, setup or recovery, a signed-in token still has to belong to the tenant chosen, and with the setting off (the default) nothing changes. Scripts, the desktop app and the MCP site send no Origin and keep choosing by the address they call.
+
 ## Three sites on temporary addresses: no certificate to buy (split layout, proved on a second host except the MCP-to-API leg)
 
 Every SmarterASP site, before any domain is attached, answers on its own temporary address (`<account>-siteN.dtempurl.com`, `.atempurl.com` or `.ftempurl.com`), and the panel shows a free certificate on it (the SSL badge next to the address). So the full layout of a web site, an API site and an MCP site can run over https with nothing to buy and no domain. The project reads three addresses; here is where each one is set.
