@@ -54,6 +54,7 @@ export const LABELS = {
   dismiss: 'Dismiss',
   switchToLight: 'Switch to light mode',
   switchToDark: 'Switch to dark mode',
+  colourTheme: 'Colour theme',
   accountMenu: 'Account menu',
   logOut: 'Log out',
   signIn: 'Sign in',

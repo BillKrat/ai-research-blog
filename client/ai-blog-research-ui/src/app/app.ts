@@ -11,6 +11,7 @@ import { SiteNav, SiteService, WidgetZone } from '@adventures/blog-reader';
 import { API_BASE_URL, AdminExceptionsService, AdminMenuService, ApiProblemService, AuthService, HealthService, SetupService, SpinnerService } from '@adventures/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LabelPipe, LanguageLoader } from '@adventures/entity-ui';
+import { ThemeService } from './theme.service';
 
 
 const CHOICE_KEY = 'adv.colorMode';
@@ -47,6 +48,8 @@ export class App implements OnInit {
   private readonly adminMenu = inject(AdminMenuService);
 
   private readonly site = inject(SiteService);
+  /** The colour theme next to dark or light: the site default until the visitor picks one from the header. */
+  protected readonly themes = inject(ThemeService);
   private readonly language = inject(LanguageLoader);
   private readonly setup = inject(SetupService);
   protected readonly apiProblem = inject(ApiProblemService);
@@ -97,6 +100,7 @@ export class App implements OnInit {
         }
       }
     });
+    effect(() => this.themes.setSiteDefault(this.site.settings().theme));
     effect(() => this.applyTheme());
     // An allowed analytics script on the public pages only (never in the admin area: a script there could read the administrator's sign-in).
     effect(() => this.applyTrackingScript(this.site.settings().trackingScriptUrl, this.wide()));

@@ -199,8 +199,8 @@ describe('App colour mode', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    const answerSite = (colorMode?: string) => {
-      http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'T', tagline: '', postsPerPage: 10, colorMode });
+    const answerSite = (colorMode?: string, theme?: string) => {
+      http.expectOne((r) => r.url.endsWith('/api/public/site')).flush({ title: 'T', tagline: '', postsPerPage: 10, colorMode, theme });
       fixture.detectChanges();
     };
     return { fixture, answerSite };
@@ -234,6 +234,24 @@ describe('App colour mode', () => {
 
     expect(document.body.style.colorScheme).toBe('dark');
     expect(localStorage.getItem('adv.colorMode')).toBe('dark');
+  });
+
+  it('applies the site theme, shows the picker in the header, and the visitor pick wins and is remembered', async () => {
+    document.documentElement.removeAttribute('data-theme');
+    const { fixture, answerSite } = await setup();
+    answerSite('dark', 'violet');
+    const picker = (fixture.nativeElement as HTMLElement).querySelector('select[name="theme"]') as HTMLSelectElement;
+
+    expect(document.documentElement.getAttribute('data-theme')).toBe('violet');
+    expect(picker.value).toBe('violet');
+    expect(picker.options).toHaveLength(12);
+
+    picker.value = 'rose';
+    picker.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    expect(document.documentElement.getAttribute('data-theme')).toBe('rose');
+    expect(localStorage.getItem('adv.theme')).toBe('rose');
   });
 
   it('paints the last known site default at start-up so a light site does not flash dark', async () => {

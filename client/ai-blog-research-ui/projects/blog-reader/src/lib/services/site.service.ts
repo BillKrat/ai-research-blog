@@ -17,6 +17,8 @@ export interface SiteSettings {
   trackingScriptUrl?: string;
   /** The look a visitor starts with until they use the header toggle (an older API sends nothing, which means dark). */
   colorMode?: 'dark' | 'light';
+  /** The colour theme a visitor starts with, one of the Material palette names (an older API sends nothing, which means azure). */
+  theme?: string;
 }
 
 const DEFAULTS: SiteSettings = { title: 'AI Research Blog', tagline: '', postsPerPage: 10 };

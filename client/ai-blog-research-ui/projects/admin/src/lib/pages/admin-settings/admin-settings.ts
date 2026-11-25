@@ -39,6 +39,7 @@ export const SETTING_GROUPS: SettingGroup[] = [
       field('PostsPerPage', 'Posts per page', 'How many posts the list shows on a page (1 to 50).', 'Number', '10', 3),
       field('Language', 'Language', 'A language code such as en, de or pt-br; the texts come from that language file.', 'Text', 'en', 10),
       field('ColorMode', 'Colour mode', 'The look every visitor starts with: dark or light.', 'Text', 'dark', 10),
+      field('Theme', 'Colour theme', 'The colours every visitor starts with: azure, blue, chartreuse, cyan, green, magenta, orange, red, rose, spring-green, violet or yellow. A visitor can pick another in the header.', 'Text', 'azure', 20),
     ],
   },
   { id: 'email', label: 'E-mail', fields: [], link: '/admin/plugins/mail' },

@@ -28,6 +28,11 @@
       <a mat-icon-button [href]="feedUrl" aria-label="RSS feed" title="RSS feed">
         <mat-icon>rss_feed</mat-icon>
       </a>
+      <select class="page__theme" name="theme" [attr.aria-label]="'colourTheme' | label" [attr.title]="'colourTheme' | label" (change)="themes.choose($any($event.target).value)">
+        @for (name of themes.themes; track name) {
+          <option [value]="name" [selected]="name === themes.theme()">{{ name }}</option>
+        }
+      </select>
      <button
         mat-icon-button
         (click)="toggleTheme()"
