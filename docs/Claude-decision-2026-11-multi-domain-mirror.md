@@ -42,4 +42,4 @@ One folder with many domains is the single-site layout (the API serves the clien
 
 ## Status (2026-11-25)
 
-Stage 1 (lockout items) is built, merged and deployed. Stage 2 (the pointer) is built on the session branch, not yet deployed: see [the stage review](artifacts/Claude-2026-11-25-mirror-pointer.md). One rule was added while building it: a pointer cannot be set from the very site it would change (the person would be signed out of their own account with no way back); clearing is always allowed. Stage 3 is next.
+Stage 1 (lockout items) is built, merged and deployed. Stage 2 (the pointer) is built and was deployed to the live site and the second installation on 2026-11-25: see [the stage review](artifacts/Claude-2026-11-25-mirror-pointer.md). One rule was added while building it: a pointer cannot be set from the very site it would change (the person would be signed out of their own account with no way back); clearing is always allowed. Stage 3 is next.

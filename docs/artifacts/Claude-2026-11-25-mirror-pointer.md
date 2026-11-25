@@ -1,6 +1,6 @@
 # Stage review: the mirror pointer (multi-domain decision, stage 2)
 
-**Branch:** `claude-session-2026-12-14` in the app repo and in `Adventures.Foundation`. **Not merged and not deployed.** Decision: [Claude-decision-2026-11-multi-domain-mirror.md](../Claude-decision-2026-11-multi-domain-mirror.md).
+**Branch:** `claude-session-2026-12-14` in the app repo and in `Adventures.Foundation`. **Merged to `main` and deployed to the live site and the second installation on 2026-11-25** (the human tests it on the second installation). Decision: [Claude-decision-2026-11-multi-domain-mirror.md](../Claude-decision-2026-11-multi-domain-mirror.md).
 
 ## What was built
 
