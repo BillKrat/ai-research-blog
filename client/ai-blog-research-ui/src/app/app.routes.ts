@@ -1,6 +1,13 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { ActivatedRouteSnapshot, Routes } from '@angular/router';
-import { authGuard } from '@adventures/core';
+import { inject } from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivateFn, Router, Routes } from '@angular/router';
+import { AuthService, authGuard } from '@adventures/core';
+
+/** Opening /logout (the Administration widget's Log off link) signs the person out and shows the home page. */
+export const logOffGuard: CanActivateFn = () => {
+  inject(AuthService).logout();
+  return inject(Router).parseUrl('/');
+};
 
 /**
  * One list screen and one entity screen serve every collection: the route data names the collection and the title, the
@@ -38,6 +45,7 @@ export const routes: Routes = [
   { path: 'forgot-password', loadComponent: () => import('@adventures/admin').then((m) => m.ForgotPassword) },
   { path: 'reset-password', loadComponent: () => import('@adventures/admin').then((m) => m.ResetPassword) },
   { path: 'login', loadComponent: () => import('@adventures/admin').then((m) => m.Login) },
+  { path: 'logout', canActivate: [logOffGuard], children: [] },
   {
     path: 'profile',
     loadComponent: () => import('@adventures/admin').then((m) => m.Profile),
