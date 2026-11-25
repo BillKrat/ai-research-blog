@@ -34,6 +34,7 @@ public sealed class SolutionFilesTests
         var paths = document.SelectNodes("//Project")!.Cast<XmlElement>().Select(p => p.GetAttribute("Path")).ToList();
         Assert.NotEmpty(paths);
         Assert.Empty(paths.GroupBy(p => p, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key));
-        Assert.Empty(paths.Where(p => !File.Exists(Path.GetFullPath(Path.Combine(Root(), p)))));
+        // The poc repo is a read-only reference sibling that CI does not check out.
+        Assert.Empty(paths.Where(p => !p.StartsWith("../poc/", StringComparison.OrdinalIgnoreCase) && !File.Exists(Path.GetFullPath(Path.Combine(Root(), p)))));
     }
 }
