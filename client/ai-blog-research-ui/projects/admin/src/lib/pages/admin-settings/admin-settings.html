@@ -1,0 +1,31 @@
+<section class="admin-settings">
+  <adv-page-header title="Settings">
+    <a routerLink="/admin/settings/all" [matTooltip]="'allSettings' | label" [attr.aria-label]="'allSettings' | label"><mat-icon>list</mat-icon></a>
+  </adv-page-header>
+
+  <div class="admin-settings__tabs" role="tablist" aria-label="Settings groups">
+    @for (g of groups; track g.id) {
+      <span role="tab" tabindex="0" [attr.aria-selected]="g.id === current()" [class.admin-settings__tab--on]="g.id === current()" (click)="select(g.id)" (keydown.enter)="select(g.id)" (keydown.space)="select(g.id); $event.preventDefault()">{{ g.label }}</span>
+    }
+  </div>
+
+  @for (message of errors(); track message) {
+    <p class="admin-settings__error" role="alert">{{ message }}</p>
+  }
+
+  @if (!isLoading()) {
+    @if (group().link; as link) {
+      <p>The e-mail settings belong to the e-mail plug-in. <a [routerLink]="link">Open the e-mail settings</a>.</p>
+    } @else {
+      <form class="admin-settings__form" (submit)="save($event)">
+        <adv-setting-fields [definitions]="group().fields" [values]="values()" idPrefix="s" (changed)="set($event.name, $event.value)" />
+        <div class="admin-settings__actions">
+          <button type="submit" [disabled]="isSaving()" [matTooltip]="'save' | label" [attr.aria-label]="'save' | label"><mat-icon>save</mat-icon> {{ 'save' | label }}</button>
+          @if (saved()) {
+            <span class="admin-settings__saved" role="status">Saved.</span>
+          }
+        </div>
+      </form>
+    }
+  }
+</section>

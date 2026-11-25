@@ -1,0 +1,38 @@
+.admin-settings {
+  &__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    margin-bottom: 1rem;
+
+    [role='tab'] {
+      font: inherit;
+      padding: 0.5rem 1rem;
+      border-bottom: 2px solid transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+  }
+
+  &__tab--on {
+    border-bottom-color: var(--mat-sys-primary) !important;
+    font-weight: 600;
+  }
+
+  &__form {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 48rem;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  &__error {
+    color: var(--mat-sys-error);
+  }
+}
