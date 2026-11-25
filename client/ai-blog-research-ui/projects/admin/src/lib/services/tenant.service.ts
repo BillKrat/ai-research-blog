@@ -9,7 +9,9 @@ import { ActingTenantService, API_BASE_URL } from '@adventures/core';
 export interface CurrentTenant {
   host: string;
   tenant: { id: string; name: string | null; domain: string | null } | null;
-  match: 'Domain' | 'Fallback' | 'Acting' | 'None';
+  match: 'Domain' | 'Fallback' | 'Acting' | 'Mirror' | 'None';
+  /** While this address mirrors another site (match Mirror): the site the address itself belongs to, whose own configuration is ignored for now. */
+  own?: { id: string; domain: string | null } | null;
 }
 
 /** A tenant with the host names that reach it: its own domain and its aliases. */
@@ -18,6 +20,8 @@ export interface TenantHosts {
   name: string;
   domain: string;
   aliases: string[];
+  /** The id of the tenant whose configuration this one uses while a mirror pointer is set (empty or missing: its own). */
+  mirrors?: string | null;
 }
 
 /**
@@ -113,15 +117,22 @@ export class TenantService {
     });
   }
 
-  /** Takes this host back to its default: removes it from whichever tenant mirrors it. Says so when it mirrors none. */
-  resetAlias(host: string): void {
-    const name = host.replace(/^[a-z]+:\/\//i, '').split(/[/:?#]/)[0].toLowerCase();
-    const owner = this._all().find((tenant) => tenant.aliases.includes(name));
-    if (owner) {
-      this.removeAlias(owner.id, name);
-    } else {
-      this._problem.set(`${name} is not mirroring any tenant.`);
-    }
+  /**
+   * Sets or clears a tenant's mirror pointer ("use the configuration of"); a null target clears it. The tenant's own record and data are untouched. The server refuses a
+   * target that is unknown, itself or already mirroring, and setting it from the tenant's own address (the person would be locked out), and says why.
+   */
+  setMirror(tenantId: string, targetId: string | null, done?: () => void): void {
+    this._problem.set('');
+    this._notice.set('');
+    this.http.put(`${this.apiUrl}/api/tenant/${encodeURIComponent(tenantId)}/mirror`, { target: targetId }).subscribe({
+      next: () => {
+        this._notice.set(targetId ? 'Saved. That site now shows the other site configuration; its own is kept and ignored until you choose none.' : 'Saved. That site uses its own configuration again.');
+        this.loadHosts();
+        this.load();
+        done?.();
+      },
+      error: (error) => this._problem.set(this.messageOf(error, 'The mirror was not changed.')),
+    });
   }
 
   removeAlias(tenantId: string, host: string): void {

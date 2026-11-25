@@ -8,6 +8,10 @@
     </p>
   }
 
+  @if (mirroring(); as m) {
+    <p class="admin-shell__mirror" role="status"><mat-icon aria-hidden="true">sync_alt</mat-icon> Mirroring {{ m.shows }}: {{ m.own }} shows that site, and changes made here change it. Stop on the Dashboard.</p>
+  }
+
   <nav class="admin-shell__nav" aria-label="Admin">
     <button
       type="button"

@@ -48,6 +48,18 @@
   }
 
   // the standard banner: across the top of the admin area, under the site menu
+  &__mirror {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    background: var(--mat-sys-tertiary-container);
+    color: var(--mat-sys-on-tertiary-container);
+    font-size: 0.9rem;
+    grid-column: 1 / -1;
+  }
+
   &__banner {
     grid-column: 1 / -1;
     display: flex;

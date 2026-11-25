@@ -278,4 +278,36 @@ describe('AdminShell as the legacy menu (DCP: user usage review)', () => {
     expect((panel.querySelector('a[aria-label="Change password"]') as HTMLAnchorElement).getAttribute('href')).toBe('/profile#password');
     expect((panel.querySelector('a[aria-label="View my blog"]') as HTMLAnchorElement).getAttribute('href')).toBe('/');
   });
+
+  it('shows a notice on every admin screen while the address mirrors another site', () => {
+    const fixture = TestBed.createComponent(AdminShell);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.url.endsWith('/api/admin/menu')).flush({ sections: [] });
+    http.expectOne((r) => r.url.endsWith('/api/tenant/current')).flush({
+      host: 'scratch.example',
+      tenant: { id: 't1', name: 'DEV Main', domain: 'global-webnet.com' },
+      match: 'Mirror',
+      own: { id: 't9', domain: 'scratch.example' },
+    });
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const notice = root.querySelector('.admin-shell__mirror') as HTMLElement;
+    expect(notice.getAttribute('role')).toBe('status');
+    expect(notice.textContent).toContain('global-webnet.com');
+    expect(notice.textContent).toContain('scratch.example');
+    expect(notice.textContent).toContain('change');
+  });
+
+  it('shows no mirror notice for an ordinary address', () => {
+    const fixture = TestBed.createComponent(AdminShell);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.url.endsWith('/api/admin/menu')).flush({ sections: [] });
+    http.expectOne((r) => r.url.endsWith('/api/tenant/current')).flush({ host: 'a.example', tenant: { id: 't1', name: 'Main', domain: 'a.example' }, match: 'Domain' });
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('.admin-shell__mirror')).toBeNull();
+  });
 });

@@ -28,15 +28,9 @@ export class TenantPanel {
     this.tenantService.choose(tenantId);
   }
 
-  /** Make this host reach the tenant (platform administrators only; the server checks). */
-  protected mirror(host: string, tenantId: string): void {
-    if (tenantId === '') {
-      // "Default": the host goes back to reaching whatever its own name reaches (no alias)
-      this.tenantService.resetAlias(host);
-      return;
-    }
-
-    this.tenantService.addAlias(tenantId, host);
+  /** Stops this address mirroring another site: its own configuration is used again (platform administrators only; the server checks). */
+  protected stopMirroring(ownTenantId: string): void {
+    this.tenantService.setMirror(ownTenantId, null);
   }
 
   protected removeAlias(tenantId: string, alias: string): void {

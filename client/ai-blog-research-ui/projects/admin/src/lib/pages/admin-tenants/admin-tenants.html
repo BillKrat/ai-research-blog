@@ -49,6 +49,19 @@
         />
         <button type="button" [matTooltip]="'addHostNameTo' | label: entry.name" [attr.aria-label]="'addHostNameTo' | label: entry.name" (click)="add(entry)"><mat-icon>add</mat-icon> {{ 'add' | label }}</button>
       </div>
+      <div class="tenants__mirror">
+        <label>
+          Use the configuration of
+          <select [attr.aria-label]="'Use the configuration of, for ' + entry.name" (change)="setMirrorChoice(entry.id, $any($event.target).value)">
+            <option value="" [selected]="chosenMirror(entry) === ''">Its own configuration</option>
+            @for (target of mirrorTargets(entry); track target.id) {
+              <option [value]="target.id" [selected]="chosenMirror(entry) === target.id">{{ target.name }} ({{ target.domain }})</option>
+            }
+          </select>
+        </label>
+        <button type="button" [attr.data-action]="'set-mirror-' + entry.id" [matTooltip]="'apply' | label" [attr.aria-label]="'apply' | label" (click)="applyMirror(entry)"><mat-icon>check</mat-icon> {{ 'apply' | label }}</button>
+        <small>While another site is chosen, this site's own settings and content are kept and ignored; choosing its own configuration brings them back. Set it from the other site's address.</small>
+      </div>
       <div class="tenants__delete">
         @if (deleting() === entry.id) {
           <p class="tenants__warning">

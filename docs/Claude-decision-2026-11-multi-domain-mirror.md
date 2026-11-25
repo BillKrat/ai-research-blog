@@ -39,3 +39,7 @@ One folder with many domains is the single-site layout (the API serves the clien
 - A pointer never exposes a tenant's data to someone who could not sign in to that tenant (rights and sign-in resolve against the effective tenant; token tenant claim must match it).
 - Cache invalidation when a pointer changes (the tenant and CORS caches).
 - The setup page and the first-run rules (first host, auto alias) still behave when pointers exist.
+
+## Status (2026-11-25)
+
+Stage 1 (lockout items) is built, merged and deployed. Stage 2 (the pointer) is built on the session branch, not yet deployed: see [the stage review](artifacts/Claude-2026-11-25-mirror-pointer.md). One rule was added while building it: a pointer cannot be set from the very site it would change (the person would be signed out of their own account with no way back); clearing is always allowed. Stage 3 is next.

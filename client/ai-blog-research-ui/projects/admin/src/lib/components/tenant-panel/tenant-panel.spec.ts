@@ -90,46 +90,37 @@ describe('TenantPanel', () => {
     acting.choose(null);
   });
 
-  it('shows host names to a platform administrator and adds the current host to the chosen tenant', () => {
-    const { root, http, fixture } = renderSwitcher(['admin.access', 'platform.manage']);
+  it('shows host names to a platform administrator, without the old alias-based mirror control', () => {
+    const { root } = renderSwitcher(['admin.access', 'platform.manage']);
 
     expect(root.querySelector('.tenant-panel__hosts')?.textContent).toContain('temp.example');
-    const select = root.querySelector('select[aria-label="Tenant to mirror"]') as HTMLSelectElement;
-    select.value = 't2';
-    select.dispatchEvent(new Event('change'));
-    (root.querySelector('.tenant-panel__mirror') as HTMLButtonElement).click();
-    fixture.detectChanges();
-
-    const put = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/tenant/t2/aliases'));
-    expect(put.request.body).toEqual({ host: 'localhost:7052' });
-    put.flush('localhost already reaches another tenant.', { status: 409, statusText: 'Conflict' });
-    fixture.detectChanges();
-    expect(root.querySelector('.tenant-panel__problem')?.textContent).toContain('already reaches another tenant');
+    expect(root.querySelector('select[aria-label="Tenant to mirror"]')).toBeNull();
+    expect(root.querySelector('.tenant-panel__stop-mirror')).toBeNull();
   });
 
-  it('takes the host back to its default: Default removes the alias from the tenant that mirrors it', () => {
-    const { root, http, fixture } = renderSwitcher(['admin.access', 'platform.manage'], 'localhost');
-
-    const select = root.querySelector('select[aria-label="Tenant to mirror"]') as HTMLSelectElement;
-    select.value = '';
-    select.dispatchEvent(new Event('change'));
-    (root.querySelector('.tenant-panel__mirror') as HTMLButtonElement).click();
+  it('while the address mirrors another site: says so, names both sites, and stops mirroring with one button', () => {
+    const fixture = TestBed.createComponent(TenantPanel);
+    TestBed.inject(TenantService).load();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.url.endsWith('/api/tenant/current')).flush({
+      host: 'scratch.example',
+      tenant: { id: 't1', name: 'DEV Main', domain: 'global-webnet.com' },
+      match: 'Mirror',
+      own: { id: 't9', domain: 'scratch.example' },
+    });
+    http.expectOne((r) => r.url.endsWith('/api/tenant/mine')).flush({ actingId: null, tenants: [] });
+    http.expectOne((r) => r.url.endsWith('/api/auth/rights')).flush({ userName: 'Admin', rights: [{ name: 'platform.manage', description: '' }] });
+    http.expectOne((r) => r.url.endsWith('/api/tenant/hosts')).flush([]);
     fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
 
-    const removal = http.expectOne((r) => r.method === 'DELETE' && r.url.endsWith('/api/tenant/t1/aliases/localhost'));
-    removal.flush([]);
-  });
+    const note = root.querySelector('.tenant-panel__mirroring') as HTMLElement;
+    expect(note.textContent).toContain('Mirroring');
+    expect(note.textContent).toContain('global-webnet.com');
+    expect(note.textContent).toContain('scratch.example');
+    (root.querySelector('.tenant-panel__stop-mirror') as HTMLButtonElement).click();
 
-  it('says so when Default is applied to a host that mirrors nothing', () => {
-    const { root, fixture } = renderSwitcher(['admin.access', 'platform.manage']);
-
-    const select = root.querySelector('select[aria-label="Tenant to mirror"]') as HTMLSelectElement;
-    select.value = '';
-    select.dispatchEvent(new Event('change'));
-    (root.querySelector('.tenant-panel__mirror') as HTMLButtonElement).click();
-    fixture.detectChanges();
-
-    expect(root.querySelector('.tenant-panel__problem')?.textContent).toContain('is not mirroring any tenant');
+    expect(http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/tenant/t9/mirror')).request.body).toEqual({ target: null });
   });
 
   it('says no tenant matches the domain, naming the domain, instead of showing nothing', () => {

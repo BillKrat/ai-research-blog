@@ -43,6 +43,7 @@ export const LABELS = {
   remove: 'Remove',
   removeNamed: 'Remove {0}',
   revisionLocked: 'This is a proposed revision, not a post. Open it to apply or discard it; only the original is published.',
+  stopMirroring: 'Stop mirroring',
   allSettings: 'All settings (plain list)',
   sendMessage: 'Send message',
   save: 'Save',

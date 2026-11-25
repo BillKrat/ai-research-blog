@@ -1,5 +1,5 @@
 // Assessed 2026-10-24 17:37 CT (Claude): automated scan for secrets, injection and unsafe patterns - no finding in this file. See docs/artifacts/Claude-2026-10-24-security-practices-patterns-review.md (ai-research-blog).
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -28,6 +28,12 @@ export class AdminShell implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly username = this.auth.username;
+
+  /** While this address mirrors another site: which site it shows, and which address it is (a notice on every admin screen, because edits change the other site). */
+  protected readonly mirroring = computed(() => {
+    const current = this.tenantService.current();
+    return current?.match === 'Mirror' ? { shows: current.tenant?.domain ?? '', own: current.own?.domain ?? current.host } : null;
+  });
 
   /** The address the person is on: the section that holds it opens by itself, like the legacy menu. */
   private readonly url = signal(this.router.url);

@@ -27,6 +27,15 @@
       }
     </div>
   </div>
+  @if (current.match === 'Mirror') {
+    <p class="tenant-panel__mirroring" role="status">
+      Mirroring <strong>{{ current.tenant?.domain }}</strong>: this address ({{ current.own?.domain }}) shows that site's configuration and content, and changes made here change that site. This address's own
+      configuration is kept and ignored until you stop.
+      @if (isPlatform() && current.own) {
+        <button type="button" class="tenant-panel__stop-mirror" (click)="stopMirroring(current.own.id)" [matTooltip]="'stopMirroring' | label" [attr.aria-label]="'stopMirroring' | label"><mat-icon>link_off</mat-icon> {{ 'stopMirroring' | label }}</button>
+      }
+    </p>
+  }
   @if (isPlatform()) {
     <details class="tenant-panel__hosts">
       <summary>Host names</summary>
@@ -41,16 +50,6 @@
           }
         </p>
       }
-      <label>
-        Make {{ current.host }} mirror
-        <select #mirrorTarget aria-label="Tenant to mirror">
-          <option value="">Default (stop mirroring)</option>
-          @for (entry of allTenants(); track entry.id) {
-            <option [value]="entry.id" [selected]="entry.id === current.tenant?.id">{{ entry.name }}</option>
-          }
-        </select>
-      </label>
-      <button type="button" class="tenant-panel__mirror" (click)="mirror(current.host, mirrorTarget.value)" [matTooltip]="'apply' | label" [attr.aria-label]="'apply' | label"><mat-icon>check</mat-icon> {{ 'apply' | label }}</button>
       @if (problem()) {
         <p class="tenant-panel__problem" role="alert">{{ problem() }}</p>
       }

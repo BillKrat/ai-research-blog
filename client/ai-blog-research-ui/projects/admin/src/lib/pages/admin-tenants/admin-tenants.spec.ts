@@ -204,3 +204,75 @@ describe('AdminTenants', () => {
     });
   });
 });
+
+describe('AdminTenants mirror pointer', () => {
+  const hosts = [
+    { id: 't1', name: 'DEV Main', domain: 'global-webnet.com', aliases: [], mirrors: '' },
+    { id: 't2', name: 'Scratch', domain: 'scratch.example', aliases: [], mirrors: 't1' },
+    { id: 't3', name: 'Third', domain: 'third.example', aliases: [], mirrors: null },
+  ];
+
+  function setup() {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
+    const fixture = TestBed.createComponent(AdminTenants);
+    const http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/tenant/hosts') && r.method === 'GET').flush(hosts);
+    fixture.detectChanges();
+    return { fixture, http, page: fixture.nativeElement as HTMLElement };
+  }
+
+  const select = (page: HTMLElement, name: string) => page.querySelector(`select[aria-label="Use the configuration of, for ${name}"]`) as HTMLSelectElement;
+
+  it('shows each tenant\'s pointer: its own configuration, or the site it uses', () => {
+    const { page } = setup();
+
+    expect(select(page, 'Scratch').value).toBe('t1');
+    expect(select(page, 'DEV Main').value).toBe('');
+    expect(select(page, 'Third').value).toBe('');
+  });
+
+  it('offers the other sites that do not mirror, and never the site itself', () => {
+    const { page } = setup();
+
+    const options = Array.from(select(page, 'Third').options).map((o) => o.value);
+
+    expect(options).toEqual(['', 't1']);   // Scratch mirrors, so it is no target; Third is itself
+  });
+
+  it('saves a chosen site and clears the pointer with "own configuration"', () => {
+    const { fixture, http, page } = setup();
+    const third = select(page, 'Third');
+    third.value = 't1';
+    third.dispatchEvent(new Event('change'));
+    (page.querySelector('button[data-action="set-mirror-t3"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const put = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/tenant/t3/mirror'));
+    expect(put.request.body).toEqual({ target: 't1' });
+    put.flush(null, { status: 204, statusText: 'No Content' });
+    http.expectOne((r) => r.url.endsWith('/api/tenant/hosts')).flush(hosts);
+    http.expectOne((r) => r.url.endsWith('/api/tenant/current')).flush({ host: 'h', tenant: null, match: 'None' });
+    http.expectOne((r) => r.url.endsWith('/api/tenant/mine')).flush({ actingId: null, tenants: [] });
+    http.expectOne((r) => r.url.endsWith('/api/auth/rights')).flush({ rights: [] });
+
+    const scratch = select(page, 'Scratch');
+    scratch.value = '';
+    scratch.dispatchEvent(new Event('change'));
+    (page.querySelector('button[data-action="set-mirror-t2"]') as HTMLButtonElement).click();
+    expect(http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/tenant/t2/mirror')).request.body).toEqual({ target: null });
+  });
+
+  it('shows the reason when the server refuses', () => {
+    const { fixture, http, page } = setup();
+    const third = select(page, 'Third');
+    third.value = 't1';
+    third.dispatchEvent(new Event('change'));
+    (page.querySelector('button[data-action="set-mirror-t3"]') as HTMLButtonElement).click();
+
+    http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/api/tenant/t3/mirror')).flush('You are on this site\'s own address (you would be locked out).', { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+
+    expect(page.querySelector('.tenants__problem')?.textContent).toContain('locked out');
+  });
+});

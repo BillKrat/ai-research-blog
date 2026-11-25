@@ -86,6 +86,27 @@ export class AdminTenants implements OnInit {
     return value.trim().replace(/^[a-z]+:\/\//i, '').split(/[/:?#]/)[0].toLowerCase();
   }
 
+  /** What has been chosen in each tenant's "use the configuration of" list but not applied yet (empty string: its own). */
+  protected readonly mirrorChoice = signal<Record<string, string>>({});
+
+  protected chosenMirror(entry: TenantHosts): string {
+    return this.mirrorChoice()[entry.id] ?? entry.mirrors ?? '';
+  }
+
+  protected setMirrorChoice(tenantId: string, value: string): void {
+    this.mirrorChoice.update((all) => ({ ...all, [tenantId]: value }));
+  }
+
+  /** The sites this one may use: not itself and not a site that mirrors (one level only; the server checks again). */
+  protected mirrorTargets(entry: TenantHosts): TenantHosts[] {
+    return this.tenants().filter((other) => other.id !== entry.id && !other.mirrors);
+  }
+
+  protected applyMirror(entry: TenantHosts): void {
+    const target = this.chosenMirror(entry);
+    this.service.setMirror(entry.id, target === '' ? null : target, () => this.mirrorChoice.update((all) => Object.fromEntries(Object.entries(all).filter(([id]) => id !== entry.id))));
+  }
+
   protected remove(tenantId: string, alias: string): void {
     this.service.removeAlias(tenantId, alias);
   }
