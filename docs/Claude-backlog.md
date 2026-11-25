@@ -159,3 +159,7 @@ Found while repairing a second installation that showed "Setup this address" on 
 ## A tenant made by hand has nobody who can administer it (found 2026-11-25)
 
 A platform administrator can act in any tenant but holds no rights there until a role assignment exists, so after Admin > Tenants > New tenant the creator saw "dashboard could not be loaded" (403) in the new tenant and could not even give themselves a role (the role screen needs a right they lack). Repaired by hand with `Claude-nquad-tool grant` (Admin role in every tenant). To do, tests first: creating a tenant (the Tenants page and the setup page's "start a new site") also gives the creating person the Admin role in it, and "Work in" a tenant where the person holds no role says so in plain words instead of a failed dashboard.
+
+## Tenants page: a Work in switcher and a clearer refusal (found 2026-11-25)
+
+Deleting a tenant was refused with "the tenant you are working in or reaching this site through" while the person was on a temporary address, because the browser remembers the Work in choice per web address and it still named the tenant being deleted. To do, tests first: (1) the Tenants page carries the same Work in switcher as the Dashboard panel; (2) the refusal says which of the two applies (you are working in it: switch with Work in; or this address belongs to it: open another of its addresses).
