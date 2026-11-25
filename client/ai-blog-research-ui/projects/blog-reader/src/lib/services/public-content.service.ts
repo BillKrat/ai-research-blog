@@ -113,9 +113,33 @@ export class PublicContentService {
     return this.http.post<{ message: string }>(`${this.base}/posts/${encodeURIComponent(slug)}/comments`, comment);
   }
 
+  /** Whether the Contact plug-in is on (for the CONTACT link) and the text above its form. */
+  contact(): Observable<ContactInfo> {
+    return this.http.get<ContactInfo>(`${this.base}/contact`);
+  }
+
+  /** Sends a message to the owner by e-mail (rate limited by the server). */
+  sendContact(message: ContactSubmission): Observable<unknown> {
+    return this.http.post(`${this.base}/contact`, message);
+  }
+
   tags(): Observable<PublicTerm[]> {
     return this.http.get<PublicTerm[]>(`${this.base}/tags`);
   }
+}
+
+/** What the site needs of the Contact plug-in: whether it is on, and the text above the form. The recipient is never sent to a browser. */
+export interface ContactInfo {
+  enabled: boolean;
+  intro: string;
+}
+
+/** What the contact form sends. `website` is a hidden field only a robot fills in. */
+export interface ContactSubmission {
+  name: string;
+  email: string;
+  message: string;
+  website: string;
 }
 
 /** An approved comment: no id and no e-mail address ever reach a reader. */

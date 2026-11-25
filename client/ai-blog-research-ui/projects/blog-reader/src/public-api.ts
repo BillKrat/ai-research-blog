@@ -15,3 +15,4 @@ export * from './lib/pages/public/post-list';
 export * from './lib/pages/public/post-view';
 export * from './lib/components/post-comments/post-comments';
 export * from './lib/pages/public/search/search-page';
+export * from './lib/pages/public/contact/contact-page';

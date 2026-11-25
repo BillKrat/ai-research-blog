@@ -28,6 +28,9 @@ export class SiteNav implements OnInit {
   /** True when a published page is pinned as the front page; without one there is no Home link and the site opens on Posts (as BlogEngine.NET does). */
   protected readonly hasHome = signal(false);
 
+  /** True when the owner switched the Contact plug-in on: a Contact link follows Home. */
+  protected readonly hasContact = signal(false);
+
   ngOnInit(): void {
     this.load();
     this.router.events
@@ -46,6 +49,10 @@ export class SiteNav implements OnInit {
     this.content.home().subscribe({
       next: (page) => this.hasHome.set(page !== null),
       error: () => this.hasHome.set(false),
+    });
+    this.content.contact().subscribe({
+      next: (info) => this.hasContact.set(info?.enabled === true),
+      error: () => this.hasContact.set(false),
     });
   }
 }

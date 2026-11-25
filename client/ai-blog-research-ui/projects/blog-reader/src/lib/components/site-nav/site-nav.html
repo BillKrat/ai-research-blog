@@ -2,6 +2,9 @@
   @if (hasHome()) {
     <a routerLink="/" routerLinkActive="site-nav__active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
   }
+  @if (hasContact()) {
+    <a routerLink="/contact" routerLinkActive="site-nav__active">Contact</a>
+  }
   <a routerLink="/posts" routerLinkActive="site-nav__active">Posts</a>
   @for (item of items(); track item.slug) {
     <span class="site-nav__group">

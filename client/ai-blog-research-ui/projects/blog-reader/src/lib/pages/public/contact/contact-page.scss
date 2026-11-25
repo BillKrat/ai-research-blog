@@ -1,0 +1,32 @@
+.contact {
+  &__form {
+    display: grid;
+    gap: 1rem;
+    max-width: 40rem;
+
+    label {
+      display: grid;
+      gap: 0.25rem;
+    }
+
+    input,
+    textarea {
+      font: inherit;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+
+  // the honeypot: out of sight and out of the tab order, only a robot fills it
+  &__trap {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  &__problem {
+    color: var(--mat-sys-error);
+  }
+}

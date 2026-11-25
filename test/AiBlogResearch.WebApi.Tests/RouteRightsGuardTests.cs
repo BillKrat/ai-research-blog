@@ -37,6 +37,7 @@ public sealed class RouteRightsGuardTests
         [nameof(PublicLabelsController)] = "anonymous: the table of button and screen texts of the site language (words only, no data)",
         [nameof(SearchController)] = "anonymous: search of the published posts and pages (words only; rate limited; no draft or revision)",
         [nameof(PublicCommentsController)] = "anonymous: the approved comments of a post and the rate-limited comment form (new comments wait for approval)",
+        [nameof(PublicContactController)] = "anonymous: whether the Contact plug-in is on, and the rate-limited, size-capped contact form with a honeypot (it e-mails the owner; the recipient is never returned)",
         [nameof(SetupController)] = "onboarding setup of a host that reaches no tenant: status and sign-in are anonymous (sign-in rate limited, one answer for every failure); every other action needs a setup token, which works on this API only (SetupTokenGuardMiddleware) and is re-checked against the platform switch on each call",
         [nameof(ProfileController)] ="the signed-in person edits their own profile",
         [nameof(EmailVerificationController)] = "the signed-in person verifies their own saved address (mail goes only to that address, link host checked against registered hosts); the confirm link is anonymous and answers every failure alike",

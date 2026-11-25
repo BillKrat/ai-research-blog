@@ -1,0 +1,39 @@
+<section class="contact">
+  <h2>Contact</h2>
+  @if (info(); as i) {
+    @if (i.enabled) {
+      @if (i.intro) {
+        <p class="contact__intro">{{ i.intro }}</p>
+      }
+      <form #form class="contact__form" (submit)="$event.preventDefault(); send(form, name.value, email.value, message.value, website.value)">
+        <label>
+          Name
+          <input #name name="name" type="text" maxlength="80" autocomplete="name" required />
+        </label>
+        <label>
+          E-mail (so I can answer; never shown)
+          <input #email name="email" type="email" maxlength="254" autocomplete="email" required />
+        </label>
+        <label>
+          Message
+          <textarea #message name="message" rows="7" maxlength="4000" required></textarea>
+        </label>
+        <div class="contact__trap" aria-hidden="true">
+          <label>
+            Leave this empty
+            <input #website name="website" type="text" tabindex="-1" autocomplete="off" />
+          </label>
+        </div>
+        <button type="submit" [disabled]="sending()" [matTooltip]="'sendMessage' | label" [attr.aria-label]="'sendMessage' | label"><mat-icon>send</mat-icon> {{ 'sendMessage' | label }}</button>
+        @if (notice()) {
+          <p class="contact__notice" role="status">{{ notice() }}</p>
+        }
+        @if (problem()) {
+          <p class="contact__problem" role="alert">{{ problem() }}</p>
+        }
+      </form>
+    } @else {
+      <p class="contact__off" role="status">The contact form is not available on this site.</p>
+    }
+  }
+</section>
