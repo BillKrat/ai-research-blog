@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AdminTenants } from './admin-tenants';
+import { TenantService } from '../../services/tenant.service';
 
 describe('AdminTenants', () => {
   const hosts = [
@@ -293,5 +294,53 @@ describe('AdminTenants mirror pointer', () => {
     fixture.detectChanges();
 
     expect(page.querySelector('.tenants__problem')?.textContent).toContain('locked out');
+  });
+});
+
+describe('AdminTenants Work in switcher', () => {
+  const mine = [
+    { id: 't1', name: 'First', domain: 'first.example', aliases: [] },
+    { id: 't2', name: 'Second', domain: 'second.example', aliases: [] },
+  ];
+
+  function setup(tenants = mine) {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
+    const fixture = TestBed.createComponent(AdminTenants);
+    const http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/api/tenant/hosts') && r.method === 'GET').flush(mine);
+    TestBed.inject(TenantService).load();
+    http.expectOne((r) => r.url.endsWith('/api/tenant/current')).flush({ host: 'h', tenant: { id: 't2', name: 'Second', domain: 'second.example' }, match: 'Acting' });
+    http.expectOne((r) => r.url.endsWith('/api/tenant/mine')).flush({ actingId: 't2', tenants });
+    http.expectOne((r) => r.url.endsWith('/api/auth/rights')).flush({ rights: [] });
+    fixture.detectChanges();
+    return { fixture, page: fixture.nativeElement as HTMLElement };
+  }
+
+  it('offers Work in at the top of the page, with the tenant now worked in selected', () => {
+    const { page } = setup();
+
+    const select = page.querySelector('select[aria-label="Work in tenant"]') as HTMLSelectElement;
+    expect(select).not.toBeNull();
+    expect(select.value).toBe('t2');
+    expect(Array.from(select.options).map((o) => o.text.trim())).toEqual(['First', 'Second']);
+  });
+
+  it('switches tenant when another is chosen (the choice is remembered and the page reloads)', () => {
+    const { page } = setup();
+    const service = TestBed.inject(TenantService);
+    const choose = vi.spyOn(service, 'choose').mockImplementation(() => undefined);
+
+    const select = page.querySelector('select[aria-label="Work in tenant"]') as HTMLSelectElement;
+    select.value = 't1';
+    select.dispatchEvent(new Event('change'));
+
+    expect(choose).toHaveBeenCalledWith('t1');
+  });
+
+  it('shows no switcher for a person who belongs to one tenant', () => {
+    const { page } = setup([mine[0]]);
+
+    expect(page.querySelector('select[aria-label="Work in tenant"]')).toBeNull();
   });
 });

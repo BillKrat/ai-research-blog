@@ -7,6 +7,17 @@
     site's browser call it. A host name can belong to only one tenant. A change works straight away.
   </p>
 
+  @if (mine().length > 1) {
+    <label class="tenants__workin">
+      Work in
+      <select #switcher aria-label="Work in tenant" (change)="workIn(switcher.value)">
+        @for (option of mine(); track option.id) {
+          <option [value]="option.id" [selected]="option.id === workingIn()">{{ option.name }}</option>
+        }
+      </select>
+    </label>
+  }
+
   @if (notice()) {
     <p class="tenants__notice" role="status">{{ notice() }}</p>
   }

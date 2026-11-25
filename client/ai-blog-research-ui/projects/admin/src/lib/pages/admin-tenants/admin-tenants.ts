@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { PageHeader } from '../../components/page-header/page-header';
 import { TenantHosts, TenantService } from '../../services/tenant.service';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,6 +22,14 @@ export class AdminTenants implements OnInit {
   protected readonly problem = this.service.problem;
   protected readonly notice = this.service.notice;
   protected readonly draft = signal<Record<string, string>>({});
+
+  /** The tenants this person may work in and the one they work in now: the same switcher as the Dashboard panel, here so a refused delete can be fixed on this page. */
+  protected readonly mine = this.service.mine;
+  protected readonly workingIn = computed(() => this.service.current()?.tenant?.id ?? '');
+
+  protected workIn(tenantId: string): void {
+    this.service.choose(tenantId);
+  }
 
   ngOnInit(): void {
     this.service.loadHosts();
