@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,7 +19,7 @@ type Step = 'checking' | 'notNeeded' | 'signIn' | 'choose' | 'done';
  */
 @Component({
   selector: 'adv-setup',
-  imports: [PageHeader, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTooltipModule, LabelPipe],
+  imports: [PageHeader, RouterLink, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTooltipModule, LabelPipe],
   templateUrl: './setup.html',
   styleUrl: './setup.scss',
 })

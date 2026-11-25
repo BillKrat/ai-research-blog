@@ -44,6 +44,7 @@ export const routes: Routes = [
   { path: 'setup', loadComponent: () => import('@adventures/admin').then((m) => m.Setup) },
   { path: 'verify-email', loadComponent: () => import('@adventures/admin').then((m) => m.VerifyEmail) },
   { path: 'forgot-password', loadComponent: () => import('@adventures/admin').then((m) => m.ForgotPassword) },
+  { path: 'recover', loadComponent: () => import('@adventures/admin').then((m) => m.Recover) },
   { path: 'reset-password', loadComponent: () => import('@adventures/admin').then((m) => m.ResetPassword) },
   { path: 'login', loadComponent: () => import('@adventures/admin').then((m) => m.Login) },
   { path: 'logout', canActivate: [logOffGuard], children: [] },

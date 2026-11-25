@@ -147,6 +147,17 @@ Behind a proxy the app sees the proxy's address for every visitor. Without telli
 5. Check: sign in wrongly six times from your own address and then from a phone on mobile data. Only your address is limited, not the phone's.
 6. The forwarded host is never used: the site is chosen by the host name the server received, so the proxy must pass the original host name through to the app (a CDN does by default). An invalid entry in `Proxy__Trusted` stops the app at start-up with a message naming the setting.
 
+## Locked out and no e-mail set up? (recovery with a file on the host)
+
+You do not need mail to get back in. You prove that you control the installation by putting a file on the host, then choose a new password. Nothing is ever reset to a default password.
+
+1. Open the sign-in page (or the setup page of an address that reaches no site) and use **Locked out and no e-mail? Recover with a file on the host**, then **Get a code**.
+2. The page shows a file name such as `recovery-<32 characters>`. Create an empty file with that name in the `App_Data` folder next to the app on the host (over FTP or the hosting panel's file manager; create the folder if it is not there; a `.txt` ending is fine).
+3. On the same page give the site address (leave it empty if you opened the site's own address), the user name and the new password, twice. The code is good for 15 minutes and works once; if the site restarts before you finish, ask for a new code.
+4. Sign in with the new password. The file is removed by the app when it can; delete it yourself if it stays.
+
+Things that cause trouble: the file is in the wrong folder (it must be the `App_Data` folder of the site that serves the API, not of the web site in the split layout); the name has an extra extension; the code expired. The host tool `Claude-nquad-tool reset-password` is the last resort when you also have database access.
+
 ## Listing text for a one-click install (draft for SmarterASP)
 
 **Name:** Adventures blog (AI starter kit). **What it is:** a blog and content site for people who want AI as a collaborator: posts and pages, comments with approval, search, an RSS feed, a Word-like editor, widgets and plug-ins, one admin for several sites on several domains, and an optional MCP server so an AI assistant can draft posts for you to review (it can never publish). **Install:** one site, one database. Open the site address; the first visit creates the site and you sign in with `Admin` and `Admin`, then choose a new password. **Needs:** ASP.NET Core 10 hosting, PostgreSQL. **Cost to run:** the hosting plan plus an AI subscription only if you use the AI features. **Licence:** BUSL-1.1 with a free grant for small operators (see LICENSE). Nothing is sent anywhere unless you configure an AI key or mail server yourself. This text is a draft and is not sent anywhere: the human decides what to send SmarterASP (ticket #3716417).

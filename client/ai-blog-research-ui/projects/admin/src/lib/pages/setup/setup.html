@@ -10,6 +10,7 @@
     }
     @case ('signIn') {
       <p class="setup__note">{{ 'setupIntro' | label: host() }}</p>
+      <p class="setup__note"><a routerLink="/recover">{{ 'recoverLink' | label }}</a></p>
       <form class="setup__form" [formGroup]="signInForm" (ngSubmit)="signIn()">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'setupSite' | label }}</mat-label>
