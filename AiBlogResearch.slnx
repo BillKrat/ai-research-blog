@@ -32,6 +32,7 @@
   </Folder>
   <Folder Name="/Adventures.Foundation/Tests/">
     <Project Path="../Adventures.Foundation/test/Adventures.Blog.Tests/Adventures.Blog.Tests.csproj" />
+    <Project Path="../Adventures.Foundation/test/Adventures.Browser.Desktop.Tests/Adventures.Browser.Desktop.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Browser.Host.Tests/Adventures.Browser.Host.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Blog.Legacy.Tests/Adventures.Blog.Legacy.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Collaboration.Tests/Adventures.Collaboration.Tests.csproj" />
@@ -45,6 +46,7 @@
     <Project Path="../Adventures.Foundation/test/Adventures.Security.AspNetCore.Tests/Adventures.Security.AspNetCore.Tests.csproj" />
   </Folder>
   <Folder Name="/Adventures.Foundation/Apps/">
+    <Project Path="../Adventures.Foundation/apps/Adventures.Browser.Desktop/Adventures.Browser.Desktop.csproj" />
     <Project Path="../Adventures.Foundation/apps/Adventures.Browser.Host/Adventures.Browser.Host.csproj" />
   </Folder>
   <Folder Name="/AIBlogResearch/">
@@ -59,10 +61,6 @@
   <Folder Name="/AIBlogResearch/Tests/">
     <Project Path="test/AiBlogResearch.WebApi.Tests/AiBlogResearch.WebApi.Tests.csproj" />
     <Project Path="test/AiBlogResearch.WebApi.HostTests/AiBlogResearch.WebApi.HostTests.csproj" />
-  </Folder>
-  <Folder Name="/Desktop/">
-    <Project Path="src/AiBlogResearch.Desktop/AiBlogResearch.Desktop.csproj" />
-    <Project Path="test/AiBlogResearch.Desktop.Tests/AiBlogResearch.Desktop.Tests.csproj" />
   </Folder>
   <Folder Name="/MCP/">
     <Project Path="src/McpServer.WebApi/McpServer.WebApi.csproj" />
