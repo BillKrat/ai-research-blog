@@ -4,6 +4,8 @@
 
 Written 2026-11-23 for the human's review. Source: the human's 2026-11-21 brief ("one place where a developer sees schemas, tables, types and people at a glance; navigated, not hardcoded: parent and children like folders, built from the data, so dimensions nobody has thought of yet show up without code changes") and the schema IRI convention (`https://schema.global-webnet.com/<area>/<name>`, decided 2026-10-11 so the IRIs can become real, documented pages). Nothing is built yet.
 
+**Note (2026-11-27):** the catalog this design asks for now exists (`SchemaCatalog`, built for the [schema browser applications](Claude-decision-2026-11-foundation-apps.md)); the public, anonymous site is still deferred.
+
 ## What the data gives us
 
 - Schemas are ordinary entities in the N-Quad store (`SchemaEntity`, with `SchemaFieldEntity` children), loaded today by `SchemaDal` and `SchemaBll`. Their addresses already form a hierarchy: **area, then schema, then field**, for example `identity/Tenant`, `identity/TenantRoleAssignment/Tenant` (a field of the schema before it), `content/Post`, `collaboration/PluginSetting/PluginKey`.
