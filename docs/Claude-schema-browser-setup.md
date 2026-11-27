@@ -54,7 +54,7 @@ Add the domain `localhost`, sign in, pick a schema, follow a link under "Points 
 
 **Order.** Foundation merges to `main` before the blog app. A change only in Foundation does not trigger the app's deploy workflows: dispatch the API deploy by hand.
 
-**Before uploading anything:** the two intended sites already exist on the host. Look at what each serves now; uploading replaces it. The single-site installation holds the many-domains setup, so do not overwrite it by accident.
+**Before uploading anything:** the two intended sites already exist on the host. On 2026-11-27 each web root held only a placeholder `index.html` (a read-only listing); look again before an upload, since uploading replaces what is there. Their pool settings, FTP users and upload folders still have to be set up (`Claude-ftp-tree.ps1` in the private workspace uploads a published folder to a fresh site).
 
 1. **Each domain's API:** deploy the new version, then set `Browser__Enabled` = `true` in that site's application pool and restart it. On its first start the Developer role gains `schema.read`, only where its rights are still the shipped default.
 2. **Browser API on `<browser-api-site>`:** `dotnet publish apps/Adventures.Browser.Host -c Release -o <folder>`; upload the folder; set in its pool:
