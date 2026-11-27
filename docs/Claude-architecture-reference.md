@@ -46,6 +46,11 @@
 - **R22.** Rich client: sanitise what reaches the person (exception shielding), log unexpected failures where an administrator can find them, and never put a token or password in a message or log. (AppArch 17, 3)
 - **R23.** Rich client: secure the channel (https; plain http only to loopback in development) and hold the token in memory only. (AppArch 17)
 
+**Applications in Foundation** (2026-11-27, [decision](Claude-decision-2026-11-foundation-apps.md); R24 and R25 are tests in `Adventures.Architecture.Tests`, R26 is checked there for web addresses in committed JSON)
+- **R24.** Libraries live under `src/`, applications under `apps/`, tests under `test/`. A library references only libraries; no project references another repository.
+- **R25.** An application in Foundation is generic: it reaches no blog, collaboration or blog-hosting library. Only applications and their tests may need Windows; CI builds the whole solution on Windows and the rest on Linux.
+- **R26.** Which sites a person connects to is configuration of the installation or the person, never committed.
+
 ## 3. Target architecture
 
 From the refactor diagram. Arrows read "depends on".
