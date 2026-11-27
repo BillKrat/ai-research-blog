@@ -166,4 +166,4 @@ Deleting a tenant was refused with "the tenant you are working in or reaching th
 
 ## Ship the web.config with the client; index.html must not be cached for a year (found 2026-11-25)
 
-DONE 2026-11-27, deployed to the live web site with the `global` clean-up (stage review `docs/artifacts/Claude-2026-11-27-client-web-config.md`). The live settings were not carried over: the old file belongs to BlogEngine and the folder is being emptied. Still open: replace the hand-made file on the second installation at its next upload; hashed files could be cached long again if load ever matters; Strict-Transport-Security on the web site is left out until the human wants it.
+DONE 2026-11-27, deployed to the live web site with the `global` clean-up (stage review `docs/artifacts/Claude-2026-11-27-client-web-config.md`). The live settings were not carried over: the old file belongs to BlogEngine and the folder is being emptied. The second installation took the shipped file on 2026-11-27. Still open: hashed files could be cached long again if load ever matters; Strict-Transport-Security on the web site is left out until the human wants it.
