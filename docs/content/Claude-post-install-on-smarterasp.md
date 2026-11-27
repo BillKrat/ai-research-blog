@@ -44,7 +44,7 @@ Create a web site, an API site and an MCP site, and give each its pool. Then tel
 | MCP pool | `Api__BaseUrl` | the API site's temporary address, with a trailing slash |
 | API and MCP pools | `Jwt__SigningKey` | **the same value** on both |
 
-Leave `Site__Domain` unset: when it is set it replaces both addresses with `api.` and `mcp.` names. The web site is plain files, so it needs no settings at all, but it does need a `web.config` that rewrites unknown paths to `index.html` so a refresh on a deep link works.
+Leave `Site__Domain` unset: when it is set it replaces both addresses with `api.` and `mcp.` names. The web site is plain files, so it needs no settings at all, and the `web.config` it needs (so a refresh on a deep link works) comes with the client build.
 
 The API serves only hosts that belong to a tenant. For the first run, set `Tenancy__AutoAliasToTenantDomain` on the API pool to the web site's host name, open the API's temporary address once, and the log says the host "was added as an alias". Then remove the setting. This layout has been proved end to end on a second host: sign-in, edits, and the API and MCP sites calling each other.
 
