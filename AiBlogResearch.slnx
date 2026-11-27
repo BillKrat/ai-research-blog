@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Adventures.Foundation/">
+    <Project Path="../Adventures.Foundation/src/Adventures.Client/Adventures.Client.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Common/Adventures.Common.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Ioc/Adventures.Ioc.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Collaboration/Adventures.Collaboration.csproj" />
@@ -31,6 +32,7 @@
   </Folder>
   <Folder Name="/Adventures.Foundation/Tests/">
     <Project Path="../Adventures.Foundation/test/Adventures.Blog.Tests/Adventures.Blog.Tests.csproj" />
+    <Project Path="../Adventures.Foundation/test/Adventures.Browser.Host.Tests/Adventures.Browser.Host.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Blog.Legacy.Tests/Adventures.Blog.Legacy.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Collaboration.Tests/Adventures.Collaboration.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Common.Tests/Adventures.Common.Tests.csproj" />
@@ -41,6 +43,9 @@
     <Project Path="../Adventures.Foundation/test/Adventures.Identity.Tests/Adventures.Identity.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Security.Tests/Adventures.Security.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Security.AspNetCore.Tests/Adventures.Security.AspNetCore.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Adventures.Foundation/Apps/">
+    <Project Path="../Adventures.Foundation/apps/Adventures.Browser.Host/Adventures.Browser.Host.csproj" />
   </Folder>
   <Folder Name="/AIBlogResearch/">
     <Project Path="src/AiBlogResearch.AppHost/AiBlogResearch.AppHost.csproj" />
@@ -61,11 +66,9 @@
   </Folder>
   <Folder Name="/MCP/">
     <Project Path="src/McpServer.WebApi/McpServer.WebApi.csproj" />
-    <Project Path="src/NQuadBrowser.WebApi/NQuadBrowser.WebApi.csproj" />
   </Folder>
   <Folder Name="/MCP/Tests/">
     <Project Path="test/McpServer.WebApi.Tests/McpServer.WebApi.Tests.csproj" />
-    <Project Path="test/NQuadBrowser.WebApi.Tests/NQuadBrowser.WebApi.Tests.csproj" />
   </Folder>
   <Folder Name="/Solution/">
     <File Path="AGENTS.md" />

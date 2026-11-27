@@ -14,7 +14,6 @@ public sealed class ThinHostRatchetTests
     {
         { "AiBlogResearch.WebApi", 30, "Adventures.Blog.Legacy" }, // only for LegacySeeds; the store choice lives in Adventures.Hosting
         { "McpServer.WebApi", 60, "" },
-        { "NQuadBrowser.WebApi", 200, "Adventures.Data.NQuad,Adventures.Data.NQuad.Postgres" },
     };
 
     private static readonly string[] StoreProjects =
