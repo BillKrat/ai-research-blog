@@ -28,4 +28,10 @@
 	<Copy SourceFiles="@(SampleWebPluginDll->'%(RootDir)%(Directory)Adventures.MEF.SampleWebPlugin.deps.json')" DestinationFolder="$(OutDir)sample-web-plugin" Condition="Exists('%(RootDir)%(Directory)Adventures.MEF.SampleWebPlugin.deps.json')" />
   </Target>
 
+  <ItemGroup>
+    <!-- The schema browser end to end: the applications client and the gateway against this API. -->
+    <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Browser.Client\Adventures.Browser.Client.csproj" />
+    <ProjectReference Include="..\..\..\Adventures.Foundation\src\Adventures.Browser.Gateway.WebApi\Adventures.Browser.Gateway.WebApi.csproj" />
+  </ItemGroup>
+
 </Project>
