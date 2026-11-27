@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 	  <UserSecretsId>35f5242d-e0ef-427b-8901-a1a38c165ac4</UserSecretsId>
+    <!-- A small shared application pool: the workstation garbage collector holds less memory than the server one, the web default. -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>
 
 <ItemGroup>
