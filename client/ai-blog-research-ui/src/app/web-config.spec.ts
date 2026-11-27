@@ -46,6 +46,9 @@ function handle(request: Request): string {
     });
     if (holds) {
       const action = rule.querySelector('action')!;
+      if (action.getAttribute('type') === 'CustomResponse') {
+        return `status ${action.getAttribute('statusCode')}`;
+      }
       const target = action.getAttribute('url')!.replace('{HTTP_HOST}', host).replace('{REQUEST_URI}', url);
       return `${action.getAttribute('type')!.toLowerCase()} ${target}`;
     }
@@ -70,7 +73,18 @@ describe('the web.config shipped with the client', () => {
     expect(handle({ url: '/main-ABC123.js', isFile: true })).toBe('serve');
   });
 
-  it.each(['/chunk-gone.js', '/styles-gone.css', '/media/gone.woff2', '/chunk-gone.js?v=2'])(
+  it.each(['/Adventures/image.axd?picture=2016%2fa.png', '/blogai/file.axd', '/image.axd', '/syndication.AXD'])(
+    'answers the old BlogEngine address %s with not found, so the application never loads for it',
+    (url) => {
+      expect(handle({ url })).toBe('status 404');
+    },
+  );
+
+  it('leaves a post whose address only mentions .axd to the application', () => {
+    expect(handle({ url: '/post/what-is-an.axd-handler' })).toBe('rewrite /index.html');
+  });
+
+  it.each(['/chunk-gone.js', '/styles-gone.css', '/media/gone.woff2', '/chunk-gone.js?v=2', '/OnTheEdge/Images/HeadBang.gif', '/pics/old.JPG', '/a.jpeg', '/b.png'])(
     'lets a missing asset %s be a 404 instead of the application page',
     (url) => {
       expect(handle({ url })).toBe('serve');

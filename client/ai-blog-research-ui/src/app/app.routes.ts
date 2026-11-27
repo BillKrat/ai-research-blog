@@ -35,6 +35,9 @@ export const routes: Routes = [
   { path: 'posts', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostList), data: { kind: 'all' } },
   { path: 'post/:year/:month/:day/:slug', redirectTo: legacyPostRedirect },
   { path: 'post/:year/:month/:day/:slug/rate/:stars', redirectTo: legacyPostRedirect },
+  // The same behind a blog's own name, when one BlogEngine.NET install held several blogs.
+  { path: ':blog/post/:year/:month/:day/:slug', redirectTo: legacyPostRedirect },
+  { path: ':blog/post/:year/:month/:day/:slug/rate/:stars', redirectTo: legacyPostRedirect },
   { path: 'post/:slug', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PostView) },
   { path: 'page/:slug', loadComponent: () => import('@adventures/blog-reader').then((m) => m.PageView) },
   { path: 'search', loadComponent: () => import('@adventures/blog-reader').then((m) => m.SearchPage) },

@@ -19,6 +19,13 @@ describe('legacy BlogEngine post addresses', () => {
     expect(find('post/:year/:month/:day/:slug/rate/:stars')).toBeDefined();
   });
 
+  it.each([':blog/post/:year/:month/:day/:slug', ':blog/post/:year/:month/:day/:slug/rate/:stars'])(
+    'redirects the address of a post in a named blog (%s), as one BlogEngine install holding several blogs linked it',
+    (path) => {
+      expect(find(path)?.redirectTo).toBe(legacyPostRedirect);
+    },
+  );
+
   it('keeps the plain /post/:slug route, which does not match four extra segments', () => {
     expect(find('post/:slug')).toBeDefined();
   });
