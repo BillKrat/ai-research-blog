@@ -83,6 +83,8 @@ jobs:
         run: |
           mkdir -p publish/wwwroot
           cp -r client/ai-blog-research-ui/dist/ai-blog-research-ui/browser/. publish/wwwroot/
+          # The client's web.config is for a static web site; here the API serves the client and has its own.
+          rm publish/wwwroot/web.config
           test -f publish/wwwroot/index.html
 
       - name: Put the site offline for deployment
