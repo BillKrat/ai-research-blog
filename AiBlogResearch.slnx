@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Adventures.Foundation/">
+    <Project Path="../Adventures.Foundation/src/Adventures.Browser.Gateway.WebApi/Adventures.Browser.Gateway.WebApi.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Browser.WebApi/Adventures.Browser.WebApi.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Client/Adventures.Client.csproj" />
     <Project Path="../Adventures.Foundation/src/Adventures.Common/Adventures.Common.csproj" />
