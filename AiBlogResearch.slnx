@@ -34,6 +34,7 @@
     <Project Path="../Adventures.Foundation/src/Adventures.WebApi/Adventures.WebApi.csproj" />
   </Folder>
   <Folder Name="/Adventures.Foundation/Tests/">
+    <Project Path="../Adventures.Foundation/test/Adventures.Browser.Web.Tests/Adventures.Browser.Web.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Browser.Client.Tests/Adventures.Browser.Client.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Browser.WebApi.Tests/Adventures.Browser.WebApi.Tests.csproj" />
     <Project Path="../Adventures.Foundation/test/Adventures.Blog.Tests/Adventures.Blog.Tests.csproj" />
@@ -51,6 +52,7 @@
     <Project Path="../Adventures.Foundation/test/Adventures.Security.AspNetCore.Tests/Adventures.Security.AspNetCore.Tests.csproj" />
   </Folder>
   <Folder Name="/Adventures.Foundation/Apps/">
+    <Project Path="../Adventures.Foundation/apps/Adventures.Browser.Web/Adventures.Browser.Web.csproj" />
     <Project Path="../Adventures.Foundation/apps/Adventures.Browser.Desktop/Adventures.Browser.Desktop.csproj" />
     <Project Path="../Adventures.Foundation/apps/Adventures.Browser.Host/Adventures.Browser.Host.csproj" />
   </Folder>
