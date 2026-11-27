@@ -67,14 +67,8 @@
     <Project Path="test/McpServer.WebApi.Tests/McpServer.WebApi.Tests.csproj" />
     <Project Path="test/NQuadBrowser.WebApi.Tests/NQuadBrowser.WebApi.Tests.csproj" />
   </Folder>
-  <Folder Name="/Poc/">
-    <Project Path="../poc/nquad-end-to-end-poc/src/Poc.Api/Poc.Api.csproj" />
-    <Project Path="../poc/nquad-end-to-end-poc/src/Poc/Poc.csproj" />
-    <Project Path="../poc/nquad-end-to-end-poc/tests/Poc.Tests/Poc.Tests.csproj" />
-  </Folder>
   <Folder Name="/Solution/">
     <File Path="AGENTS.md" />
-    <File Path="artifacts/solution-uml.jpg" />
     <File Path="LICENSE" />
     <File Path="README.md" />
   </Folder>
