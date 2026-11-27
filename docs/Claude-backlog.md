@@ -4,6 +4,10 @@ Ideas and planned work that are not the current path. "Put it in backlog" means 
 
 Guiding aim: keep eyes on the running system at every level (logs, exceptions, health) so a human or an AI through MCP can isolate a production issue fast. Add seams for that even when they start as placeholders.
 
+## Last task before the beta code cut-off (human, 2026-11-27)
+
+After the schema browser separation work: a `legacysite` installation holding years of legacy blogs, then performance, load and full regression testing on it. Includes the data decisions that are costly to change once users have data. Plan: [Claude-backlog-legacy-load-test.md](Claude-backlog-legacy-load-test.md).
+
 ## Priority order (set by Claude 2026-10-24, from the human's rule "functionality first, security highest as beta nears")
 
 Reasoning: beta puts other people's accounts and content on the system, so what protects them comes first; cheap guards against silent breakage come next (the review found two test projects that no longer compiled or passed because the deploy workflows never run tests); dated chores are scheduled by their dates; toolchain upgrades are batched so they are verified once; business enablers precede polish; polish is ordered by how often the human meets it.
