@@ -27,5 +27,5 @@ Live behaviour on a host: that is the next step on the second installation (turn
 ## Test steps for the human
 
 1. On the second installation set `Tenancy__OriginHint` = `Registered` on the API site (Claude does this) and restart it.
-2. Admin > Tenants: remove `orderofthecross.net` as a host name of the first tenant, then **New tenant** "Order Of The Cross" on `orderofthecross.net`. The notice gives the Admin sign-in.
-3. Open `https://orderofthecross.net` and `https://billkrat-001-site8.ftempurl.com`: each shows its own tenant. Sign in at the domain as Admin with the given password and change it.
+2. Admin > Tenants: remove `<domain-name>` as a host name of the first tenant, then **New tenant** "<site-name>" on `<domain-name>`. The notice gives the Admin sign-in.
+3. Open `https://<domain-name>` and `https://<web-site>`: each shows its own tenant. Sign in at the domain as Admin with the given password and change it.
