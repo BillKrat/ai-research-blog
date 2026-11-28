@@ -1,6 +1,6 @@
 # Schema browser: try it locally, then install it
 
-Owner: Claude. The applications are in `Adventures.Foundation/apps` ([decision](Claude-decision-2026-11-foundation-apps.md)). Placeholders: `<browser-site>` (web client), `<browser-api-site>` (browser API), `<domain-name>` (a site you browse). Written 2026-11-27; **nothing has been deployed**, so the install steps are untried.
+Owner: Claude. The applications are in `Adventures.Foundation/apps` ([decision](Claude-decision-2026-11-foundation-apps.md)). Placeholders: `<browser-site>` (web client), `<browser-api-site>` (browser API), `<domain-name>` (a site you browse). Written 2026-11-27, install steps revised 2026-11-28; **nothing has been deployed**, so the steps are untried on the host.
 
 ## The pieces
 
@@ -52,17 +52,26 @@ Add the domain `localhost`, sign in, pick a schema, follow a link under "Points 
 
 ## Install (needs your word before any upload)
 
-**Order.** Foundation merges to `main` before the blog app. A change only in Foundation does not trigger the app's deploy workflows: dispatch the API deploy by hand.
+**Order.** The two browser sites can be uploaded before any domain is ready; browsing a domain works once that domain runs the new API. Foundation merges to `main` before the blog app. A change only in Foundation does not trigger the app's deploy workflows: dispatch the API deploy by hand.
 
-**Before uploading anything:** the two intended sites already exist on the host. On 2026-11-27 each web root held only a placeholder `index.html` (a read-only listing); look again before an upload, since uploading replaces what is there. Their pool settings, FTP users and upload folders still have to be set up (`Claude-ftp-tree.ps1` in the private workspace uploads a published folder to a fresh site).
+**Before uploading anything:** the two intended sites already exist on the host. On 2026-11-28 each web root held only a placeholder `index.html` (a read-only listing); look again before an upload, since uploading replaces what is there. Each needs an FTP user rooted at its own folder (`Claude-ftp-tree.ps1` in the private workspace uploads a published folder to a fresh site, dry run first).
+
+**Shared pool.** The two sites sit in a pool with other sites, none of the ones that could be listed being an ASP.NET Core application. The host's `web.config` runs it out of process. IIS cannot mix the two hosting models in one pool (500.34) and runs only one in-process application per pool (500.35), so any later ASP.NET Core site in that pool must run out of process too.
 
 1. **Each domain's API:** deploy the new version, then set `Browser__Enabled` = `true` in that site's application pool and restart it. On its first start the Developer role gains `schema.read`, only where its rights are still the shipped default.
-2. **Browser API on `<browser-api-site>`:** `dotnet publish apps/Adventures.Browser.Host -c Release -o <folder>`; upload the folder; set in its pool:
-   - `BrowserGateway__Sites__0__Domain` = `<domain-name>` and `BrowserGateway__Sites__0__Api` = that domain's API address (`__1__` for the next one)
-   - `BrowserGateway__AllowedOrigins__0` = `https://<browser-site>`
-   - Check: `https://<browser-api-site>/api/health` says Healthy; `https://<browser-api-site>/api/sites` is 404.
-3. **Web app on `<browser-site>`:** `dotnet publish apps/Adventures.Browser.Web -c Release -o <folder>`; in `<folder>\wwwroot\appsettings.json` set `Api:BaseUrl` to `https://<browser-api-site>/` and delete `appsettings.json.br` and `.gz` beside it; upload the folder. The published `web.config` needs the IIS URL Rewrite module.
-4. **Desktop:** put the address in `%LOCALAPPDATA%\Adventures.Browser\settings.json` as `{ "apiBaseUrl": "https://<browser-api-site>/", "domains": [] }`.
+2. **Browser API for `<browser-api-site>`:** `dotnet publish apps/Adventures.Browser.Host -c Release -p:UseAppHost=false -o <folder>`; delete `appsettings.Development.json`; add `appsettings.Production.json` to the folder (never committed; the application does not serve it). This keeps the settings with the site rather than in a pool other sites share; pool variables (`BrowserGateway__Sites__0__Domain` and so on) work too.
+
+   ```json
+   { "BrowserGateway": {
+       "Sites": [ { "Domain": "<domain-name>", "Api": "https://<that domain's API>/" } ],
+       "AllowedOrigins": [ "https://<browser-site>" ] } }
+   ```
+
+   Upload, then check: `/api/health` says Healthy; `/api/sites` and `/appsettings.Production.json` are 404; a plain `http://` request to `/api/health` is refused or redirected.
+3. **Web app for `<browser-site>`:** `dotnet publish apps/Adventures.Browser.Web -c Release -o <folder>`; in `<folder>\wwwroot\appsettings.json` set `Api:BaseUrl` to `https://<browser-api-site>/` and delete `appsettings.json.br` and `.gz` beside it if present; upload the folder. The published `web.config` needs the IIS URL Rewrite module.
+4. **Desktop:** `dotnet publish apps/Adventures.Browser.Desktop -c Release -o <folder>`; set `Api:BaseUrl` in `<folder>\appsettings.json` (a person's own `%LOCALAPPDATA%\Adventures.Browser\settings.json` overrides it). Needs the .NET 10 desktop runtime.
+
+**Tried on 2026-11-28 with the published builds under local IIS Express** (a stand-in domain, not the host): web start page, deep link, settings file, https redirect, file types and headers; browser API health, cross-origin rules, refusals and hidden settings files; add a domain, sign in, list and open a schema in the web app with no console errors; the desktop app starts and closes. Nothing has been uploaded.
 
 ## Limits to know
 
